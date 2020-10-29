@@ -224,7 +224,7 @@ Status FlushJob::Run(LogsWithPrepTracker* prep_tracker,
   }
 
   // This will release and re-acquire the mutex.
-  Status s = WriteLevel0Tble();
+  Status s = WriteLevel0Table();
 
   if (s.ok() && cfd_->IsDropped()) {
     s = Status::ColumnFamilyDropped("Column family dropped during compaction");
@@ -312,7 +312,8 @@ Status FlushJob::WriteLevel0Table() {
   std::vector<BlobFileAddition> blob_file_additions;
 
   {
-    auto write_hint = cfd_->CalculateSSTWriteHint(0);
+//    auto write_hint = cfd_->CalculateSSTWriteHint(0);
+    cfd_->CalculateSSTWriteHint(0);
     db_mutex_->Unlock();
     if (log_buffer_) {
       log_buffer_->FlushBufferToLog();
