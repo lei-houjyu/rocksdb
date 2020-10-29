@@ -393,10 +393,10 @@ Status FlushJob::WriteLevel0Table() {
 
       meta_.file_creation_time = current_time;
 
-      uint64_t creation_time = (cfd_->ioptions()->compaction_style ==
-                                CompactionStyle::kCompactionStyleFIFO)
-                                   ? current_time
-                                   : meta_.oldest_ancester_time;
+//      uint64_t creation_time = (cfd_->ioptions()->compaction_style ==
+//                                CompactionStyle::kCompactionStyleFIFO)
+//                                   ? current_time
+//                                   : meta_.oldest_ancester_time;
 
       IOStatus io_s;
 //      s = BuildTable(
