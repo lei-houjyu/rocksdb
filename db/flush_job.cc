@@ -224,7 +224,7 @@ Status FlushJob::Run(LogsWithPrepTracker* prep_tracker,
   }
 
   // This will release and re-acquire the mutex.
-  Status s = WriteLevel0Table();
+  Status s = WriteLevel0Tble();
 
   if (s.ok() && cfd_->IsDropped()) {
     s = Status::ColumnFamilyDropped("Column family dropped during compaction");
@@ -355,69 +355,69 @@ Status FlushJob::WriteLevel0Table() {
                          << total_memory_usage << "flush_reason"
                          << GetFlushReasonString(cfd_->GetFlushReason());
 
-    {
-      ScopedArenaIterator iter(
-          NewMergingIterator(&cfd_->internal_comparator(), &memtables[0],
-                             static_cast<int>(memtables.size()), &arena));
-      ROCKS_LOG_INFO(db_options_.info_log,
-                     "[%s] [JOB %d] Level-0 flush table #%" PRIu64 ": started",
-                     cfd_->GetName().c_str(), job_context_->job_id,
-                     meta_.fd.GetNumber());
-
-      TEST_SYNC_POINT_CALLBACK("FlushJob::WriteLevel0Table:output_compression",
-                               &output_compression_);
-      int64_t _current_time = 0;
-      auto status = db_options_.env->GetCurrentTime(&_current_time);
-      // Safe to proceed even if GetCurrentTime fails. So, log and proceed.
-      if (!status.ok()) {
-        ROCKS_LOG_WARN(
-            db_options_.info_log,
-            "Failed to get current time to populate creation_time property. "
-            "Status: %s",
-            status.ToString().c_str());
-      }
-      const uint64_t current_time = static_cast<uint64_t>(_current_time);
-
-      uint64_t oldest_key_time =
-          mems_.front()->ApproximateOldestKeyTime();
-
-      // It's not clear whether oldest_key_time is always available. In case
-      // it is not available, use current_time.
-      uint64_t oldest_ancester_time = std::min(current_time, oldest_key_time);
-
-      TEST_SYNC_POINT_CALLBACK(
-          "FlushJob::WriteLevel0Table:oldest_ancester_time",
-          &oldest_ancester_time);
-      meta_.oldest_ancester_time = oldest_ancester_time;
-
-      meta_.file_creation_time = current_time;
-
-      uint64_t creation_time = (cfd_->ioptions()->compaction_style ==
-                                CompactionStyle::kCompactionStyleFIFO)
-                                   ? current_time
-                                   : meta_.oldest_ancester_time;
-
-      IOStatus io_s;
-      s = BuildTable(
-          dbname_, versions_, db_options_.env, db_options_.fs.get(),
-          *cfd_->ioptions(), mutable_cf_options_, file_options_,
-          cfd_->table_cache(), iter.get(), std::move(range_del_iters), &meta_,
-          &blob_file_additions, cfd_->internal_comparator(),
-          cfd_->int_tbl_prop_collector_factories(), cfd_->GetID(),
-          cfd_->GetName(), existing_snapshots_,
-          earliest_write_conflict_snapshot_, snapshot_checker_,
-          output_compression_, mutable_cf_options_.sample_for_compression,
-          mutable_cf_options_.compression_opts,
-          mutable_cf_options_.paranoid_file_checks, cfd_->internal_stats(),
-          TableFileCreationReason::kFlush, &io_s, io_tracer_, event_logger_,
-          job_context_->job_id, Env::IO_HIGH, &table_properties_, 0 /* level */,
-          creation_time, oldest_key_time, write_hint, current_time, db_id_,
-          db_session_id_);
-      if (!io_s.ok()) {
-        io_status_ = io_s;
-      }
-      LogFlush(db_options_.info_log);
-    }
+//    {
+//      ScopedArenaIterator iter(
+//          NewMergingIterator(&cfd_->internal_comparator(), &memtables[0],
+//                             static_cast<int>(memtables.size()), &arena));
+//      ROCKS_LOG_INFO(db_options_.info_log,
+//                     "[%s] [JOB %d] Level-0 flush table #%" PRIu64 ": started",
+//                     cfd_->GetName().c_str(), job_context_->job_id,
+//                     meta_.fd.GetNumber());
+//
+//      TEST_SYNC_POINT_CALLBACK("FlushJob::WriteLevel0Table:output_compression",
+//                               &output_compression_);
+//      int64_t _current_time = 0;
+//      auto status = db_options_.env->GetCurrentTime(&_current_time);
+//      // Safe to proceed even if GetCurrentTime fails. So, log and proceed.
+//      if (!status.ok()) {
+//        ROCKS_LOG_WARN(
+//            db_options_.info_log,
+//            "Failed to get current time to populate creation_time property. "
+//            "Status: %s",
+//            status.ToString().c_str());
+//      }
+//      const uint64_t current_time = static_cast<uint64_t>(_current_time);
+//
+//      uint64_t oldest_key_time =
+//          mems_.front()->ApproximateOldestKeyTime();
+//
+//      // It's not clear whether oldest_key_time is always available. In case
+//      // it is not available, use current_time.
+//      uint64_t oldest_ancester_time = std::min(current_time, oldest_key_time);
+//
+//      TEST_SYNC_POINT_CALLBACK(
+//          "FlushJob::WriteLevel0Table:oldest_ancester_time",
+//          &oldest_ancester_time);
+//      meta_.oldest_ancester_time = oldest_ancester_time;
+//
+//      meta_.file_creation_time = current_time;
+//
+//      uint64_t creation_time = (cfd_->ioptions()->compaction_style ==
+//                                CompactionStyle::kCompactionStyleFIFO)
+//                                   ? current_time
+//                                   : meta_.oldest_ancester_time;
+//
+//      IOStatus io_s;
+//      s = BuildTable(
+//          dbname_, versions_, db_options_.env, db_options_.fs.get(),
+//          *cfd_->ioptions(), mutable_cf_options_, file_options_,
+//          cfd_->table_cache(), iter.get(), std::move(range_del_iters), &meta_,
+//          &blob_file_additions, cfd_->internal_comparator(),
+//          cfd_->int_tbl_prop_collector_factories(), cfd_->GetID(),
+//          cfd_->GetName(), existing_snapshots_,
+//          earliest_write_conflict_snapshot_, snapshot_checker_,
+//          output_compression_, mutable_cf_options_.sample_for_compression,
+//          mutable_cf_options_.compression_opts,
+//          mutable_cf_options_.paranoid_file_checks, cfd_->internal_stats(),
+//          TableFileCreationReason::kFlush, &io_s, io_tracer_, event_logger_,
+//          job_context_->job_id, Env::IO_HIGH, &table_properties_, 0 /* level */,
+//          creation_time, oldest_key_time, write_hint, current_time, db_id_,
+//          db_session_id_);
+//      if (!io_s.ok()) {
+//        io_status_ = io_s;
+//      }
+//      LogFlush(db_options_.info_log);
+//    }
     ROCKS_LOG_INFO(db_options_.info_log,
                    "[%s] [JOB %d] Level-0 flush table #%" PRIu64 ": %" PRIu64
                    " bytes %s"
