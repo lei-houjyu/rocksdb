@@ -393,31 +393,31 @@ Status FlushJob::WriteLevel0Table() {
 
       meta_.file_creation_time = current_time;
 
-//      uint64_t creation_time = (cfd_->ioptions()->compaction_style ==
-//                                CompactionStyle::kCompactionStyleFIFO)
-//                                   ? current_time
-//                                   : meta_.oldest_ancester_time;
+      uint64_t creation_time = (cfd_->ioptions()->compaction_style ==
+                                CompactionStyle::kCompactionStyleFIFO)
+                                   ? current_time
+                                   : meta_.oldest_ancester_time;
 
       IOStatus io_s;
-//      s = BuildTable(
-//          dbname_, versions_, db_options_.env, db_options_.fs.get(),
-//          *cfd_->ioptions(), mutable_cf_options_, file_options_,
-//          cfd_->table_cache(), iter.get(), std::move(range_del_iters), &meta_,
-//          &blob_file_additions, cfd_->internal_comparator(),
-//          cfd_->int_tbl_prop_collector_factories(), cfd_->GetID(),
-//          cfd_->GetName(), existing_snapshots_,
-//          earliest_write_conflict_snapshot_, snapshot_checker_,
-//          output_compression_, mutable_cf_options_.sample_for_compression,
-//          mutable_cf_options_.compression_opts,
-//          mutable_cf_options_.paranoid_file_checks, cfd_->internal_stats(),
-//          TableFileCreationReason::kFlush, &io_s, io_tracer_, event_logger_,
-//          job_context_->job_id, Env::IO_HIGH, &table_properties_, 0 /* level */,
-//          creation_time, oldest_key_time, write_hint, current_time, db_id_,
-//          db_session_id_);
+      s = BuildTable(
+          dbname_, versions_, db_options_.env, db_options_.fs.get(),
+          *cfd_->ioptions(), mutable_cf_options_, file_options_,
+          cfd_->table_cache(), iter.get(), std::move(range_del_iters), &meta_,
+          &blob_file_additions, cfd_->internal_comparator(),
+          cfd_->int_tbl_prop_collector_factories(), cfd_->GetID(),
+          cfd_->GetName(), existing_snapshots_,
+          earliest_write_conflict_snapshot_, snapshot_checker_,
+          output_compression_, mutable_cf_options_.sample_for_compression,
+          mutable_cf_options_.compression_opts,
+          mutable_cf_options_.paranoid_file_checks, cfd_->internal_stats(),
+          TableFileCreationReason::kFlush, &io_s, io_tracer_, event_logger_,
+          job_context_->job_id, Env::IO_HIGH, &table_properties_, 0 /* level */,
+          creation_time, oldest_key_time, write_hint, current_time, db_id_,
+          db_session_id_);
       if (!io_s.ok()) {
         io_status_ = io_s;
       }
-      LogFlush(db_options_.info_log);
+//      LogFlush(db_options_.info_log);
     }
     ROCKS_LOG_INFO(db_options_.info_log,
                    "[%s] [JOB %d] Level-0 flush table #%" PRIu64 ": %" PRIu64
