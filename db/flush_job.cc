@@ -417,7 +417,7 @@ Status FlushJob::WriteLevel0Table() {
       if (!io_s.ok()) {
         io_status_ = io_s;
       }
-//      LogFlush(db_options_.info_log);
+      LogFlush(db_options_.info_log);
     }
     ROCKS_LOG_INFO(db_options_.info_log,
                    "[%s] [JOB %d] Level-0 flush table #%" PRIu64 ": %" PRIu64
