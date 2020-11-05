@@ -6,21 +6,13 @@
 package org.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
-<<<<<<< HEAD
 import static org.junit.Assert.*;
-=======
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
->>>>>>> 6b72342a1... Implement missing Java API for ColumnFamilyOptions (#7372)
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-<<<<<<< HEAD
 import java.util.concurrent.atomic.AtomicBoolean;
-=======
->>>>>>> 6b72342a1... Implement missing Java API for ColumnFamilyOptions (#7372)
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.rocksdb.test.RemoveEmptyValueCompactionFilterFactory;
@@ -1350,11 +1342,7 @@ public class OptionsTest {
   }
 
   @Test
-<<<<<<< HEAD
   public void cfPaths() {
-=======
-  public void cfPaths() throws IOException {
->>>>>>> 6b72342a1... Implement missing Java API for ColumnFamilyOptions (#7372)
     try (final Options options = new Options()) {
       final List<DbPath> paths = Arrays.asList(
           new DbPath(Paths.get("test1"), 2 << 25), new DbPath(Paths.get("/test2/path"), 2 << 25));
@@ -1363,7 +1351,6 @@ public class OptionsTest {
       assertThat(options.cfPaths()).isEqualTo(paths);
     }
   }
-<<<<<<< HEAD
 
   @Test
   public void avoidUnnecessaryBlockingIO() {
@@ -1483,6 +1470,4 @@ public class OptionsTest {
       assertEquals(0, listeners2.size());
     }
   }
-=======
->>>>>>> 6b72342a1... Implement missing Java API for ColumnFamilyOptions (#7372)
 }
