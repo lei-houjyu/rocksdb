@@ -1462,7 +1462,10 @@ Status DB::Open(const DBOptions& db_options, const std::string& dbname,
                 std::vector<ColumnFamilyHandle*>* handles, DB** dbptr) {
   const bool kSeqPerBatch = true;
   const bool kBatchPerTxn = true;
-  return DBImpl::Open(db_options, dbname, column_families, handles, dbptr,
+  // ASH: changes to add db_paths
+  DBOptions temp_db_options = db_options;
+  temp_db_options.db_paths.push_back(rocksdb::DbPath("/mnt/sdb/sst_dir/sst_10", 10000000000));
+  return DBImpl::Open(temp_db_options, dbname, column_families, handles, dbptr,
                       !kSeqPerBatch, kBatchPerTxn);
 }
 

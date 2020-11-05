@@ -312,7 +312,7 @@ Status FlushJob::WriteLevel0Table() {
   std::vector<BlobFileAddition> blob_file_additions;
 
   {
-//    auto write_hint = cfd_->CalculateSSTWriteHint(0);
+    auto write_hint = cfd_->CalculateSSTWriteHint(0);
     cfd_->CalculateSSTWriteHint(0);
     db_mutex_->Unlock();
     if (log_buffer_) {
@@ -417,7 +417,7 @@ Status FlushJob::WriteLevel0Table() {
       if (!io_s.ok()) {
         io_status_ = io_s;
       }
-//      LogFlush(db_options_.info_log);
+      LogFlush(db_options_.info_log);
     }
     ROCKS_LOG_INFO(db_options_.info_log,
                    "[%s] [JOB %d] Level-0 flush table #%" PRIu64 ": %" PRIu64
