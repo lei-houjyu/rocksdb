@@ -577,8 +577,8 @@ void MemTableList::Add(MemTable* m, autovector<MemTable*>* to_delete) {
   m->MarkImmutable();
 
   // HACKING: DISCARD immutable memtable
-  current_->Remove(m, to_delete);
-  return;
+  //current_->Remove(m, to_delete);
+  //return;
 
   num_flush_not_started_++;
   if (num_flush_not_started_ == 1) {
