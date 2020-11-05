@@ -312,7 +312,7 @@ Status FlushJob::WriteLevel0Table() {
   std::vector<BlobFileAddition> blob_file_additions;
 
   {
-//    auto write_hint = cfd_->CalculateSSTWriteHint(0);
+    auto write_hint = cfd_->CalculateSSTWriteHint(0);
     cfd_->CalculateSSTWriteHint(0);
     db_mutex_->Unlock();
     if (log_buffer_) {
