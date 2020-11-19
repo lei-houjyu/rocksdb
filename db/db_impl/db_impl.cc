@@ -869,7 +869,7 @@ Status DBImpl::GetStatsHistory(
 
 void DBImpl::DumpStats() {
   TEST_SYNC_POINT("DBImpl::DumpStats:1");
-  PrintStatistics();
+//  PrintStatistics();
 #ifndef ROCKSDB_LITE
   const DBPropertyInfo* cf_property_info =
       GetPropertyInfo(DB::Properties::kCFStats);
@@ -887,29 +887,29 @@ void DBImpl::DumpStats() {
     InstrumentedMutexLock l(&mutex_);
     default_cf_internal_stats_->GetStringProperty(
         *db_property_info, DB::Properties::kDBStats, &stats);
+//    for (auto cfd : *versions_->GetColumnFamilySet()) {
+//      ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside first loop");
+//      if (cfd->initialized()) {
+//        ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside first loop and cfd->initialized() True");
+//        cfd->internal_stats()->GetStringProperty(
+//            *cf_property_info, DB::Properties::kCFStatsNoFileHistogram, &stats);
+//      }
+//    }
+//    for (auto cfd : *versions_->GetColumnFamilySet()) {
+//      ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside second loop");
+//      if (cfd->initialized()) {
+//        cfd->internal_stats()->GetStringProperty(
+//            *cf_property_info, DB::Properties::kCFFileHistogram, &stats);
+//      }
+//    }
+//    for (auto cfd : *versions_->GetColumnFamilySet()) {
+//      ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside third loop");
+//      if (cfd->initialized()) {
+//        cfd->internal_stats()->GetStringProperty(*cf_property_info, DB::Properties::kCFStats, &stats);
+//      }
+//    }
     for (auto cfd : *versions_->GetColumnFamilySet()) {
-      ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside first loop");
-      if (cfd->initialized()) {
-        ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside first loop and cfd->initialized() True");
-        cfd->internal_stats()->GetStringProperty(
-            *cf_property_info, DB::Properties::kCFStatsNoFileHistogram, &stats);
-      }
-    }
-    for (auto cfd : *versions_->GetColumnFamilySet()) {
-      ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside second loop");
-      if (cfd->initialized()) {
-        cfd->internal_stats()->GetStringProperty(
-            *cf_property_info, DB::Properties::kCFFileHistogram, &stats);
-      }
-    }
-    for (auto cfd : *versions_->GetColumnFamilySet()) {
-      ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside third loop");
-      if (cfd->initialized()) {
-        cfd->internal_stats()->GetStringProperty(*cf_property_info, DB::Properties::kCFStats, &stats);
-      }
-    }
-    for (auto cfd : *versions_->GetColumnFamilySet()) {
-        ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside third loop");
+        ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside fourth loop");
         if (cfd->initialized()) {
             cfd->internal_stats()->GetStringProperty(*cf_property_info, DB::Properties::kLevelStats, &stats);
         }
