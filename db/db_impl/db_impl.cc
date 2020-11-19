@@ -652,7 +652,7 @@ Status DBImpl::CloseHelper() {
 }
 
 Status DBImpl::CloseImpl() {
-    DBImpl::DumpStats();
+//    DBImpl::DumpStats();
     return CloseHelper();
 }
 
