@@ -652,7 +652,7 @@ Status DBImpl::CloseHelper() {
 }
 
 Status DBImpl::CloseImpl() {
-//    DBImpl::DumpStats();
+    DBImpl::DumpStats();
     return CloseHelper();
 }
 
@@ -887,6 +887,7 @@ void DBImpl::DumpStats() {
     InstrumentedMutexLock l(&mutex_);
     default_cf_internal_stats_->GetStringProperty(
         *db_property_info, DB::Properties::kDBStats, &stats);
+    default_cf_internal_stats_->GetStringProperty(*db_property_info, DB::Properties::kLevelStats, &stats);
     ROCKS_LOG_INFO(immutable_db_options_.info_log, "Load kCFStatsNoFileHistogram");
     for (auto cfd : *versions_->GetColumnFamilySet()) {
       if (cfd->initialized()) {
@@ -906,19 +907,6 @@ void DBImpl::DumpStats() {
       if (cfd->initialized()) {
         cfd->internal_stats()->GetStringProperty(*cf_property_info, DB::Properties::kCFStats, &stats);
       }
-    }
-    ROCKS_LOG_INFO(immutable_db_options_.info_log, "Load kLevelStats");
-    for (auto cfd : *versions_->GetColumnFamilySet()) {
-        if (cfd->initialized()) {
-            cfd->internal_stats()->GetStringProperty(*cf_property_info, DB::Properties::kLevelStats, &stats);
-        }
-        ROCKS_LOG_INFO(immutable_db_options_.info_log, "%s", stats.c_str());
-    }
-    ROCKS_LOG_INFO(immutable_db_options_.info_log, "Load KSSTables");
-    for (auto cfd : *versions_->GetColumnFamilySet()) {
-        if (cfd->initialized()) {
-            cfd->internal_stats()->GetStringProperty(*cf_property_info, DB::Properties::kSSTables, &stats);
-        }
     }
   }
   TEST_SYNC_POINT("DBImpl::DumpStats:2");
