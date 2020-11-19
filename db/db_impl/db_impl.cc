@@ -1585,8 +1585,14 @@ class GetWithTimestampReadCallback : public ReadCallback {
 };
 }  // namespace
 
+std::atomic<uint64_t> num_get_called = {0};
+
 Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
                        GetImplOptions& get_impl_options) {
+// changxu: hack to call DumpStats() manually
+  if (num_get_called%100000 == 0) {
+      DBImpl::DumpStats();
+  }
   assert(get_impl_options.value != nullptr ||
          get_impl_options.merge_operands != nullptr);
 
