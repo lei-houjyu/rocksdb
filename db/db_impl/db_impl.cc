@@ -899,6 +899,11 @@ void DBImpl::DumpStats() {
             *cf_property_info, DB::Properties::kCFFileHistogram, &stats);
       }
     }
+    for (auto cfd : *versions_->GetColumnFamilySet()) {
+      if (cfd->initialized()) {
+        cfd->internal_stats()->GetStringProperty(*cf_property_info, DB::Properties::kCFStats, &stats);
+      }
+    }
   }
   TEST_SYNC_POINT("DBImpl::DumpStats:2");
   ROCKS_LOG_INFO(immutable_db_options_.info_log,

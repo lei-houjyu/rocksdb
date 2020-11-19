@@ -404,6 +404,7 @@ static std::unordered_map<std::string, OptionTypeInfo>
 
 // TODO(myabandeh): We should return an error instead of silently changing the
 // options
+
 BlockBasedTableFactory::BlockBasedTableFactory(
     const BlockBasedTableOptions& _table_options)
     : table_options_(_table_options) {
@@ -425,6 +426,8 @@ void BlockBasedTableFactory::InitializeOptions() {
     // It makes little sense to pay overhead for mid-point insertion while the
     // block size is only 8MB.
     co.high_pri_pool_ratio = 0.0;
+    //Changxu: hack to have our cache_size
+    //co.capacity = 6442445094;
     table_options_.block_cache = NewLRUCache(co);
   }
   if (table_options_.block_size_deviation < 0 ||
