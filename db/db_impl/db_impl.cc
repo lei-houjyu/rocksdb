@@ -912,6 +912,7 @@ void DBImpl::DumpStats() {
         ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside fourth loop");
         if (cfd->initialized()) {
             cfd->internal_stats()->GetStringProperty(*cf_property_info, DB::Properties::kLevelStats, &stats);
+            ROCKS_LOG_INFO(immutable_db_options_.info_log, "%s", stats.c_str());
         }
     }
   }
