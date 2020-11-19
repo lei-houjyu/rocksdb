@@ -896,7 +896,6 @@ void DBImpl::DumpStats() {
     }
     ROCKS_LOG_INFO(immutable_db_options_.info_log, "Load kCFFileHistogram");
     for (auto cfd : *versions_->GetColumnFamilySet()) {
-      ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside second loop");
       if (cfd->initialized()) {
         cfd->internal_stats()->GetStringProperty(
             *cf_property_info, DB::Properties::kCFFileHistogram, &stats);
