@@ -1465,6 +1465,7 @@ Status DB::Open(const DBOptions& db_options, const std::string& dbname,
   // ASH: changes to add db_paths
   DBOptions temp_db_options = db_options;
   temp_db_options.statistics = CreateDBStatistics();
+  temp_db_options.stats_dump_period_sec = 60;
   temp_db_options.db_paths.push_back(rocksdb::DbPath("/mnt/sdb/archive_dbs/sst_dir/sst_last_run", 10000000000));
   return DBImpl::Open(temp_db_options, dbname, column_families, handles, dbptr,
                       !kSeqPerBatch, kBatchPerTxn);
