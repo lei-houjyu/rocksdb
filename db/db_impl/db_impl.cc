@@ -887,14 +887,14 @@ void DBImpl::DumpStats() {
     InstrumentedMutexLock l(&mutex_);
     default_cf_internal_stats_->GetStringProperty(
         *db_property_info, DB::Properties::kDBStats, &stats);
+    ROCKS_LOG_INFO(immutable_db_options_.info_log, "Load kCFStatsNoFileHistogram");
     for (auto cfd : *versions_->GetColumnFamilySet()) {
-      ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside first loop");
       if (cfd->initialized()) {
-        ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside first loop and cfd->initialized() True");
         cfd->internal_stats()->GetStringProperty(
             *cf_property_info, DB::Properties::kCFStatsNoFileHistogram, &stats);
       }
     }
+    ROCKS_LOG_INFO(immutable_db_options_.info_log, "Load kCFFileHistogram");
     for (auto cfd : *versions_->GetColumnFamilySet()) {
       ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside second loop");
       if (cfd->initialized()) {
@@ -902,17 +902,22 @@ void DBImpl::DumpStats() {
             *cf_property_info, DB::Properties::kCFFileHistogram, &stats);
       }
     }
+      ROCKS_LOG_INFO(immutable_db_options_.info_log, "Load kCFStats");
     for (auto cfd : *versions_->GetColumnFamilySet()) {
-      ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside third loop");
       if (cfd->initialized()) {
         cfd->internal_stats()->GetStringProperty(*cf_property_info, DB::Properties::kCFStats, &stats);
       }
     }
+    ROCKS_LOG_INFO(immutable_db_options_.info_log, "Load kLevelStats");
     for (auto cfd : *versions_->GetColumnFamilySet()) {
-        ROCKS_LOG_INFO(immutable_db_options_.info_log, "Inside fourth loop");
         if (cfd->initialized()) {
             cfd->internal_stats()->GetStringProperty(*cf_property_info, DB::Properties::kLevelStats, &stats);
-//            ROCKS_LOG_INFO(immutable_db_options_.info_log, "%s", stats.c_str());
+        }
+    }
+    ROCKS_LOG_INFO(immutable_db_options_.info_log, "Load KSSTables");
+    for (auto cfd : *versions_->GetColumnFamilySet()) {
+        if (cfd->initialized()) {
+            cfd->internal_stats()->GetStringProperty(*cf_property_info, DB::Properties::kSSTables, &stats);
         }
     }
   }
