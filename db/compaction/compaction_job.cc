@@ -19,6 +19,9 @@
 #include <thread>
 #include <utility>
 #include <vector>
+// RUBBLE:
+#include <iostream>
+#include <fstream>
 
 #include "db/builder.h"
 #include "db/db_impl/db_impl.h"
@@ -1506,11 +1509,32 @@ Status CompactionJob::InstallCompactionResults(
   // Add compaction inputs
   compaction->AddInputDeletions(compact_->compaction->edit());
 
+  // RUBBLE: write compaction metadata file
+  std::string filepath = "/mnt/sdb/archive_dbs/compaction_meta/"+std::to_string(job_id_);
+  std::string comp_metadata_str = "";
+  for (unsigned int i=0; i<compact_->compaction->num_input_levels(); i++){
+    comp_metadata_str += "level-"+std::to_string(compact_->compaction->start_level());
+    for (auto f : *(compact_->compaction->inputs(i))){
+      comp_metadata_str += " "+std::to_string(f->fd.GetNumber());
+    }
+    comp_metadata_str += "\n";
+  }
+  comp_metadata_str += "level-"+std::to_string(compact_->compaction->output_level());
+
   for (const auto& sub_compact : compact_->sub_compact_states) {
     for (const auto& out : sub_compact.outputs) {
       compaction->edit()->AddFile(compaction->output_level(), out.meta);
+      // RUBBLE: append output compaction files
+      comp_metadata_str += " "+std::to_string(out.meta.fd.GetNumber());
     }
   }
+
+  // RUBBLE: write the file
+  std::ofstream metafile;
+  metafile.open(filepath);
+  metafile << comp_metadata_str+"\n";
+  metafile.close();
+
   return versions_->LogAndApply(compaction->column_family_data(),
                                 mutable_cf_options, compaction->edit(),
                                 db_mutex_, db_directory_);

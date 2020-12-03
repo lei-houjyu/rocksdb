@@ -1466,11 +1466,7 @@ Status DB::Open(const DBOptions& db_options, const std::string& dbname,
   DBOptions temp_db_options = db_options;
   temp_db_options.statistics = CreateDBStatistics();
   temp_db_options.stats_dump_period_sec = 60;
-//  temp_db_options.db_paths.emplace_back(rocksdb::DbPath("/mnt/sdb/archive_dbs/sst_dir/sst_last_run", 10000000000));
-  temp_db_options.create_missing_column_families=true;
-  temp_db_options.create_if_missing=true;
-  temp_db_options.error_if_exists=false;
-  temp_db_options.max_background_jobs=16;
+  temp_db_options.db_paths.emplace_back(rocksdb::DbPath("/mnt/sdb/archive_dbs/sst_dir/sst_last_run", 10000000000));
   return DBImpl::Open(temp_db_options, dbname, column_families, handles, dbptr,
                       !kSeqPerBatch, kBatchPerTxn);
 //  return DBImpl::Open(db_options, dbname, column_families, handles, dbptr, !kSeqPerBatch, kBatchPerTxn);
