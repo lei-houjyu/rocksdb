@@ -455,6 +455,14 @@ Status FlushJob::WriteLevel0Table() {
                    meta_.file_checksum, meta_.file_checksum_func_name);
 
     edit_->SetBlobFileAdditions(std::move(blob_file_additions));
+
+    // RUBBLE: write compaction metadata file
+    std::string filepath = "/mnt/sdb/archive_dbs/compaction_meta/"+std::to_string(job_context_->job_id);
+    std::string comp_metadata_str = "w 0 "+std::to_string(meta_.fd.GetNumber());
+    std::ofstream metafile;
+    metafile.open(filepath);
+    metafile << comp_metadata_str+"\n";
+    metafile.close();
   }
 #ifndef ROCKSDB_LITE
   // Piggyback FlushJobInfo on the first first flushed memtable.
