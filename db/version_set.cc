@@ -4116,11 +4116,12 @@ Status VersionSet::ProcessManifestWrites(
           break;
         }
         // RUBBLE:
-        fprintf(stderr, "Manifest recordId %lu record %s\n", recordId.load(std::memory_order_relaxed), record.c_str());
+	Slice rec_slice = record;
+        fprintf(stderr, "Manifest recordId %lu record %s\n", recordId.load(std::memory_order_relaxed), rec_slice.ToString().c_str());
         std::string filepath = "/mnt/sdb/archive_dbs/manifest_meta/"+std::to_string(recordId.load(std::memory_order_relaxed));
         std::ofstream metafile;
         metafile.open(filepath);
-        metafile << record+"\n";
+        metafile << rec_slice.ToString()+"\n";
         metafile.close();
 	recordId++;
         
