@@ -3834,6 +3834,9 @@ void VersionSet::AppendVersion(ColumnFamilyData* column_family_data,
   v->next_->prev_ = v;
 }
 
+// RUBBLE: global manifest record unique id
+std::atomic<uint64_t> recordId{0};
+
 Status VersionSet::ProcessManifestWrites(
     std::deque<ManifestWriter>& writers, InstrumentedMutex* mu,
     FSDirectory* db_directory, bool new_descriptor_log,
@@ -4112,7 +4115,16 @@ Status VersionSet::ProcessManifestWrites(
                                  e->DebugString(true));
           break;
         }
-        TEST_KILL_RANDOM("VersionSet::LogAndApply:BeforeAddRecord",
+        // RUBBLE:
+        fprintf(stderr, "Manifest recordId %lu record %s\n", recordId.load(std::memory_order_relaxed), record.c_str());
+        std::string filepath = "/mnt/sdb/archive_dbs/manifest_meta/"+std::to_string(recordId.load(std::memory_order_relaxed));
+        std::ofstream metafile;
+        metafile.open(filepath);
+        metafile << record+"\n";
+        metafile.close();
+	recordId++;
+        
+	TEST_KILL_RANDOM("VersionSet::LogAndApply:BeforeAddRecord",
                          rocksdb_kill_odds * REDUCE_ODDS2);
 #ifndef NDEBUG
         if (batch_edits.size() > 1 && batch_edits.size() - 1 == idx) {
