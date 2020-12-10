@@ -1597,6 +1597,7 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
   if (num_get_called%100000 == 0) {
       DBImpl::DumpStats();
   }
+  num_get_called++;
   assert(get_impl_options.value != nullptr ||
          get_impl_options.merge_operands != nullptr);
 
