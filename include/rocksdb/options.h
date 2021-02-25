@@ -1196,6 +1196,9 @@ struct DBOptions {
   //
   // Default: hostname
   std::string db_host_id = kHostnameForDbHostId;
+
+  //RUBBLE
+  bool is_primary = false;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)

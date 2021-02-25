@@ -61,6 +61,62 @@
 #include "util/string_util.h"
 #include "util/user_comparator_wrapper.h"
 
+// RUBBLE
+#include <memory>
+#include <string>
+#include <grpcpp/grpcpp.h>
+#include <grpcpp/health_check_service_interface.h>
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
+#include "grpc/version_edit_sync.grpc.pb.h"
+#include "grpc/version_edit_sync.pb.h"
+
+using grpc::Server;
+using grpc::ServerBuilder;
+using grpc::ServerContext;
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
+using version_edit_sync::VersionEditSyncService;
+using version_edit_sync::VersionEditSyncRequest;
+using version_edit_sync::VersionEditSyncReply;
+
+class VersionEditSyncClient {
+  public:
+    VersionEditSyncClient(std::shared_ptr<Channel> channel)
+        : stub_(VersionEditSyncService::NewStub(channel)) {}
+
+    std::string VersionEditSync(const std::string& record) {
+      VersionEditSyncRequest request;
+      request.set_record(record);
+
+      VersionEditSyncReply reply;
+      ClientContext context;
+      Status status = stub_->VersionEditSync(&context, request, &reply);
+
+      if (status.ok()) {
+        return reply.message();
+      } else {
+        std::cout << status.error_code() << ": " << status.error_message()
+                    << std::endl;
+          return "RPC failed";
+      }
+    }
+  private:
+    std::unique_ptr<VersionEditSyncService::Stub> stub_;
+};
+
+class VersionEditSyncServiceImpl final : public VersionEditSyncService::Service {
+  Status VersionEditSync(ServerContext* context, const VersionEditSyncRequest* request, 
+                          VersionEditSyncReply* reply) override {
+    std::cout << "Got a LogAndApply RPC from primary" << '\n';
+    std::string prefix("Received record ");
+    reply->set_message(prefix+request->record());
+    return Status::OK;
+  }
+};
+
+// RUBBLE END
+
 namespace ROCKSDB_NAMESPACE {
 
 namespace {
@@ -4045,6 +4101,8 @@ Status VersionSet::ProcessManifestWrites(
   IOStatus io_s;
   {
     FileOptions opt_file_opts = fs_->OptimizeForManifestWrite(file_options_);
+
+    std::cout << "mutex unlock \n";
     mu->Unlock();
 
     TEST_SYNC_POINT("VersionSet::LogAndApply:WriteManifest");
@@ -4329,6 +4387,29 @@ Status VersionSet::LogAndApply(
     InstrumentedMutex* mu, FSDirectory* db_directory, bool new_descriptor_log,
     const ColumnFamilyOptions* new_cf_options) {
   mu->AssertHeld();
+  // RUBBLE: trigger RPC calls to secondary to sync RocksDB state.
+  // std::string target_str = "10.10.1.2:50051";
+
+  const ImmutableDBOptions* options = db_options();
+
+  if(options->is_primary){
+    std::cout << "primary calling logAndApply\n";
+    std::string target_str = "localhost:50051";
+    VersionEditSyncClient client(grpc::CreateChannel(
+      target_str, grpc::InsecureChannelCredentials()
+    ));
+    for (auto edit_list: edit_lists){
+      for (auto e: edit_list) {
+        std::string record;
+        e->EncodeTo(&record);
+        Slice rec_slice = record;
+        std::string reply = client.VersionEditSync(rec_slice.ToString().c_str());
+        std::cerr << "Primary received: " << reply << std::endl;
+      }
+    }
+  }
+
+  // RUBBLE END
   int num_edits = 0;
   for (const auto& elist : edit_lists) {
     num_edits += static_cast<int>(elist.size());

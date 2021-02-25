@@ -1016,6 +1016,10 @@ class DBImpl : public DB {
   // flush LOG out of application buffer
   void FlushInfoLog();
 
+  FSDirectory* GetDataDir(ColumnFamilyData* cfd, size_t path_id) const;
+
+  Directories directories_;
+
  protected:
   const std::string dbname_;
   std::string db_id_;
@@ -1689,7 +1693,7 @@ class DBImpl : public DB {
 
   uint64_t GetMaxTotalWalSize() const;
 
-  FSDirectory* GetDataDir(ColumnFamilyData* cfd, size_t path_id) const;
+  // FSDirectory* GetDataDir(ColumnFamilyData* cfd, size_t path_id) const;
 
   Status CloseHelper();
 
@@ -1931,7 +1935,7 @@ class DBImpl : public DB {
 
   bool stats_slice_initialized_ = false;
 
-  Directories directories_;
+  // Directories directories_;
 
   WriteBufferManager* write_buffer_manager_;
 
