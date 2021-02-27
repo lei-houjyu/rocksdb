@@ -1518,9 +1518,11 @@ Status CompactionJob::InstallCompactionResults(
     }
   }
 
+  std::cout << " -------- Compaction Job : ["  << job_id_ << "] ----------" << std::endl;
   // RUBBLE: ship new sst file to the remote dir and delete the input sst file at the remote sst dir
   if(db_options_.is_rubble && db_options_.is_primary){
 
+    assert(db_options_.remote_sst_dir != "");
     std::string remote_sst_dir = db_options_.remote_sst_dir;
     if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
         remote_sst_dir = remote_sst_dir + '/';
@@ -1537,18 +1539,16 @@ Status CompactionJob::InstallCompactionResults(
         std::string fname = TableFileName(compact_->compaction->immutable_cf_options()->cf_paths,
                         f->fd.GetNumber(), f->fd.GetPathId());
 
-        std::cout << "local file deleted : " << fname << std::endl; 
-        std::string remote_sst_file_name = remote_sst_dir + sst_file_name;
-        std::cout << "remote file name " << remote_sst_file_name << std::endl;
-        ios = fs_->FileExists(fname, IOOptions(), nullptr);
+        std::string remote_sst_fname = remote_sst_dir + sst_file_name;
+        ios = fs_->FileExists(remote_sst_fname, IOOptions(), nullptr);
         // this check is probably unnecessary, cause versions_->VerifyCompactionFileConsistency(compaction) already does the check
         if (ios.ok()){
-          // ios = fs_->DeleteFile(fname, IOOptions(), nullptr);
+          ios = fs_->DeleteFile(remote_sst_fname, IOOptions(), nullptr);
           
           if(ios.IsIOError()){
-            fprintf(stderr, "delete file failed: %lu\n", f->fd.GetNumber());
+            fprintf(stderr, "[ File Deletion Failed ]: %lu\n", f->fd.GetNumber());
           }else if(ios.ok()){
-            fprintf(stdout, "delete file success: %lu\n", f->fd.GetNumber());
+            fprintf(stdout, "[ File Deleted ] : %lu\n", f->fd.GetNumber());
           }
         }else {
           if (ios.IsNotFound()){
@@ -1560,7 +1560,6 @@ Status CompactionJob::InstallCompactionResults(
 
      for (const auto& sub_compact : compact_->sub_compact_states) {
       for (const auto& out : sub_compact.outputs) {
-        compaction->edit()->AddFile(compaction->output_level(), out.meta);
         // copy the output sst files to remote sst directory
         std::string fname = TableFileName(sub_compact.compaction->immutable_cf_options()->cf_paths,
                         out.meta.fd.GetNumber(), out.meta.fd.GetPathId());
@@ -1571,9 +1570,9 @@ Status CompactionJob::InstallCompactionResults(
         ios = CopyFile(fs_.get(), fname, remote_sst_dir + sst_file_name, 0,  true);
 
         if (!ios.ok()){
-          fprintf(stderr, "file copy failed: %lu\n", out.meta.fd.GetNumber());
+          fprintf(stderr, "[ File Ship Failed ] : %lu\n", out.meta.fd.GetNumber());
         }else {
-          fprintf(stdout, "file copy success: %lu \n", out.meta.fd.GetNumber());
+          fprintf(stdout, "[ File Shipped ] : %lu \n", out.meta.fd.GetNumber());
         }
       }
     }

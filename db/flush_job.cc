@@ -461,7 +461,7 @@ Status FlushJob::WriteLevel0Table() {
     // RUBBLE: ship L0 sst to remote sst directory
     if(db_options_.is_rubble && db_options_.is_primary){
 
-      fprintf(stdout , "Flush Job [%d] : shipping LO sst %lu ",job_context_->job_id, meta_.fd.GetNumber());
+      fprintf(stdout , "-------- Flush Job [%d] : WriteLevel0Table [%lu] -------------- \n", job_context_->job_id, meta_.fd.GetNumber());
       std::string remote_sst_dir = db_options_.remote_sst_dir;
 
       IOStatus ios;
@@ -478,9 +478,9 @@ Status FlushJob::WriteLevel0Table() {
       ios = CopyFile(db_options_.fs.get(), fname, remote_sst_dir + sst_file_name, 0,  true);
 
       if (!ios.ok()){
-        fprintf(stderr, " file copy failed: %lu\n", meta_.fd.GetNumber());
+        fprintf(stderr, "[ File Shipping Failed ] : %lu\n", meta_.fd.GetNumber());
       }else {
-        fprintf(stdout, "file copy success: %lu \n", meta_.fd.GetNumber());
+        fprintf(stdout, "[ File Shipped] : %lu \n", meta_.fd.GetNumber());
       }
 
     }

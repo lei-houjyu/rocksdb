@@ -631,10 +631,27 @@ class GetReply PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kValueFieldNumber = 2,
+    kStatusFieldNumber = 2,
+    kValueFieldNumber = 3,
     kOkFieldNumber = 1,
   };
-  // string value = 2;
+  // string status = 2;
+  void clear_status();
+  const std::string& status() const;
+  void set_status(const std::string& value);
+  void set_status(std::string&& value);
+  void set_status(const char* value);
+  void set_status(const char* value, size_t size);
+  std::string* mutable_status();
+  std::string* release_status();
+  void set_allocated_status(std::string* status);
+  private:
+  const std::string& _internal_status() const;
+  void _internal_set_status(const std::string& value);
+  std::string* _internal_mutable_status();
+  public:
+
+  // string value = 3;
   void clear_value();
   const std::string& value() const;
   void set_value(const std::string& value);
@@ -666,6 +683,7 @@ class GetReply PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr status_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr value_;
   bool ok_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -948,8 +966,25 @@ class PutReply PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kStatusFieldNumber = 2,
     kOkFieldNumber = 1,
   };
+  // string status = 2;
+  void clear_status();
+  const std::string& status() const;
+  void set_status(const std::string& value);
+  void set_status(std::string&& value);
+  void set_status(const char* value);
+  void set_status(const char* value, size_t size);
+  std::string* mutable_status();
+  std::string* release_status();
+  void set_allocated_status(std::string* status);
+  private:
+  const std::string& _internal_status() const;
+  void _internal_set_status(const std::string& value);
+  std::string* _internal_mutable_status();
+  public:
+
   // bool ok = 1;
   void clear_ok();
   bool ok() const;
@@ -966,6 +1001,7 @@ class PutReply PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr status_;
   bool ok_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_version_5fedit_5fsync_2eproto;
@@ -1199,7 +1235,69 @@ inline void GetReply::set_ok(bool value) {
   // @@protoc_insertion_point(field_set:version_edit_sync.GetReply.ok)
 }
 
-// string value = 2;
+// string status = 2;
+inline void GetReply::clear_status() {
+  status_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& GetReply::status() const {
+  // @@protoc_insertion_point(field_get:version_edit_sync.GetReply.status)
+  return _internal_status();
+}
+inline void GetReply::set_status(const std::string& value) {
+  _internal_set_status(value);
+  // @@protoc_insertion_point(field_set:version_edit_sync.GetReply.status)
+}
+inline std::string* GetReply::mutable_status() {
+  // @@protoc_insertion_point(field_mutable:version_edit_sync.GetReply.status)
+  return _internal_mutable_status();
+}
+inline const std::string& GetReply::_internal_status() const {
+  return status_.Get();
+}
+inline void GetReply::_internal_set_status(const std::string& value) {
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void GetReply::set_status(std::string&& value) {
+  
+  status_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:version_edit_sync.GetReply.status)
+}
+inline void GetReply::set_status(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:version_edit_sync.GetReply.status)
+}
+inline void GetReply::set_status(const char* value,
+    size_t size) {
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:version_edit_sync.GetReply.status)
+}
+inline std::string* GetReply::_internal_mutable_status() {
+  
+  return status_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* GetReply::release_status() {
+  // @@protoc_insertion_point(field_release:version_edit_sync.GetReply.status)
+  return status_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void GetReply::set_allocated_status(std::string* status) {
+  if (status != nullptr) {
+    
+  } else {
+    
+  }
+  status_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), status,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:version_edit_sync.GetReply.status)
+}
+
+// string value = 3;
 inline void GetReply::clear_value() {
   value_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
@@ -1411,6 +1509,68 @@ inline void PutReply::_internal_set_ok(bool value) {
 inline void PutReply::set_ok(bool value) {
   _internal_set_ok(value);
   // @@protoc_insertion_point(field_set:version_edit_sync.PutReply.ok)
+}
+
+// string status = 2;
+inline void PutReply::clear_status() {
+  status_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& PutReply::status() const {
+  // @@protoc_insertion_point(field_get:version_edit_sync.PutReply.status)
+  return _internal_status();
+}
+inline void PutReply::set_status(const std::string& value) {
+  _internal_set_status(value);
+  // @@protoc_insertion_point(field_set:version_edit_sync.PutReply.status)
+}
+inline std::string* PutReply::mutable_status() {
+  // @@protoc_insertion_point(field_mutable:version_edit_sync.PutReply.status)
+  return _internal_mutable_status();
+}
+inline const std::string& PutReply::_internal_status() const {
+  return status_.Get();
+}
+inline void PutReply::_internal_set_status(const std::string& value) {
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void PutReply::set_status(std::string&& value) {
+  
+  status_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:version_edit_sync.PutReply.status)
+}
+inline void PutReply::set_status(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:version_edit_sync.PutReply.status)
+}
+inline void PutReply::set_status(const char* value,
+    size_t size) {
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:version_edit_sync.PutReply.status)
+}
+inline std::string* PutReply::_internal_mutable_status() {
+  
+  return status_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* PutReply::release_status() {
+  // @@protoc_insertion_point(field_release:version_edit_sync.PutReply.status)
+  return status_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void PutReply::set_allocated_status(std::string* status) {
+  if (status != nullptr) {
+    
+  } else {
+    
+  }
+  status_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), status,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:version_edit_sync.PutReply.status)
 }
 
 #ifdef __GNUC__

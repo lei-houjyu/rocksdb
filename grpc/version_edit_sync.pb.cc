@@ -153,6 +153,7 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_version_5fedit_5fsync_2eproto:
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   PROTOBUF_FIELD_OFFSET(::version_edit_sync::GetReply, ok_),
+  PROTOBUF_FIELD_OFFSET(::version_edit_sync::GetReply, status_),
   PROTOBUF_FIELD_OFFSET(::version_edit_sync::GetReply, value_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::version_edit_sync::PutRequest, _internal_metadata_),
@@ -167,14 +168,15 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_version_5fedit_5fsync_2eproto:
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   PROTOBUF_FIELD_OFFSET(::version_edit_sync::PutReply, ok_),
+  PROTOBUF_FIELD_OFFSET(::version_edit_sync::PutReply, status_),
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::version_edit_sync::VersionEditSyncRequest)},
   { 6, -1, sizeof(::version_edit_sync::VersionEditSyncReply)},
   { 12, -1, sizeof(::version_edit_sync::GetRequest)},
   { 18, -1, sizeof(::version_edit_sync::GetReply)},
-  { 25, -1, sizeof(::version_edit_sync::PutRequest)},
-  { 32, -1, sizeof(::version_edit_sync::PutReply)},
+  { 26, -1, sizeof(::version_edit_sync::PutRequest)},
+  { 33, -1, sizeof(::version_edit_sync::PutReply)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -190,17 +192,18 @@ const char descriptor_table_protodef_version_5fedit_5fsync_2eproto[] PROTOBUF_SE
   "\n\027version_edit_sync.proto\022\021version_edit_"
   "sync\"(\n\026VersionEditSyncRequest\022\016\n\006record"
   "\030\001 \001(\t\"\'\n\024VersionEditSyncReply\022\017\n\007messag"
-  "e\030\001 \001(\t\"\031\n\nGetRequest\022\013\n\003key\030\001 \001(\t\"%\n\010Ge"
-  "tReply\022\n\n\002ok\030\001 \001(\010\022\r\n\005value\030\002 \001(\t\"(\n\nPut"
-  "Request\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\"\026\n\010P"
-  "utReply\022\n\n\002ok\030\001 \001(\0102\223\002\n\026VersionEditSyncS"
-  "ervice\022g\n\017VersionEditSync\022).version_edit"
-  "_sync.VersionEditSyncRequest\032\'.version_e"
-  "dit_sync.VersionEditSyncReply\"\000\022G\n\003Put\022\035"
-  ".version_edit_sync.PutRequest\032\033.version_"
-  "edit_sync.PutReply\"\000(\0010\001\022G\n\003Get\022\035.versio"
-  "n_edit_sync.GetRequest\032\033.version_edit_sy"
-  "nc.GetReply\"\000(\0010\001b\006proto3"
+  "e\030\001 \001(\t\"\031\n\nGetRequest\022\013\n\003key\030\001 \001(\t\"5\n\010Ge"
+  "tReply\022\n\n\002ok\030\001 \001(\010\022\016\n\006status\030\002 \001(\t\022\r\n\005va"
+  "lue\030\003 \001(\t\"(\n\nPutRequest\022\013\n\003key\030\001 \001(\t\022\r\n\005"
+  "value\030\002 \001(\t\"&\n\010PutReply\022\n\n\002ok\030\001 \001(\010\022\016\n\006s"
+  "tatus\030\002 \001(\t2\223\002\n\026VersionEditSyncService\022g"
+  "\n\017VersionEditSync\022).version_edit_sync.Ve"
+  "rsionEditSyncRequest\032\'.version_edit_sync"
+  ".VersionEditSyncReply\"\000\022G\n\003Put\022\035.version"
+  "_edit_sync.PutRequest\032\033.version_edit_syn"
+  "c.PutReply\"\000(\0010\001\022G\n\003Get\022\035.version_edit_s"
+  "ync.GetRequest\032\033.version_edit_sync.GetRe"
+  "ply\"\000(\0010\001b\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_version_5fedit_5fsync_2eproto_deps[1] = {
 };
@@ -214,7 +217,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_ver
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_version_5fedit_5fsync_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_version_5fedit_5fsync_2eproto = {
-  false, false, descriptor_table_protodef_version_5fedit_5fsync_2eproto, "version_edit_sync.proto", 545,
+  false, false, descriptor_table_protodef_version_5fedit_5fsync_2eproto, "version_edit_sync.proto", 577,
   &descriptor_table_version_5fedit_5fsync_2eproto_once, descriptor_table_version_5fedit_5fsync_2eproto_sccs, descriptor_table_version_5fedit_5fsync_2eproto_deps, 6, 0,
   schemas, file_default_instances, TableStruct_version_5fedit_5fsync_2eproto::offsets,
   file_level_metadata_version_5fedit_5fsync_2eproto, 6, file_level_enum_descriptors_version_5fedit_5fsync_2eproto, file_level_service_descriptors_version_5fedit_5fsync_2eproto,
@@ -868,6 +871,11 @@ GetReply::GetReply(::PROTOBUF_NAMESPACE_ID::Arena* arena)
 GetReply::GetReply(const GetReply& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  status_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from._internal_status().empty()) {
+    status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_status(),
+      GetArena());
+  }
   value_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (!from._internal_value().empty()) {
     value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_value(),
@@ -879,6 +887,7 @@ GetReply::GetReply(const GetReply& from)
 
 void GetReply::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_GetReply_version_5fedit_5fsync_2eproto.base);
+  status_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   value_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   ok_ = false;
 }
@@ -891,6 +900,7 @@ GetReply::~GetReply() {
 
 void GetReply::SharedDtor() {
   GOOGLE_DCHECK(GetArena() == nullptr);
+  status_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   value_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
@@ -915,6 +925,7 @@ void GetReply::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  status_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   value_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   ok_ = false;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
@@ -935,9 +946,18 @@ const char* GetReply::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::i
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // string value = 2;
+      // string status = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+          auto str = _internal_mutable_status();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "version_edit_sync.GetReply.status"));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string value = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
           auto str = _internal_mutable_value();
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "version_edit_sync.GetReply.value"));
@@ -978,14 +998,24 @@ failure:
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteBoolToArray(1, this->_internal_ok(), target);
   }
 
-  // string value = 2;
+  // string status = 2;
+  if (this->status().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_status().data(), static_cast<int>(this->_internal_status().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "version_edit_sync.GetReply.status");
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_status(), target);
+  }
+
+  // string value = 3;
   if (this->value().size() > 0) {
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
       this->_internal_value().data(), static_cast<int>(this->_internal_value().length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "version_edit_sync.GetReply.value");
     target = stream->WriteStringMaybeAliased(
-        2, this->_internal_value(), target);
+        3, this->_internal_value(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -1004,7 +1034,14 @@ size_t GetReply::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // string value = 2;
+  // string status = 2;
+  if (this->status().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_status());
+  }
+
+  // string value = 3;
   if (this->value().size() > 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
@@ -1047,6 +1084,9 @@ void GetReply::MergeFrom(const GetReply& from) {
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from.status().size() > 0) {
+    _internal_set_status(from._internal_status());
+  }
   if (from.value().size() > 0) {
     _internal_set_value(from._internal_value());
   }
@@ -1076,6 +1116,7 @@ bool GetReply::IsInitialized() const {
 void GetReply::InternalSwap(GetReply* other) {
   using std::swap;
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  status_.Swap(&other->status_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   value_.Swap(&other->value_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   swap(ok_, other->ok_);
 }
@@ -1349,11 +1390,18 @@ PutReply::PutReply(::PROTOBUF_NAMESPACE_ID::Arena* arena)
 PutReply::PutReply(const PutReply& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  status_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from._internal_status().empty()) {
+    status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_status(),
+      GetArena());
+  }
   ok_ = from.ok_;
   // @@protoc_insertion_point(copy_constructor:version_edit_sync.PutReply)
 }
 
 void PutReply::SharedCtor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_PutReply_version_5fedit_5fsync_2eproto.base);
+  status_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   ok_ = false;
 }
 
@@ -1365,6 +1413,7 @@ PutReply::~PutReply() {
 
 void PutReply::SharedDtor() {
   GOOGLE_DCHECK(GetArena() == nullptr);
+  status_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
 void PutReply::ArenaDtor(void* object) {
@@ -1388,6 +1437,7 @@ void PutReply::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  status_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   ok_ = false;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
@@ -1404,6 +1454,15 @@ const char* PutReply::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::i
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
           ok_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string status = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+          auto str = _internal_mutable_status();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "version_edit_sync.PutReply.status"));
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -1441,6 +1500,16 @@ failure:
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteBoolToArray(1, this->_internal_ok(), target);
   }
 
+  // string status = 2;
+  if (this->status().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_status().data(), static_cast<int>(this->_internal_status().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "version_edit_sync.PutReply.status");
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_status(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1456,6 +1525,13 @@ size_t PutReply::ByteSizeLong() const {
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
+
+  // string status = 2;
+  if (this->status().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_status());
+  }
 
   // bool ok = 1;
   if (this->ok() != 0) {
@@ -1493,6 +1569,9 @@ void PutReply::MergeFrom(const PutReply& from) {
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from.status().size() > 0) {
+    _internal_set_status(from._internal_status());
+  }
   if (from.ok() != 0) {
     _internal_set_ok(from._internal_ok());
   }
@@ -1519,6 +1598,7 @@ bool PutReply::IsInitialized() const {
 void PutReply::InternalSwap(PutReply* other) {
   using std::swap;
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  status_.Swap(&other->status_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   swap(ok_, other->ok_);
 }
 

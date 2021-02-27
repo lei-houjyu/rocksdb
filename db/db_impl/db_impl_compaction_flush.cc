@@ -2109,9 +2109,12 @@ void DBImpl::MaybeScheduleFlushOrCompaction() {
 
   //RUBBLE: disable scheduling of Flush Job for secondary in rubble mode 
   if(immutable_db_options_.is_rubble && immutable_db_options_.is_secondary){
-    unscheduled_flushes_ = 0;
+    if(unscheduled_flushes_ > 0){
+      unscheduled_flushes_ = 0;
+      std::cout << " -------- Secondary Flush Job disabled  ---------" << std::endl;
+    }
   }
-  
+
   while (!is_flush_pool_empty && unscheduled_flushes_ > 0 &&
          bg_flush_scheduled_ < bg_job_limits.max_flushes) {
     bg_flush_scheduled_++;

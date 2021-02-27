@@ -1472,7 +1472,7 @@ Status DB::Open(const DBOptions& db_options, const std::string& dbname,
   // temp_db_options.db_paths.emplace_back(rocksdb::DbPath("/mnt/sdb/archive_dbs/sst_dir/sst_last_run", 10000000000));
   // return DBImpl::Open(temp_db_options, dbname, column_families, handles, dbptr,
   //                     !kSeqPerBatch, kBatchPerTxn);
-  std::cout << " ---------- sst directory : " << db_options.db_paths.back().path << "----------" << std::endl;
+  std::cout << " -------- sst directory : " << db_options.db_paths.back().path << "--------" << std::endl;
   return DBImpl::Open(db_options, dbname, column_families, handles, dbptr, !kSeqPerBatch, kBatchPerTxn);
 }
 

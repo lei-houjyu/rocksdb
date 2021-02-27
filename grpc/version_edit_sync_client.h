@@ -24,7 +24,12 @@ using version_edit_sync::PutRequest;
 class VersionEditSyncClient {
   public:
     VersionEditSyncClient(std::shared_ptr<Channel> channel)
-        : stub_(VersionEditSyncService::NewStub(channel)) {}
+        : stub_(VersionEditSyncService::NewStub(channel)),
+        to_primary_(false){};
+
+    VersionEditSyncClient(std::shared_ptr<Channel> channel, bool to_primary)
+        : stub_(VersionEditSyncService::NewStub(channel)),
+        to_primary_(to_primary){};
 
     std::string VersionEditSync(const std::string& record) {
       VersionEditSyncRequest request;
@@ -45,62 +50,12 @@ class VersionEditSyncClient {
 
   // Requests each key in the vector and displays the key and its corresponding
   // value as a pair
-  grpc::Status Get(const std::vector<std::string>& keys, std::vector<std::string>& vals) {
-    // Context for the client. It could be used to convey extra information to
-    // the server and/or tweak certain RPC behaviors.
-    ClientContext context;
-    auto stream = stub_->Get(&context);
-    for (const auto& key : keys) {
-      // Key we are sending to the server.
-      GetRequest request;
-      request.set_key(key);
-      stream->Write(request);
-
-      // Get the value for the sent key
-      GetReply response;
-      stream->Read(&response);
-
-      vals.emplace_back(response.value());
-      std::cout << key << " : " << response.value() << "\n";
-    }
-
-    stream->WritesDone();
-    grpc::Status status = stream->Finish();
-    if (!status.ok()) {
-      std::cout << status.error_code() << ": " << status.error_message()
-                << std::endl;
-      std::cout << "RPC failed";
-    }
-    return status;
-  }
-
-  grpc::Status Put(const std::pair<std::string, std::string>& kv){
-    ClientContext context;
-    auto stream = stub_->Put(&context);
-    // for(const auto& kv: kvs){
-        
-        PutRequest request;
-        request.set_key(kv.first);
-        request.set_value(kv.second);
-
-        stream->Write(request);
-
-        PutReply reply;
-        stream->Read(&reply);
-        std::cout << "Put : ( " << kv.first << " ," << kv.second << " ) , status : " << reply.ok() << "\n";  
-    // }
-
-    stream->WritesDone();
-
-    grpc::Status s = stream->Finish();
-    if(!s.ok()){
-        std::cout << s.error_code() << ": " << s.error_message()
-                << std::endl;
-        std::cout << "RPC failed";
-    }
-    return s;
-  }
+  grpc::Status Get(const std::vector<std::string>& keys, std::vector<std::string>& vals);
+  grpc::Status Put(const std::pair<std::string, std::string>& kv);
 
   private:
-    std::unique_ptr<VersionEditSyncService::Stub> stub_;
+    std::unique_ptr<VersionEditSyncService::Stub> stub_ = nullptr;
+    // Is this client sending kv to the primary? If not, it's sending kv to the secondary
+    bool to_primary_ = false;
+    std::atomic<uint64_t> put_count_{0};
 };

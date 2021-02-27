@@ -61,51 +61,6 @@
 #include "util/string_util.h"
 #include "util/user_comparator_wrapper.h"
 
-// RUBBLE
-// #include <memory>
-// #include <string>
-// #include <grpcpp/grpcpp.h>
-// #include <grpcpp/health_check_service_interface.h>
-// #include <grpcpp/ext/proto_server_reflection_plugin.h>
-// #include "grpc/version_edit_sync.grpc.pb.h"
-// #include "grpc/version_edit_sync.pb.h"
-
-// using grpc::Server;
-// using grpc::ServerBuilder;
-// using grpc::ServerContext;
-// using grpc::Channel;
-// using grpc::ClientContext;
-// using grpc::Status;
-// using version_edit_sync::VersionEditSyncService;
-// using version_edit_sync::VersionEditSyncRequest;
-// using version_edit_sync::VersionEditSyncReply;
-
-// class VersionEditSyncClient {
-//   public:
-//     VersionEditSyncClient(std::shared_ptr<Channel> channel)
-//         : stub_(VersionEditSyncService::NewStub(channel)) {}
-
-//     std::string VersionEditSync(const std::string& record) {
-//       VersionEditSyncRequest request;
-//       request.set_record(record);
-
-//       VersionEditSyncReply reply;
-//       ClientContext context;
-//       Status status = stub_->VersionEditSync(&context, request, &reply);
-
-//       if (status.ok()) {
-//         return reply.message();
-//       } else {
-//         std::cout << status.error_code() << ": " << status.error_message()
-//                     << std::endl;
-//           return "RPC failed";
-//       }
-//     }
-//   private:
-//     std::unique_ptr<VersionEditSyncService::Stub> stub_;
-// };
-// // RUBBLE END
-
 namespace ROCKSDB_NAMESPACE {
 
 namespace {
@@ -4091,7 +4046,7 @@ Status VersionSet::ProcessManifestWrites(
   {
     FileOptions opt_file_opts = fs_->OptimizeForManifestWrite(file_options_);
 
-    std::cout << "mutex unlock \n";
+    // std::cout << "mutex unlock \n";
     mu->Unlock();
 
     TEST_SYNC_POINT("VersionSet::LogAndApply:WriteManifest");
@@ -4126,7 +4081,7 @@ Status VersionSet::ProcessManifestWrites(
       std::string descriptor_fname =
           DescriptorFileName(dbname_, pending_manifest_file_number_);
       
-      std::cout << " new manifest file descriptor name : " << descriptor_fname << std::endl;
+      std::cout << "new DescriptorFileName: " << descriptor_fname << std::endl;
 
       std::unique_ptr<FSWritableFile> descriptor_file;
       io_s = NewWritableFile(fs_.get(), descriptor_fname, &descriptor_file,
@@ -4168,11 +4123,6 @@ Status VersionSet::ProcessManifestWrites(
         // RUBBLE:
       	Slice rec_slice = record;
         fprintf(stderr, "Manifest recordId %lu record %s\n", recordId.load(std::memory_order_relaxed), rec_slice.ToString().c_str());
-        // std::string filepath = "/mnt/sdb/archive_dbs/manifest_meta/"+std::to_string(recordId.load(std::memory_order_relaxed));
-        // std::ofstream metafile;
-        // metafile.open(filepath);
-        // metafile << rec_slice.ToString()+"\n";
-        // metafile.close();
 	      recordId++;
         
 	TEST_KILL_RANDOM("VersionSet::LogAndApply:BeforeAddRecord",
@@ -4384,24 +4334,30 @@ Status VersionSet::LogAndApply(
   if(db_options_->is_rubble && db_options_->is_primary){
       log_and_apply_counter++;
       std::string target_str = db_options_->secondary_address;
-      
-      std::cout << "primary calling logAndApply " << log_and_apply_counter << " times" << " to secondary : " << target_str; 
-      // VersionEditSyncClient client(grpc::CreateChannel(
-      //   target_str, grpc::InsecureChannelCredentials()
-      // ));
-      
+
+      std::cout << "[primary] calling VesClient->logAndApply [" << log_and_apply_counter << "] times\n"; 
+
+      std::cout << "VersionStorageInfo->LevelSummary : ";
+      VersionStorageInfo::LevelSummaryStorage tmp;
+      auto vstorage = GetColumnFamilySet()->GetDefault()->current()->storage_info();
+      const char* c = vstorage->LevelSummary(&tmp);
+      std::cout << std::string(c) << std::endl;
+
       uint32_t ve_count{0};
       for (auto edit_list: edit_lists){
         for (auto e: edit_list) {
           ve_count++;
           std::string record;
+          std::cout << e->DebugString(true);
           e->EncodeTo(&record);
-          Slice rec_slice = record;
-          std::string reply = db_options_->ves_client->VersionEditSync(rec_slice.ToString().c_str());
-          std::cerr << "Primary received: " << reply << std::endl;
+          // Slice rec_slice(record)
+          std::string reply = db_options_->ves_client->VersionEditSync(Slice(record).ToString().c_str());
+          std::cerr << "[ Reply Status ]: " << reply << std::endl;
         }
       }
-      std::cout << "sending " << ve_count << " version_edits\n";
+      std::cout << "VersionEdits Count :  " << ve_count << "\n";
+  }else if (db_options_->is_rubble && db_options_->is_secondary){
+    std::cout << "[secondary] calling logAndApply " << std::endl;
   }
   // RUBBLE END
   int num_edits = 0;
@@ -4503,6 +4459,19 @@ Status VersionSet::LogAndApplyHelper(ColumnFamilyData* cfd,
 
   if (edit->has_log_number_) {
     assert(edit->log_number_ >= cfd->GetLogNumber());
+    std::cout << "VersionEdit->log_number : " << edit->log_number_ << std::endl;
+    if(db_options_->is_rubble && db_options_->is_secondary){
+      std::cout << "Seconary's VersionSet->next_file_number : " << next_file_number_.load() << std::endl;
+      // uint64_t new_file_num = NewFileNumber();
+      if(next_file_number_.load() < edit->log_number_){
+        while(next_file_number_.load() <= edit->log_number_){
+          NewFileNumber();
+        }
+        std::cout << "Secondary's VersionSet->next_file_number After Increasing : " << next_file_number_.load() << std::endl;  
+      }
+    }else if(db_options_->is_rubble && db_options_->is_primary){
+      std::cout << "Primary's VersionSet->next_file_number : " << next_file_number_.load() << std::endl;
+    }
     assert(edit->log_number_ < next_file_number_.load());
   }
 
