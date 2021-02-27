@@ -588,9 +588,11 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       remote_sst_dir(options.remote_sst_dir)
       // ves_client(options.ves_client)
        {
-         assert(secondary_address != "");
-         ves_client = std::make_shared<VersionEditSyncClient>(grpc::CreateChannel(
-        secondary_address, grpc::InsecureChannelCredentials()));
+         if(is_rubble && is_primary){
+          assert(secondary_address != "");
+          ves_client = std::make_shared<VersionEditSyncClient>(grpc::CreateChannel(
+          secondary_address, grpc::InsecureChannelCredentials()));
+         }
 }
 
 void ImmutableDBOptions::Dump(Logger* log) const {

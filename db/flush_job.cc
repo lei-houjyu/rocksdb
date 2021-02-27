@@ -301,6 +301,8 @@ void FlushJob::Cancel() {
   base_->Unref();
 }
 
+std::atomic<uint64_t> flush_job_counter{0};
+
 Status FlushJob::WriteLevel0Table() {
   AutoThreadOperationStageUpdater stage_updater(
       ThreadStatus::STAGE_FLUSH_WRITE_L0);

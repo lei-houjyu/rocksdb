@@ -1430,7 +1430,8 @@ Status DBImpl::WriteLevel0TableForRecovery(int job_id, ColumnFamilyData* cfd,
 }
 
 Status DB::Open(const Options& options, const std::string& dbname, DB** dbptr) {
-  std::cout << "db_name : " << dbname << std::endl;
+
+  std::cout << " -------- db_name : " << dbname << "--------" << std::endl;
   DBOptions db_options(options);
   ColumnFamilyOptions cf_options(options);
   std::vector<ColumnFamilyDescriptor> column_families;
@@ -1471,6 +1472,7 @@ Status DB::Open(const DBOptions& db_options, const std::string& dbname,
   // temp_db_options.db_paths.emplace_back(rocksdb::DbPath("/mnt/sdb/archive_dbs/sst_dir/sst_last_run", 10000000000));
   // return DBImpl::Open(temp_db_options, dbname, column_families, handles, dbptr,
   //                     !kSeqPerBatch, kBatchPerTxn);
+  std::cout << " ---------- sst directory : " << db_options.db_paths.back().path << "----------" << std::endl;
   return DBImpl::Open(db_options, dbname, column_families, handles, dbptr, !kSeqPerBatch, kBatchPerTxn);
 }
 
