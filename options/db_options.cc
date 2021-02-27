@@ -581,7 +581,16 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       bgerror_resume_retry_interval(options.bgerror_resume_retry_interval),
       allow_data_in_errors(options.allow_data_in_errors),
       db_host_id(options.db_host_id),
-      is_primary(options.is_primary) {
+      is_rubble(options.is_rubble),
+      is_primary(options.is_primary),
+      secondary_address(options.secondary_address),
+      is_secondary(options.is_secondary),
+      remote_sst_dir(options.remote_sst_dir)
+      // ves_client(options.ves_client)
+       {
+         assert(secondary_address != "");
+         ves_client = std::make_shared<VersionEditSyncClient>(grpc::CreateChannel(
+        secondary_address, grpc::InsecureChannelCredentials()));
 }
 
 void ImmutableDBOptions::Dump(Logger* log) const {

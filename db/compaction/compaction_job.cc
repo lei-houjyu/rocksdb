@@ -1506,35 +1506,80 @@ Status CompactionJob::InstallCompactionResults(
         compaction->InputLevelSummary(&inputs_summary), compact_->total_bytes);
   }
 
+  VersionEdit* const edit = compaction->edit();
+  assert(edit);
+
   // Add compaction inputs
   compaction->AddInputDeletions(compact_->compaction->edit());
 
-  // RUBBLE: write compaction metadata file
-  std::string filepath = "/mnt/sdb/archive_dbs/compaction_meta/"+std::to_string(job_id_);
-  std::string comp_metadata_str = "";
-  for (unsigned int i=0; i<compact_->compaction->num_input_levels(); i++){
-    comp_metadata_str += "d "+std::to_string(compact_->compaction->start_level());
-    for (auto f : *(compact_->compaction->inputs(i))){
-      comp_metadata_str += " "+std::to_string(f->fd.GetNumber());
-    }
-    comp_metadata_str += "\n";
-  }
-  comp_metadata_str += "w "+std::to_string(compact_->compaction->output_level());
-
   for (const auto& sub_compact : compact_->sub_compact_states) {
     for (const auto& out : sub_compact.outputs) {
-      compaction->edit()->AddFile(compaction->output_level(), out.meta);
-      // RUBBLE: append output compaction files
-      comp_metadata_str += " "+std::to_string(out.meta.fd.GetNumber());
+      edit->AddFile(compaction->output_level(), out.meta);
     }
   }
 
-  // RUBBLE: write the file
-  std::ofstream metafile;
-  metafile.open(filepath);
-  metafile << comp_metadata_str+"\n";
-  metafile.close();
+  // RUBBLE: ship new sst file to the remote dir and delete the input sst file at the remote sst dir
+  if(db_options_.is_rubble && db_options_.is_primary){
 
+    std::string remote_sst_dir = db_options_.remote_sst_dir;
+    if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
+        remote_sst_dir = remote_sst_dir + '/';
+      }
+
+    IOStatus ios;
+    for (unsigned int i=0; i < compact_->compaction->num_input_levels(); i++){
+      for (auto f : *(compact_->compaction->inputs(i))){
+
+        std::string sst_number = std::to_string(f->fd.GetNumber());
+        std::string sst_file_name = std::string("000000").replace(6 - sst_number.length(), sst_number.length(), sst_number) + ".sst";
+
+        //for those sst files that gets deleted in the compaction, also delete the remote ones
+        std::string fname = TableFileName(compact_->compaction->immutable_cf_options()->cf_paths,
+                        f->fd.GetNumber(), f->fd.GetPathId());
+
+        std::cout << "local file deleted : " << fname << std::endl; 
+        std::string remote_sst_file_name = remote_sst_dir + sst_file_name;
+        std::cout << "remote file name " << remote_sst_file_name << std::endl;
+        ios = fs_->FileExists(fname, IOOptions(), nullptr);
+        // this check is probably unnecessary, cause versions_->VerifyCompactionFileConsistency(compaction) already does the check
+        if (ios.ok()){
+          // ios = fs_->DeleteFile(fname, IOOptions(), nullptr);
+          
+          if(ios.IsIOError()){
+            fprintf(stderr, "delete file failed: %lu\n", f->fd.GetNumber());
+          }else if(ios.ok()){
+            fprintf(stdout, "delete file success: %lu\n", f->fd.GetNumber());
+          }
+        }else {
+          if (ios.IsNotFound()){
+            fprintf(stderr, "file : %lu does not exist \n", f->fd.GetNumber());
+          }
+        }
+      }
+    }
+
+     for (const auto& sub_compact : compact_->sub_compact_states) {
+      for (const auto& out : sub_compact.outputs) {
+        compaction->edit()->AddFile(compaction->output_level(), out.meta);
+        // copy the output sst files to remote sst directory
+        std::string fname = TableFileName(sub_compact.compaction->immutable_cf_options()->cf_paths,
+                        out.meta.fd.GetNumber(), out.meta.fd.GetPathId());
+        
+        std::string sst_number = std::to_string(out.meta.fd.GetNumber());
+        std::string sst_file_name = std::string("000000").replace(6 - sst_number.length(), sst_number.length(), sst_number) + ".sst";
+
+        ios = CopyFile(fs_.get(), fname, remote_sst_dir + sst_file_name, 0,  true);
+
+        if (!ios.ok()){
+          fprintf(stderr, "file copy failed: %lu\n", out.meta.fd.GetNumber());
+        }else {
+          fprintf(stdout, "file copy success: %lu \n", out.meta.fd.GetNumber());
+        }
+      }
+    }
+
+  }
+  
   return versions_->LogAndApply(compaction->column_family_data(),
                                 mutable_cf_options, compaction->edit(),
                                 db_mutex_, db_directory_);

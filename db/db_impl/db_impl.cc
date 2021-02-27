@@ -238,6 +238,8 @@ DBImpl::DBImpl(const DBOptions& options, const std::string& dbname,
   // TODO: Check for an error here
   env_->GetAbsolutePath(dbname, &db_absolute_path_).PermitUncheckedError();
 
+  fprintf(stdout, " ------ db_absolute_path : %s -------\n", db_absolute_path_.c_str());
+
   // Reserve ten files or so for other uses and give the rest to TableCache.
   // Give a large number for setting of "infinite" open files.
   const int table_cache_size = (mutable_db_options_.max_open_files == -1)

@@ -456,13 +456,33 @@ Status FlushJob::WriteLevel0Table() {
 
     edit_->SetBlobFileAdditions(std::move(blob_file_additions));
 
-    // RUBBLE: write compaction metadata file
-    std::string filepath = "/mnt/sdb/archive_dbs/compaction_meta/"+std::to_string(job_context_->job_id);
-    std::string comp_metadata_str = "w 0 "+std::to_string(meta_.fd.GetNumber());
-    std::ofstream metafile;
-    metafile.open(filepath);
-    metafile << comp_metadata_str+"\n";
-    metafile.close();
+    // RUBBLE: ship L0 sst to remote sst directory
+    if(db_options_.is_rubble && db_options_.is_primary){
+
+      fprintf(stdout , "Flush Job [%d] : shipping LO sst %lu ",job_context_->job_id, meta_.fd.GetNumber());
+      std::string remote_sst_dir = db_options_.remote_sst_dir;
+
+      IOStatus ios;
+      std::string fname = TableFileName(cfd_->ioptions()->cf_paths,
+                        meta_.fd.GetNumber(), meta_.fd.GetPathId());
+
+      // write_L0_Table_counter++;
+      std::string sst_number = std::to_string(meta_.fd.GetNumber());
+      std::string sst_file_name = std::string("000000").replace(6 - sst_number.length(), sst_number.length(), sst_number) + ".sst";
+
+      if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
+        remote_sst_dir = remote_sst_dir + '/';
+      }
+      ios = CopyFile(db_options_.fs.get(), fname, remote_sst_dir + sst_file_name, 0,  true);
+
+      if (!ios.ok()){
+        fprintf(stderr, " file copy failed: %lu\n", meta_.fd.GetNumber());
+      }else {
+        fprintf(stdout, "file copy success: %lu \n", meta_.fd.GetNumber());
+      }
+
+    }
+   
   }
 #ifndef ROCKSDB_LITE
   // Piggyback FlushJobInfo on the first first flushed memtable.

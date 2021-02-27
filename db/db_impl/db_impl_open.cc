@@ -1430,6 +1430,7 @@ Status DBImpl::WriteLevel0TableForRecovery(int job_id, ColumnFamilyData* cfd,
 }
 
 Status DB::Open(const Options& options, const std::string& dbname, DB** dbptr) {
+  std::cout << "db_name : " << dbname << std::endl;
   DBOptions db_options(options);
   ColumnFamilyOptions cf_options(options);
   std::vector<ColumnFamilyDescriptor> column_families;
@@ -1463,13 +1464,14 @@ Status DB::Open(const DBOptions& db_options, const std::string& dbname,
   const bool kSeqPerBatch = true;
   const bool kBatchPerTxn = true;
   // ASH: changes to add db_paths
-  DBOptions temp_db_options = db_options;
-  temp_db_options.statistics = CreateDBStatistics();
-  temp_db_options.stats_dump_period_sec = 60;
-  temp_db_options.db_paths.emplace_back(rocksdb::DbPath("/mnt/sdb/archive_dbs/sst_dir/sst_last_run", 10000000000));
-  return DBImpl::Open(temp_db_options, dbname, column_families, handles, dbptr,
-                      !kSeqPerBatch, kBatchPerTxn);
-//  return DBImpl::Open(db_options, dbname, column_families, handles, dbptr, !kSeqPerBatch, kBatchPerTxn);
+
+  // DBOptions temp_db_options = db_options;
+  // temp_db_options.statistics = CreateDBStatistics();
+  // temp_db_options.stats_dump_period_sec = 60;
+  // temp_db_options.db_paths.emplace_back(rocksdb::DbPath("/mnt/sdb/archive_dbs/sst_dir/sst_last_run", 10000000000));
+  // return DBImpl::Open(temp_db_options, dbname, column_families, handles, dbptr,
+  //                     !kSeqPerBatch, kBatchPerTxn);
+  return DBImpl::Open(db_options, dbname, column_families, handles, dbptr, !kSeqPerBatch, kBatchPerTxn);
 }
 
 IOStatus DBImpl::CreateWAL(uint64_t log_file_num, uint64_t recycle_log_number,

@@ -450,6 +450,9 @@ Status VersionEditHandler::LoadTables(ColumnFamilyData* cfd,
 
 Status VersionEditHandler::ExtractInfoFromVersionEdit(ColumnFamilyData* cfd,
                                                       const VersionEdit& edit) {
+  
+  fprintf(stdout, " ------------ calling ExtractInfoFromVersionEdit --------------- \n");
+  
   Status s;
   if (cfd != nullptr) {
     if (edit.has_db_id_) {

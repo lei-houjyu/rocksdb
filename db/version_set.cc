@@ -62,60 +62,49 @@
 #include "util/user_comparator_wrapper.h"
 
 // RUBBLE
-#include <memory>
-#include <string>
-#include <grpcpp/grpcpp.h>
-#include <grpcpp/health_check_service_interface.h>
-#include <grpcpp/ext/proto_server_reflection_plugin.h>
-#include "grpc/version_edit_sync.grpc.pb.h"
-#include "grpc/version_edit_sync.pb.h"
+// #include <memory>
+// #include <string>
+// #include <grpcpp/grpcpp.h>
+// #include <grpcpp/health_check_service_interface.h>
+// #include <grpcpp/ext/proto_server_reflection_plugin.h>
+// #include "grpc/version_edit_sync.grpc.pb.h"
+// #include "grpc/version_edit_sync.pb.h"
 
-using grpc::Server;
-using grpc::ServerBuilder;
-using grpc::ServerContext;
-using grpc::Channel;
-using grpc::ClientContext;
-using grpc::Status;
-using version_edit_sync::VersionEditSyncService;
-using version_edit_sync::VersionEditSyncRequest;
-using version_edit_sync::VersionEditSyncReply;
+// using grpc::Server;
+// using grpc::ServerBuilder;
+// using grpc::ServerContext;
+// using grpc::Channel;
+// using grpc::ClientContext;
+// using grpc::Status;
+// using version_edit_sync::VersionEditSyncService;
+// using version_edit_sync::VersionEditSyncRequest;
+// using version_edit_sync::VersionEditSyncReply;
 
-class VersionEditSyncClient {
-  public:
-    VersionEditSyncClient(std::shared_ptr<Channel> channel)
-        : stub_(VersionEditSyncService::NewStub(channel)) {}
+// class VersionEditSyncClient {
+//   public:
+//     VersionEditSyncClient(std::shared_ptr<Channel> channel)
+//         : stub_(VersionEditSyncService::NewStub(channel)) {}
 
-    std::string VersionEditSync(const std::string& record) {
-      VersionEditSyncRequest request;
-      request.set_record(record);
+//     std::string VersionEditSync(const std::string& record) {
+//       VersionEditSyncRequest request;
+//       request.set_record(record);
 
-      VersionEditSyncReply reply;
-      ClientContext context;
-      Status status = stub_->VersionEditSync(&context, request, &reply);
+//       VersionEditSyncReply reply;
+//       ClientContext context;
+//       Status status = stub_->VersionEditSync(&context, request, &reply);
 
-      if (status.ok()) {
-        return reply.message();
-      } else {
-        std::cout << status.error_code() << ": " << status.error_message()
-                    << std::endl;
-          return "RPC failed";
-      }
-    }
-  private:
-    std::unique_ptr<VersionEditSyncService::Stub> stub_;
-};
-
-class VersionEditSyncServiceImpl final : public VersionEditSyncService::Service {
-  Status VersionEditSync(ServerContext* context, const VersionEditSyncRequest* request, 
-                          VersionEditSyncReply* reply) override {
-    std::cout << "Got a LogAndApply RPC from primary" << '\n';
-    std::string prefix("Received record ");
-    reply->set_message(prefix+request->record());
-    return Status::OK;
-  }
-};
-
-// RUBBLE END
+//       if (status.ok()) {
+//         return reply.message();
+//       } else {
+//         std::cout << status.error_code() << ": " << status.error_message()
+//                     << std::endl;
+//           return "RPC failed";
+//       }
+//     }
+//   private:
+//     std::unique_ptr<VersionEditSyncService::Stub> stub_;
+// };
+// // RUBBLE END
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -4136,6 +4125,9 @@ Status VersionSet::ProcessManifestWrites(
                      pending_manifest_file_number_);
       std::string descriptor_fname =
           DescriptorFileName(dbname_, pending_manifest_file_number_);
+      
+      std::cout << " new manifest file descriptor name : " << descriptor_fname << std::endl;
+
       std::unique_ptr<FSWritableFile> descriptor_file;
       io_s = NewWritableFile(fs_.get(), descriptor_fname, &descriptor_file,
                              opt_file_opts);
@@ -4174,14 +4166,14 @@ Status VersionSet::ProcessManifestWrites(
           break;
         }
         // RUBBLE:
-	Slice rec_slice = record;
+      	Slice rec_slice = record;
         fprintf(stderr, "Manifest recordId %lu record %s\n", recordId.load(std::memory_order_relaxed), rec_slice.ToString().c_str());
-        std::string filepath = "/mnt/sdb/archive_dbs/manifest_meta/"+std::to_string(recordId.load(std::memory_order_relaxed));
-        std::ofstream metafile;
-        metafile.open(filepath);
-        metafile << rec_slice.ToString()+"\n";
-        metafile.close();
-	recordId++;
+        // std::string filepath = "/mnt/sdb/archive_dbs/manifest_meta/"+std::to_string(recordId.load(std::memory_order_relaxed));
+        // std::ofstream metafile;
+        // metafile.open(filepath);
+        // metafile << rec_slice.ToString()+"\n";
+        // metafile.close();
+	      recordId++;
         
 	TEST_KILL_RANDOM("VersionSet::LogAndApply:BeforeAddRecord",
                          rocksdb_kill_odds * REDUCE_ODDS2);
@@ -4378,6 +4370,7 @@ Status VersionSet::ProcessManifestWrites(
   return s;
 }
 
+std::atomic<uint64_t> log_and_apply_counter{0};
 // 'datas' is gramatically incorrect. We still use this notation to indicate
 // that this variable represents a collection of column_family_data.
 Status VersionSet::LogAndApply(
@@ -4388,27 +4381,28 @@ Status VersionSet::LogAndApply(
     const ColumnFamilyOptions* new_cf_options) {
   mu->AssertHeld();
   // RUBBLE: trigger RPC calls to secondary to sync RocksDB state.
-  // std::string target_str = "10.10.1.2:50051";
-
-  const ImmutableDBOptions* options = db_options();
-
-  if(options->is_primary){
-    std::cout << "primary calling logAndApply\n";
-    std::string target_str = "localhost:50051";
-    VersionEditSyncClient client(grpc::CreateChannel(
-      target_str, grpc::InsecureChannelCredentials()
-    ));
-    for (auto edit_list: edit_lists){
-      for (auto e: edit_list) {
-        std::string record;
-        e->EncodeTo(&record);
-        Slice rec_slice = record;
-        std::string reply = client.VersionEditSync(rec_slice.ToString().c_str());
-        std::cerr << "Primary received: " << reply << std::endl;
+  if(db_options_->is_rubble && db_options_->is_primary){
+      log_and_apply_counter++;
+      std::string target_str = db_options_->secondary_address;
+      
+      std::cout << "primary calling logAndApply " << log_and_apply_counter << " times" << " to secondary : " << target_str; 
+      // VersionEditSyncClient client(grpc::CreateChannel(
+      //   target_str, grpc::InsecureChannelCredentials()
+      // ));
+      
+      uint32_t ve_count{0};
+      for (auto edit_list: edit_lists){
+        for (auto e: edit_list) {
+          ve_count++;
+          std::string record;
+          e->EncodeTo(&record);
+          Slice rec_slice = record;
+          std::string reply = db_options_->ves_client->VersionEditSync(rec_slice.ToString().c_str());
+          std::cerr << "Primary received: " << reply << std::endl;
+        }
       }
-    }
+      std::cout << "sending " << ve_count << " version_edits\n";
   }
-
   // RUBBLE END
   int num_edits = 0;
   for (const auto& elist : edit_lists) {

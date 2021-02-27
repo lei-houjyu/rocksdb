@@ -94,7 +94,12 @@ struct ImmutableDBOptions {
   bool allow_data_in_errors;
   std::string db_host_id;
   //RUBBLE
+  bool is_rubble;
   bool is_primary;
+  std::string secondary_address;
+  bool is_secondary;
+  std::string remote_sst_dir;
+  std::shared_ptr<VersionEditSyncClient> ves_client;
 };
 
 struct MutableDBOptions {

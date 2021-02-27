@@ -87,17 +87,6 @@ install/local/fast: preinstall/fast
 	/usr/local/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
 .PHONY : install/local/fast
 
-# Special rule for the target rebuild_cache
-rebuild_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/usr/local/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : rebuild_cache
-
-# Special rule for the target rebuild_cache
-rebuild_cache/fast: rebuild_cache
-
-.PHONY : rebuild_cache/fast
-
 # Special rule for the target install/strip
 install/strip: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
@@ -110,16 +99,6 @@ install/strip/fast: preinstall/fast
 	/usr/local/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
 .PHONY : install/strip/fast
 
-# Special rule for the target list_install_components
-list_install_components:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"devel\""
-.PHONY : list_install_components
-
-# Special rule for the target list_install_components
-list_install_components/fast: list_install_components
-
-.PHONY : list_install_components/fast
-
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
@@ -130,6 +109,27 @@ edit_cache:
 edit_cache/fast: edit_cache
 
 .PHONY : edit_cache/fast
+
+# Special rule for the target rebuild_cache
+rebuild_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
+	/usr/local/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : rebuild_cache
+
+# Special rule for the target rebuild_cache
+rebuild_cache/fast: rebuild_cache
+
+.PHONY : rebuild_cache/fast
+
+# Special rule for the target list_install_components
+list_install_components:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"devel\""
+.PHONY : list_install_components
+
+# Special rule for the target list_install_components
+list_install_components/fast: list_install_components
+
+.PHONY : list_install_components/fast
 
 # Special rule for the target install
 install: preinstall
@@ -176,97 +176,6 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named memtablerep_bench
-
-# Build rule for target.
-memtablerep_bench: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 memtablerep_bench
-.PHONY : memtablerep_bench
-
-# fast build rule for target.
-memtablerep_bench/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/memtablerep_bench.dir/build.make CMakeFiles/memtablerep_bench.dir/build
-.PHONY : memtablerep_bench/fast
-
-#=============================================================================
-# Target rules for targets named tools
-
-# Build rule for target.
-tools: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tools
-.PHONY : tools
-
-# fast build rule for target.
-tools/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tools.dir/build.make CMakeFiles/tools.dir/build
-.PHONY : tools/fast
-
-#=============================================================================
-# Target rules for targets named cache_bench
-
-# Build rule for target.
-cache_bench: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 cache_bench
-.PHONY : cache_bench
-
-# fast build rule for target.
-cache_bench/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cache_bench.dir/build.make CMakeFiles/cache_bench.dir/build
-.PHONY : cache_bench/fast
-
-#=============================================================================
-# Target rules for targets named testharness
-
-# Build rule for target.
-testharness: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 testharness
-.PHONY : testharness
-
-# fast build rule for target.
-testharness/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testharness.dir/build.make CMakeFiles/testharness.dir/build
-.PHONY : testharness/fast
-
-#=============================================================================
-# Target rules for targets named table_reader_bench
-
-# Build rule for target.
-table_reader_bench: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 table_reader_bench
-.PHONY : table_reader_bench
-
-# fast build rule for target.
-table_reader_bench/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/table_reader_bench.dir/build.make CMakeFiles/table_reader_bench.dir/build
-.PHONY : table_reader_bench/fast
-
-#=============================================================================
-# Target rules for targets named hash_table_bench
-
-# Build rule for target.
-hash_table_bench: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 hash_table_bench
-.PHONY : hash_table_bench
-
-# fast build rule for target.
-hash_table_bench/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/hash_table_bench.dir/build.make CMakeFiles/hash_table_bench.dir/build
-.PHONY : hash_table_bench/fast
-
-#=============================================================================
-# Target rules for targets named build_version
-
-# Build rule for target.
-build_version: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 build_version
-.PHONY : build_version
-
-# fast build rule for target.
-build_version/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/build_version.dir/build.make CMakeFiles/build_version.dir/build
-.PHONY : build_version/fast
-
-#=============================================================================
 # Target rules for targets named rocksdb
 
 # Build rule for target.
@@ -280,186 +189,17 @@ rocksdb/fast:
 .PHONY : rocksdb/fast
 
 #=============================================================================
-# Target rules for targets named range_del_aggregator_bench
+# Target rules for targets named build_version
 
 # Build rule for target.
-range_del_aggregator_bench: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 range_del_aggregator_bench
-.PHONY : range_del_aggregator_bench
+build_version: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 build_version
+.PHONY : build_version
 
 # fast build rule for target.
-range_del_aggregator_bench/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/range_del_aggregator_bench.dir/build.make CMakeFiles/range_del_aggregator_bench.dir/build
-.PHONY : range_del_aggregator_bench/fast
-
-#=============================================================================
-# Target rules for targets named core_tools
-
-# Build rule for target.
-core_tools: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 core_tools
-.PHONY : core_tools
-
-# fast build rule for target.
-core_tools/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/core_tools.dir/build.make CMakeFiles/core_tools.dir/build
-.PHONY : core_tools/fast
-
-#=============================================================================
-# Target rules for targets named filter_bench
-
-# Build rule for target.
-filter_bench: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 filter_bench
-.PHONY : filter_bench
-
-# fast build rule for target.
-filter_bench/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/filter_bench.dir/build.make CMakeFiles/filter_bench.dir/build
-.PHONY : filter_bench/fast
-
-#=============================================================================
-# Target rules for targets named db_bench
-
-# Build rule for target.
-db_bench: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 db_bench
-.PHONY : db_bench
-
-# fast build rule for target.
-db_bench/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/db_bench.dir/build.make CMakeFiles/db_bench.dir/build
-.PHONY : db_bench/fast
-
-#=============================================================================
-# Target rules for targets named gtest
-
-# Build rule for target.
-gtest: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gtest
-.PHONY : gtest
-
-# fast build rule for target.
-gtest/fast:
-	$(MAKE) $(MAKESILENT) -f third-party/gtest-1.8.1/fused-src/gtest/CMakeFiles/gtest.dir/build.make third-party/gtest-1.8.1/fused-src/gtest/CMakeFiles/gtest.dir/build
-.PHONY : gtest/fast
-
-#=============================================================================
-# Target rules for targets named rocksdb_undump
-
-# Build rule for target.
-rocksdb_undump: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rocksdb_undump
-.PHONY : rocksdb_undump
-
-# fast build rule for target.
-rocksdb_undump/fast:
-	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/rocksdb_undump.dir/build.make tools/CMakeFiles/rocksdb_undump.dir/build
-.PHONY : rocksdb_undump/fast
-
-#=============================================================================
-# Target rules for targets named ldb_tests
-
-# Build rule for target.
-ldb_tests: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ldb_tests
-.PHONY : ldb_tests
-
-# fast build rule for target.
-ldb_tests/fast:
-	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/ldb_tests.dir/build.make tools/CMakeFiles/ldb_tests.dir/build
-.PHONY : ldb_tests/fast
-
-#=============================================================================
-# Target rules for targets named ldb
-
-# Build rule for target.
-ldb: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ldb
-.PHONY : ldb
-
-# fast build rule for target.
-ldb/fast:
-	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/ldb.dir/build.make tools/CMakeFiles/ldb.dir/build
-.PHONY : ldb/fast
-
-#=============================================================================
-# Target rules for targets named sst_dump
-
-# Build rule for target.
-sst_dump: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sst_dump
-.PHONY : sst_dump
-
-# fast build rule for target.
-sst_dump/fast:
-	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/sst_dump.dir/build.make tools/CMakeFiles/sst_dump.dir/build
-.PHONY : sst_dump/fast
-
-#=============================================================================
-# Target rules for targets named db_sanity_test
-
-# Build rule for target.
-db_sanity_test: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 db_sanity_test
-.PHONY : db_sanity_test
-
-# fast build rule for target.
-db_sanity_test/fast:
-	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/db_sanity_test.dir/build.make tools/CMakeFiles/db_sanity_test.dir/build
-.PHONY : db_sanity_test/fast
-
-#=============================================================================
-# Target rules for targets named write_stress
-
-# Build rule for target.
-write_stress: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 write_stress
-.PHONY : write_stress
-
-# fast build rule for target.
-write_stress/fast:
-	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/write_stress.dir/build.make tools/CMakeFiles/write_stress.dir/build
-.PHONY : write_stress/fast
-
-#=============================================================================
-# Target rules for targets named rocksdb_dump
-
-# Build rule for target.
-rocksdb_dump: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rocksdb_dump
-.PHONY : rocksdb_dump
-
-# fast build rule for target.
-rocksdb_dump/fast:
-	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/rocksdb_dump.dir/build.make tools/CMakeFiles/rocksdb_dump.dir/build
-.PHONY : rocksdb_dump/fast
-
-#=============================================================================
-# Target rules for targets named db_repl_stress
-
-# Build rule for target.
-db_repl_stress: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 db_repl_stress
-.PHONY : db_repl_stress
-
-# fast build rule for target.
-db_repl_stress/fast:
-	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/db_repl_stress.dir/build.make tools/CMakeFiles/db_repl_stress.dir/build
-.PHONY : db_repl_stress/fast
-
-#=============================================================================
-# Target rules for targets named db_stress
-
-# Build rule for target.
-db_stress: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 db_stress
-.PHONY : db_stress
-
-# fast build rule for target.
-db_stress/fast:
-	$(MAKE) $(MAKESILENT) -f db_stress_tool/CMakeFiles/db_stress.dir/build.make db_stress_tool/CMakeFiles/db_stress.dir/build
-.PHONY : db_stress/fast
+build_version/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/build_version.dir/build.make CMakeFiles/build_version.dir/build
+.PHONY : build_version/fast
 
 build_version.o: build_version.cc.o
 
@@ -514,33 +254,6 @@ cache/cache.s: cache/cache.cc.s
 cache/cache.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/cache/cache.cc.s
 .PHONY : cache/cache.cc.s
-
-cache/cache_bench.o: cache/cache_bench.cc.o
-
-.PHONY : cache/cache_bench.o
-
-# target to build an object file
-cache/cache_bench.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cache_bench.dir/build.make CMakeFiles/cache_bench.dir/cache/cache_bench.cc.o
-.PHONY : cache/cache_bench.cc.o
-
-cache/cache_bench.i: cache/cache_bench.cc.i
-
-.PHONY : cache/cache_bench.i
-
-# target to preprocess a source file
-cache/cache_bench.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cache_bench.dir/build.make CMakeFiles/cache_bench.dir/cache/cache_bench.cc.i
-.PHONY : cache/cache_bench.cc.i
-
-cache/cache_bench.s: cache/cache_bench.cc.s
-
-.PHONY : cache/cache_bench.s
-
-# target to generate assembly for a file
-cache/cache_bench.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cache_bench.dir/build.make CMakeFiles/cache_bench.dir/cache/cache_bench.cc.s
-.PHONY : cache/cache_bench.cc.s
 
 cache/clock_cache.o: cache/clock_cache.cc.o
 
@@ -2162,33 +1875,6 @@ db/range_del_aggregator.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/db/range_del_aggregator.cc.s
 .PHONY : db/range_del_aggregator.cc.s
 
-db/range_del_aggregator_bench.o: db/range_del_aggregator_bench.cc.o
-
-.PHONY : db/range_del_aggregator_bench.o
-
-# target to build an object file
-db/range_del_aggregator_bench.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/range_del_aggregator_bench.dir/build.make CMakeFiles/range_del_aggregator_bench.dir/db/range_del_aggregator_bench.cc.o
-.PHONY : db/range_del_aggregator_bench.cc.o
-
-db/range_del_aggregator_bench.i: db/range_del_aggregator_bench.cc.i
-
-.PHONY : db/range_del_aggregator_bench.i
-
-# target to preprocess a source file
-db/range_del_aggregator_bench.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/range_del_aggregator_bench.dir/build.make CMakeFiles/range_del_aggregator_bench.dir/db/range_del_aggregator_bench.cc.i
-.PHONY : db/range_del_aggregator_bench.cc.i
-
-db/range_del_aggregator_bench.s: db/range_del_aggregator_bench.cc.s
-
-.PHONY : db/range_del_aggregator_bench.s
-
-# target to generate assembly for a file
-db/range_del_aggregator_bench.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/range_del_aggregator_bench.dir/build.make CMakeFiles/range_del_aggregator_bench.dir/db/range_del_aggregator_bench.cc.s
-.PHONY : db/range_del_aggregator_bench.cc.s
-
 db/range_tombstone_fragmenter.o: db/range_tombstone_fragmenter.cc.o
 
 .PHONY : db/range_tombstone_fragmenter.o
@@ -3511,33 +3197,6 @@ memtable/hash_skiplist_rep.s: memtable/hash_skiplist_rep.cc.s
 memtable/hash_skiplist_rep.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/memtable/hash_skiplist_rep.cc.s
 .PHONY : memtable/hash_skiplist_rep.cc.s
-
-memtable/memtablerep_bench.o: memtable/memtablerep_bench.cc.o
-
-.PHONY : memtable/memtablerep_bench.o
-
-# target to build an object file
-memtable/memtablerep_bench.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/memtablerep_bench.dir/build.make CMakeFiles/memtablerep_bench.dir/memtable/memtablerep_bench.cc.o
-.PHONY : memtable/memtablerep_bench.cc.o
-
-memtable/memtablerep_bench.i: memtable/memtablerep_bench.cc.i
-
-.PHONY : memtable/memtablerep_bench.i
-
-# target to preprocess a source file
-memtable/memtablerep_bench.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/memtablerep_bench.dir/build.make CMakeFiles/memtablerep_bench.dir/memtable/memtablerep_bench.cc.i
-.PHONY : memtable/memtablerep_bench.cc.i
-
-memtable/memtablerep_bench.s: memtable/memtablerep_bench.cc.s
-
-.PHONY : memtable/memtablerep_bench.s
-
-# target to generate assembly for a file
-memtable/memtablerep_bench.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/memtablerep_bench.dir/build.make CMakeFiles/memtablerep_bench.dir/memtable/memtablerep_bench.cc.s
-.PHONY : memtable/memtablerep_bench.cc.s
 
 memtable/skiplistrep.o: memtable/skiplistrep.cc.o
 
@@ -5456,33 +5115,6 @@ table/table_properties.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/table/table_properties.cc.s
 .PHONY : table/table_properties.cc.s
 
-table/table_reader_bench.o: table/table_reader_bench.cc.o
-
-.PHONY : table/table_reader_bench.o
-
-# target to build an object file
-table/table_reader_bench.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/table_reader_bench.dir/build.make CMakeFiles/table_reader_bench.dir/table/table_reader_bench.cc.o
-.PHONY : table/table_reader_bench.cc.o
-
-table/table_reader_bench.i: table/table_reader_bench.cc.i
-
-.PHONY : table/table_reader_bench.i
-
-# target to preprocess a source file
-table/table_reader_bench.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/table_reader_bench.dir/build.make CMakeFiles/table_reader_bench.dir/table/table_reader_bench.cc.i
-.PHONY : table/table_reader_bench.cc.i
-
-table/table_reader_bench.s: table/table_reader_bench.cc.s
-
-.PHONY : table/table_reader_bench.s
-
-# target to generate assembly for a file
-table/table_reader_bench.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/table_reader_bench.dir/build.make CMakeFiles/table_reader_bench.dir/table/table_reader_bench.cc.s
-.PHONY : table/table_reader_bench.cc.s
-
 table/two_level_iterator.o: table/two_level_iterator.cc.o
 
 .PHONY : table/two_level_iterator.o
@@ -5509,33 +5141,6 @@ table/two_level_iterator.s: table/two_level_iterator.cc.s
 table/two_level_iterator.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/table/two_level_iterator.cc.s
 .PHONY : table/two_level_iterator.cc.s
-
-test_util/mock_time_env.o: test_util/mock_time_env.cc.o
-
-.PHONY : test_util/mock_time_env.o
-
-# target to build an object file
-test_util/mock_time_env.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testharness.dir/build.make CMakeFiles/testharness.dir/test_util/mock_time_env.cc.o
-.PHONY : test_util/mock_time_env.cc.o
-
-test_util/mock_time_env.i: test_util/mock_time_env.cc.i
-
-.PHONY : test_util/mock_time_env.i
-
-# target to preprocess a source file
-test_util/mock_time_env.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testharness.dir/build.make CMakeFiles/testharness.dir/test_util/mock_time_env.cc.i
-.PHONY : test_util/mock_time_env.cc.i
-
-test_util/mock_time_env.s: test_util/mock_time_env.cc.s
-
-.PHONY : test_util/mock_time_env.s
-
-# target to generate assembly for a file
-test_util/mock_time_env.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testharness.dir/build.make CMakeFiles/testharness.dir/test_util/mock_time_env.cc.s
-.PHONY : test_util/mock_time_env.cc.s
 
 test_util/sync_point.o: test_util/sync_point.cc.o
 
@@ -5590,33 +5195,6 @@ test_util/sync_point_impl.s: test_util/sync_point_impl.cc.s
 test_util/sync_point_impl.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/test_util/sync_point_impl.cc.s
 .PHONY : test_util/sync_point_impl.cc.s
-
-test_util/testharness.o: test_util/testharness.cc.o
-
-.PHONY : test_util/testharness.o
-
-# target to build an object file
-test_util/testharness.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testharness.dir/build.make CMakeFiles/testharness.dir/test_util/testharness.cc.o
-.PHONY : test_util/testharness.cc.o
-
-test_util/testharness.i: test_util/testharness.cc.i
-
-.PHONY : test_util/testharness.i
-
-# target to preprocess a source file
-test_util/testharness.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testharness.dir/build.make CMakeFiles/testharness.dir/test_util/testharness.cc.i
-.PHONY : test_util/testharness.cc.i
-
-test_util/testharness.s: test_util/testharness.cc.s
-
-.PHONY : test_util/testharness.s
-
-# target to generate assembly for a file
-test_util/testharness.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testharness.dir/build.make CMakeFiles/testharness.dir/test_util/testharness.cc.s
-.PHONY : test_util/testharness.cc.s
 
 test_util/testutil.o: test_util/testutil.cc.o
 
@@ -5833,60 +5411,6 @@ tools/block_cache_analyzer/block_cache_trace_analyzer.s: tools/block_cache_analy
 tools/block_cache_analyzer/block_cache_trace_analyzer.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/tools/block_cache_analyzer/block_cache_trace_analyzer.cc.s
 .PHONY : tools/block_cache_analyzer/block_cache_trace_analyzer.cc.s
-
-tools/db_bench.o: tools/db_bench.cc.o
-
-.PHONY : tools/db_bench.o
-
-# target to build an object file
-tools/db_bench.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/db_bench.dir/build.make CMakeFiles/db_bench.dir/tools/db_bench.cc.o
-.PHONY : tools/db_bench.cc.o
-
-tools/db_bench.i: tools/db_bench.cc.i
-
-.PHONY : tools/db_bench.i
-
-# target to preprocess a source file
-tools/db_bench.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/db_bench.dir/build.make CMakeFiles/db_bench.dir/tools/db_bench.cc.i
-.PHONY : tools/db_bench.cc.i
-
-tools/db_bench.s: tools/db_bench.cc.s
-
-.PHONY : tools/db_bench.s
-
-# target to generate assembly for a file
-tools/db_bench.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/db_bench.dir/build.make CMakeFiles/db_bench.dir/tools/db_bench.cc.s
-.PHONY : tools/db_bench.cc.s
-
-tools/db_bench_tool.o: tools/db_bench_tool.cc.o
-
-.PHONY : tools/db_bench_tool.o
-
-# target to build an object file
-tools/db_bench_tool.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/db_bench.dir/build.make CMakeFiles/db_bench.dir/tools/db_bench_tool.cc.o
-.PHONY : tools/db_bench_tool.cc.o
-
-tools/db_bench_tool.i: tools/db_bench_tool.cc.i
-
-.PHONY : tools/db_bench_tool.i
-
-# target to preprocess a source file
-tools/db_bench_tool.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/db_bench.dir/build.make CMakeFiles/db_bench.dir/tools/db_bench_tool.cc.i
-.PHONY : tools/db_bench_tool.cc.i
-
-tools/db_bench_tool.s: tools/db_bench_tool.cc.s
-
-.PHONY : tools/db_bench_tool.s
-
-# target to generate assembly for a file
-tools/db_bench_tool.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/db_bench.dir/build.make CMakeFiles/db_bench.dir/tools/db_bench_tool.cc.s
-.PHONY : tools/db_bench_tool.cc.s
 
 tools/dump/db_dump_tool.o: tools/dump/db_dump_tool.cc.o
 
@@ -6346,33 +5870,6 @@ util/file_checksum_helper.s: util/file_checksum_helper.cc.s
 util/file_checksum_helper.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/util/file_checksum_helper.cc.s
 .PHONY : util/file_checksum_helper.cc.s
-
-util/filter_bench.o: util/filter_bench.cc.o
-
-.PHONY : util/filter_bench.o
-
-# target to build an object file
-util/filter_bench.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/filter_bench.dir/build.make CMakeFiles/filter_bench.dir/util/filter_bench.cc.o
-.PHONY : util/filter_bench.cc.o
-
-util/filter_bench.i: util/filter_bench.cc.i
-
-.PHONY : util/filter_bench.i
-
-# target to preprocess a source file
-util/filter_bench.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/filter_bench.dir/build.make CMakeFiles/filter_bench.dir/util/filter_bench.cc.i
-.PHONY : util/filter_bench.cc.i
-
-util/filter_bench.s: util/filter_bench.cc.s
-
-.PHONY : util/filter_bench.s
-
-# target to generate assembly for a file
-util/filter_bench.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/filter_bench.dir/build.make CMakeFiles/filter_bench.dir/util/filter_bench.cc.s
-.PHONY : util/filter_bench.cc.s
 
 util/hash.o: util/hash.cc.o
 
@@ -7508,33 +7005,6 @@ utilities/persistent_cache/block_cache_tier_metadata.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/utilities/persistent_cache/block_cache_tier_metadata.cc.s
 .PHONY : utilities/persistent_cache/block_cache_tier_metadata.cc.s
 
-utilities/persistent_cache/hash_table_bench.o: utilities/persistent_cache/hash_table_bench.cc.o
-
-.PHONY : utilities/persistent_cache/hash_table_bench.o
-
-# target to build an object file
-utilities/persistent_cache/hash_table_bench.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/hash_table_bench.dir/build.make CMakeFiles/hash_table_bench.dir/utilities/persistent_cache/hash_table_bench.cc.o
-.PHONY : utilities/persistent_cache/hash_table_bench.cc.o
-
-utilities/persistent_cache/hash_table_bench.i: utilities/persistent_cache/hash_table_bench.cc.i
-
-.PHONY : utilities/persistent_cache/hash_table_bench.i
-
-# target to preprocess a source file
-utilities/persistent_cache/hash_table_bench.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/hash_table_bench.dir/build.make CMakeFiles/hash_table_bench.dir/utilities/persistent_cache/hash_table_bench.cc.i
-.PHONY : utilities/persistent_cache/hash_table_bench.cc.i
-
-utilities/persistent_cache/hash_table_bench.s: utilities/persistent_cache/hash_table_bench.cc.s
-
-.PHONY : utilities/persistent_cache/hash_table_bench.s
-
-# target to generate assembly for a file
-utilities/persistent_cache/hash_table_bench.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/hash_table_bench.dir/build.make CMakeFiles/hash_table_bench.dir/utilities/persistent_cache/hash_table_bench.cc.s
-.PHONY : utilities/persistent_cache/hash_table_bench.cc.s
-
 utilities/persistent_cache/persistent_cache_tier.o: utilities/persistent_cache/persistent_cache_tier.cc.o
 
 .PHONY : utilities/persistent_cache/persistent_cache_tier.o
@@ -8195,37 +7665,14 @@ help:
 	@echo "... install/strip"
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... core_tools"
-	@echo "... ldb_tests"
-	@echo "... tools"
 	@echo "... build_version"
-	@echo "... cache_bench"
-	@echo "... db_bench"
-	@echo "... db_repl_stress"
-	@echo "... db_sanity_test"
-	@echo "... db_stress"
-	@echo "... filter_bench"
-	@echo "... gtest"
-	@echo "... hash_table_bench"
-	@echo "... ldb"
-	@echo "... memtablerep_bench"
-	@echo "... range_del_aggregator_bench"
 	@echo "... rocksdb"
-	@echo "... rocksdb_dump"
-	@echo "... rocksdb_undump"
-	@echo "... sst_dump"
-	@echo "... table_reader_bench"
-	@echo "... testharness"
-	@echo "... write_stress"
 	@echo "... build_version.o"
 	@echo "... build_version.i"
 	@echo "... build_version.s"
 	@echo "... cache/cache.o"
 	@echo "... cache/cache.i"
 	@echo "... cache/cache.s"
-	@echo "... cache/cache_bench.o"
-	@echo "... cache/cache_bench.i"
-	@echo "... cache/cache_bench.s"
 	@echo "... cache/clock_cache.o"
 	@echo "... cache/clock_cache.i"
 	@echo "... cache/clock_cache.s"
@@ -8406,9 +7853,6 @@ help:
 	@echo "... db/range_del_aggregator.o"
 	@echo "... db/range_del_aggregator.i"
 	@echo "... db/range_del_aggregator.s"
-	@echo "... db/range_del_aggregator_bench.o"
-	@echo "... db/range_del_aggregator_bench.i"
-	@echo "... db/range_del_aggregator_bench.s"
 	@echo "... db/range_tombstone_fragmenter.o"
 	@echo "... db/range_tombstone_fragmenter.i"
 	@echo "... db/range_tombstone_fragmenter.s"
@@ -8556,9 +8000,6 @@ help:
 	@echo "... memtable/hash_skiplist_rep.o"
 	@echo "... memtable/hash_skiplist_rep.i"
 	@echo "... memtable/hash_skiplist_rep.s"
-	@echo "... memtable/memtablerep_bench.o"
-	@echo "... memtable/memtablerep_bench.i"
-	@echo "... memtable/memtablerep_bench.s"
 	@echo "... memtable/skiplistrep.o"
 	@echo "... memtable/skiplistrep.i"
 	@echo "... memtable/skiplistrep.s"
@@ -8772,24 +8213,15 @@ help:
 	@echo "... table/table_properties.o"
 	@echo "... table/table_properties.i"
 	@echo "... table/table_properties.s"
-	@echo "... table/table_reader_bench.o"
-	@echo "... table/table_reader_bench.i"
-	@echo "... table/table_reader_bench.s"
 	@echo "... table/two_level_iterator.o"
 	@echo "... table/two_level_iterator.i"
 	@echo "... table/two_level_iterator.s"
-	@echo "... test_util/mock_time_env.o"
-	@echo "... test_util/mock_time_env.i"
-	@echo "... test_util/mock_time_env.s"
 	@echo "... test_util/sync_point.o"
 	@echo "... test_util/sync_point.i"
 	@echo "... test_util/sync_point.s"
 	@echo "... test_util/sync_point_impl.o"
 	@echo "... test_util/sync_point_impl.i"
 	@echo "... test_util/sync_point_impl.s"
-	@echo "... test_util/testharness.o"
-	@echo "... test_util/testharness.i"
-	@echo "... test_util/testharness.s"
 	@echo "... test_util/testutil.o"
 	@echo "... test_util/testutil.i"
 	@echo "... test_util/testutil.s"
@@ -8814,12 +8246,6 @@ help:
 	@echo "... tools/block_cache_analyzer/block_cache_trace_analyzer.o"
 	@echo "... tools/block_cache_analyzer/block_cache_trace_analyzer.i"
 	@echo "... tools/block_cache_analyzer/block_cache_trace_analyzer.s"
-	@echo "... tools/db_bench.o"
-	@echo "... tools/db_bench.i"
-	@echo "... tools/db_bench.s"
-	@echo "... tools/db_bench_tool.o"
-	@echo "... tools/db_bench_tool.i"
-	@echo "... tools/db_bench_tool.s"
 	@echo "... tools/dump/db_dump_tool.o"
 	@echo "... tools/dump/db_dump_tool.i"
 	@echo "... tools/dump/db_dump_tool.s"
@@ -8871,9 +8297,6 @@ help:
 	@echo "... util/file_checksum_helper.o"
 	@echo "... util/file_checksum_helper.i"
 	@echo "... util/file_checksum_helper.s"
-	@echo "... util/filter_bench.o"
-	@echo "... util/filter_bench.i"
-	@echo "... util/filter_bench.s"
 	@echo "... util/hash.o"
 	@echo "... util/hash.i"
 	@echo "... util/hash.s"
@@ -9000,9 +8423,6 @@ help:
 	@echo "... utilities/persistent_cache/block_cache_tier_metadata.o"
 	@echo "... utilities/persistent_cache/block_cache_tier_metadata.i"
 	@echo "... utilities/persistent_cache/block_cache_tier_metadata.s"
-	@echo "... utilities/persistent_cache/hash_table_bench.o"
-	@echo "... utilities/persistent_cache/hash_table_bench.i"
-	@echo "... utilities/persistent_cache/hash_table_bench.s"
 	@echo "... utilities/persistent_cache/persistent_cache_tier.o"
 	@echo "... utilities/persistent_cache/persistent_cache_tier.i"
 	@echo "... utilities/persistent_cache/persistent_cache_tier.s"

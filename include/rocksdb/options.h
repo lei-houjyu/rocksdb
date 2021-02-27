@@ -29,6 +29,9 @@
 #include "rocksdb/version.h"
 #include "rocksdb/write_buffer_manager.h"
 
+//RUBBLE 
+#include "grpc/version_edit_sync_client.h"
+
 #ifdef max
 #undef max
 #endif
@@ -1198,7 +1201,22 @@ struct DBOptions {
   std::string db_host_id = kHostnameForDbHostId;
 
   //RUBBLE
+  //is rubble mode?
+  bool is_rubble = false;
+
+  // used when rubble mode is enabled
   bool is_primary = false;
+  // secondary's server address, used by primary(is_primayr is true)
+  // example : 10.10.1.2:50051
+  std::string secondary_address = "";
+
+  bool is_secondary = false;
+
+  //priamry's remote sst directory
+  std::string remote_sst_dir = "";
+
+  // version_edit sync client, used in primary instance
+  std::shared_ptr<VersionEditSyncClient> ves_client = nullptr;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)

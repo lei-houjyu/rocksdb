@@ -2106,6 +2106,12 @@ void DBImpl::MaybeScheduleFlushOrCompaction() {
   auto bg_job_limits = GetBGJobLimits();
   bool is_flush_pool_empty =
       env_->GetBackgroundThreads(Env::Priority::HIGH) == 0;
+
+  //RUBBLE: disable scheduling of Flush Job for secondary in rubble mode 
+  if(immutable_db_options_.is_rubble && immutable_db_options_.is_secondary){
+    unscheduled_flushes_ = 0;
+  }
+  
   while (!is_flush_pool_empty && unscheduled_flushes_ > 0 &&
          bg_flush_scheduled_ < bg_job_limits.max_flushes) {
     bg_flush_scheduled_++;
