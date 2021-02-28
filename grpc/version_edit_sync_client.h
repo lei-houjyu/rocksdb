@@ -21,6 +21,12 @@ using version_edit_sync::GetRequest;
 using version_edit_sync::PutReply;
 using version_edit_sync::PutRequest;
 
+using version_edit_sync::DeleteFile;
+using version_edit_sync::NewFile;
+using version_edit_sync::NewFile_FileMetaData;
+using version_edit_sync::NewFile_FileMetaData_FileDescriptor;
+using version_edit_sync::VersionEditToSync;
+
 class VersionEditSyncClient {
   public:
     VersionEditSyncClient(std::shared_ptr<Channel> channel)
@@ -30,12 +36,40 @@ class VersionEditSyncClient {
     VersionEditSyncClient(std::shared_ptr<Channel> channel, bool to_primary)
         : stub_(VersionEditSyncService::NewStub(channel)),
         to_primary_(to_primary){};
+    
 
-    std::string VersionEditSync(const std::string& record) {
-      VersionEditSyncRequest request;
-      request.set_record(record);
+    void DebugString(const VersionEditSyncRequest& request){
+      VersionEditToSync edit =  request.edit();
+    
+      std::cout << "{LogNumber : " << edit.log_number() << " , PrevLogNumber : " << edit.prev_log_number();
+      std::cout << " ColumnFamily : " << edit.column_family();
+      std::cout << " , AddedFiles : [ ";
+      for(int i = 0; i < edit.new__size(); i++){
+
+        NewFile add = edit.new_(i);
+        NewFile_FileMetaData meta = add.meta();
+        NewFile_FileMetaData_FileDescriptor fd = meta.fd();
+        std::cout << "{ Level :  " << add.level() << " , FileNumber : " << fd.file_number();
+        std::cout << " , FileSize :  " << fd.file_size() << " , SmallestKey : " << meta.smallest_key() << " seqno: " << fd.smallest_seqno();
+        std::cout << " , LargestKey : " << meta.largest_key() << " seqno: " << fd.largest_seqno();
+       
+        std::cout << " , oldest ancester time : "  << meta.oldest_ancestor_time();
+        std::cout << " , file creation time : " << meta.file_creation_time();
+        std::cout << " , file checksum : " << meta.file_checksum();
+        std::cout << " , file checksum func name : " << meta.file_checksum_func_name() << " }, ";
+      }
+      std::cout << " ], DeletedFile : [ ";
+      for(int i = 0; i < edit.del_size(); i++){
+        DeleteFile del = edit.del(i);
+        std::cout << " { FileLevel : " << del.level() << " , FileNumber : " <<  del.file_number() << " }, ";
+      }
+      std::cout << " ] }";
+    }
+   
+    std::string VersionEditSync(const VersionEditSyncRequest& request) {
 
       VersionEditSyncReply reply;
+      // DebugString(request);
       ClientContext context;
       grpc::Status status = stub_->VersionEditSync(&context, request, &reply);
 
