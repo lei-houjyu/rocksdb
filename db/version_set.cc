@@ -4355,14 +4355,14 @@ Status VersionSet::LogAndApply(
 
       std::cout << "VersionStorageInfo->LevelSummary : ";
       VersionStorageInfo::LevelSummaryStorage tmp;
-      auto vstorage = GetColumnFamilySet()->GetDefault()->current()->storage_info();
+
+      auto default_cf = GetColumnFamilySet()->GetDefault();
+      auto vstorage = default_cf->current()->storage_info();
       const char* c = vstorage->LevelSummary(&tmp);
       std::cout << std::string(c) << std::endl;
 
-      MemTableList* imm = GetColumnFamilySet()->GetDefault()->imm();
-      std::cout << " ----------- ImmutableList : " << nlohmann::json::parse(imm->DebugJson()).dump(4) << " ----------------\n";
-      std::cout << " Current Version: \n " << GetColumnFamilySet()->GetDefault()->current()->DebugString(false) << std::endl;
-
+      MemTableList* imm = default_cf->imm();
+      MemTable* m = default_cf->mem();
       uint32_t ve_count{0};
       for (auto edit_list: edit_lists){
         for (auto e: edit_list) {
@@ -4377,7 +4377,12 @@ Status VersionSet::LogAndApply(
           std::cerr << "[ Reply Status ]: " << reply << std::endl;
         }
       }
-      std::cout << "VersionEdits Count :  " << ve_count << "\n";
+
+      // std::cout  << nlohmann::json::parse(m->DebugJson()).dump(4) << std::endl;
+      std::cout << " ----------- ImmutableList : " << nlohmann::json::parse(imm->DebugJson()).dump(4) << " ----------------\n";
+      std::cout << " Current Version: \n " << default_cf->current()->DebugString(false) << std::endl;
+      assert(ve_count == 1);
+      // std::cout << "VersionEdits Count :  " << ve_count << "\n";
   }else if (db_options_->is_rubble && db_options_->is_secondary){
     std::cout << "[secondary] calling logAndApply " << std::endl;
   }

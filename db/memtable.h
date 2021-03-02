@@ -436,6 +436,20 @@ class MemTable {
     flush_in_progress_ = in_progress;
   }
 
+  std::string DebugJson() const{
+    JSONWriter jw;
+    jw << "Memtable ID" << id_;
+    jw << "NumDeletes" << num_deletes_.load(std::memory_order_relaxed);
+    jw << "NumEntries" << num_entries_.load(std::memory_order_relaxed);
+    jw << "ApproximateMemoryUsage" << approximate_memory_usage_.load(std::memory_order_relaxed);
+    jw << "DataSize" << data_size_.load(std::memory_order_relaxed);
+    jw << "FirstSequenceNum" << first_seqno_.load(std::memory_order_relaxed);
+    jw << "EarliestSequenceNum" << earliest_seqno_.load(std::memory_order_relaxed);
+
+    jw.EndObject();
+    return jw.Get();
+  }
+
 #ifndef ROCKSDB_LITE
   void SetFlushJobInfo(std::unique_ptr<FlushJobInfo>&& info) {
     flush_job_info_ = std::move(info);

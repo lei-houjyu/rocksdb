@@ -267,7 +267,7 @@ void MemTableListVersion::Add(MemTable* m, autovector<MemTable*>* to_delete) {
 // Removes m from list of memtables not flushed.  Caller should NOT Unref m.
 void MemTableListVersion::Remove(MemTable* m,
                                  autovector<MemTable*>* to_delete) {
-  std::cout << " ###### [ MemTableListVersion -> Remove ], Ref count : << " << GetRefsCount() << " ####### \n";
+  std::cout << " ###### [ MemTableListVersion -> Remove ], Ref count : " << GetRefsCount() << " ####### \n";
 
   assert(refs_ == 1);  // only when refs_ == 1 is MemTableListVersion mutable
   memlist_.remove(m);
@@ -482,8 +482,11 @@ Status MemTableList::TryInstallMemtableFlushResults(
       }
       batch_count++;
     }
+    //rubble
+    // There is always only one version edit in the list?
     assert(edit_list.size() == 1);
     edit_list.back()->SetBatchCount(batch_count);
+
     std::cout << " ---- batch count ( flush compeleted memtable ): " << batch_count << ",  edit list size : " << edit_list.size() << "------ \n";
     // TODO(myabandeh): Not sure how batch_count could be 0 here.
     if (batch_count > 0) {
@@ -500,7 +503,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
                             db_directory);
       *io_s = vset->io_status();
 
-      std::cout << " ----------------- TryInstallMemtableFlushResults -> InstallNewVersion ----------------- \n";
+      // std::cout << " ----------------- TryInstallMemtableFlushResults -> InstallNewVersion ----------------- \n";
       // we will be changing the version in the next code path,
       // so we better create a new one, since versions are immutable
       InstallNewVersion();
@@ -698,8 +701,12 @@ std::string MemTableList::DebugJson() const{
     for(auto m : current_->memlist_){
       jw.StartArrayedObject();
       jw << "ID" << m->GetID();
+      jw << "NumDeletes" << m->num_deletes();
       jw << "NumEntries" << m->num_entries();
-      jw << "MemoryUsage" << m->ApproximateMemoryUsage();
+      jw << "ApproximateMemoryUsage" << m->ApproximateMemoryUsage();
+      jw << "DataSize" << m->get_data_size();
+      jw << "FirstSequenceNum" << m->GetFirstSequenceNumber();
+      jw << "EarliestSequenceNum" << m->GetEarliestSequenceNumber();
       jw.EndArrayedObject();
     }
     
