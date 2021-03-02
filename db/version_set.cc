@@ -4362,108 +4362,18 @@ Status VersionSet::LogAndApply(
       MemTableList* imm = GetColumnFamilySet()->GetDefault()->imm();
       std::cout << " ----------- ImmutableList : " << nlohmann::json::parse(imm->DebugJson()).dump(4) << " ----------------\n";
       std::cout << " Current Version: \n " << GetColumnFamilySet()->GetDefault()->current()->DebugString(false) << std::endl;
-      
+
       uint32_t ve_count{0};
       for (auto edit_list: edit_lists){
         for (auto e: edit_list) {
           ve_count++;
-          std::string record;
           std::cout << nlohmann::json::parse(e->DebugJSON((int)log_and_apply_counter, false)).dump(4) << std::endl;
-          // std::cout << e->DebugString(false) << std::endl;
-          // std::cout << e->DebugJSON((int)log_and_apply_counter, true) << std::endl;
-          // std::cout << e->DebugString(false);
-          e->EncodeTo(&record);
-          // Slice rec_slice(record)
-          
+
+          //Form VersionEditSync Request
           VersionEditSyncRequest request;
           request.set_edit_json(e->DebugJSON((int)log_and_apply_counter, false));
 
-
-          // InternalKey largest = e->GetNewFiles().back().second.largest;
-          // std::cout << "largest Ikey : " << largest.DebugString(false) << std::endl;
-          // std::cout << "largest Ikey rep : " << largest.rep() << std::endl;
-          // std::cout << "largest user key : " << largest.user_key().ToString() << std::endl;
-          // std::cout << "ReFormed Ikey rep : " << InternalKey(Slice(largest.user_key().ToString()), e->GetNewFiles().back().second.fd.largest_seqno, ValueType::kTypeValue).rep() << std::endl;
-
-          // InternalKey smallest = e->GetNewFiles().back().second.smallest;
-          // std::cout << "smallest Ikey : " << smallest.DebugString(false) << std::endl;
-          // std::cout << "smallest Ikey rep : " << smallest.rep() << std::endl;
-          // std::cout << "smallest user key : " << smallest.user_key().ToString() << std::endl;
-
-          // std::cout << "ReFormed Ikey rep : " << InternalKey(Slice(smallest.user_key().ToString()), e->GetNewFiles().back().second.fd.smallest_seqno, ValueType::kTypeValue).rep() << std::endl; 
-
-          // populated the VersionEditSyncRequest fields
-          if(false){
-            VersionEditToSync ves;
-            ves.set_prev_log_number(e->GetPrevLogNumber());
-            ves.set_log_number(e->GetLogNumber());
-            ves.set_column_family(e->GetColumnFamily());
-
-            std::cout << " Setting " << e->GetNewFiles().size() << " Additions " << std::endl;
-            // populate the added files
-
-            int i = 0;
-            for(const auto& new_file : e->GetNewFiles()){
-                i++;
-                std::cout << i << "th iteration " << std::endl;
-                int level = new_file.first;
-                FileMetaData meta = new_file.second;
-
-                std::shared_ptr<NewFile>f(ves.add_new_());
-
-                NewFile_FileMetaData_FileDescriptor fd;
-                fd.set_file_number(meta.fd.GetNumber());
-                fd.set_file_size(meta.fd.GetFileSize());
-
-                fd.set_smallest_seqno(meta.fd.smallest_seqno);
-                fd.set_largest_seqno(meta.fd.largest_seqno);
-
-                NewFile_FileMetaData f_meta;
-                f_meta.set_allocated_fd(&fd);
-                f_meta.set_smallest_key(meta.smallest.Encode().ToString());
-                f_meta.set_largest_key(meta.largest.Encode().ToString());
-
-                // optional fields, not sure if you need those
-                f_meta.set_oldest_ancestor_time(meta.oldest_ancester_time);
-                f_meta.set_file_creation_time(meta.file_creation_time);
-                f_meta.set_file_checksum(meta.file_checksum);
-                f_meta.set_file_checksum_func_name(meta.file_checksum_func_name);
-
-                f->set_level(level);
-                // f->set_allocated_meta(&f_meta);
-
-                std::cout << "{ Level :  " << f->level() << " , FileNumber : " << fd.file_number();
-                std::cout << " , FileSize :  " << fd.file_size() << " , SmallestKey : " << f_meta.smallest_key() << " seqno: " << fd.smallest_seqno();
-                std::cout << " , LargestKey : " << f_meta.largest_key() << " seqno: " << fd.largest_seqno();
-              
-                std::cout << " , oldest_ancester_time : "  << f_meta.oldest_ancestor_time();
-                std::cout << " , file_creation_time : " << f_meta.file_creation_time();
-                std::cout << " , file_checksum : " << f_meta.file_checksum();
-                std::cout << " , file_checksum_func_name : " << f_meta.file_checksum_func_name() << " } \n";
-
-                std::cout << "something else \n";
-              }
-
-              std::cout << "Setting Deletions  " << std::endl;
-              // populate the deleted files
-              for(const auto& deleted_file : e->GetDeletedFiles()) {
-                int level = deleted_file.first;
-                uint64_t file_number = deleted_file.second;
-
-                DeleteFile* del = ves.add_del();
-                del->set_file_number(file_number);
-                del->set_level(level);
-              }
-
-              request.set_allocated_edit(&ves);
-          }
-          // std::cout << "VersionEditSyncRequest Formed " << std::endl;
           std::string reply = db_options_->ves_client->VersionEditSync(request);
-
-          // VersionEdit decoded;
-          // decoded.DecodeFrom(Slice(record));
-
-          // std::cout << "Decoded : " << decoded.DebugString(true);
           std::cerr << "[ Reply Status ]: " << reply << std::endl;
         }
       }

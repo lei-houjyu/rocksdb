@@ -1257,9 +1257,9 @@ void ColumnFamilyData::InstallSuperVersion(
 void ColumnFamilyData::InstallSuperVersion(
     SuperVersionContext* sv_context, InstrumentedMutex* db_mutex,
     const MutableCFOptions& mutable_cf_options) {
-  std::cout << "----- ColumnFamilyData -> InstallSuperVersion : current imm refs_ : "<< imm_.current()->GetRefsCount() <<" ------- \n";
+  // std::cout << "----- ColumnFamilyData -> InstallSuperVersion : current imm refs_ : "<< imm_.current()->GetRefsCount() <<" ------- \n";
 
-  std::cout << "  ------ InstallSuperVersion : superversion -> init ----------- \n";
+  // std::cout << "  ------ InstallSuperVersion : superversion -> init ----------- \n";
   SuperVersion* new_superversion = sv_context->new_superversion.release();
   new_superversion->db_mutex = db_mutex;
   new_superversion->mutable_cf_options = mutable_cf_options;
