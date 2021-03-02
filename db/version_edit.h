@@ -534,6 +534,14 @@ class VersionEdit {
     return is_flush_;
   }
 
+  void SetBatchCount(int batch_count ){
+    batch_count_ = batch_count;
+  }
+
+  int GetBatchCount(){
+    return batch_count_;
+  }
+
  private:
   friend class ReactiveVersionSet;
   friend class VersionEditHandler;
@@ -590,6 +598,8 @@ class VersionEdit {
   // Does this edit corresponds to a flush
   bool is_flush_ = false;
 
+  // how many memtables gets flushed in a batch in a flush job
+  int batch_count_ = 0;
 };
 
 }  // namespace ROCKSDB_NAMESPACE

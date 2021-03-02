@@ -777,6 +777,10 @@ std::string VersionEdit::DebugJSON(int edit_num, bool hex_key) const {
     jw << "LastSeq" << last_sequence_;
   }
 
+  if(batch_count_){
+    jw << "BatchCount" << batch_count_;
+  }
+
   if (!deleted_files_.empty()) {
     jw << "DeletedFiles";
     jw.StartArray();

@@ -482,9 +482,10 @@ Status MemTableList::TryInstallMemtableFlushResults(
       }
       batch_count++;
     }
-
+    assert(edit_list.size() == 1);
+    edit_list.back()->SetBatchCount(batch_count);
     std::cout << " ----------- batch count ( flush compeleted memtable ): " << batch_count << "--------------\n ";
-
+    std::cout  << "------------ edit list size : " << edit_list.size() << "------------ \n";
     // TODO(myabandeh): Not sure how batch_count could be 0 here.
     if (batch_count > 0) {
       if (vset->db_options()->allow_2pc) {
