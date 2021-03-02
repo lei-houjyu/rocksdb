@@ -1015,9 +1015,18 @@ endif()
 # RUBBLE END
 
 
+# nlohman json lib
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+
+add_subdirectory("nlohmann_json/json")
+
+
 add_library(${ROCKSDB_STATIC_LIB} STATIC ${SOURCES})
 target_link_libraries(${ROCKSDB_STATIC_LIB} PRIVATE
-  ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} ${_REFLECTION} ${_GRPC_GRPCPP}
+  ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} 
+  ${_REFLECTION}
+  ${_GRPC_GRPCPP}
+  nlohmann_json::nlohmann_json
   ${_PROTOBUF_LIBPROTOBUF})
 
 if(ROCKSDB_BUILD_SHARED)
@@ -1101,8 +1110,8 @@ if(NOT WIN32 OR ROCKSDB_INSTALL_ON_WINDOWS)
   install(DIRECTORY "${PROJECT_SOURCE_DIR}/cmake/modules" COMPONENT devel DESTINATION ${package_config_destination})
 
   install(
-    TARGETS ${ROCKSDB_STATIC_LIB}
-    EXPORT RocksDBTargets
+    TARGETS ${ROCKSDB_STATIC_LIB} 
+    EXPORT RocksDBTargets 
     COMPONENT devel
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"

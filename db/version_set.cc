@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 #include "compaction/compaction.h"
 #include "db/blob/blob_file_cache.h"
@@ -60,6 +61,8 @@
 #include "util/stop_watch.h"
 #include "util/string_util.h"
 #include "util/user_comparator_wrapper.h"
+
+
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -4361,7 +4364,7 @@ Status VersionSet::LogAndApply(
         for (auto e: edit_list) {
           ve_count++;
           std::string record;
-          std::cout << e->DebugJSON((int)log_and_apply_counter, false) << std::endl;
+          std::cout << nlohmann::json::parse(e->DebugJSON((int)log_and_apply_counter, false)).dump(4) << std::endl;
           // std::cout << e->DebugString(false) << std::endl;
           // std::cout << e->DebugJSON((int)log_and_apply_counter, true) << std::endl;
           // std::cout << e->DebugString(false);
