@@ -21,12 +21,6 @@ using version_edit_sync::GetRequest;
 using version_edit_sync::PutReply;
 using version_edit_sync::PutRequest;
 
-using version_edit_sync::DeleteFile;
-using version_edit_sync::NewFile;
-using version_edit_sync::NewFile_FileMetaData;
-using version_edit_sync::NewFile_FileMetaData_FileDescriptor;
-using version_edit_sync::VersionEditToSync;
-
 class VersionEditSyncClient {
   public:
     VersionEditSyncClient(std::shared_ptr<Channel> channel)
