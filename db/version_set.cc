@@ -4359,6 +4359,10 @@ Status VersionSet::LogAndApply(
       const char* c = vstorage->LevelSummary(&tmp);
       std::cout << std::string(c) << std::endl;
 
+      MemTableList* imm = GetColumnFamilySet()->GetDefault()->imm();
+      std::cout << " ----------- ImmutableList : " << nlohmann::json::parse(imm->DebugJson()).dump(4) << " ----------------\n";
+      std::cout << " Current Version: \n " << GetColumnFamilySet()->GetDefault()->current()->DebugString(false) << std::endl;
+      
       uint32_t ve_count{0};
       for (auto edit_list: edit_lists){
         for (auto e: edit_list) {

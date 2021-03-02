@@ -70,14 +70,14 @@ MemTableListVersion::MemTableListVersion(
 
 void MemTableListVersion::Ref() {
    ++refs_;
-    std::cout << " ------------- MemTablListVersion -> Ref , ref counts : "<< refs_ << " ---------- \n";
+    // std::cout << " ------------- MemTablListVersion -> Ref , ref counts : "<< refs_ << " ---------- \n";
     }
 
 // called by superversion::clean()
 void MemTableListVersion::Unref(autovector<MemTable*>* to_delete) {
   assert(refs_ >= 1);
   --refs_;
-  std::cout << "------------- MemTableListVersion -> Unref , ref counts : " <<  refs_ << "--------------\n";
+  // std::cout << "------------- MemTableListVersion -> Unref , ref counts : " <<  refs_ << "--------------\n";
   if (refs_ == 0) {
     // if to_delete is equal to nullptr it means we're confident
     // that refs_ will not be zero
