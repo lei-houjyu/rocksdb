@@ -130,6 +130,23 @@ class MemTableListVersion {
   // History.
   SequenceNumber GetEarliestSequenceNumber(bool include_history = false) const;
 
+  void DebugJson();
+
+  int GetRefsCount (){
+    return refs_;
+  }
+
+  std::list<MemTable*> GetMemlist(){
+    return memlist_;
+  }
+
+  void RemoveLast(autovector<MemTable*>* to_delete){
+    return Remove(memlist_.back(), to_delete);
+  };
+  
+  // REQUIRE: m is an immutable memtable
+  void Remove(MemTable* m, autovector<MemTable*>* to_delete);
+
  private:
   friend class MemTableList;
 
@@ -145,8 +162,6 @@ class MemTableListVersion {
 
   // REQUIRE: m is an immutable memtable
   void Add(MemTable* m, autovector<MemTable*>* to_delete);
-  // REQUIRE: m is an immutable memtable
-  void Remove(MemTable* m, autovector<MemTable*>* to_delete);
 
   // Return true if memtable is trimmed
   bool TrimHistory(autovector<MemTable*>* to_delete, size_t usage);
@@ -375,6 +390,24 @@ class MemTableList {
   void RemoveOldMemTables(uint64_t log_number,
                           autovector<MemTable*>* to_delete);
 
+  
+  std::string DebugJson() const;
+
+  // DB mutex held
+  void InstallNewVersion();
+
+  void SetCommitInProgress(bool in_progress){
+    commit_in_progress_ = in_progress;
+  }
+
+  int GetNumFlushNotStarted(){
+    return num_flush_not_started_;
+  }
+
+  void SetNumFlushNotStarted(int num_flush_not_started){
+    num_flush_not_started_ = num_flush_not_started;
+  }
+
  private:
   friend Status InstallMemtableAtomicFlushResults(
       const autovector<MemTableList*>* imm_lists,
@@ -386,8 +419,6 @@ class MemTableList {
       autovector<MemTable*>* to_delete, FSDirectory* db_directory,
       LogBuffer* log_buffer);
 
-  // DB mutex held
-  void InstallNewVersion();
 
   const int min_write_buffer_number_to_merge_;
 

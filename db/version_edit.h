@@ -525,6 +525,15 @@ class VersionEdit {
   std::string DebugString(bool hex_key = false) const;
   std::string DebugJSON(int edit_num, bool hex_key = false) const;
 
+  //rubble
+  void MarkFlush() {
+    is_flush_ = true;
+  }
+
+  bool IsFlush(){
+    return is_flush_;
+  }
+
  private:
   friend class ReactiveVersionSet;
   friend class VersionEditHandler;
@@ -577,6 +586,10 @@ class VersionEdit {
 
   bool is_in_atomic_group_ = false;
   uint32_t remaining_entries_ = 0;
+
+  // Does this edit corresponds to a flush
+  bool is_flush_ = false;
+
 };
 
 }  // namespace ROCKSDB_NAMESPACE

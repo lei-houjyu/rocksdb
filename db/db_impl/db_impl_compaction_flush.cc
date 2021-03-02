@@ -1431,6 +1431,7 @@ Status DBImpl::ReFitLevel(ColumnFamilyData* cfd, int level, int target_level) {
                     "[%s] Apply version edit:\n%s", cfd->GetName().c_str(),
                     edit.DebugString().data());
 
+
     status = versions_->LogAndApply(cfd, mutable_cf_options, &edit, &mutex_,
                                     directories_.GetDbDir());
     InstallSuperVersionAndScheduleWork(cfd, &sv_context, mutable_cf_options);
@@ -1690,7 +1691,15 @@ void DBImpl::GenerateFlushRequest(const autovector<ColumnFamilyData*>& cfds,
 Status DBImpl::FlushMemTable(ColumnFamilyData* cfd,
                              const FlushOptions& flush_options,
                              FlushReason flush_reason, bool writes_stopped) {
+  
   Status s;
+  const ImmutableDBOptions* db_options_ = cfd->current()->version_set()->db_options();
+  if(db_options_->is_rubble && db_options_->is_secondary ){
+    std::cout << " ----------- Calling FlushMemTable --------------- \n";
+     s = Status::OK();
+    return s;
+  }
+
   uint64_t flush_memtable_id = 0;
   if (!flush_options.allow_write_stall) {
     bool flush_needed = true;
@@ -2086,6 +2095,15 @@ void DBImpl::EnableManualCompaction() {
 
 void DBImpl::MaybeScheduleFlushOrCompaction() {
   mutex_.AssertHeld();
+  //RUBBLE: disable scheduling of Flush Job for secondary in rubble mode 
+  if(immutable_db_options_.is_rubble && immutable_db_options_.is_secondary){
+    // if(unscheduled_flushes_ > 0){
+      // unscheduled_flushes_ = 0;
+      std::cout << " -------- Secondary Flush/Compaction disabled  ---------" << std::endl;
+    // }
+    return;
+  }
+
   if (!opened_successfully_) {
     // Compaction may introduce data race to DB open
     return;
@@ -2108,12 +2126,12 @@ void DBImpl::MaybeScheduleFlushOrCompaction() {
       env_->GetBackgroundThreads(Env::Priority::HIGH) == 0;
 
   //RUBBLE: disable scheduling of Flush Job for secondary in rubble mode 
-  if(immutable_db_options_.is_rubble && immutable_db_options_.is_secondary){
-    if(unscheduled_flushes_ > 0){
-      unscheduled_flushes_ = 0;
-      std::cout << " -------- Secondary Flush Job disabled  ---------" << std::endl;
-    }
-  }
+  // if(immutable_db_options_.is_rubble && immutable_db_options_.is_secondary){
+  //   if(unscheduled_flushes_ > 0){
+  //     unscheduled_flushes_ = 0;
+  //     std::cout << " -------- Secondary Flush Job disabled  ---------" << std::endl;
+  //   }
+  // }
 
   while (!is_flush_pool_empty && unscheduled_flushes_ > 0 &&
          bg_flush_scheduled_ < bg_job_limits.max_flushes) {
@@ -2173,6 +2191,7 @@ void DBImpl::MaybeScheduleFlushOrCompaction() {
     env_->Schedule(&DBImpl::BGWorkCompaction, ca, Env::Priority::LOW, this,
                    &DBImpl::UnscheduleCompactionCallback);
   }
+
 }
 
 DBImpl::BGJobLimits DBImpl::GetBGJobLimits() const {
@@ -2883,6 +2902,8 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
                            f->file_creation_time, f->file_checksum,
                            f->file_checksum_func_name);
 
+        std::cout << " ----------- Trivial Move Compaction  [ "<< job_context->job_id <<" ]  ----------------- \n";
+        std::cout  << " Version Edit : " << c->edit()->DebugString(false) << std::endl;
         ROCKS_LOG_BUFFER(
             log_buffer,
             "[%s] Moving #%" PRIu64 " to level-%d %" PRIu64 " bytes\n",
@@ -2892,7 +2913,6 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
         moved_bytes += f->fd.GetFileSize();
       }
     }
-
     status = versions_->LogAndApply(c->column_family_data(),
                                     *c->mutable_cf_options(), c->edit(),
                                     &mutex_, directories_.GetDbDir());

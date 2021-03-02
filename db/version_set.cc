@@ -4321,7 +4321,10 @@ Status VersionSet::ProcessManifestWrites(
   if (!manifest_writers_.empty()) {
     manifest_writers_.front()->cv.Signal();
   }
+
+  std::cout << " ------------ Returned From ProcessManifestWrites ------------------\n";
   return s;
+
 }
 
 std::atomic<uint64_t> log_and_apply_counter{0};
@@ -4333,6 +4336,12 @@ Status VersionSet::LogAndApply(
     const autovector<autovector<VersionEdit*>>& edit_lists,
     InstrumentedMutex* mu, FSDirectory* db_directory, bool new_descriptor_log,
     const ColumnFamilyOptions* new_cf_options) {
+
+  // logAndApply is directly called inside three functions during normal execution:
+  // 1) BackgroundCompaction inside db_impl_compaction_flush.cc , sepecifically when there is a trivial move compaction
+  // 2) InstallCompactionResults inside compaction_job.cc, usually called when a normal compaction finishes
+  // 3) TryInstallMemtableFlushResults inside memtable_list.cc, which tries to record a successful flush in the manifest file.
+
   mu->AssertHeld();
   // RUBBLE: trigger RPC calls to secondary to sync RocksDB state.
   if(db_options_->is_rubble && db_options_->is_primary){
@@ -4353,7 +4362,7 @@ Status VersionSet::LogAndApply(
           ve_count++;
           std::string record;
           std::cout << e->DebugJSON((int)log_and_apply_counter, false) << std::endl;
-          std::cout << e->DebugString(false) << std::endl;
+          // std::cout << e->DebugString(false) << std::endl;
           // std::cout << e->DebugJSON((int)log_and_apply_counter, true) << std::endl;
           // std::cout << e->DebugString(false);
           e->EncodeTo(&record);
@@ -4363,18 +4372,18 @@ Status VersionSet::LogAndApply(
           request.set_edit_json(e->DebugJSON((int)log_and_apply_counter, false));
 
 
-          InternalKey largest = e->GetNewFiles().back().second.largest;
-          std::cout << "largest Ikey : " << largest.DebugString(false) << std::endl;
-          std::cout << "largest Ikey rep : " << largest.rep() << std::endl;
-          std::cout << "largest user key : " << largest.user_key().ToString() << std::endl;
-          std::cout << "ReFormed Ikey rep : " << InternalKey(Slice(largest.user_key().ToString()), e->GetNewFiles().back().second.fd.largest_seqno, ValueType::kTypeValue).rep() << std::endl;
+          // InternalKey largest = e->GetNewFiles().back().second.largest;
+          // std::cout << "largest Ikey : " << largest.DebugString(false) << std::endl;
+          // std::cout << "largest Ikey rep : " << largest.rep() << std::endl;
+          // std::cout << "largest user key : " << largest.user_key().ToString() << std::endl;
+          // std::cout << "ReFormed Ikey rep : " << InternalKey(Slice(largest.user_key().ToString()), e->GetNewFiles().back().second.fd.largest_seqno, ValueType::kTypeValue).rep() << std::endl;
 
-          InternalKey smallest = e->GetNewFiles().back().second.smallest;
-          std::cout << "smallest Ikey : " << smallest.DebugString(false) << std::endl;
-          std::cout << "smallest Ikey rep : " << smallest.rep() << std::endl;
-          std::cout << "smallest user key : " << smallest.user_key().ToString() << std::endl;
+          // InternalKey smallest = e->GetNewFiles().back().second.smallest;
+          // std::cout << "smallest Ikey : " << smallest.DebugString(false) << std::endl;
+          // std::cout << "smallest Ikey rep : " << smallest.rep() << std::endl;
+          // std::cout << "smallest user key : " << smallest.user_key().ToString() << std::endl;
 
-          std::cout << "ReFormed Ikey rep : " << InternalKey(Slice(smallest.user_key().ToString()), e->GetNewFiles().back().second.fd.smallest_seqno, ValueType::kTypeValue).rep() << std::endl; 
+          // std::cout << "ReFormed Ikey rep : " << InternalKey(Slice(smallest.user_key().ToString()), e->GetNewFiles().back().second.fd.smallest_seqno, ValueType::kTypeValue).rep() << std::endl; 
 
           // populated the VersionEditSyncRequest fields
           if(false){
@@ -4441,13 +4450,13 @@ Status VersionSet::LogAndApply(
 
               request.set_allocated_edit(&ves);
           }
-          std::cout << "VersionEditSyncRequest Formed " << std::endl;
+          // std::cout << "VersionEditSyncRequest Formed " << std::endl;
           std::string reply = db_options_->ves_client->VersionEditSync(request);
 
-          VersionEdit decoded;
-          decoded.DecodeFrom(Slice(record));
+          // VersionEdit decoded;
+          // decoded.DecodeFrom(Slice(record));
 
-          std::cout << "Decoded : " << decoded.DebugString(true);
+          // std::cout << "Decoded : " << decoded.DebugString(true);
           std::cerr << "[ Reply Status ]: " << reply << std::endl;
         }
       }

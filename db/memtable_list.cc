@@ -68,12 +68,16 @@ MemTableListVersion::MemTableListVersion(
       max_write_buffer_size_to_maintain_(max_write_buffer_size_to_maintain),
       parent_memtable_list_memory_usage_(parent_memtable_list_memory_usage) {}
 
-void MemTableListVersion::Ref() { ++refs_; }
+void MemTableListVersion::Ref() {
+   ++refs_;
+    std::cout << " ------------- MemTablListVersion -> Ref , ref counts : "<< refs_ << " ---------- \n";
+    }
 
 // called by superversion::clean()
 void MemTableListVersion::Unref(autovector<MemTable*>* to_delete) {
   assert(refs_ >= 1);
   --refs_;
+  std::cout << "------------- MemTableListVersion -> Unref , ref counts : " <<  refs_ << "--------------\n";
   if (refs_ == 0) {
     // if to_delete is equal to nullptr it means we're confident
     // that refs_ will not be zero
@@ -263,6 +267,8 @@ void MemTableListVersion::Add(MemTable* m, autovector<MemTable*>* to_delete) {
 // Removes m from list of memtables not flushed.  Caller should NOT Unref m.
 void MemTableListVersion::Remove(MemTable* m,
                                  autovector<MemTable*>* to_delete) {
+  std::cout << " ###### [ MemTableListVersion -> Remove ], Ref count : << " << GetRefsCount() << " ####### \n";
+
   assert(refs_ == 1);  // only when refs_ == 1 is MemTableListVersion mutable
   memlist_.remove(m);
 
@@ -383,6 +389,7 @@ void MemTableList::RollbackMemtableFlush(const autovector<MemTable*>& mems,
   imm_flush_needed.store(true, std::memory_order_release);
 }
 
+std::atomic<uint64_t> try_install_memtable_flush_result_counter{0};
 // Try record a successful flush in the manifest file. It might just return
 // Status::OK letting a concurrent flush to do actual the recording..
 Status MemTableList::TryInstallMemtableFlushResults(
@@ -397,16 +404,20 @@ Status MemTableList::TryInstallMemtableFlushResults(
       ThreadStatus::STAGE_MEMTABLE_INSTALL_FLUSH_RESULTS);
   mu->AssertHeld();
 
+  try_install_memtable_flush_result_counter++;
   // Flush was successful
   // Record the status on the memtable object. Either this call or a call by a
   // concurrent flush thread will read the status and write it to manifest.
+  std::cout <<  "---- " << try_install_memtable_flush_result_counter.load(std::memory_order_relaxed) << " times calling TryInstallMemtableFlushResults , batch count : " << mems.size() << ", file number : " << file_number<< " --------\n  ";
   for (size_t i = 0; i < mems.size(); ++i) {
     // All the edits are associated with the first memtable of this batch.
     assert(i == 0 || mems[i]->GetEdits()->NumEntries() == 0);
 
     mems[i]->flush_completed_ = true;
     mems[i]->file_number_ = file_number;
+    // std::cout <<  i << " th flushed memtable in : " << mems[i]->file_number_ << " ,";
   }
+  // std::cout  << " } \n";
 
   // if some other thread is already committing, then return
   Status s;
@@ -457,6 +468,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
                            m->edit_.GetBlobFileAdditions().size());
         }
 
+        m->edit_.MarkFlush();
         edit_list.push_back(&m->edit_);
         memtables_to_flush.push_back(m);
 #ifndef ROCKSDB_LITE
@@ -470,6 +482,8 @@ Status MemTableList::TryInstallMemtableFlushResults(
       }
       batch_count++;
     }
+
+    std::cout << " ----------- batch count ( flush compeleted memtable ): " << batch_count << "--------------\n ";
 
     // TODO(myabandeh): Not sure how batch_count could be 0 here.
     if (batch_count > 0) {
@@ -486,6 +500,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
                             db_directory);
       *io_s = vset->io_status();
 
+      std::cout << " ----------------- TryInstallMemtableFlushResults -> InstallNewVersion ----------------- \n";
       // we will be changing the version in the next code path,
       // so we better create a new one, since versions are immutable
       InstallNewVersion();
@@ -567,6 +582,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
 // New memtables are inserted at the front of the list.
 void MemTableList::Add(MemTable* m, autovector<MemTable*>* to_delete) {
   assert(static_cast<int>(current_->memlist_.size()) >= num_flush_not_started_);
+  std::cout << " ####### Adding MemTable : [" << m->GetID() << "] To Immutable List ,  next :  InstallNewVersion ##### ";
   InstallNewVersion();
   // this method is used to move mutable memtable into an immutable list.
   // since mutable memtable is already refcounted by the DBImpl,
@@ -575,10 +591,6 @@ void MemTableList::Add(MemTable* m, autovector<MemTable*>* to_delete) {
   // reference from the DBImpl.
   current_->Add(m, to_delete);
   m->MarkImmutable();
-
-  // HACKING: DISCARD immutable memtable
-  //current_->Remove(m, to_delete);
-  //return;
 
   num_flush_not_started_++;
   if (num_flush_not_started_ == 1) {
@@ -636,6 +648,8 @@ uint64_t MemTableList::ApproximateOldestKeyTime() const {
 }
 
 void MemTableList::InstallNewVersion() {
+
+  std::cout << "------ MemTableList -> InstallNewVerion , refs_ : " << current_->refs_ << "---------\n";
   if (current_->refs_ == 1) {
     // we're the only one using the version, just keep using it
   } else {
@@ -673,6 +687,27 @@ uint64_t MemTableList::PrecomputeMinLogContainingPrepSection(
   }
 
   return min_log;
+}
+
+std::string MemTableList::DebugJson() const{
+  JSONWriter jw;
+  if(!current_->memlist_.empty()){
+    jw << "ImmuTable MemtableList";
+    jw.StartArray();
+
+    for(auto m : current_->memlist_){
+      jw.StartArrayedObject();
+      jw << "ID" << m->GetID();
+      jw << "NumEntries" << m->num_entries();
+      jw << "MemoryUsage" << m->ApproximateMemoryUsage();
+      jw.EndArrayedObject();
+    }
+    
+    jw.EndArray();
+  }
+
+  jw.EndObject();
+  return jw.Get();
 }
 
 // Commit a successful atomic flush in the manifest file.

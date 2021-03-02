@@ -218,6 +218,8 @@ struct SuperVersion {
   // before deleting this SuperVersion.
   bool Unref();
 
+  int GetRefCount() {return refs.load();}
+  autovector<MemTable*>* GetToDelete() { return &to_delete;}
   // call these two methods with db mutex held
   // Cleanup unrefs mem, imm and current. Also, it stores all memtables
   // that needs to be deleted in to_delete vector. Unrefing those

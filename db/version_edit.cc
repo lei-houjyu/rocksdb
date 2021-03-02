@@ -884,6 +884,10 @@ std::string VersionEdit::DebugJSON(int edit_num, bool hex_key) const {
     jw << "AtomicGroup" << remaining_entries_;
   }
 
+  if(is_flush_){
+    jw << "IsFlush" << is_flush_;
+  }
+
   jw.EndObject();
 
   return jw.Get();
