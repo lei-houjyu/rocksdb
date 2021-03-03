@@ -1515,9 +1515,6 @@ Status CompactionJob::InstallCompactionResults(
   for (const auto& sub_compact : compact_->sub_compact_states) {
     for (const auto& out : sub_compact.outputs) {
       edit->AddFile(compaction->output_level(), out.meta);
-      std::cout << " New File : { File Number : " << out.meta.fd.GetNumber();
-      std::cout << " , Largest IKey : " << out.meta.largest.DebugString();
-      std::cout << " , Smallest IKey : " << out.meta.smallest.DebugString() << " } \n";
     }
   }
 

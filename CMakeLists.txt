@@ -191,7 +191,7 @@ endif()
 string(REGEX REPLACE "[^0-9a-f]+" "" GIT_SHA "${GIT_SHA}")
 
 
-option(WITH_MD_LIBRARY "build with MD" ON)
+option(WITH_MD_LIBRARY "build with MD" OFF)
 if(WIN32 AND MSVC)
   if(WITH_MD_LIBRARY)
     set(RUNTIME_LIBRARY "MD")
@@ -831,8 +831,8 @@ set(SOURCES
         utilities/ttl/db_ttl_impl.cc
         utilities/write_batch_with_index/write_batch_with_index.cc
         utilities/write_batch_with_index/write_batch_with_index_internal.cc
-        grpc/version_edit_sync.grpc.pb.cc
-        grpc/version_edit_sync.pb.cc
+        grpc/rubble_kv_store.grpc.pb.cc
+        grpc/rubble_kv_store.pb.cc
         $<TARGET_OBJECTS:build_version>)
 
 if(HAVE_SSE42 AND NOT MSVC)
@@ -1145,7 +1145,7 @@ if(NOT WIN32 OR ROCKSDB_INSTALL_ON_WINDOWS)
   )
 endif()
 
-option(WITH_ALL_TESTS "Build all test, rather than a small subset" ON)
+option(WITH_ALL_TESTS "Build all test, rather than a small subset" OFF)
 
 if(WITH_TESTS OR WITH_BENCHMARK_TOOLS)
   add_subdirectory(third-party/gtest-1.8.1/fused-src/gtest)

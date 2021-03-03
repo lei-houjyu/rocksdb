@@ -4366,14 +4366,17 @@ Status VersionSet::LogAndApply(
       uint32_t ve_count{0};
       for (auto edit_list: edit_lists){
         for (auto e: edit_list) {
+          nlohmann::json args;
+          args["ImmutableMemlistSize"] = imm->current()->GetMemlist().size();
+          args["VersionEdit"] = e->DebugJSON((int)log_and_apply_counter , false);
           ve_count++;
-          std::cout << nlohmann::json::parse(e->DebugJSON((int)log_and_apply_counter, false)).dump(4) << std::endl;
+          std::cout << args.dump(4) << std::endl;
 
-          //Form VersionEditSync Request
-          VersionEditSyncRequest request;
-          request.set_edit_json(e->DebugJSON((int)log_and_apply_counter, false));
+          //Form SyncRequest
+          SyncRequest request;
+          request.set_args(args.dump());
 
-          std::string reply = db_options_->ves_client->VersionEditSync(request);
+          std::string reply = db_options_->sync_client->Sync(request);
           std::cerr << "[ Reply Status ]: " << reply << std::endl;
         }
       }

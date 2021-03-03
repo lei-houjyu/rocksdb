@@ -2874,59 +2874,59 @@ file/writable_file_writer.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/file/writable_file_writer.cc.s
 .PHONY : file/writable_file_writer.cc.s
 
-grpc/version_edit_sync.grpc.pb.o: grpc/version_edit_sync.grpc.pb.cc.o
+grpc/rubble_kv_store.grpc.pb.o: grpc/rubble_kv_store.grpc.pb.cc.o
 
-.PHONY : grpc/version_edit_sync.grpc.pb.o
-
-# target to build an object file
-grpc/version_edit_sync.grpc.pb.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/version_edit_sync.grpc.pb.cc.o
-.PHONY : grpc/version_edit_sync.grpc.pb.cc.o
-
-grpc/version_edit_sync.grpc.pb.i: grpc/version_edit_sync.grpc.pb.cc.i
-
-.PHONY : grpc/version_edit_sync.grpc.pb.i
-
-# target to preprocess a source file
-grpc/version_edit_sync.grpc.pb.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/version_edit_sync.grpc.pb.cc.i
-.PHONY : grpc/version_edit_sync.grpc.pb.cc.i
-
-grpc/version_edit_sync.grpc.pb.s: grpc/version_edit_sync.grpc.pb.cc.s
-
-.PHONY : grpc/version_edit_sync.grpc.pb.s
-
-# target to generate assembly for a file
-grpc/version_edit_sync.grpc.pb.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/version_edit_sync.grpc.pb.cc.s
-.PHONY : grpc/version_edit_sync.grpc.pb.cc.s
-
-grpc/version_edit_sync.pb.o: grpc/version_edit_sync.pb.cc.o
-
-.PHONY : grpc/version_edit_sync.pb.o
+.PHONY : grpc/rubble_kv_store.grpc.pb.o
 
 # target to build an object file
-grpc/version_edit_sync.pb.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/version_edit_sync.pb.cc.o
-.PHONY : grpc/version_edit_sync.pb.cc.o
+grpc/rubble_kv_store.grpc.pb.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/rubble_kv_store.grpc.pb.cc.o
+.PHONY : grpc/rubble_kv_store.grpc.pb.cc.o
 
-grpc/version_edit_sync.pb.i: grpc/version_edit_sync.pb.cc.i
+grpc/rubble_kv_store.grpc.pb.i: grpc/rubble_kv_store.grpc.pb.cc.i
 
-.PHONY : grpc/version_edit_sync.pb.i
+.PHONY : grpc/rubble_kv_store.grpc.pb.i
 
 # target to preprocess a source file
-grpc/version_edit_sync.pb.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/version_edit_sync.pb.cc.i
-.PHONY : grpc/version_edit_sync.pb.cc.i
+grpc/rubble_kv_store.grpc.pb.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/rubble_kv_store.grpc.pb.cc.i
+.PHONY : grpc/rubble_kv_store.grpc.pb.cc.i
 
-grpc/version_edit_sync.pb.s: grpc/version_edit_sync.pb.cc.s
+grpc/rubble_kv_store.grpc.pb.s: grpc/rubble_kv_store.grpc.pb.cc.s
 
-.PHONY : grpc/version_edit_sync.pb.s
+.PHONY : grpc/rubble_kv_store.grpc.pb.s
 
 # target to generate assembly for a file
-grpc/version_edit_sync.pb.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/version_edit_sync.pb.cc.s
-.PHONY : grpc/version_edit_sync.pb.cc.s
+grpc/rubble_kv_store.grpc.pb.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/rubble_kv_store.grpc.pb.cc.s
+.PHONY : grpc/rubble_kv_store.grpc.pb.cc.s
+
+grpc/rubble_kv_store.pb.o: grpc/rubble_kv_store.pb.cc.o
+
+.PHONY : grpc/rubble_kv_store.pb.o
+
+# target to build an object file
+grpc/rubble_kv_store.pb.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/rubble_kv_store.pb.cc.o
+.PHONY : grpc/rubble_kv_store.pb.cc.o
+
+grpc/rubble_kv_store.pb.i: grpc/rubble_kv_store.pb.cc.i
+
+.PHONY : grpc/rubble_kv_store.pb.i
+
+# target to preprocess a source file
+grpc/rubble_kv_store.pb.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/rubble_kv_store.pb.cc.i
+.PHONY : grpc/rubble_kv_store.pb.cc.i
+
+grpc/rubble_kv_store.pb.s: grpc/rubble_kv_store.pb.cc.s
+
+.PHONY : grpc/rubble_kv_store.pb.s
+
+# target to generate assembly for a file
+grpc/rubble_kv_store.pb.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb.dir/build.make CMakeFiles/rocksdb.dir/grpc/rubble_kv_store.pb.cc.s
+.PHONY : grpc/rubble_kv_store.pb.cc.s
 
 logging/auto_roll_logger.o: logging/auto_roll_logger.cc.o
 
@@ -7964,12 +7964,12 @@ help:
 	@echo "... file/writable_file_writer.o"
 	@echo "... file/writable_file_writer.i"
 	@echo "... file/writable_file_writer.s"
-	@echo "... grpc/version_edit_sync.grpc.pb.o"
-	@echo "... grpc/version_edit_sync.grpc.pb.i"
-	@echo "... grpc/version_edit_sync.grpc.pb.s"
-	@echo "... grpc/version_edit_sync.pb.o"
-	@echo "... grpc/version_edit_sync.pb.i"
-	@echo "... grpc/version_edit_sync.pb.s"
+	@echo "... grpc/rubble_kv_store.grpc.pb.o"
+	@echo "... grpc/rubble_kv_store.grpc.pb.i"
+	@echo "... grpc/rubble_kv_store.grpc.pb.s"
+	@echo "... grpc/rubble_kv_store.pb.o"
+	@echo "... grpc/rubble_kv_store.pb.i"
+	@echo "... grpc/rubble_kv_store.pb.s"
 	@echo "... logging/auto_roll_logger.o"
 	@echo "... logging/auto_roll_logger.i"
 	@echo "... logging/auto_roll_logger.s"

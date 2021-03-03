@@ -30,7 +30,7 @@
 #include "rocksdb/write_buffer_manager.h"
 
 //RUBBLE 
-#include "grpc/version_edit_sync_client.h"
+#include "grpc/sync_client.h"
 
 #ifdef max
 #undef max
@@ -1216,7 +1216,7 @@ struct DBOptions {
   std::string remote_sst_dir = "";
 
   // version_edit sync client, used in primary instance
-  std::shared_ptr<VersionEditSyncClient> ves_client = nullptr;
+  std::shared_ptr<SyncClient> ves_client = nullptr;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)
