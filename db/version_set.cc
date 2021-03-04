@@ -3837,9 +3837,6 @@ void VersionSet::AppendVersion(ColumnFamilyData* column_family_data,
   v->next_->prev_ = v;
 }
 
-// RUBBLE: global manifest record unique id
-std::atomic<uint64_t> recordId{0};
-
 Status VersionSet::ProcessManifestWrites(
     std::deque<ManifestWriter>& writers, InstrumentedMutex* mu,
     FSDirectory* db_directory, bool new_descriptor_log,
@@ -4049,7 +4046,6 @@ Status VersionSet::ProcessManifestWrites(
   {
     FileOptions opt_file_opts = fs_->OptimizeForManifestWrite(file_options_);
 
-    // std::cout << "mutex unlock \n";
     mu->Unlock();
 
     TEST_SYNC_POINT("VersionSet::LogAndApply:WriteManifest");
@@ -4084,7 +4080,7 @@ Status VersionSet::ProcessManifestWrites(
       std::string descriptor_fname =
           DescriptorFileName(dbname_, pending_manifest_file_number_);
       
-      std::cout << "new DescriptorFileName: " << descriptor_fname << std::endl;
+      // std::cout << "new DescriptorFileName: " << descriptor_fname << std::endl;
 
       std::unique_ptr<FSWritableFile> descriptor_file;
       io_s = NewWritableFile(fs_.get(), descriptor_fname, &descriptor_file,
@@ -4123,15 +4119,7 @@ Status VersionSet::ProcessManifestWrites(
                                  e->DebugString(true));
           break;
         }
-        FileMetaData meta = e->GetNewFiles().back().second;
-        std::cout << " New File : { File Number : " << meta.fd.GetNumber();
-        std::cout << " , Largest IKey : " << meta.largest.DebugString();
-        std::cout << " , Smallest IKey : " <<meta.smallest.DebugString() << " } \n";
-        // RUBBLE:
-      	Slice rec_slice = record;
-        fprintf(stderr, "Manifest recordId %lu record %s\n", recordId.load(std::memory_order_relaxed), rec_slice.ToString().c_str());
-	      recordId++;
-        
+
 	TEST_KILL_RANDOM("VersionSet::LogAndApply:BeforeAddRecord",
                          rocksdb_kill_odds * REDUCE_ODDS2);
 #ifndef NDEBUG
@@ -4325,7 +4313,6 @@ Status VersionSet::ProcessManifestWrites(
     manifest_writers_.front()->cv.Signal();
   }
 
-  std::cout << " ------------ Returned From ProcessManifestWrites ------------------\n";
   return s;
 
 }
@@ -4347,20 +4334,18 @@ Status VersionSet::LogAndApply(
 
   mu->AssertHeld();
   // RUBBLE: trigger RPC calls to secondary to sync RocksDB state.
-  // std::cout << "------------ Next File Number : " << next_file_number_.load() << " ------------\n";
   if(db_options_->is_rubble && db_options_->is_primary){
       log_and_apply_counter++;
       std::string target_str = db_options_->secondary_address;
 
       std::cout << "[primary] calling syncClient->Sync [" << log_and_apply_counter << "] times\n"; 
-
-      std::cout << "VersionStorageInfo->LevelSummary : ";
-      VersionStorageInfo::LevelSummaryStorage tmp;
+      // std::cout << "VersionStorageInfo->LevelSummary : ";
+      // VersionStorageInfo::LevelSummaryStorage tmp;
 
       auto default_cf = GetColumnFamilySet()->GetDefault();
       auto vstorage = default_cf->current()->storage_info();
-      const char* c = vstorage->LevelSummary(&tmp);
-      std::cout << std::string(c) << std::endl;
+      // const char* c = vstorage->LevelSummary(&tmp);
+      // std::cout << std::string(c) << std::endl;
 
       MemTableList* imm = default_cf->imm();
       MemTable* m = default_cf->mem();
@@ -4370,11 +4355,10 @@ Status VersionSet::LogAndApply(
           ve_count++;
 
           auto j_edit = nlohmann::json::parse(e->DebugJSON((int)log_and_apply_counter , false));
-          std::cout << j_edit.dump(4) << std::endl;
+          // std::cout << j_edit.dump(4) << std::endl;
 
           // Form SyncRequest
           SyncRequest request;
-          // request.set_args("1");
           request.set_args(e->DebugJSON((int)log_and_apply_counter , false));
 
           std::string reply = db_options_->sync_client->Sync(request);

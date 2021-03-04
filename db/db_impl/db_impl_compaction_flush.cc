@@ -1694,12 +1694,7 @@ Status DBImpl::FlushMemTable(ColumnFamilyData* cfd,
   
   Status s;
   const ImmutableDBOptions* db_options_ = cfd->current()->version_set()->db_options();
-  if(db_options_->is_rubble && db_options_->is_secondary ){
-    std::cout << " ----------- Calling FlushMemTable --------------- \n";
-     s = Status::OK();
-    return s;
-  }
-
+  
   uint64_t flush_memtable_id = 0;
   if (!flush_options.allow_write_stall) {
     bool flush_needed = true;
@@ -2097,10 +2092,7 @@ void DBImpl::MaybeScheduleFlushOrCompaction() {
   mutex_.AssertHeld();
   //RUBBLE: disable scheduling of Flush Job for secondary in rubble mode 
   if(immutable_db_options_.is_rubble && immutable_db_options_.is_secondary){
-    // if(unscheduled_flushes_ > 0){
-      // unscheduled_flushes_ = 0;
       std::cout << " -------- Secondary Flush/Compaction disabled  ---------" << std::endl;
-    // }
     return;
   }
 
@@ -2125,13 +2117,6 @@ void DBImpl::MaybeScheduleFlushOrCompaction() {
   bool is_flush_pool_empty =
       env_->GetBackgroundThreads(Env::Priority::HIGH) == 0;
 
-  //RUBBLE: disable scheduling of Flush Job for secondary in rubble mode 
-  // if(immutable_db_options_.is_rubble && immutable_db_options_.is_secondary){
-  //   if(unscheduled_flushes_ > 0){
-  //     unscheduled_flushes_ = 0;
-  //     std::cout << " -------- Secondary Flush Job disabled  ---------" << std::endl;
-  //   }
-  // }
 
   while (!is_flush_pool_empty && unscheduled_flushes_ > 0 &&
          bg_flush_scheduled_ < bg_job_limits.max_flushes) {
@@ -2903,7 +2888,7 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
                            f->file_checksum_func_name);
 
         std::cout << " ----------- Trivial Move Compaction  [ "<< job_context->job_id <<" ]  ----------------- \n";
-        std::cout  << " Version Edit : " << c->edit()->DebugString(false) << std::endl;
+        // std::cout  << " Version Edit : " << c->edit()->DebugString(false) << std::endl;
         ROCKS_LOG_BUFFER(
             log_buffer,
             "[%s] Moving #%" PRIu64 " to level-%d %" PRIu64 " bytes\n",

@@ -421,28 +421,24 @@ void* const SuperVersion::kSVInUse = &SuperVersion::dummy;
 void* const SuperVersion::kSVObsolete = nullptr;
 
 SuperVersion::~SuperVersion() {
-  // std::cout << " ------------- SuperVersion dtor -----------\n";
   for (auto td : to_delete) {
     delete td;
   }
 }
 
 SuperVersion* SuperVersion::Ref() {
-  // std::cout << " ------------ SuperVersion -> Ref -------------\n ";
   refs.fetch_add(1, std::memory_order_relaxed);
   return this;
 }
 
 bool SuperVersion::Unref() {
   // fetch_sub returns the previous value of ref
-  // std::cout << "--------------- SuperVersion -> Unref ------------\n";
   uint32_t previous_refs = refs.fetch_sub(1);
   assert(previous_refs > 0);
   return previous_refs == 1;
 }
 
 void SuperVersion::Cleanup() {
-  // std::cout << " ------------- SuperVersion Cleanp -------------- \n";
   assert(refs.load(std::memory_order_relaxed) == 0);
   imm->Unref(&to_delete);
   MemTable* m = mem->Unref();
@@ -461,7 +457,6 @@ void SuperVersion::Cleanup() {
 void SuperVersion::Init(ColumnFamilyData* new_cfd, MemTable* new_mem,
                         MemTableListVersion* new_imm, Version* new_current) {
                           
-  // std::cout <<"--------- SuperVerison Init ---------- \n";
   cfd = new_cfd;
   mem = new_mem;
   imm = new_imm;
@@ -1257,9 +1252,6 @@ void ColumnFamilyData::InstallSuperVersion(
 void ColumnFamilyData::InstallSuperVersion(
     SuperVersionContext* sv_context, InstrumentedMutex* db_mutex,
     const MutableCFOptions& mutable_cf_options) {
-  // std::cout << "----- ColumnFamilyData -> InstallSuperVersion : current imm refs_ : "<< imm_.current()->GetRefsCount() <<" ------- \n";
-
-  // std::cout << "  ------ InstallSuperVersion : superversion -> init ----------- \n";
   SuperVersion* new_superversion = sv_context->new_superversion.release();
   new_superversion->db_mutex = db_mutex;
   new_superversion->mutable_cf_options = mutable_cf_options;

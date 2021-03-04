@@ -70,14 +70,12 @@ MemTableListVersion::MemTableListVersion(
 
 void MemTableListVersion::Ref() {
    ++refs_;
-    // std::cout << " ------------- MemTablListVersion -> Ref , ref counts : "<< refs_ << " ---------- \n";
     }
 
 // called by superversion::clean()
 void MemTableListVersion::Unref(autovector<MemTable*>* to_delete) {
   assert(refs_ >= 1);
   --refs_;
-  // std::cout << "------------- MemTableListVersion -> Unref , ref counts : " <<  refs_ << "--------------\n";
   if (refs_ == 0) {
     // if to_delete is equal to nullptr it means we're confident
     // that refs_ will not be zero
@@ -267,8 +265,7 @@ void MemTableListVersion::Add(MemTable* m, autovector<MemTable*>* to_delete) {
 // Removes m from list of memtables not flushed.  Caller should NOT Unref m.
 void MemTableListVersion::Remove(MemTable* m,
                                  autovector<MemTable*>* to_delete) {
-  std::cout << " ###### [ MemTableListVersion -> Remove ], Ref count : " << GetRefsCount() << " ####### \n";
-
+  // std::cout << " ###### [ MemTableListVersion -> Remove ], Ref count : " << GetRefsCount() << " ####### \n";
   assert(refs_ == 1);  // only when refs_ == 1 is MemTableListVersion mutable
   memlist_.remove(m);
 
@@ -408,7 +405,6 @@ Status MemTableList::TryInstallMemtableFlushResults(
   // Flush was successful
   // Record the status on the memtable object. Either this call or a call by a
   // concurrent flush thread will read the status and write it to manifest.
-  std::cout <<  "---- " << try_install_memtable_flush_result_counter.load(std::memory_order_relaxed) << " times calling TryInstallMemtableFlushResults , batch count : " << mems.size() << ", file number : " << file_number<< " --------\n  ";
   for (size_t i = 0; i < mems.size(); ++i) {
     // All the edits are associated with the first memtable of this batch.
     assert(i == 0 || mems[i]->GetEdits()->NumEntries() == 0);
@@ -489,7 +485,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
     assert(batch_count == 2);
     edit_list.back()->SetBatchCount(batch_count);
 
-    std::cout << " ---- batch count ( flush compeleted memtable ): " << batch_count << ",  edit list size : " << edit_list.size() << "------ \n";
+    // std::cout << " ---- batch count ( flush compeleted memtable ): " << batch_count << ",  edit list size : " << edit_list.size() << "------ \n";
     // TODO(myabandeh): Not sure how batch_count could be 0 here.
     if (batch_count > 0) {
       if (vset->db_options()->allow_2pc) {
@@ -654,7 +650,7 @@ uint64_t MemTableList::ApproximateOldestKeyTime() const {
 
 void MemTableList::InstallNewVersion() {
 
-  std::cout << "------ MemTableList -> InstallNewVerion , refs_ : " << current_->refs_ << "---------\n";
+  // std::cout << "------ MemTableList -> InstallNewVerion , refs_ : " << current_->refs_ << "---------\n";
   if (current_->refs_ == 1) {
     // we're the only one using the version, just keep using it
   } else {

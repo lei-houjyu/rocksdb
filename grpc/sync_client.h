@@ -11,7 +11,6 @@
 
 using grpc::Channel;
 using grpc::ClientContext;
-// using grpc::Status;
 using rubble::RubbleKvStoreService;
 using rubble::SyncRequest;
 using rubble::SyncReply;
@@ -20,17 +19,12 @@ using rubble::SyncReply;
 class SyncClient {
   public:
     SyncClient(std::shared_ptr<Channel> channel)
-        : stub_(RubbleKvStoreService::NewStub(channel)){};
-    
+        : stub_(RubbleKvStoreService::NewStub(channel)){};    
 
     std::string Sync(const SyncRequest& request){
-
       SyncReply reply;
-      // DebugString(request);
       ClientContext context;
-      // std::cout << "--------------- Calling sync with args : " << request.args() <<" ----------\n";
       grpc::Status status = stub_->Sync(&context, request, &reply);
-      // std::cout << "--------------- Return from sync --------------\n";
       if (status.ok()) {
         return reply.message();
       } else {
@@ -39,8 +33,6 @@ class SyncClient {
           return "RPC failed";
       }
     }
-  grpc::Status Put(const std::pair<std::string, std::string>& kv);
-  grpc::Status Get(const std::vector<std::string>& keys, std::vector<std::string>& vals);
 
   private:
     std::unique_ptr<RubbleKvStoreService::Stub> stub_ = nullptr;
