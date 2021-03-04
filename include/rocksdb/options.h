@@ -30,7 +30,7 @@
 #include "rocksdb/write_buffer_manager.h"
 
 //RUBBLE 
-#include "grpc/sync_client.h"
+#include "grpc/rubble_client.h"
 
 #ifdef max
 #undef max
@@ -1215,8 +1215,8 @@ struct DBOptions {
   //priamry's remote sst directory
   std::string remote_sst_dir = "";
 
-  // version_edit sync client, used in primary instance
-  std::shared_ptr<SyncClient> ves_client = nullptr;
+  // sync client, used by primary instance
+  // std::shared_ptr<RubbleClient> syn_client = nullptr;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)

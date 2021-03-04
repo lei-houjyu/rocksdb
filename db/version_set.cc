@@ -4347,11 +4347,12 @@ Status VersionSet::LogAndApply(
 
   mu->AssertHeld();
   // RUBBLE: trigger RPC calls to secondary to sync RocksDB state.
+  std::cout << "------------ Next File Number : " << next_file_number_.load() << " ------------\n";
   if(db_options_->is_rubble && db_options_->is_primary){
       log_and_apply_counter++;
       std::string target_str = db_options_->secondary_address;
 
-      std::cout << "[primary] calling VesClient->logAndApply [" << log_and_apply_counter << "] times\n"; 
+      std::cout << "[primary] calling syncClient->Sync [" << log_and_apply_counter << "] times\n"; 
 
       std::cout << "VersionStorageInfo->LevelSummary : ";
       VersionStorageInfo::LevelSummaryStorage tmp;
@@ -4366,15 +4367,24 @@ Status VersionSet::LogAndApply(
       uint32_t ve_count{0};
       for (auto edit_list: edit_lists){
         for (auto e: edit_list) {
-          nlohmann::json args;
-          args["ImmutableMemlistSize"] = imm->current()->GetMemlist().size();
-          args["VersionEdit"] = e->DebugJSON((int)log_and_apply_counter , false);
-          ve_count++;
-          std::cout << args.dump(4) << std::endl;
+          // nlohmann::json args;
+          // args["ImmutableMemlistSize"] = imm->current()->GetMemlist().size();
+          // args["VersionEdit"] =
+          auto j_edit = nlohmann::json::parse(e->DebugJSON((int)log_and_apply_counter , false));
 
-          //Form SyncRequest
+          for(auto& file : j_edit["AddedFiles"].get<std::vector<nlohmann::json>>()){
+            for(auto &el: file.items()){
+              std::cout << el.key() << " : " << el.value() << "\n";
+            }
+          }
+          std::cout << j_edit.dump(4) << std::endl;
+          ve_count++;
+          // std::cout << args.dump(4) << std::endl;
+
+          // Form SyncRequest
           SyncRequest request;
-          request.set_args(args.dump());
+          // request.set_args("1");
+          request.set_args(e->DebugJSON((int)log_and_apply_counter , false));
 
           std::string reply = db_options_->sync_client->Sync(request);
           std::cerr << "[ Reply Status ]: " << reply << std::endl;
@@ -4385,7 +4395,7 @@ Status VersionSet::LogAndApply(
       std::cout << " ----------- ImmutableList : " << nlohmann::json::parse(imm->DebugJson()).dump(4) << " ----------------\n";
       std::cout << " Current Version: \n " << default_cf->current()->DebugString(false) << std::endl;
       assert(ve_count == 1);
-      // std::cout << "VersionEdits Count :  " << ve_count << "\n";
+  
   }else if (db_options_->is_rubble && db_options_->is_secondary){
     std::cout << "[secondary] calling logAndApply " << std::endl;
   }

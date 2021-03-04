@@ -482,7 +482,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
       }
       batch_count++;
     }
-    
+
     //rubble
     // There is always only one version edit in the list?
     assert(edit_list.size() == 1);
@@ -697,9 +697,10 @@ uint64_t MemTableList::PrecomputeMinLogContainingPrepSection(
 
 std::string MemTableList::DebugJson() const{
   JSONWriter jw;
+
   if(!current_->memlist_.empty()){
     jw << "Immutable MemtableList";
-    jw << "Size" << current_->memlist_.size();
+    // jw << "Size" << current_->memlist_.size();
     jw.StartArray();
     for(auto m : current_->memlist_){
       jw.StartArrayedObject();

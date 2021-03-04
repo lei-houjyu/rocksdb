@@ -99,7 +99,7 @@ struct ImmutableDBOptions {
   std::string secondary_address;
   bool is_secondary;
   std::string remote_sst_dir;
-  std::shared_ptr<SyncClient> sync_client;
+  std::shared_ptr<RubbleClient> sync_client;
 };
 
 struct MutableDBOptions {

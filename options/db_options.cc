@@ -590,7 +590,7 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
        {
          if(is_rubble && is_primary){
           assert(secondary_address != "");
-          sync_client = std::make_shared<SyncClient>(grpc::CreateChannel(
+          sync_client = std::make_shared<RubbleClient>(grpc::CreateChannel(
           secondary_address, grpc::InsecureChannelCredentials()));
          }
 }

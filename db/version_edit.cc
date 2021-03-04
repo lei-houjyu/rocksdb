@@ -807,10 +807,10 @@ std::string VersionEdit::DebugJSON(int edit_num, bool hex_key) const {
       jw << "FileSize" << f.fd.GetFileSize();
       jw << "SmallestUserKey" << f.smallest.user_key().ToString();
       jw << "SmallestSeqno" << f.fd.smallest_seqno;
-      jw << "SmallestIKey" << f.smallest.DebugString(hex_key);
+      // jw << "SmallestIKey" << f.smallest.DebugString(hex_key);
       jw << "LargestUserKey" << f.largest.user_key().ToString();
       jw << "LargestSeqno" << f.fd.largest_seqno;
-      jw << "LargestIKey" << f.largest.DebugString(hex_key);
+      // jw << "LargestIKey" << f.largest.DebugString(hex_key);
       if (f.oldest_blob_file_number != kInvalidBlobFileNumber) {
         jw << "OldestBlobFile" << f.oldest_blob_file_number;
       }
