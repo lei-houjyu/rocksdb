@@ -16,30 +16,21 @@ using rubble::RubbleKvStoreService;
 using rubble::SyncRequest;
 using rubble::SyncReply;
 
-using rubble::GetReply;
-using rubble::GetRequest;
-using rubble::PutReply;
-using rubble::PutRequest;
-
-// a rubble client could be used by a user to make Put/Get request to the server
-// or it could be used by the primary to do Sync rpc call to the secondary
-class RubbleClient {
+// client responsible for making Sync rpc call to the secondary, used by primary instance 
+class SyncClient {
   public:
-    RubbleClient(std::shared_ptr<Channel> channel)
+    SyncClient(std::shared_ptr<Channel> channel)
         : stub_(RubbleKvStoreService::NewStub(channel)){};
     
-    RubbleClient(std::shared_ptr<Channel> channel, bool to_primary)
-        : stub_(RubbleKvStoreService::NewStub(channel)),
-        to_primary_(to_primary){};
 
     std::string Sync(const SyncRequest& request){
 
       SyncReply reply;
       // DebugString(request);
       ClientContext context;
-      std::cout << "--------------- Calling sync with args : " << request.args() <<" ----------\n";
+      // std::cout << "--------------- Calling sync with args : " << request.args() <<" ----------\n";
       grpc::Status status = stub_->Sync(&context, request, &reply);
-      std::cout << "--------------- Return from sync --------------\n";
+      // std::cout << "--------------- Return from sync --------------\n";
       if (status.ok()) {
         return reply.message();
       } else {
@@ -53,7 +44,4 @@ class RubbleClient {
 
   private:
     std::unique_ptr<RubbleKvStoreService::Stub> stub_ = nullptr;
-     // Is this client sending kv to the primary? If not, it's sending kv to the secondary
-    bool to_primary_ = false;
-    std::atomic<uint64_t> put_count_{0};
 };

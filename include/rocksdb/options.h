@@ -30,7 +30,7 @@
 #include "rocksdb/write_buffer_manager.h"
 
 //RUBBLE 
-#include "grpc/rubble_client.h"
+#include "grpc/sync_client.h"
 
 #ifdef max
 #undef max
