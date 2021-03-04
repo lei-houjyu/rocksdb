@@ -415,9 +415,8 @@ Status MemTableList::TryInstallMemtableFlushResults(
 
     mems[i]->flush_completed_ = true;
     mems[i]->file_number_ = file_number;
-    // std::cout <<  i << " th flushed memtable in : " << mems[i]->file_number_ << " ,";
   }
-  // std::cout  << " } \n";
+
 
   // if some other thread is already committing, then return
   Status s;

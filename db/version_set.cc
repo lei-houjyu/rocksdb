@@ -4347,7 +4347,7 @@ Status VersionSet::LogAndApply(
 
   mu->AssertHeld();
   // RUBBLE: trigger RPC calls to secondary to sync RocksDB state.
-  std::cout << "------------ Next File Number : " << next_file_number_.load() << " ------------\n";
+  // std::cout << "------------ Next File Number : " << next_file_number_.load() << " ------------\n";
   if(db_options_->is_rubble && db_options_->is_primary){
       log_and_apply_counter++;
       std::string target_str = db_options_->secondary_address;
@@ -4367,19 +4367,10 @@ Status VersionSet::LogAndApply(
       uint32_t ve_count{0};
       for (auto edit_list: edit_lists){
         for (auto e: edit_list) {
-          // nlohmann::json args;
-          // args["ImmutableMemlistSize"] = imm->current()->GetMemlist().size();
-          // args["VersionEdit"] =
-          auto j_edit = nlohmann::json::parse(e->DebugJSON((int)log_and_apply_counter , false));
-
-          for(auto& file : j_edit["AddedFiles"].get<std::vector<nlohmann::json>>()){
-            for(auto &el: file.items()){
-              std::cout << el.key() << " : " << el.value() << "\n";
-            }
-          }
-          std::cout << j_edit.dump(4) << std::endl;
           ve_count++;
-          // std::cout << args.dump(4) << std::endl;
+
+          auto j_edit = nlohmann::json::parse(e->DebugJSON((int)log_and_apply_counter , false));
+          std::cout << j_edit.dump(4) << std::endl;
 
           // Form SyncRequest
           SyncRequest request;
@@ -4390,7 +4381,6 @@ Status VersionSet::LogAndApply(
           std::cerr << "[ Reply Status ]: " << reply << std::endl;
         }
       }
-
       // std::cout  << nlohmann::json::parse(m->DebugJson()).dump(4) << std::endl;
       std::cout << " ----------- ImmutableList : " << nlohmann::json::parse(imm->DebugJson()).dump(4) << " ----------------\n";
       std::cout << " Current Version: \n " << default_cf->current()->DebugString(false) << std::endl;
@@ -4499,19 +4489,6 @@ Status VersionSet::LogAndApplyHelper(ColumnFamilyData* cfd,
 
   if (edit->has_log_number_) {
     assert(edit->log_number_ >= cfd->GetLogNumber());
-    std::cout << "VersionEdit->log_number : " << edit->log_number_ << std::endl;
-    if(db_options_->is_rubble && db_options_->is_secondary){
-      std::cout << "Seconary's VersionSet->next_file_number : " << next_file_number_.load() << std::endl;
-      // uint64_t new_file_num = NewFileNumber();
-      if(next_file_number_.load() <= edit->log_number_){
-        while(next_file_number_.load() <= edit->log_number_){
-          NewFileNumber();
-        }
-        std::cout << "Secondary's VersionSet->next_file_number After Increasing : " << next_file_number_.load() << std::endl;  
-      }
-    }else if(db_options_->is_rubble && db_options_->is_primary){
-      std::cout << "Primary's VersionSet->next_file_number : " << next_file_number_.load() << std::endl;
-    }
     assert(edit->log_number_ < next_file_number_.load());
   }
 
