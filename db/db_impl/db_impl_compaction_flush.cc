@@ -1693,8 +1693,6 @@ Status DBImpl::FlushMemTable(ColumnFamilyData* cfd,
                              FlushReason flush_reason, bool writes_stopped) {
   
   Status s;
-  const ImmutableDBOptions* db_options_ = cfd->current()->version_set()->db_options();
-  
   uint64_t flush_memtable_id = 0;
   if (!flush_options.allow_write_stall) {
     bool flush_needed = true;
