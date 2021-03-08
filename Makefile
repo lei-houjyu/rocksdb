@@ -21,6 +21,7 @@ LDFLAGS += $(EXTRA_LDFLAGS)
 MACHINE ?= $(shell uname -m)
 ARFLAGS = ${EXTRA_ARFLAGS} rs
 STRIPFLAGS = -S -x
+# set JAVA_HOME for jni to be located
 JAVA_HOME = /usr/lib/jvm/default-java
 
 # Transform parallel LOG output into something more readable.
@@ -435,6 +436,7 @@ ifeq ($(PLATFORM), OS_OPENBSD)
 endif
 
 ifndef DISABLE_WARNING_AS_ERROR
+	#suppressed warnning
 	# WARNING_FLAGS += -Werror
 endif
 
@@ -470,6 +472,8 @@ ifeq ($(NO_THREEWAY_CRC32C), 1)
 endif
 
 CFLAGS += $(WARNING_FLAGS) -I. -I./include $(PLATFORM_CCFLAGS) $(OPT)
+# add -I and -L flags for rubble dependencies, warnning is suppressed
+# -L specifies where your grpc lib(libgrpc.a libprotobuf.a) directory is
 CXXFLAGS += $(WARNING_FLAGS) -I. -I./include -I./grpc  -I/root/include -I./nlohmann_json/json/include -L/root/lib/  $(PLATFORM_CXXFLAGS) $(OPT)
 #  -Woverloaded-virtual -Wnon-virtual-dtor -Wno-missing-field-initializers
 
@@ -2338,6 +2342,7 @@ $(OBJ_DIR)/util/crc32c_ppc.o: util/crc32c_ppc.c
 $(OBJ_DIR)/util/crc32c_ppc_asm.o: util/crc32c_ppc_asm.S
 	$(AM_V_CC)$(CC) $(CFLAGS) -c $< -o $@
 endif
+#rubble: linking protobuf and grpc lib 
 $(OBJ_DIR)/%.o: %.cc
 	$(AM_V_CC)mkdir -p $(@D) && $(CXX) $(CXXFLAGS) -c $< -o $@ $(COVERAGEFLAGS) -lprotobuf -lgrpc -lgrpc++
 
