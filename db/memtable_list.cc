@@ -697,8 +697,33 @@ std::string MemTableList::DebugJson() const{
     jw << "Immutable MemtableList";
     // jw << "Size" << current_->memlist_.size();
     jw.StartArray();
+    // const ReadOptions read_options = ReadOptions();
     for(auto m : current_->memlist_){
+      
+      // Arena arena;
+      // ScopedArenaIterator arena_iter_guard;
+      // InternalIterator* iter = m->NewIterator(read_options, &arena);
+      // arena_iter_guard.set(iter);
+      // ParsedInternalKey ikey;
+      // iter->SeekToFirst();
+      // ParseInternalKey(iter->key(), &ikey);
+    
+      // std::string smallest = ikey.user_key.ToString();
+      // std::string largest = smallest;
+      // for (iter->Next(); iter->Valid(); iter->Next()) {
+      //   ikey.clear();
+      //   ParseInternalKey(iter->key(), &ikey);
+      //   if(ikey.user_key.ToString() < smallest){
+      //     smallest = ikey.user_key.ToString();
+      //   }
+      //   if(ikey.user_key.ToString() > largest){
+      //     largest = ikey.user_key.ToString();
+      //   }
+      // }
+
       jw.StartArrayedObject();
+      // jw << "SmallestKey" << smallest;
+      // jw << "LargestKey" << largest;
       jw << "ID" << m->GetID();
       jw << "NumDeletes" << m->num_deletes();
       jw << "NumEntries" << m->num_entries();

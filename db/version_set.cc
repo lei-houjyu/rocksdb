@@ -4365,7 +4365,22 @@ Status VersionSet::LogAndApply(
           std::cerr << "[ Reply Status ]: " << reply << std::endl;
         }
       }
-      // std::cout  << nlohmann::json::parse(m->DebugJson()).dump(4) << std::endl;
+      
+      // Arena arena;
+      // const ReadOptions read_options = ReadOptions();
+      // ScopedArenaIterator arena_iter_guard;
+      // InternalIterator* iter = m->NewIterator(read_options, &arena);
+      // arena_iter_guard.set(iter);
+  
+      // ParsedInternalKey ikey;
+      // ParseInternalKey(iter->key(), &ikey);
+      // std::cout << "SmallestKey : " << ikey.user_key.ToString() << std::endl;
+      // ikey.clear();
+      // iter->SeekToLast();
+      // ParseInternalKey(iter->key(), &ikey);
+      // std::cout << "LargestKey : " << ikey.user_key.ToString() << std::endl;
+
+      std::cout  << nlohmann::json::parse(m->DebugJson()).dump(4) << std::endl;
       std::cout << " ----------- ImmutableList : " << nlohmann::json::parse(imm->DebugJson()).dump(4) << " ----------------\n";
       std::cout << " Current Version: \n " << default_cf->current()->DebugString(false) << std::endl;
       assert(ve_count == 1);

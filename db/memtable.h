@@ -445,7 +445,6 @@ class MemTable {
     jw << "DataSize" << data_size_.load(std::memory_order_relaxed);
     jw << "FirstSequenceNum" << first_seqno_.load(std::memory_order_relaxed);
     jw << "EarliestSequenceNum" << earliest_seqno_.load(std::memory_order_relaxed);
-
     jw.EndObject();
     return jw.Get();
   }
