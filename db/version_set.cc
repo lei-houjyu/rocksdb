@@ -4333,12 +4333,11 @@ Status VersionSet::LogAndApply(
   // 3) TryInstallMemtableFlushResults inside memtable_list.cc, which tries to record a successful flush in the manifest file.
 
   mu->AssertHeld();
-  // RUBBLE: trigger RPC calls to secondary to sync RocksDB state.
+  // RUBBLE: trigger RPC calls to downstream node to sync RocksDB states.
   if(db_options_->is_rubble && db_options_->is_primary){
       log_and_apply_counter++;
-      std::string target_str = db_options_->secondary_address;
 
-      std::cout << "[primary] calling syncClient->Sync [" << log_and_apply_counter << "] times\n"; 
+      std::cout << "[Primary] calling syncClient->Sync [" << log_and_apply_counter << "] times to " << db_options_->target_address << "\n"; 
       // std::cout << "VersionStorageInfo->LevelSummary : ";
       // VersionStorageInfo::LevelSummaryStorage tmp;
 
@@ -4385,7 +4384,7 @@ Status VersionSet::LogAndApply(
       std::cout << " Current Version: \n " << default_cf->current()->DebugString(false) << std::endl;
       assert(ve_count == 1);
   
-  }else if (db_options_->is_rubble && db_options_->is_secondary){
+  }else if (db_options_->is_rubble && !db_options_->is_primary){
     std::cout << "[secondary] calling logAndApply " << std::endl;
   }
   // RUBBLE END

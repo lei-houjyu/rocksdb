@@ -220,7 +220,7 @@ struct FileMetaData {
         file_creation_time(_file_creation_time),
         file_checksum(_file_checksum),
         file_checksum_func_name(_file_checksum_func_name) {
-    // TEST_SYNC_POINT_CALLBACK("FileMetaData::FileMetaData", this);
+    TEST_SYNC_POINT_CALLBACK("FileMetaData::FileMetaData", this);
   }
 
   // REQUIRED: Keys must be given to the function in sorted order (it expects

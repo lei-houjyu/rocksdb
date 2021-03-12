@@ -9,6 +9,9 @@
 #include <vector>
 
 #include "rocksdb/options.h"
+//RUBBLE 
+#include "grpc/sync_client.h"
+#include "grpc/kvstore_client.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -96,10 +99,11 @@ struct ImmutableDBOptions {
   //RUBBLE
   bool is_rubble;
   bool is_primary;
-  std::string secondary_address;
-  bool is_secondary;
+  bool is_tail;
+  std::string target_address;
   std::string remote_sst_dir;
   std::shared_ptr<SyncClient> sync_client;
+  std::shared_ptr<KvStoreClient> kvstore_client;
 };
 
 struct MutableDBOptions {

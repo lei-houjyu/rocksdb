@@ -581,17 +581,23 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       bgerror_resume_retry_interval(options.bgerror_resume_retry_interval),
       allow_data_in_errors(options.allow_data_in_errors),
       db_host_id(options.db_host_id),
+      //RUBBLE
       is_rubble(options.is_rubble),
       is_primary(options.is_primary),
-      secondary_address(options.secondary_address),
-      is_secondary(options.is_secondary),
+      is_tail(options.is_tail),
+      target_address(options.target_address),
       remote_sst_dir(options.remote_sst_dir)
-      // ves_client(options.ves_client)
        {
-         if(is_rubble && is_primary){
-          assert(secondary_address != "");
+         // all nodes except tail needs to do Sync rpc and forward operations to target_address
+         if(is_rubble && !is_tail){
+          assert(target_address != "");
           sync_client = std::make_shared<SyncClient>(grpc::CreateChannel(
-          secondary_address, grpc::InsecureChannelCredentials()));
+            target_address, grpc::InsecureChannelCredentials()));
+          kvstore_client = std::make_shared<KvStoreClient>(grpc::CreateChannel(
+            target_address, grpc::InsecureChannelCredentials()));
+         }else if(is_rubble && is_tail){
+           //TODO: tail node needs to do rpc call to replicator to return the true reply
+
          }
 }
 

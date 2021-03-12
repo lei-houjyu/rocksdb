@@ -2088,8 +2088,8 @@ void DBImpl::EnableManualCompaction() {
 
 void DBImpl::MaybeScheduleFlushOrCompaction() {
   mutex_.AssertHeld();
-  //RUBBLE: disable scheduling of Flush Job for secondary in rubble mode 
-  if(immutable_db_options_.is_rubble && immutable_db_options_.is_secondary){
+  //RUBBLE: only primary is doing Flush, disable scheduling of Flush Job for secondaries in rubble mode 
+  if(immutable_db_options_.is_rubble && !immutable_db_options_.is_primary){
       std::cout << " -------- Secondary Flush/Compaction disabled  ---------" << std::endl;
     return;
   }

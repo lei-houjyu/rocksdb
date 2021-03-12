@@ -29,9 +29,6 @@
 #include "rocksdb/version.h"
 #include "rocksdb/write_buffer_manager.h"
 
-//RUBBLE 
-#include "grpc/sync_client.h"
-
 #ifdef max
 #undef max
 #endif
@@ -1201,22 +1198,23 @@ struct DBOptions {
   std::string db_host_id = kHostnameForDbHostId;
 
   //RUBBLE
-  //is rubble mode?
   bool is_rubble = false;
 
   // used when rubble mode is enabled
+  // Only the primary instance is doing flush and compaction
   bool is_primary = false;
-  // secondary's server address, used by primary(is_primayr is true)
-  // example : 10.10.1.2:50051
-  std::string secondary_address = "";
 
-  bool is_secondary = false;
+  // nodes except tail are doing shipping sst files and doing Sync rpc call 
+  // to the downstream node in the chain
+  // tail node is responsible for sending the true reply back to the replicator 
+  bool is_tail = false;
 
-  //priamry's remote sst directory
+  // downstream's server address to an upstream node, all nodes have a target_address 
+  // example string : 10.10.1.2:50051
+  std::string target_address = "";
+
+  //upstream's remote sst directory, not "" for all nodes except tail
   std::string remote_sst_dir = "";
-
-  // sync client, used by primary instance
-  // std::shared_ptr<RubbleClient> syn_client = nullptr;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)
