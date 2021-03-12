@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package rubble;
+
+service RubbleKvStoreService {
+
+  // an internal rpc call used by the upstream (except the tail node) 
+  // to synchronize states to the downstream nodes in the chain
+  rpc Sync (SyncRequest) returns (SyncReply) {} 
+
+  //Put a stream of key/value pairs
+  rpc Put(stream PutRequest) returns (stream PutReply){}
+
+  // Get values for the specified keys
+  rpc Get(stream GetRequest) returns (stream GetReply){}
+
+  // Delete a record in the db
+  rpc Delete(stream DeleteRequest) returns (stream DeleteReply){}
+
+  // Update the value for a specified key of a record in the db
+  rpc Update(stream UpdateRequest) returns (stream UpdateReply){}
+}
+
+message SyncRequest {
+  // a json string of args
+  string  args = 1;
+}
+
+message SyncReply {
+  string message = 1;
+}
+
+// The Get request containing a key.
+message GetRequest {
+  string key = 1;
+}
+
+// The Get response containing the status and returned value for the key if key exists
+message GetReply {
+  bool   ok = 1;
+  string status = 2;
+  string  value = 3;
+}
+
+// The Put request containing a key-value pair.
+message PutRequest {
+  string key = 1;
+  string value = 2;
+}
+
+// The Put reply containing the reply status indicating whether the put succeeds
+message PutReply {
+    bool ok = 1;
+    string status = 2;
+}
+
+// The Delete request containing a key of a record to delete
+message DeleteRequest{
+  string key = 1;
+}
+
+message DeleteReply{
+  string status = 1;
+}
+
+// The Update request containing a key/value pair to update a record in the db
+message UpdateRequest{
+  string key = 1;
+  string value = 2;
+}
+
+message UpdateReply{
+  string status = 1;
+}
