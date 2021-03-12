@@ -831,9 +831,7 @@ set(SOURCES
         utilities/ttl/db_ttl_impl.cc
         utilities/write_batch_with_index/write_batch_with_index.cc
         utilities/write_batch_with_index/write_batch_with_index_internal.cc
-        grpc/rubble_kv_store.grpc.pb.cc
-        grpc/rubble_kv_store.pb.cc
-        $<TARGET_OBJECTS:build_version>)
+        )
 
 if(HAVE_SSE42 AND NOT MSVC)
   set_source_files_properties(
@@ -1012,6 +1010,31 @@ else()
   endif()
 endif()
 
+# Proto file
+get_filename_component(rubble_kv_store "./protos/rubble_kv_store.proto" ABSOLUTE)
+get_filename_component(rubble_kv_store_path "${rubble_kv_store}" PATH)
+
+# Generated sources
+set(rubble_kv_store_srcs "${CMAKE_CURRENT_BINARY_DIR}/grpc/rubble_kv_store.pb.cc")
+set(rubble_kv_store_hdrs "${CMAKE_CURRENT_BINARY_DIR}/grpc/rubble_kv_store.pb.h")
+set(rubble_kv_store_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/grpc/rubble_kv_store.grpc.pb.cc")
+set(rubble_kv_store_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/grpc/rubble_kv_store.grpc.pb.h")
+add_custom_command(
+      OUTPUT "${rubble_kv_store_srcs}" "${rubble_kv_store_hdrs}" "${rubble_kv_store_grpc_srcs}" "${rubble_kv_store_grpc_hdrs}"
+      COMMAND ${_PROTOBUF_PROTOC}
+      ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}/grpc"
+        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}/grpc"
+        -I "${rubble_kv_store_path}"
+        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+        "${rubble_kv_store}"
+      DEPENDS "${rubble_kv_store}")
+
+# Include generated *.pb.h files
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/grpc")
+
+list(APPEND SOURCES
+    grpc/rubble_kv_store.grpc.pb.cc
+    grpc/rubble_kv_store.pb.cc) 
 # RUBBLE END
 
 
@@ -1032,7 +1055,10 @@ target_link_libraries(${ROCKSDB_STATIC_LIB} PRIVATE
 if(ROCKSDB_BUILD_SHARED)
   add_library(${ROCKSDB_SHARED_LIB} SHARED ${SOURCES})
   target_link_libraries(${ROCKSDB_SHARED_LIB} PRIVATE
-    ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} ${_REFLECTION} ${_GRPC_GRPCPP}
+    ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} 
+    ${_REFLECTION} 
+    ${_GRPC_GRPCPP}
+    nlohmann_json::nlohmann_json
     ${_PROTOBUF_LIBPROTOBUF})
 
   if(WIN32)
