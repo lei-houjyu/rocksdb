@@ -47,7 +47,7 @@ struct TableStruct_rubble_5fkv_5fstore_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[6]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[10]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -55,6 +55,12 @@ struct TableStruct_rubble_5fkv_5fstore_2eproto {
 };
 extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_rubble_5fkv_5fstore_2eproto;
 namespace rubble {
+class DeleteReply;
+class DeleteReplyDefaultTypeInternal;
+extern DeleteReplyDefaultTypeInternal _DeleteReply_default_instance_;
+class DeleteRequest;
+class DeleteRequestDefaultTypeInternal;
+extern DeleteRequestDefaultTypeInternal _DeleteRequest_default_instance_;
 class GetReply;
 class GetReplyDefaultTypeInternal;
 extern GetReplyDefaultTypeInternal _GetReply_default_instance_;
@@ -73,14 +79,24 @@ extern SyncReplyDefaultTypeInternal _SyncReply_default_instance_;
 class SyncRequest;
 class SyncRequestDefaultTypeInternal;
 extern SyncRequestDefaultTypeInternal _SyncRequest_default_instance_;
+class UpdateReply;
+class UpdateReplyDefaultTypeInternal;
+extern UpdateReplyDefaultTypeInternal _UpdateReply_default_instance_;
+class UpdateRequest;
+class UpdateRequestDefaultTypeInternal;
+extern UpdateRequestDefaultTypeInternal _UpdateRequest_default_instance_;
 }  // namespace rubble
 PROTOBUF_NAMESPACE_OPEN
+template<> ::rubble::DeleteReply* Arena::CreateMaybeMessage<::rubble::DeleteReply>(Arena*);
+template<> ::rubble::DeleteRequest* Arena::CreateMaybeMessage<::rubble::DeleteRequest>(Arena*);
 template<> ::rubble::GetReply* Arena::CreateMaybeMessage<::rubble::GetReply>(Arena*);
 template<> ::rubble::GetRequest* Arena::CreateMaybeMessage<::rubble::GetRequest>(Arena*);
 template<> ::rubble::PutReply* Arena::CreateMaybeMessage<::rubble::PutReply>(Arena*);
 template<> ::rubble::PutRequest* Arena::CreateMaybeMessage<::rubble::PutRequest>(Arena*);
 template<> ::rubble::SyncReply* Arena::CreateMaybeMessage<::rubble::SyncReply>(Arena*);
 template<> ::rubble::SyncRequest* Arena::CreateMaybeMessage<::rubble::SyncRequest>(Arena*);
+template<> ::rubble::UpdateReply* Arena::CreateMaybeMessage<::rubble::UpdateReply>(Arena*);
+template<> ::rubble::UpdateRequest* Arena::CreateMaybeMessage<::rubble::UpdateRequest>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace rubble {
 
@@ -1006,6 +1022,600 @@ class PutReply PROTOBUF_FINAL :
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
 };
+// -------------------------------------------------------------------
+
+class DeleteRequest PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.DeleteRequest) */ {
+ public:
+  inline DeleteRequest() : DeleteRequest(nullptr) {}
+  virtual ~DeleteRequest();
+
+  DeleteRequest(const DeleteRequest& from);
+  DeleteRequest(DeleteRequest&& from) noexcept
+    : DeleteRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline DeleteRequest& operator=(const DeleteRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline DeleteRequest& operator=(DeleteRequest&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const DeleteRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const DeleteRequest* internal_default_instance() {
+    return reinterpret_cast<const DeleteRequest*>(
+               &_DeleteRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    6;
+
+  friend void swap(DeleteRequest& a, DeleteRequest& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(DeleteRequest* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(DeleteRequest* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline DeleteRequest* New() const final {
+    return CreateMaybeMessage<DeleteRequest>(nullptr);
+  }
+
+  DeleteRequest* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<DeleteRequest>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const DeleteRequest& from);
+  void MergeFrom(const DeleteRequest& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(DeleteRequest* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "rubble.DeleteRequest";
+  }
+  protected:
+  explicit DeleteRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
+    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kKeyFieldNumber = 1,
+  };
+  // string key = 1;
+  void clear_key();
+  const std::string& key() const;
+  void set_key(const std::string& value);
+  void set_key(std::string&& value);
+  void set_key(const char* value);
+  void set_key(const char* value, size_t size);
+  std::string* mutable_key();
+  std::string* release_key();
+  void set_allocated_key(std::string* key);
+  private:
+  const std::string& _internal_key() const;
+  void _internal_set_key(const std::string& value);
+  std::string* _internal_mutable_key();
+  public:
+
+  // @@protoc_insertion_point(class_scope:rubble.DeleteRequest)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr key_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
+};
+// -------------------------------------------------------------------
+
+class DeleteReply PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.DeleteReply) */ {
+ public:
+  inline DeleteReply() : DeleteReply(nullptr) {}
+  virtual ~DeleteReply();
+
+  DeleteReply(const DeleteReply& from);
+  DeleteReply(DeleteReply&& from) noexcept
+    : DeleteReply() {
+    *this = ::std::move(from);
+  }
+
+  inline DeleteReply& operator=(const DeleteReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline DeleteReply& operator=(DeleteReply&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const DeleteReply& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const DeleteReply* internal_default_instance() {
+    return reinterpret_cast<const DeleteReply*>(
+               &_DeleteReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    7;
+
+  friend void swap(DeleteReply& a, DeleteReply& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(DeleteReply* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(DeleteReply* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline DeleteReply* New() const final {
+    return CreateMaybeMessage<DeleteReply>(nullptr);
+  }
+
+  DeleteReply* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<DeleteReply>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const DeleteReply& from);
+  void MergeFrom(const DeleteReply& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(DeleteReply* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "rubble.DeleteReply";
+  }
+  protected:
+  explicit DeleteReply(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
+    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kStatusFieldNumber = 1,
+  };
+  // string status = 1;
+  void clear_status();
+  const std::string& status() const;
+  void set_status(const std::string& value);
+  void set_status(std::string&& value);
+  void set_status(const char* value);
+  void set_status(const char* value, size_t size);
+  std::string* mutable_status();
+  std::string* release_status();
+  void set_allocated_status(std::string* status);
+  private:
+  const std::string& _internal_status() const;
+  void _internal_set_status(const std::string& value);
+  std::string* _internal_mutable_status();
+  public:
+
+  // @@protoc_insertion_point(class_scope:rubble.DeleteReply)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr status_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
+};
+// -------------------------------------------------------------------
+
+class UpdateRequest PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.UpdateRequest) */ {
+ public:
+  inline UpdateRequest() : UpdateRequest(nullptr) {}
+  virtual ~UpdateRequest();
+
+  UpdateRequest(const UpdateRequest& from);
+  UpdateRequest(UpdateRequest&& from) noexcept
+    : UpdateRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline UpdateRequest& operator=(const UpdateRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline UpdateRequest& operator=(UpdateRequest&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const UpdateRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const UpdateRequest* internal_default_instance() {
+    return reinterpret_cast<const UpdateRequest*>(
+               &_UpdateRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    8;
+
+  friend void swap(UpdateRequest& a, UpdateRequest& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(UpdateRequest* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(UpdateRequest* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline UpdateRequest* New() const final {
+    return CreateMaybeMessage<UpdateRequest>(nullptr);
+  }
+
+  UpdateRequest* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<UpdateRequest>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const UpdateRequest& from);
+  void MergeFrom(const UpdateRequest& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(UpdateRequest* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "rubble.UpdateRequest";
+  }
+  protected:
+  explicit UpdateRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
+    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kKeyFieldNumber = 1,
+    kValueFieldNumber = 2,
+  };
+  // string key = 1;
+  void clear_key();
+  const std::string& key() const;
+  void set_key(const std::string& value);
+  void set_key(std::string&& value);
+  void set_key(const char* value);
+  void set_key(const char* value, size_t size);
+  std::string* mutable_key();
+  std::string* release_key();
+  void set_allocated_key(std::string* key);
+  private:
+  const std::string& _internal_key() const;
+  void _internal_set_key(const std::string& value);
+  std::string* _internal_mutable_key();
+  public:
+
+  // string value = 2;
+  void clear_value();
+  const std::string& value() const;
+  void set_value(const std::string& value);
+  void set_value(std::string&& value);
+  void set_value(const char* value);
+  void set_value(const char* value, size_t size);
+  std::string* mutable_value();
+  std::string* release_value();
+  void set_allocated_value(std::string* value);
+  private:
+  const std::string& _internal_value() const;
+  void _internal_set_value(const std::string& value);
+  std::string* _internal_mutable_value();
+  public:
+
+  // @@protoc_insertion_point(class_scope:rubble.UpdateRequest)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr key_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr value_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
+};
+// -------------------------------------------------------------------
+
+class UpdateReply PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.UpdateReply) */ {
+ public:
+  inline UpdateReply() : UpdateReply(nullptr) {}
+  virtual ~UpdateReply();
+
+  UpdateReply(const UpdateReply& from);
+  UpdateReply(UpdateReply&& from) noexcept
+    : UpdateReply() {
+    *this = ::std::move(from);
+  }
+
+  inline UpdateReply& operator=(const UpdateReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline UpdateReply& operator=(UpdateReply&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const UpdateReply& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const UpdateReply* internal_default_instance() {
+    return reinterpret_cast<const UpdateReply*>(
+               &_UpdateReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    9;
+
+  friend void swap(UpdateReply& a, UpdateReply& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(UpdateReply* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(UpdateReply* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline UpdateReply* New() const final {
+    return CreateMaybeMessage<UpdateReply>(nullptr);
+  }
+
+  UpdateReply* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<UpdateReply>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const UpdateReply& from);
+  void MergeFrom(const UpdateReply& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(UpdateReply* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "rubble.UpdateReply";
+  }
+  protected:
+  explicit UpdateReply(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
+    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kStatusFieldNumber = 1,
+  };
+  // string status = 1;
+  void clear_status();
+  const std::string& status() const;
+  void set_status(const std::string& value);
+  void set_status(std::string&& value);
+  void set_status(const char* value);
+  void set_status(const char* value, size_t size);
+  std::string* mutable_status();
+  std::string* release_status();
+  void set_allocated_status(std::string* status);
+  private:
+  const std::string& _internal_status() const;
+  void _internal_set_status(const std::string& value);
+  std::string* _internal_mutable_status();
+  public:
+
+  // @@protoc_insertion_point(class_scope:rubble.UpdateReply)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr status_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
+};
 // ===================================================================
 
 
@@ -1573,9 +2183,343 @@ inline void PutReply::set_allocated_status(std::string* status) {
   // @@protoc_insertion_point(field_set_allocated:rubble.PutReply.status)
 }
 
+// -------------------------------------------------------------------
+
+// DeleteRequest
+
+// string key = 1;
+inline void DeleteRequest::clear_key() {
+  key_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& DeleteRequest::key() const {
+  // @@protoc_insertion_point(field_get:rubble.DeleteRequest.key)
+  return _internal_key();
+}
+inline void DeleteRequest::set_key(const std::string& value) {
+  _internal_set_key(value);
+  // @@protoc_insertion_point(field_set:rubble.DeleteRequest.key)
+}
+inline std::string* DeleteRequest::mutable_key() {
+  // @@protoc_insertion_point(field_mutable:rubble.DeleteRequest.key)
+  return _internal_mutable_key();
+}
+inline const std::string& DeleteRequest::_internal_key() const {
+  return key_.Get();
+}
+inline void DeleteRequest::_internal_set_key(const std::string& value) {
+  
+  key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void DeleteRequest::set_key(std::string&& value) {
+  
+  key_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:rubble.DeleteRequest.key)
+}
+inline void DeleteRequest::set_key(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:rubble.DeleteRequest.key)
+}
+inline void DeleteRequest::set_key(const char* value,
+    size_t size) {
+  
+  key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:rubble.DeleteRequest.key)
+}
+inline std::string* DeleteRequest::_internal_mutable_key() {
+  
+  return key_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* DeleteRequest::release_key() {
+  // @@protoc_insertion_point(field_release:rubble.DeleteRequest.key)
+  return key_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void DeleteRequest::set_allocated_key(std::string* key) {
+  if (key != nullptr) {
+    
+  } else {
+    
+  }
+  key_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), key,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:rubble.DeleteRequest.key)
+}
+
+// -------------------------------------------------------------------
+
+// DeleteReply
+
+// string status = 1;
+inline void DeleteReply::clear_status() {
+  status_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& DeleteReply::status() const {
+  // @@protoc_insertion_point(field_get:rubble.DeleteReply.status)
+  return _internal_status();
+}
+inline void DeleteReply::set_status(const std::string& value) {
+  _internal_set_status(value);
+  // @@protoc_insertion_point(field_set:rubble.DeleteReply.status)
+}
+inline std::string* DeleteReply::mutable_status() {
+  // @@protoc_insertion_point(field_mutable:rubble.DeleteReply.status)
+  return _internal_mutable_status();
+}
+inline const std::string& DeleteReply::_internal_status() const {
+  return status_.Get();
+}
+inline void DeleteReply::_internal_set_status(const std::string& value) {
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void DeleteReply::set_status(std::string&& value) {
+  
+  status_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:rubble.DeleteReply.status)
+}
+inline void DeleteReply::set_status(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:rubble.DeleteReply.status)
+}
+inline void DeleteReply::set_status(const char* value,
+    size_t size) {
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:rubble.DeleteReply.status)
+}
+inline std::string* DeleteReply::_internal_mutable_status() {
+  
+  return status_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* DeleteReply::release_status() {
+  // @@protoc_insertion_point(field_release:rubble.DeleteReply.status)
+  return status_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void DeleteReply::set_allocated_status(std::string* status) {
+  if (status != nullptr) {
+    
+  } else {
+    
+  }
+  status_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), status,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:rubble.DeleteReply.status)
+}
+
+// -------------------------------------------------------------------
+
+// UpdateRequest
+
+// string key = 1;
+inline void UpdateRequest::clear_key() {
+  key_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& UpdateRequest::key() const {
+  // @@protoc_insertion_point(field_get:rubble.UpdateRequest.key)
+  return _internal_key();
+}
+inline void UpdateRequest::set_key(const std::string& value) {
+  _internal_set_key(value);
+  // @@protoc_insertion_point(field_set:rubble.UpdateRequest.key)
+}
+inline std::string* UpdateRequest::mutable_key() {
+  // @@protoc_insertion_point(field_mutable:rubble.UpdateRequest.key)
+  return _internal_mutable_key();
+}
+inline const std::string& UpdateRequest::_internal_key() const {
+  return key_.Get();
+}
+inline void UpdateRequest::_internal_set_key(const std::string& value) {
+  
+  key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void UpdateRequest::set_key(std::string&& value) {
+  
+  key_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:rubble.UpdateRequest.key)
+}
+inline void UpdateRequest::set_key(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:rubble.UpdateRequest.key)
+}
+inline void UpdateRequest::set_key(const char* value,
+    size_t size) {
+  
+  key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:rubble.UpdateRequest.key)
+}
+inline std::string* UpdateRequest::_internal_mutable_key() {
+  
+  return key_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* UpdateRequest::release_key() {
+  // @@protoc_insertion_point(field_release:rubble.UpdateRequest.key)
+  return key_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void UpdateRequest::set_allocated_key(std::string* key) {
+  if (key != nullptr) {
+    
+  } else {
+    
+  }
+  key_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), key,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:rubble.UpdateRequest.key)
+}
+
+// string value = 2;
+inline void UpdateRequest::clear_value() {
+  value_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& UpdateRequest::value() const {
+  // @@protoc_insertion_point(field_get:rubble.UpdateRequest.value)
+  return _internal_value();
+}
+inline void UpdateRequest::set_value(const std::string& value) {
+  _internal_set_value(value);
+  // @@protoc_insertion_point(field_set:rubble.UpdateRequest.value)
+}
+inline std::string* UpdateRequest::mutable_value() {
+  // @@protoc_insertion_point(field_mutable:rubble.UpdateRequest.value)
+  return _internal_mutable_value();
+}
+inline const std::string& UpdateRequest::_internal_value() const {
+  return value_.Get();
+}
+inline void UpdateRequest::_internal_set_value(const std::string& value) {
+  
+  value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void UpdateRequest::set_value(std::string&& value) {
+  
+  value_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:rubble.UpdateRequest.value)
+}
+inline void UpdateRequest::set_value(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:rubble.UpdateRequest.value)
+}
+inline void UpdateRequest::set_value(const char* value,
+    size_t size) {
+  
+  value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:rubble.UpdateRequest.value)
+}
+inline std::string* UpdateRequest::_internal_mutable_value() {
+  
+  return value_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* UpdateRequest::release_value() {
+  // @@protoc_insertion_point(field_release:rubble.UpdateRequest.value)
+  return value_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void UpdateRequest::set_allocated_value(std::string* value) {
+  if (value != nullptr) {
+    
+  } else {
+    
+  }
+  value_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:rubble.UpdateRequest.value)
+}
+
+// -------------------------------------------------------------------
+
+// UpdateReply
+
+// string status = 1;
+inline void UpdateReply::clear_status() {
+  status_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& UpdateReply::status() const {
+  // @@protoc_insertion_point(field_get:rubble.UpdateReply.status)
+  return _internal_status();
+}
+inline void UpdateReply::set_status(const std::string& value) {
+  _internal_set_status(value);
+  // @@protoc_insertion_point(field_set:rubble.UpdateReply.status)
+}
+inline std::string* UpdateReply::mutable_status() {
+  // @@protoc_insertion_point(field_mutable:rubble.UpdateReply.status)
+  return _internal_mutable_status();
+}
+inline const std::string& UpdateReply::_internal_status() const {
+  return status_.Get();
+}
+inline void UpdateReply::_internal_set_status(const std::string& value) {
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void UpdateReply::set_status(std::string&& value) {
+  
+  status_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:rubble.UpdateReply.status)
+}
+inline void UpdateReply::set_status(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:rubble.UpdateReply.status)
+}
+inline void UpdateReply::set_status(const char* value,
+    size_t size) {
+  
+  status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:rubble.UpdateReply.status)
+}
+inline std::string* UpdateReply::_internal_mutable_status() {
+  
+  return status_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* UpdateReply::release_status() {
+  // @@protoc_insertion_point(field_release:rubble.UpdateReply.status)
+  return status_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void UpdateReply::set_allocated_status(std::string* status) {
+  if (status != nullptr) {
+    
+  } else {
+    
+  }
+  status_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), status,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:rubble.UpdateReply.status)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

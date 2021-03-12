@@ -36,7 +36,8 @@ class RubbleKvStoreService final {
   class StubInterface {
    public:
     virtual ~StubInterface() {}
-    // an internal rpc call used by the primary 
+    // an internal rpc call used by the upstream (except the tail node) 
+    // to synchronize states to the downstream nodes in the chain
     virtual ::grpc::Status Sync(::grpc::ClientContext* context, const ::rubble::SyncRequest& request, ::rubble::SyncReply* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::rubble::SyncReply>> AsyncSync(::grpc::ClientContext* context, const ::rubble::SyncRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::rubble::SyncReply>>(AsyncSyncRaw(context, request, cq));
@@ -44,6 +45,7 @@ class RubbleKvStoreService final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::rubble::SyncReply>> PrepareAsyncSync(::grpc::ClientContext* context, const ::rubble::SyncRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::rubble::SyncReply>>(PrepareAsyncSyncRaw(context, request, cq));
     }
+    // Put a stream of key/value pairs
     std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::PutRequest, ::rubble::PutReply>> Put(::grpc::ClientContext* context) {
       return std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::PutRequest, ::rubble::PutReply>>(PutRaw(context));
     }
@@ -53,6 +55,7 @@ class RubbleKvStoreService final {
     std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::PutRequest, ::rubble::PutReply>> PrepareAsyncPut(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::PutRequest, ::rubble::PutReply>>(PrepareAsyncPutRaw(context, cq));
     }
+    // Get values for the specified keys
     std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::GetRequest, ::rubble::GetReply>> Get(::grpc::ClientContext* context) {
       return std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::GetRequest, ::rubble::GetReply>>(GetRaw(context));
     }
@@ -62,25 +65,60 @@ class RubbleKvStoreService final {
     std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::GetRequest, ::rubble::GetReply>> PrepareAsyncGet(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::GetRequest, ::rubble::GetReply>>(PrepareAsyncGetRaw(context, cq));
     }
+    // Delete a record in the db
+    std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::DeleteRequest, ::rubble::DeleteReply>> Delete(::grpc::ClientContext* context) {
+      return std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::DeleteRequest, ::rubble::DeleteReply>>(DeleteRaw(context));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::DeleteRequest, ::rubble::DeleteReply>> AsyncDelete(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::DeleteRequest, ::rubble::DeleteReply>>(AsyncDeleteRaw(context, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::DeleteRequest, ::rubble::DeleteReply>> PrepareAsyncDelete(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::DeleteRequest, ::rubble::DeleteReply>>(PrepareAsyncDeleteRaw(context, cq));
+    }
+    // Update the value for a specified key of a record in the db
+    std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::UpdateRequest, ::rubble::UpdateReply>> Update(::grpc::ClientContext* context) {
+      return std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::UpdateRequest, ::rubble::UpdateReply>>(UpdateRaw(context));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::UpdateRequest, ::rubble::UpdateReply>> AsyncUpdate(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::UpdateRequest, ::rubble::UpdateReply>>(AsyncUpdateRaw(context, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::UpdateRequest, ::rubble::UpdateReply>> PrepareAsyncUpdate(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::UpdateRequest, ::rubble::UpdateReply>>(PrepareAsyncUpdateRaw(context, cq));
+    }
     class experimental_async_interface {
      public:
       virtual ~experimental_async_interface() {}
-      // an internal rpc call used by the primary 
+      // an internal rpc call used by the upstream (except the tail node) 
+      // to synchronize states to the downstream nodes in the chain
       virtual void Sync(::grpc::ClientContext* context, const ::rubble::SyncRequest* request, ::rubble::SyncReply* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void Sync(::grpc::ClientContext* context, const ::rubble::SyncRequest* request, ::rubble::SyncReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
       virtual void Sync(::grpc::ClientContext* context, const ::rubble::SyncRequest* request, ::rubble::SyncReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
+      // Put a stream of key/value pairs
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void Put(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::PutRequest,::rubble::PutReply>* reactor) = 0;
       #else
       virtual void Put(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::PutRequest,::rubble::PutReply>* reactor) = 0;
       #endif
+      // Get values for the specified keys
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void Get(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::GetRequest,::rubble::GetReply>* reactor) = 0;
       #else
       virtual void Get(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::GetRequest,::rubble::GetReply>* reactor) = 0;
+      #endif
+      // Delete a record in the db
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void Delete(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::DeleteRequest,::rubble::DeleteReply>* reactor) = 0;
+      #else
+      virtual void Delete(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::DeleteRequest,::rubble::DeleteReply>* reactor) = 0;
+      #endif
+      // Update the value for a specified key of a record in the db
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void Update(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::UpdateRequest,::rubble::UpdateReply>* reactor) = 0;
+      #else
+      virtual void Update(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::UpdateRequest,::rubble::UpdateReply>* reactor) = 0;
       #endif
     };
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
@@ -99,6 +137,12 @@ class RubbleKvStoreService final {
     virtual ::grpc::ClientReaderWriterInterface< ::rubble::GetRequest, ::rubble::GetReply>* GetRaw(::grpc::ClientContext* context) = 0;
     virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::GetRequest, ::rubble::GetReply>* AsyncGetRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) = 0;
     virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::GetRequest, ::rubble::GetReply>* PrepareAsyncGetRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientReaderWriterInterface< ::rubble::DeleteRequest, ::rubble::DeleteReply>* DeleteRaw(::grpc::ClientContext* context) = 0;
+    virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::DeleteRequest, ::rubble::DeleteReply>* AsyncDeleteRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::DeleteRequest, ::rubble::DeleteReply>* PrepareAsyncDeleteRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientReaderWriterInterface< ::rubble::UpdateRequest, ::rubble::UpdateReply>* UpdateRaw(::grpc::ClientContext* context) = 0;
+    virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::UpdateRequest, ::rubble::UpdateReply>* AsyncUpdateRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::UpdateRequest, ::rubble::UpdateReply>* PrepareAsyncUpdateRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) = 0;
   };
   class Stub final : public StubInterface {
    public:
@@ -128,6 +172,24 @@ class RubbleKvStoreService final {
     std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::rubble::GetRequest, ::rubble::GetReply>> PrepareAsyncGet(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::rubble::GetRequest, ::rubble::GetReply>>(PrepareAsyncGetRaw(context, cq));
     }
+    std::unique_ptr< ::grpc::ClientReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>> Delete(::grpc::ClientContext* context) {
+      return std::unique_ptr< ::grpc::ClientReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>>(DeleteRaw(context));
+    }
+    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>> AsyncDelete(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>>(AsyncDeleteRaw(context, cq, tag));
+    }
+    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>> PrepareAsyncDelete(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>>(PrepareAsyncDeleteRaw(context, cq));
+    }
+    std::unique_ptr< ::grpc::ClientReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>> Update(::grpc::ClientContext* context) {
+      return std::unique_ptr< ::grpc::ClientReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>>(UpdateRaw(context));
+    }
+    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>> AsyncUpdate(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>>(AsyncUpdateRaw(context, cq, tag));
+    }
+    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>> PrepareAsyncUpdate(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>>(PrepareAsyncUpdateRaw(context, cq));
+    }
     class experimental_async final :
       public StubInterface::experimental_async_interface {
      public:
@@ -146,6 +208,16 @@ class RubbleKvStoreService final {
       void Get(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::GetRequest,::rubble::GetReply>* reactor) override;
       #else
       void Get(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::GetRequest,::rubble::GetReply>* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void Delete(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::DeleteRequest,::rubble::DeleteReply>* reactor) override;
+      #else
+      void Delete(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::DeleteRequest,::rubble::DeleteReply>* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void Update(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::UpdateRequest,::rubble::UpdateReply>* reactor) override;
+      #else
+      void Update(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::UpdateRequest,::rubble::UpdateReply>* reactor) override;
       #endif
      private:
       friend class Stub;
@@ -166,9 +238,17 @@ class RubbleKvStoreService final {
     ::grpc::ClientReaderWriter< ::rubble::GetRequest, ::rubble::GetReply>* GetRaw(::grpc::ClientContext* context) override;
     ::grpc::ClientAsyncReaderWriter< ::rubble::GetRequest, ::rubble::GetReply>* AsyncGetRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) override;
     ::grpc::ClientAsyncReaderWriter< ::rubble::GetRequest, ::rubble::GetReply>* PrepareAsyncGetRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>* DeleteRaw(::grpc::ClientContext* context) override;
+    ::grpc::ClientAsyncReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>* AsyncDeleteRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>* PrepareAsyncDeleteRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>* UpdateRaw(::grpc::ClientContext* context) override;
+    ::grpc::ClientAsyncReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>* AsyncUpdateRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>* PrepareAsyncUpdateRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) override;
     const ::grpc::internal::RpcMethod rpcmethod_Sync_;
     const ::grpc::internal::RpcMethod rpcmethod_Put_;
     const ::grpc::internal::RpcMethod rpcmethod_Get_;
+    const ::grpc::internal::RpcMethod rpcmethod_Delete_;
+    const ::grpc::internal::RpcMethod rpcmethod_Update_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
 
@@ -176,10 +256,17 @@ class RubbleKvStoreService final {
    public:
     Service();
     virtual ~Service();
-    // an internal rpc call used by the primary 
+    // an internal rpc call used by the upstream (except the tail node) 
+    // to synchronize states to the downstream nodes in the chain
     virtual ::grpc::Status Sync(::grpc::ServerContext* context, const ::rubble::SyncRequest* request, ::rubble::SyncReply* response);
+    // Put a stream of key/value pairs
     virtual ::grpc::Status Put(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::PutReply, ::rubble::PutRequest>* stream);
+    // Get values for the specified keys
     virtual ::grpc::Status Get(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::GetReply, ::rubble::GetRequest>* stream);
+    // Delete a record in the db
+    virtual ::grpc::Status Delete(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::DeleteReply, ::rubble::DeleteRequest>* stream);
+    // Update the value for a specified key of a record in the db
+    virtual ::grpc::Status Update(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::UpdateReply, ::rubble::UpdateRequest>* stream);
   };
   template <class BaseClass>
   class WithAsyncMethod_Sync : public BaseClass {
@@ -241,7 +328,47 @@ class RubbleKvStoreService final {
       ::grpc::Service::RequestAsyncBidiStreaming(2, context, stream, new_call_cq, notification_cq, tag);
     }
   };
-  typedef WithAsyncMethod_Sync<WithAsyncMethod_Put<WithAsyncMethod_Get<Service > > > AsyncService;
+  template <class BaseClass>
+  class WithAsyncMethod_Delete : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_Delete() {
+      ::grpc::Service::MarkMethodAsync(3);
+    }
+    ~WithAsyncMethod_Delete() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Delete(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::DeleteReply, ::rubble::DeleteRequest>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestDelete(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::rubble::DeleteReply, ::rubble::DeleteRequest>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncBidiStreaming(3, context, stream, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_Update : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_Update() {
+      ::grpc::Service::MarkMethodAsync(4);
+    }
+    ~WithAsyncMethod_Update() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Update(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::UpdateReply, ::rubble::UpdateRequest>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestUpdate(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::rubble::UpdateReply, ::rubble::UpdateRequest>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncBidiStreaming(4, context, stream, new_call_cq, notification_cq, tag);
+    }
+  };
+  typedef WithAsyncMethod_Sync<WithAsyncMethod_Put<WithAsyncMethod_Get<WithAsyncMethod_Delete<WithAsyncMethod_Update<Service > > > > > AsyncService;
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_Sync : public BaseClass {
    private:
@@ -365,11 +492,87 @@ class RubbleKvStoreService final {
     #endif
       { return nullptr; }
   };
+  template <class BaseClass>
+  class ExperimentalWithCallbackMethod_Delete : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithCallbackMethod_Delete() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(3,
+          new ::grpc::internal::CallbackBidiHandler< ::rubble::DeleteRequest, ::rubble::DeleteReply>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context) { return this->Delete(context); }));
+    }
+    ~ExperimentalWithCallbackMethod_Delete() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Delete(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::DeleteReply, ::rubble::DeleteRequest>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerBidiReactor< ::rubble::DeleteRequest, ::rubble::DeleteReply>* Delete(
+      ::grpc::CallbackServerContext* /*context*/)
+    #else
+    virtual ::grpc::experimental::ServerBidiReactor< ::rubble::DeleteRequest, ::rubble::DeleteReply>* Delete(
+      ::grpc::experimental::CallbackServerContext* /*context*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
+  class ExperimentalWithCallbackMethod_Update : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithCallbackMethod_Update() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(4,
+          new ::grpc::internal::CallbackBidiHandler< ::rubble::UpdateRequest, ::rubble::UpdateReply>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context) { return this->Update(context); }));
+    }
+    ~ExperimentalWithCallbackMethod_Update() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Update(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::UpdateReply, ::rubble::UpdateRequest>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerBidiReactor< ::rubble::UpdateRequest, ::rubble::UpdateReply>* Update(
+      ::grpc::CallbackServerContext* /*context*/)
+    #else
+    virtual ::grpc::experimental::ServerBidiReactor< ::rubble::UpdateRequest, ::rubble::UpdateReply>* Update(
+      ::grpc::experimental::CallbackServerContext* /*context*/)
+    #endif
+      { return nullptr; }
+  };
   #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_Put<ExperimentalWithCallbackMethod_Get<Service > > > CallbackService;
+  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_Put<ExperimentalWithCallbackMethod_Get<ExperimentalWithCallbackMethod_Delete<ExperimentalWithCallbackMethod_Update<Service > > > > > CallbackService;
   #endif
 
-  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_Put<ExperimentalWithCallbackMethod_Get<Service > > > ExperimentalCallbackService;
+  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_Put<ExperimentalWithCallbackMethod_Get<ExperimentalWithCallbackMethod_Delete<ExperimentalWithCallbackMethod_Update<Service > > > > > ExperimentalCallbackService;
   template <class BaseClass>
   class WithGenericMethod_Sync : public BaseClass {
    private:
@@ -417,6 +620,40 @@ class RubbleKvStoreService final {
     }
     // disable synchronous version of this method
     ::grpc::Status Get(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::GetReply, ::rubble::GetRequest>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_Delete : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_Delete() {
+      ::grpc::Service::MarkMethodGeneric(3);
+    }
+    ~WithGenericMethod_Delete() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Delete(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::DeleteReply, ::rubble::DeleteRequest>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_Update : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_Update() {
+      ::grpc::Service::MarkMethodGeneric(4);
+    }
+    ~WithGenericMethod_Update() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Update(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::UpdateReply, ::rubble::UpdateRequest>* /*stream*/)  override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -479,6 +716,46 @@ class RubbleKvStoreService final {
     }
     void RequestGet(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncBidiStreaming(2, context, stream, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_Delete : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_Delete() {
+      ::grpc::Service::MarkMethodRaw(3);
+    }
+    ~WithRawMethod_Delete() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Delete(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::DeleteReply, ::rubble::DeleteRequest>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestDelete(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncBidiStreaming(3, context, stream, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_Update : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_Update() {
+      ::grpc::Service::MarkMethodRaw(4);
+    }
+    ~WithRawMethod_Update() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Update(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::UpdateReply, ::rubble::UpdateRequest>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestUpdate(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncBidiStreaming(4, context, stream, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -591,6 +868,82 @@ class RubbleKvStoreService final {
       ::grpc::CallbackServerContext* /*context*/)
     #else
     virtual ::grpc::experimental::ServerBidiReactor< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* Get(
+      ::grpc::experimental::CallbackServerContext* /*context*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
+  class ExperimentalWithRawCallbackMethod_Delete : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithRawCallbackMethod_Delete() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(3,
+          new ::grpc::internal::CallbackBidiHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context) { return this->Delete(context); }));
+    }
+    ~ExperimentalWithRawCallbackMethod_Delete() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Delete(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::DeleteReply, ::rubble::DeleteRequest>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerBidiReactor< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* Delete(
+      ::grpc::CallbackServerContext* /*context*/)
+    #else
+    virtual ::grpc::experimental::ServerBidiReactor< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* Delete(
+      ::grpc::experimental::CallbackServerContext* /*context*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
+  class ExperimentalWithRawCallbackMethod_Update : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithRawCallbackMethod_Update() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(4,
+          new ::grpc::internal::CallbackBidiHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context) { return this->Update(context); }));
+    }
+    ~ExperimentalWithRawCallbackMethod_Update() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Update(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::UpdateReply, ::rubble::UpdateRequest>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerBidiReactor< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* Update(
+      ::grpc::CallbackServerContext* /*context*/)
+    #else
+    virtual ::grpc::experimental::ServerBidiReactor< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* Update(
       ::grpc::experimental::CallbackServerContext* /*context*/)
     #endif
       { return nullptr; }
