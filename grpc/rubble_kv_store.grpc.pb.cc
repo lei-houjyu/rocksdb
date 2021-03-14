@@ -23,10 +23,7 @@ namespace rubble {
 
 static const char* RubbleKvStoreService_method_names[] = {
   "/rubble.RubbleKvStoreService/Sync",
-  "/rubble.RubbleKvStoreService/Put",
-  "/rubble.RubbleKvStoreService/Get",
-  "/rubble.RubbleKvStoreService/Delete",
-  "/rubble.RubbleKvStoreService/Update",
+  "/rubble.RubbleKvStoreService/DoOp",
 };
 
 std::unique_ptr< RubbleKvStoreService::Stub> RubbleKvStoreService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -37,10 +34,7 @@ std::unique_ptr< RubbleKvStoreService::Stub> RubbleKvStoreService::NewStub(const
 
 RubbleKvStoreService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
   : channel_(channel), rpcmethod_Sync_(RubbleKvStoreService_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_Put_(RubbleKvStoreService_method_names[1], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
-  , rpcmethod_Get_(RubbleKvStoreService_method_names[2], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
-  , rpcmethod_Delete_(RubbleKvStoreService_method_names[3], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
-  , rpcmethod_Update_(RubbleKvStoreService_method_names[4], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
+  , rpcmethod_DoOp_(RubbleKvStoreService_method_names[1], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
   {}
 
 ::grpc::Status RubbleKvStoreService::Stub::Sync(::grpc::ClientContext* context, const ::rubble::SyncRequest& request, ::rubble::SyncReply* response) {
@@ -66,68 +60,20 @@ void RubbleKvStoreService::Stub::experimental_async::Sync(::grpc::ClientContext*
   return result;
 }
 
-::grpc::ClientReaderWriter< ::rubble::PutRequest, ::rubble::PutReply>* RubbleKvStoreService::Stub::PutRaw(::grpc::ClientContext* context) {
-  return ::grpc::internal::ClientReaderWriterFactory< ::rubble::PutRequest, ::rubble::PutReply>::Create(channel_.get(), rpcmethod_Put_, context);
+::grpc::ClientReaderWriter< ::rubble::Op, ::rubble::OpReply>* RubbleKvStoreService::Stub::DoOpRaw(::grpc::ClientContext* context) {
+  return ::grpc::internal::ClientReaderWriterFactory< ::rubble::Op, ::rubble::OpReply>::Create(channel_.get(), rpcmethod_DoOp_, context);
 }
 
-void RubbleKvStoreService::Stub::experimental_async::Put(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::PutRequest,::rubble::PutReply>* reactor) {
-  ::grpc::internal::ClientCallbackReaderWriterFactory< ::rubble::PutRequest,::rubble::PutReply>::Create(stub_->channel_.get(), stub_->rpcmethod_Put_, context, reactor);
+void RubbleKvStoreService::Stub::experimental_async::DoOp(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::Op,::rubble::OpReply>* reactor) {
+  ::grpc::internal::ClientCallbackReaderWriterFactory< ::rubble::Op,::rubble::OpReply>::Create(stub_->channel_.get(), stub_->rpcmethod_DoOp_, context, reactor);
 }
 
-::grpc::ClientAsyncReaderWriter< ::rubble::PutRequest, ::rubble::PutReply>* RubbleKvStoreService::Stub::AsyncPutRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::PutRequest, ::rubble::PutReply>::Create(channel_.get(), cq, rpcmethod_Put_, context, true, tag);
+::grpc::ClientAsyncReaderWriter< ::rubble::Op, ::rubble::OpReply>* RubbleKvStoreService::Stub::AsyncDoOpRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::Op, ::rubble::OpReply>::Create(channel_.get(), cq, rpcmethod_DoOp_, context, true, tag);
 }
 
-::grpc::ClientAsyncReaderWriter< ::rubble::PutRequest, ::rubble::PutReply>* RubbleKvStoreService::Stub::PrepareAsyncPutRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::PutRequest, ::rubble::PutReply>::Create(channel_.get(), cq, rpcmethod_Put_, context, false, nullptr);
-}
-
-::grpc::ClientReaderWriter< ::rubble::GetRequest, ::rubble::GetReply>* RubbleKvStoreService::Stub::GetRaw(::grpc::ClientContext* context) {
-  return ::grpc::internal::ClientReaderWriterFactory< ::rubble::GetRequest, ::rubble::GetReply>::Create(channel_.get(), rpcmethod_Get_, context);
-}
-
-void RubbleKvStoreService::Stub::experimental_async::Get(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::GetRequest,::rubble::GetReply>* reactor) {
-  ::grpc::internal::ClientCallbackReaderWriterFactory< ::rubble::GetRequest,::rubble::GetReply>::Create(stub_->channel_.get(), stub_->rpcmethod_Get_, context, reactor);
-}
-
-::grpc::ClientAsyncReaderWriter< ::rubble::GetRequest, ::rubble::GetReply>* RubbleKvStoreService::Stub::AsyncGetRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::GetRequest, ::rubble::GetReply>::Create(channel_.get(), cq, rpcmethod_Get_, context, true, tag);
-}
-
-::grpc::ClientAsyncReaderWriter< ::rubble::GetRequest, ::rubble::GetReply>* RubbleKvStoreService::Stub::PrepareAsyncGetRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::GetRequest, ::rubble::GetReply>::Create(channel_.get(), cq, rpcmethod_Get_, context, false, nullptr);
-}
-
-::grpc::ClientReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>* RubbleKvStoreService::Stub::DeleteRaw(::grpc::ClientContext* context) {
-  return ::grpc::internal::ClientReaderWriterFactory< ::rubble::DeleteRequest, ::rubble::DeleteReply>::Create(channel_.get(), rpcmethod_Delete_, context);
-}
-
-void RubbleKvStoreService::Stub::experimental_async::Delete(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::DeleteRequest,::rubble::DeleteReply>* reactor) {
-  ::grpc::internal::ClientCallbackReaderWriterFactory< ::rubble::DeleteRequest,::rubble::DeleteReply>::Create(stub_->channel_.get(), stub_->rpcmethod_Delete_, context, reactor);
-}
-
-::grpc::ClientAsyncReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>* RubbleKvStoreService::Stub::AsyncDeleteRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::DeleteRequest, ::rubble::DeleteReply>::Create(channel_.get(), cq, rpcmethod_Delete_, context, true, tag);
-}
-
-::grpc::ClientAsyncReaderWriter< ::rubble::DeleteRequest, ::rubble::DeleteReply>* RubbleKvStoreService::Stub::PrepareAsyncDeleteRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::DeleteRequest, ::rubble::DeleteReply>::Create(channel_.get(), cq, rpcmethod_Delete_, context, false, nullptr);
-}
-
-::grpc::ClientReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>* RubbleKvStoreService::Stub::UpdateRaw(::grpc::ClientContext* context) {
-  return ::grpc::internal::ClientReaderWriterFactory< ::rubble::UpdateRequest, ::rubble::UpdateReply>::Create(channel_.get(), rpcmethod_Update_, context);
-}
-
-void RubbleKvStoreService::Stub::experimental_async::Update(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::UpdateRequest,::rubble::UpdateReply>* reactor) {
-  ::grpc::internal::ClientCallbackReaderWriterFactory< ::rubble::UpdateRequest,::rubble::UpdateReply>::Create(stub_->channel_.get(), stub_->rpcmethod_Update_, context, reactor);
-}
-
-::grpc::ClientAsyncReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>* RubbleKvStoreService::Stub::AsyncUpdateRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::UpdateRequest, ::rubble::UpdateReply>::Create(channel_.get(), cq, rpcmethod_Update_, context, true, tag);
-}
-
-::grpc::ClientAsyncReaderWriter< ::rubble::UpdateRequest, ::rubble::UpdateReply>* RubbleKvStoreService::Stub::PrepareAsyncUpdateRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::UpdateRequest, ::rubble::UpdateReply>::Create(channel_.get(), cq, rpcmethod_Update_, context, false, nullptr);
+::grpc::ClientAsyncReaderWriter< ::rubble::Op, ::rubble::OpReply>* RubbleKvStoreService::Stub::PrepareAsyncDoOpRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::Op, ::rubble::OpReply>::Create(channel_.get(), cq, rpcmethod_DoOp_, context, false, nullptr);
 }
 
 RubbleKvStoreService::Service::Service() {
@@ -144,42 +90,12 @@ RubbleKvStoreService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       RubbleKvStoreService_method_names[1],
       ::grpc::internal::RpcMethod::BIDI_STREAMING,
-      new ::grpc::internal::BidiStreamingHandler< RubbleKvStoreService::Service, ::rubble::PutRequest, ::rubble::PutReply>(
+      new ::grpc::internal::BidiStreamingHandler< RubbleKvStoreService::Service, ::rubble::Op, ::rubble::OpReply>(
           [](RubbleKvStoreService::Service* service,
              ::grpc::ServerContext* ctx,
-             ::grpc::ServerReaderWriter<::rubble::PutReply,
-             ::rubble::PutRequest>* stream) {
-               return service->Put(ctx, stream);
-             }, this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      RubbleKvStoreService_method_names[2],
-      ::grpc::internal::RpcMethod::BIDI_STREAMING,
-      new ::grpc::internal::BidiStreamingHandler< RubbleKvStoreService::Service, ::rubble::GetRequest, ::rubble::GetReply>(
-          [](RubbleKvStoreService::Service* service,
-             ::grpc::ServerContext* ctx,
-             ::grpc::ServerReaderWriter<::rubble::GetReply,
-             ::rubble::GetRequest>* stream) {
-               return service->Get(ctx, stream);
-             }, this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      RubbleKvStoreService_method_names[3],
-      ::grpc::internal::RpcMethod::BIDI_STREAMING,
-      new ::grpc::internal::BidiStreamingHandler< RubbleKvStoreService::Service, ::rubble::DeleteRequest, ::rubble::DeleteReply>(
-          [](RubbleKvStoreService::Service* service,
-             ::grpc::ServerContext* ctx,
-             ::grpc::ServerReaderWriter<::rubble::DeleteReply,
-             ::rubble::DeleteRequest>* stream) {
-               return service->Delete(ctx, stream);
-             }, this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      RubbleKvStoreService_method_names[4],
-      ::grpc::internal::RpcMethod::BIDI_STREAMING,
-      new ::grpc::internal::BidiStreamingHandler< RubbleKvStoreService::Service, ::rubble::UpdateRequest, ::rubble::UpdateReply>(
-          [](RubbleKvStoreService::Service* service,
-             ::grpc::ServerContext* ctx,
-             ::grpc::ServerReaderWriter<::rubble::UpdateReply,
-             ::rubble::UpdateRequest>* stream) {
-               return service->Update(ctx, stream);
+             ::grpc::ServerReaderWriter<::rubble::OpReply,
+             ::rubble::Op>* stream) {
+               return service->DoOp(ctx, stream);
              }, this)));
 }
 
@@ -193,25 +109,7 @@ RubbleKvStoreService::Service::~Service() {
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status RubbleKvStoreService::Service::Put(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::PutReply, ::rubble::PutRequest>* stream) {
-  (void) context;
-  (void) stream;
-  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-}
-
-::grpc::Status RubbleKvStoreService::Service::Get(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::GetReply, ::rubble::GetRequest>* stream) {
-  (void) context;
-  (void) stream;
-  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-}
-
-::grpc::Status RubbleKvStoreService::Service::Delete(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::DeleteReply, ::rubble::DeleteRequest>* stream) {
-  (void) context;
-  (void) stream;
-  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-}
-
-::grpc::Status RubbleKvStoreService::Service::Update(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::UpdateReply, ::rubble::UpdateRequest>* stream) {
+::grpc::Status RubbleKvStoreService::Service::DoOp(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::OpReply, ::rubble::Op>* stream) {
   (void) context;
   (void) stream;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");

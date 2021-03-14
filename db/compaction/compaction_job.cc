@@ -1537,9 +1537,6 @@ Status CompactionJob::InstallCompactionResults(
         std::string sst_file_name = std::string("000000").replace(6 - sst_number.length(), sst_number.length(), sst_number) + ".sst";
 
         //for those sst files that gets deleted in the compaction, also delete the remote ones
-        std::string fname = TableFileName(compact_->compaction->immutable_cf_options()->cf_paths,
-                        f->fd.GetNumber(), f->fd.GetPathId());
-
         std::string remote_sst_fname = remote_sst_dir + sst_file_name;
         ios = fs_->FileExists(remote_sst_fname, IOOptions(), nullptr);
         // this check is probably unnecessary, cause versions_->VerifyCompactionFileConsistency(compaction) already does the check
