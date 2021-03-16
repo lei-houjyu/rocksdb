@@ -1016,10 +1016,10 @@ get_filename_component(rubble_kv_store "./protos/rubble_kv_store.proto" ABSOLUTE
 get_filename_component(rubble_kv_store_path "${rubble_kv_store}" PATH)
 
 # Generated sources
-set(rubble_kv_store_srcs "${CMAKE_CURRENT_BINARY_DIR}/grpc/rubble_kv_store.pb.cc")
-set(rubble_kv_store_hdrs "${CMAKE_CURRENT_BINARY_DIR}/grpc/rubble_kv_store.pb.h")
-set(rubble_kv_store_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/grpc/rubble_kv_store.grpc.pb.cc")
-set(rubble_kv_store_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/grpc/rubble_kv_store.grpc.pb.h")
+set(rubble_kv_store_srcs "${CMAKE_CURRENT_BINARY_DIR}/rubble/rubble_kv_store.pb.cc")
+set(rubble_kv_store_hdrs "${CMAKE_CURRENT_BINARY_DIR}/rubble/rubble_kv_store.pb.h")
+set(rubble_kv_store_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/rubble/rubble_kv_store.grpc.pb.cc")
+set(rubble_kv_store_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/rubble/rubble_kv_store.grpc.pb.h")
 add_custom_command(
       OUTPUT "${rubble_kv_store_srcs}" "${rubble_kv_store_hdrs}" "${rubble_kv_store_grpc_srcs}" "${rubble_kv_store_grpc_hdrs}"
       COMMAND ${_PROTOBUF_PROTOC}
@@ -1031,19 +1031,12 @@ add_custom_command(
       DEPENDS "${rubble_kv_store}")
 
 # Include generated *.pb.h files
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/grpc")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/rubble")
 
 list(APPEND SOURCES
-    grpc/rubble_kv_store.grpc.pb.cc
-    grpc/rubble_kv_store.pb.cc) 
+    rubble/rubble_kv_store.grpc.pb.cc
+    rubble/rubble_kv_store.pb.cc) 
 # RUBBLE END
-
-
-# nlohman json lib
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-
-add_subdirectory("nlohmann_json/json")
-
 
 add_library(${ROCKSDB_STATIC_LIB} STATIC ${SOURCES})
 target_link_libraries(${ROCKSDB_STATIC_LIB} PRIVATE

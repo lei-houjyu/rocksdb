@@ -269,8 +269,8 @@ LIB_SOURCES =                                                   \
   utilities/ttl/db_ttl_impl.cc                                  \
   utilities/write_batch_with_index/write_batch_with_index.cc    \
   utilities/write_batch_with_index/write_batch_with_index_internal.cc  \
-  grpc/rubble_kv_store.pb.cc                                    \
-  grpc/rubble_kv_store.grpc.pb.cc                               \
+  rubble/rubble_kv_store.pb.cc                                    \
+  rubble/rubble_kv_store.grpc.pb.cc                               \
 
 ifeq ($(ARMCRC_SOURCE),1)
 LIB_SOURCES +=\

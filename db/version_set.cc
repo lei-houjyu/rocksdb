@@ -20,7 +20,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <nlohmann/json.hpp>
 
 #include "compaction/compaction.h"
 #include "db/blob/blob_file_cache.h"

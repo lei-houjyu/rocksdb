@@ -10,8 +10,8 @@
 
 #include "rocksdb/options.h"
 //RUBBLE 
-#include "grpc/sync_client.h"
-#include "grpc/kvstore_client.h"
+#include "rubble/sync_client.h"
+#include "rubble/kvstore_client.h"
 
 namespace ROCKSDB_NAMESPACE {
 
