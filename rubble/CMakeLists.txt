@@ -153,13 +153,12 @@ link_libraries("${ROCKSDB_DIR}/librocksdb.a")
 
 # Targets greeter_[async_](client|server)
 foreach(_target
+  rocksdb_server
   primary_server
   secondary_server
   kv_store_client
   )
   add_executable(${_target} "${_target}.cc"
-    # ${rubble_kv_store_srcs}
-    # ${rubble_kv_store_grpc_srcs}
   )
   target_link_libraries(${_target}
     nlohmann_json::nlohmann_json

@@ -143,19 +143,6 @@ kv_store_client/fast:
 .PHONY : kv_store_client/fast
 
 #=============================================================================
-# Target rules for targets named primary_server
-
-# Build rule for target.
-primary_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 primary_server
-.PHONY : primary_server
-
-# fast build rule for target.
-primary_server/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_server.dir/build.make CMakeFiles/primary_server.dir/build
-.PHONY : primary_server/fast
-
-#=============================================================================
 # Target rules for targets named secondary_server
 
 # Build rule for target.
@@ -167,6 +154,32 @@ secondary_server: cmake_check_build_system
 secondary_server/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_server.dir/build.make CMakeFiles/secondary_server.dir/build
 .PHONY : secondary_server/fast
+
+#=============================================================================
+# Target rules for targets named rocksdb_server
+
+# Build rule for target.
+rocksdb_server: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rocksdb_server
+.PHONY : rocksdb_server
+
+# fast build rule for target.
+rocksdb_server/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_server.dir/build.make CMakeFiles/rocksdb_server.dir/build
+.PHONY : rocksdb_server/fast
+
+#=============================================================================
+# Target rules for targets named primary_server
+
+# Build rule for target.
+primary_server: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 primary_server
+.PHONY : primary_server
+
+# fast build rule for target.
+primary_server/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_server.dir/build.make CMakeFiles/primary_server.dir/build
+.PHONY : primary_server/fast
 
 kv_store_client.o: kv_store_client.cc.o
 
@@ -222,6 +235,33 @@ primary_server.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_server.dir/build.make CMakeFiles/primary_server.dir/primary_server.cc.s
 .PHONY : primary_server.cc.s
 
+rocksdb_server.o: rocksdb_server.cc.o
+
+.PHONY : rocksdb_server.o
+
+# target to build an object file
+rocksdb_server.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_server.dir/build.make CMakeFiles/rocksdb_server.dir/rocksdb_server.cc.o
+.PHONY : rocksdb_server.cc.o
+
+rocksdb_server.i: rocksdb_server.cc.i
+
+.PHONY : rocksdb_server.i
+
+# target to preprocess a source file
+rocksdb_server.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_server.dir/build.make CMakeFiles/rocksdb_server.dir/rocksdb_server.cc.i
+.PHONY : rocksdb_server.cc.i
+
+rocksdb_server.s: rocksdb_server.cc.s
+
+.PHONY : rocksdb_server.s
+
+# target to generate assembly for a file
+rocksdb_server.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_server.dir/build.make CMakeFiles/rocksdb_server.dir/rocksdb_server.cc.s
+.PHONY : rocksdb_server.cc.s
+
 secondary_server.o: secondary_server.cc.o
 
 .PHONY : secondary_server.o
@@ -259,6 +299,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... kv_store_client"
 	@echo "... primary_server"
+	@echo "... rocksdb_server"
 	@echo "... secondary_server"
 	@echo "... kv_store_client.o"
 	@echo "... kv_store_client.i"
@@ -266,6 +307,9 @@ help:
 	@echo "... primary_server.o"
 	@echo "... primary_server.i"
 	@echo "... primary_server.s"
+	@echo "... rocksdb_server.o"
+	@echo "... rocksdb_server.i"
+	@echo "... rocksdb_server.s"
 	@echo "... secondary_server.o"
 	@echo "... secondary_server.i"
 	@echo "... secondary_server.s"
