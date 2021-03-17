@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <deque>
+#include <thread>
 #include <mutex>
 #include <condition_variable>
 
@@ -17,6 +18,7 @@ using grpc::ClientContext;
 using grpc::Status;
 using grpc::ClientAsyncResponseReader;
 using grpc::ClientAsyncReaderWriter;
+using grpc::ClientReaderWriter;
 using grpc::CompletionQueue;
 
 using rubble::RubbleKvStoreService;
@@ -37,7 +39,7 @@ class KvStoreClient{
     KvStoreClient(std::shared_ptr<Channel> channel)
         : stub_(RubbleKvStoreService::NewStub(channel)){
       grpc_thread_.reset(
-          new std::thread([=]() { &KvStoreClient::AsyncCompleteRpc }));
+          new std::thread(std::bind(&KvStoreClient::AsyncCompleteRpc, this)));
       stream_ = stub_->AsyncDoOp(&context_, &cq_,
                                    reinterpret_cast<void*>(Type::CONNECT));
       
@@ -50,38 +52,25 @@ class KvStoreClient{
         grpc_thread_->join();
     }
 
-  
-  Status Get(const std::vector<std::string>& keys, std::vector<std::string>& vals){
+  void DoOp(const Op& op){
+    request_ = op;
+    AsyncDoOp();
+  }
+
+
+  void Get(const std::vector<std::string>& keys, std::vector<std::string>& vals){
     for(const auto& key : keys){
         AsyncDoGet(key);
     }
   }
 
-  Status Put(const std::vector<std::pair<std::string, std::string>> kvs){
+  void Put(const std::vector<std::pair<std::string, std::string>>& kvs){
     for(const auto& kv: kvs){
       AsyncDoPut(kv.first, kv.second);
     }
   }
 
-  // Requests each key in the vector and displays the key and its corresponding
-  // value as a pair
-  Status SyncDoGet(const std::vector<std::string>& keys, std::vector<std::string>& vals) {
- 
-    for (const auto& key : keys) {
-      // Key we are sending to the server.
-      Op request;
-      request.set_key(key);
-      request.set_type(Op::GET);
-      sync_stream_->Write(request);
-
-      // Get the value for the sent key
-      OpReply response;
-      sync_stream_->Read(&response);
-
-      vals.emplace_back(response.value());
-      std::cout << key << " : " << response.value() << "\n";
-    }
-
+  Status SyncOpDone(){
     sync_stream_->WritesDone();
     Status status = sync_stream_->Finish();
     if (!status.ok()) {
@@ -92,9 +81,39 @@ class KvStoreClient{
     return status;
   }
 
-  Status SyncDoPut(const std::vector<std::pair<std::string, std::string>>& kvs){
+  // Requests each key in the vector and displays the key and its corresponding
+  // value as a pair
+  void SyncDoGet(const std::string& key, std::string& val) {
+ 
+    // for (const auto& key : keys) {
+      // Key we are sending to the server.
+      Op request;
+      request.set_key(key);
+      request.set_type(Op::GET);
+      sync_stream_->Write(request);
+
+      // Get the value for the sent key
+      OpReply response;
+      sync_stream_->Read(&response);
+
+      if(!response.ok()){
+        std::cout << " Get key : " << key << " Failed: " << response.status() << "\n";
+      }else{
+         val = response.value();
+         std::cout << " Get Key : " << key << " returned val : " << val << std::endl;
+      }
+      // std::cout << key << " : " << response.value() << "\n";
+    // }
+
+    // sync_stream_->WritesDone();
+    // Status status = sync_stream_->Finish();
+    
+    return ;
+  }
+
+  void SyncDoPut(const std::pair<std::string, std::string>& kv){
   
-    for(const auto& kv: kvs){
+    // for(const auto& kv: kvs){
         
       Op request;
       request.set_key(kv.first);
@@ -103,8 +122,8 @@ class KvStoreClient{
       
       sync_stream_->Write(request);
 
-      OpReply reply;
-      sync_stream_->Read(&reply);
+      // OpReply reply;
+      // sync_stream_->Read(&reply);
 
       // if(put_count_ % 1000 == 0 ){
         // std::cout << " Put ----> " ;
@@ -113,33 +132,33 @@ class KvStoreClient{
         // }else{
         //   std::cout << "Secondary ";
         // }
-      std::cout <<" ( " << kv.first << " ," << kv.second << " ) , status : " ;
-      if(reply.ok()){
-        std::cout << "Succeeds";
-      } else{
+      // std::cout <<" ( " << kv.first << " ," << kv.second << " ) , status : " ;
+      // if(reply.ok()){
+      //   std::cout << "Succeeds";
+      // } else{
         
-        std::cout << "Failed ( " << reply.status() << " )";
-      }
-      std::cout << "\n";  
+      //   std::cout << "Failed ( " << reply.status() << " )";
+      // }
+      // std::cout << "\n";  
 
         // }
-    }
+    // }
 
     // Signal the client is done with the writes (half-close the client stream).
-    sync_stream_->WritesDone();
-    Status status = sync_stream_->Finish();
-    if(!status.ok()){
-        std::cout << status.error_code() << ": " << status.error_message()
-                << std::endl;
-        std::cout << "RPC failed";
-    }
-    return s;
+    // sync_stream_->WritesDone();
+    // Status status = sync_stream_->Finish();
+    // if(!status.ok()){
+    //     std::cout << status.error_code() << ": " << status.error_message()
+    //             << std::endl;
+    //     std::cout << "RPC failed";
+    // }
+    // return s;
   }
 
   // Put is client-to-server streaming async rpc
   // since it's a chain replication, we don't need a reply when we send a put operation to a server
   // instead, the true reply is returned by the tail node in the chain to the client
-  void AsyncDoPut(const std:string& key, const string& val){
+  void AsyncDoPut(const std::string& key, const std::string& val){
     request_.set_key(key);
     request_.set_value(val);
     request_.set_type(Op::PUT);
@@ -159,6 +178,7 @@ class KvStoreClient{
       return;
   }
 
+  // could be run in multiple threads
   void AsyncDoOp(){
     {
     // check if it's ready to call Write
@@ -185,10 +205,14 @@ class KvStoreClient{
     //std::cout << " ** Sending request: " << user << std::endl;
     stream_->Write(request_, reinterpret_cast<void*>(Type::WRITE));  
 
-    if(ready_.load()){
+    // if(ready_.load()){
       ready_.store(false);
-    }
+    // }
     return;
+  }
+
+  void SetRequest(const Op& op){
+    request_ = op;
   }
 
   private:

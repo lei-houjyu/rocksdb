@@ -4352,7 +4352,7 @@ Status VersionSet::LogAndApply(
         for (auto e: edit_list) {
           ve_count++;
 
-          auto j_edit = nlohmann::json::parse(e->DebugJSON((int)log_and_apply_counter , false));
+          // auto j_edit = nlohmann::json::parse(e->DebugJSON((int)log_and_apply_counter , false));
           // std::cout << j_edit.dump(4) << std::endl;
 
           // Form SyncRequest
@@ -4378,8 +4378,10 @@ Status VersionSet::LogAndApply(
       // ParseInternalKey(iter->key(), &ikey);
       // std::cout << "LargestKey : " << ikey.user_key.ToString() << std::endl;
 
-      std::cout  << nlohmann::json::parse(m->DebugJson()).dump(4) << std::endl;
-      std::cout << " ----------- ImmutableList : " << nlohmann::json::parse(imm->DebugJson()).dump(4) << " ----------------\n";
+      // std::cout  << nlohmann::json::parse(m->DebugJson()).dump(4) << std::endl;
+      // std::cout << " ----------- ImmutableList : " << nlohmann::json::parse(imm->DebugJson()).dump(4) << " ----------------\n";
+      std::cout << " ----------- ImmutableList : " << imm->DebugJson()<< " ----------------\n";
+
       std::cout << " Current Version: \n " << default_cf->current()->DebugString(false) << std::endl;
       assert(ve_count == 1);
   

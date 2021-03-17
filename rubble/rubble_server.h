@@ -43,203 +43,6 @@ int g_thread_num = 1;
 int g_cq_num = 1;
 int g_pool = 1;
 
-class CallDataBase {
-public:
-  CallDataBase(RubbleKvStoreService::AsyncService* service, ServerCompletionQueue* cq, rocksdb::DB* db)
-   :service_(service), cq_(cq), db_(db){
-      rocksdb::DBImpl* impl = (rocksdb::DBImpl*)db_;
-      auto version_set = impl->TEST_GetVersionSet();
-      db_options_ = version_set->db_options();
-      kvstore_client_ = db_options->kvstore_client;
-   }
-
-  virtual void Proceed(bool ok) = 0;
-
-  virtual void HandleOp() = 0;
-
-protected:
-
-  // db instance
-  rocksdb::DB* db_;
-
-  // status of the db after performing an operation.
-  rocksdb::Status s_;
-
-  rocksdb::ImmutableDBOptions* db_options_;
-
-  std::shared_ptr<KvStoreClient> kvstore_client_; 
-  // The means of communication with the gRPC runtime for an asynchronous
-  // server.
-  RubbleKvStoreService::AsyncService* service_;
-  // The producer-consumer queue where for asynchronous server notifications.
-  ServerCompletionQueue* cq_;
-
-  // Context for the rpc, allowing to tweak aspects of it such as the use
-  // of compression, authentication, as well as to send metadata back to the
-  // client.
-  ServerContext ctx_;
-
-  // What we get from the client.
-  Op request_;
-  // What we send back to the client.
-  OpReply reply_;
-
-};
-
-// CallData for Bidirectional streaming rpc 
-class CallDataBidi : CallDataBase {
-
- public:
-
-  // Take in the "service" instance (in this case representing an asynchronous
-  // server) and the completion queue "cq" used for asynchronous communication
-  // with the gRPC runtime.
-  CallDataBidi(RubbleKvStoreService::AsyncService* service, ServerCompletionQueue* cq, rocksdb::DB* db)
-   :CallDataBase(service, cq, db),rw_(&ctx_){
-    // Invoke the serving logic right away.
-
-    status_ = BidiStatus::CONNECT;
-
-    ctx_.AsyncNotifyWhenDone((void*)this);
-
-    // As part of the initial CREATE state, we *request* that the system
-    // start processing DoOp requests. In this request, "this" acts are
-    // the tag uniquely identifying the request (so that different CallData
-    // instances can serve different requests concurrently), in this case
-    // the memory address of this CallData instance.
-    service_->RequestDoOp(&ctx_, &rw_, cq_, cq_, (void*)this);
-  }
-  // async version of DoOp
-  void Proceed(bool ok) override {
-
-    std::unique_lock<std::mutex> _wlock(this->m_mutex);
-
-    switch (status_) {
-    case BidiStatus::READ:
-
-        //Meaning client said it wants to end the stream either by a 'writedone' or 'finish' call.
-        if (!ok) {
-            std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " CQ returned false." << std::endl;
-            Status _st(StatusCode::OUT_OF_RANGE,"test error msg");
-            // rw_.Write(reply_, (void*)this);
-            rw_.Finish(_st,(void*)this);
-            status_ = BidiStatus::DONE;
-            std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " after call Finish(), cancelled:" << this->ctx_.IsCancelled() << std::endl;
-            break;
-        }
-
-        rw_.Read(&request_, (void*)this);
-        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " Received a new " << request_.type() << " op " << std::endl;
-
-        // Handle a db operation
-        HandleOp();
-        // assert(db_options.is_ruuble);
-        // Forward the request to the downstream node in the chain if it's not a tail node
-        if(db_options.is_ruuble && !db_options_.is_tail){
-          kvstore_client_->SetRequest(request_);
-          kvstore_client_->AsynDoOp();
-        }else if(db_options.is_ruuble &&db_options_.is_tail) {
-          // tail node
-          // TODO: send the true reply back to replicator
-          
-        }
-
-        if(request_.type() == Op::GET){
-          // if it's a Get Op, should return reply back to the client
-          status_ = BidiStatus::WRITE;
-        }else{
-          status_ = BidiStatus::READ;
-        }
-        break;
-
-    case BidiStatus::WRITE:
-        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " Get a value : " << reply_.value() << " for key : " << reply_.key() << std::endl;
-        rw_.Write(reply_, (void*)this);
-        status_ = BidiStatus::READ;
-        break;
-
-    case BidiStatus::CONNECT:
-        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " connected:" << std::endl;
-        // Spawn a new CallData instance to serve new clients while we process
-        // the one for this CallData. The instance will deallocate itself as
-        // part of its FINISH state.
-        new CallDataBidi(service_, cq_, db_);
-        rw_.Read(&request_, (void*)this);
-        status_ = BidiStatus::READ;
-        break;
-
-    case BidiStatus::DONE:
-        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this
-                << " Server done, cancelled:" << this->ctx_.IsCancelled() << std::endl;
-        status_ = BidiStatus::FINISH;
-        break;
-
-    case BidiStatus::FINISH:
-        std::cout << "thread:" << std::this_thread::get_id() <<  "tag:" << this << " Server finish, cancelled:" << this->ctx_.IsCancelled() << std::endl;
-        _wlock.unlock();
-        delete this;
-        break;
-
-    default:
-        std::cerr << "Unexpected tag " << int(status_) << std::endl;
-        assert(false);
-    }
-  }
-
- private:
-
-  void HandleOp() override {
-      std::string value;
-
-      switch (request_.type())
-      {
-      case Op::GET:
-        s_ = db_->Get(rocksdb::ReadOptions(), request_.key(), &value);
-        reply_.set_type(Op::GET);
-        reply_.set_status(s_.ToString());
-        if(s_.ok()){
-          reply_.set_ok(true);
-          reply_.set_value(value);
-        }else{
-          reply_.set_ok(false);
-        }
-        break;
-
-      case Op::PUT:
-        s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
-        reply_.set_type(Op::PUT);
-        if(s_.ok()){
-          reply_.set_ok(true);
-        }else{
-          reply_.set_ok(false);
-          reply_.set_status(s_.ToString());
-        }
-        break;
-
-      case Op::DELETE:
-        //TODO
-        break;
-
-      case Op::UPDATE:
-        //TODO
-        break;
-
-      default:
-        std::cerr << "Unsupported Operation \n";
-        break;
-      }
-  }
-
-  // The means to get back to the client.
-  ServerAsyncReaderWriter<OpReply, Op>  rw_;
-
-  // Let's implement a tiny state machine with the following states.
-  enum class BidiStatus { READ = 1, WRITE = 2, CONNECT = 3, DONE = 4, FINISH = 5 };
-  BidiStatus status_;
-
-  std::mutex   m_mutex;
-};
-
 class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
   public:
     explicit RubbleKvServiceImpl(rocksdb::DB* db)
@@ -247,11 +50,11 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
        mu_(impl_->mutex()),
        version_set_(impl_->TEST_GetVersionSet()),
        db_options_(version_set_->db_options()),
-       is_rubble_(db_options_.is_rubble),
-       is_head_(db_options_.is_primary),
-       is_tail_(db_options_.is_tail),
-       sync_client_(db_options_.sync_client),
-       kvstore_client_(db_options_.kvstore_client),
+       is_rubble_(db_options_->is_rubble),
+       is_head_(db_options_->is_primary),
+       is_tail_(db_options_->is_tail),
+       sync_client_(db_options_->sync_client),
+       kvstore_client_(db_options_->kvstore_client),
        column_family_set_(version_set_->GetColumnFamilySet()),
        default_cf_(column_family_set_->GetDefault()),
        ioptions_(default_cf_->ioptions()),
@@ -422,7 +225,7 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
     
     // std::cout << "MemTable : " <<  json::parse(default_cf->mem()->DebugJson()).dump(4) << std::endl;
     std::cout  << "Immutable MemTable list : " << json::parse(imm->DebugJson()).dump(4) << std::endl;
-    std::cout << " Current Version :\n " << default_cf->current()->DebugString(false) <<std::endl;
+    std::cout << " Current Version :\n " << default_cf_->current()->DebugString(false) <<std::endl;
 
     // set secondary version set's next file num according to the primary's next_file_num_
     version_set_->FetchAddFileNumber(next_file_num_ - current_next_file_num);
@@ -450,7 +253,7 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
       rocksdb::autovector<rocksdb::MemTable*> to_delete;
       if(s.ok() &&!default_cf_->IsDropped()){
 
-        while(num_of_added_files-- > 0){
+        while(num_of_added_files_-- > 0){
             rocksdb::SuperVersion* sv = default_cf_->GetSuperVersion();
           
             rocksdb::MemTableListVersion*  current = imm->current();
@@ -531,23 +334,23 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
    */
   rocksdb::Status ShipSstFiles(rocksdb::VersionEdit& edit){
 
-    assert(db_options_.remote_sst_dir != "");
-    std::string remote_sst_dir = db_options_.remote_sst_dir;
+    assert(db_options_->remote_sst_dir != "");
+    std::string remote_sst_dir = db_options_->remote_sst_dir;
     if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
         remote_sst_dir = remote_sst_dir + '/';
     }
 
     rocksdb::IOStatus ios;
-    for(const auto& new_file: edit->GetNewFiles()){
-      const FileMetaData& meta = new_file.second;
+    for(const auto& new_file: edit.GetNewFiles()){
+      const rocksdb::FileMetaData& meta = new_file.second;
       std::string sst_num = std::to_string(meta.fd.GetNumber());
-      std::string sst_file_name = std::string("000000").replace(6 - sst_number.length(), sst_number.length(), sst_number) + ".sst";
+      std::string sst_file_name = std::string("000000").replace(6 - sst_num.length(), sst_num.length(), sst_num) + ".sst";
 
-      std::string fname = rocksdb::TableFileName(ioptions->cf_paths,
+      std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
                       meta.fd.GetNumber(), meta.fd.GetPathId());
 
       std::string remote_sst_fname = remote_sst_dir + sst_file_name;
-      ios = CopyFile(fs_.get(), fname, remote_sst_name, 0,  true);
+      ios = CopyFile(fs_, fname, remote_sst_fname, 0,  true);
 
       if (!ios.ok()){
         std::cerr << "[ File Ship Failed ] : " << meta.fd.GetNumber() << std::endl;
@@ -556,9 +359,9 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
       }
     }
 
-    for(const auto& delete_file : edit->GetDeletedFiles()){
+    for(const auto& delete_file : edit.GetDeletedFiles()){
       std::string file_number = std::to_string(delete_file.second);
-      std::string sst_file_name = std::string("000000").replace(6 - file_number.length(), file_number.length(), sst_number) + ".sst";
+      std::string sst_file_name = std::string("000000").replace(6 - file_number.length(), file_number.length(), file_number) + ".sst";
 
       std::string remote_sst_fname = remote_sst_dir + sst_file_name;
       ios = fs_->FileExists(remote_sst_fname, rocksdb::IOOptions(), nullptr);
@@ -576,7 +379,7 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
         }
       }
     }
-    return rocksdb::Status:OK();
+    return rocksdb::Status::OK();
   }
 
 
@@ -604,7 +407,7 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
         
         case Op::PUT:
           s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
-          ssert(is_rubble_);
+          // assert(is_rubble_);
           if(!is_tail_){
             kvstore_client_->SyncDoPut(std::pair<std::string, std::string>{request_.key(), request_.value()});
           }else{
@@ -657,7 +460,7 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
     // rocksdb internal immutable column family options
     const rocksdb::ImmutableCFOptions* ioptions_;
 
-    rocksdb::FileSystemPtr fs_;
+    rocksdb::FileSystem* fs_;
 
     std::atomic<uint64_t> log_apply_counter_;
 
@@ -685,10 +488,209 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
     int next_file_num_ = 0;
 };
 
+class CallDataBase {
+public:
+  CallDataBase(RubbleKvStoreService::AsyncService* service, ServerCompletionQueue* cq, rocksdb::DB* db)
+   :service_(service), cq_(cq), db_(db){
+      rocksdb::DBImpl* impl = (rocksdb::DBImpl*)db_;
+      auto version_set = impl->TEST_GetVersionSet();
+      db_options_ = version_set->db_options();
+      kvstore_client_ = db_options_->kvstore_client;
+   }
+
+  virtual void Proceed(bool ok) = 0;
+
+  virtual void HandleOp() = 0;
+
+protected:
+
+  // db instance
+  rocksdb::DB* db_;
+
+  // status of the db after performing an operation.
+  rocksdb::Status s_;
+
+  const rocksdb::ImmutableDBOptions* db_options_;
+
+  std::shared_ptr<KvStoreClient> kvstore_client_; 
+  // The means of communication with the gRPC runtime for an asynchronous
+  // server.
+  RubbleKvStoreService::AsyncService* service_;
+  // The producer-consumer queue where for asynchronous server notifications.
+  ServerCompletionQueue* cq_;
+
+  // Context for the rpc, allowing to tweak aspects of it such as the use
+  // of compression, authentication, as well as to send metadata back to the
+  // client.
+  ServerContext ctx_;
+
+  // What we get from the client.
+  Op request_;
+  // What we send back to the client.
+  OpReply reply_;
+
+};
+
+// CallData for Bidirectional streaming rpc 
+class CallDataBidi : CallDataBase {
+
+ public:
+
+  // Take in the "service" instance (in this case representing an asynchronous
+  // server) and the completion queue "cq" used for asynchronous communication
+  // with the gRPC runtime.
+  CallDataBidi(RubbleKvStoreService::AsyncService* service, ServerCompletionQueue* cq, rocksdb::DB* db)
+   :CallDataBase(service, cq, db),rw_(&ctx_){
+    // Invoke the serving logic right away.
+
+    status_ = BidiStatus::CONNECT;
+
+    ctx_.AsyncNotifyWhenDone((void*)this);
+
+    // As part of the initial CREATE state, we *request* that the system
+    // start processing DoOp requests. In this request, "this" acts are
+    // the tag uniquely identifying the request (so that different CallData
+    // instances can serve different requests concurrently), in this case
+    // the memory address of this CallData instance.
+    service_->RequestDoOp(&ctx_, &rw_, cq_, cq_, (void*)this);
+  }
+  // async version of DoOp
+  void Proceed(bool ok) override {
+
+    std::unique_lock<std::mutex> _wlock(this->m_mutex);
+
+    switch (status_) {
+    case BidiStatus::READ:
+
+        //Meaning client said it wants to end the stream either by a 'writedone' or 'finish' call.
+        if (!ok) {
+            std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " CQ returned false." << std::endl;
+            Status _st(StatusCode::OUT_OF_RANGE,"test error msg");
+            // rw_.Write(reply_, (void*)this);
+            rw_.Finish(_st,(void*)this);
+            status_ = BidiStatus::DONE;
+            std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " after call Finish(), cancelled:" << this->ctx_.IsCancelled() << std::endl;
+            break;
+        }
+
+        // read a request from the client through the stream
+        rw_.Read(&request_, (void*)this);
+        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " Received a new " << request_.type() << " op " << std::endl;
+
+        // Handle a db operation
+        HandleOp();
+        /* chain replication */
+        // Forward the request to the downstream node in the chain if it's not a tail node
+        if(!db_options_->is_tail){
+          kvstore_client_->SetRequest(request_);
+          kvstore_client_->AsyncDoOp();
+        }else {
+          // tail node
+          // TODO: send the true reply back to replicator
+          
+        }
+
+        if(request_.type() == Op::GET){
+          // if it's a Get Op, should return reply back to the client
+          status_ = BidiStatus::WRITE;
+        }else{
+          status_ = BidiStatus::READ;
+        }
+        break;
+
+    case BidiStatus::WRITE:
+        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " Get For key : " << request_.key() << " , status : " << reply_.status() << std::endl;
+        // For a get request, return a reply back to the client
+        rw_.Write(reply_, (void*)this);
+        status_ = BidiStatus::READ;
+        break;
+
+    case BidiStatus::CONNECT:
+        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " connected:" << std::endl;
+        // Spawn a new CallData instance to serve new clients while we process
+        // the one for this CallData. The instance will deallocate itself as
+        // part of its FINISH state.
+        new CallDataBidi(service_, cq_, db_);
+        rw_.Read(&request_, (void*)this);
+        status_ = BidiStatus::READ;
+        break;
+
+    case BidiStatus::DONE:
+        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this
+                << " Server done, cancelled:" << this->ctx_.IsCancelled() << std::endl;
+        status_ = BidiStatus::FINISH;
+        break;
+
+    case BidiStatus::FINISH:
+        std::cout << "thread:" << std::this_thread::get_id() <<  "tag:" << this << " Server finish, cancelled:" << this->ctx_.IsCancelled() << std::endl;
+        _wlock.unlock();
+        delete this;
+        break;
+
+    default:
+        std::cerr << "Unexpected tag " << int(status_) << std::endl;
+        assert(false);
+    }
+  }
+
+ private:
+
+  void HandleOp() override {
+      std::string value;
+
+      switch (request_.type())
+      {
+      case Op::GET:
+        s_ = db_->Get(rocksdb::ReadOptions(), request_.key(), &value);
+        reply_.set_type(OpReply::GET);
+        reply_.set_status(s_.ToString());
+        if(s_.ok()){
+          reply_.set_ok(true);
+          reply_.set_value(value);
+        }else{
+          reply_.set_ok(false);
+        }
+        break;
+
+      case Op::PUT:
+        s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
+        reply_.set_type(OpReply::PUT);
+        if(s_.ok()){
+          reply_.set_ok(true);
+        }else{
+          reply_.set_ok(false);
+          reply_.set_status(s_.ToString());
+        }
+        break;
+
+      case Op::DELETE:
+        //TODO
+        break;
+
+      case Op::UPDATE:
+        //TODO
+        break;
+
+      default:
+        std::cerr << "Unsupported Operation \n";
+        break;
+      }
+  }
+
+  // The means to get back to the client.
+  ServerAsyncReaderWriter<OpReply, Op>  rw_;
+
+  // Let's implement a tiny state machine with the following states.
+  enum class BidiStatus { READ = 1, WRITE = 2, CONNECT = 3, DONE = 4, FINISH = 5 };
+  BidiStatus status_;
+
+  std::mutex   m_mutex;
+};
+
 class ServerImpl final {
   public:
-  ServerImpl(ServerBuilder& builder, Rocksdb::DB* db)
-   :builder_(builder), db_(db){
+  ServerImpl(const std::string& server_addr, rocksdb::DB* db)
+   :server_addr_(server_addr), db_(db){
   }
   ~ServerImpl() {
     server_->Shutdown();
@@ -699,6 +701,8 @@ class ServerImpl final {
 
   // There is no shutdown handling in this code.
   void Run() {
+
+     builder_.AddListeningPort(server_addr_, grpc::InsecureServerCredentials());
     // Register "service_" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *asynchronous* service.
     builder_.RegisterService(&service_);
@@ -707,12 +711,11 @@ class ServerImpl final {
 
     for (int i = 0; i < g_cq_num; ++i) {
         //cq_ = builder.AddCompletionQueue();
-        m_cq.emplace_back(builder.AddCompletionQueue());
+        m_cq.emplace_back(builder_.AddCompletionQueue());
     }
 
     // Finally assemble the server.
     server_ = builder_.BuildAndStart();
-    std::cout << "Server listening on " << server_address << std::endl;
 
     // Proceed to the server's main loop.
     std::vector<std::thread*> _vec_threads;
@@ -756,22 +759,23 @@ class ServerImpl final {
 
   RubbleKvStoreService::AsyncService service_;
   std::unique_ptr<Server> server_;
+  const std::string& server_addr_;
   ServerBuilder builder_;
   rocksdb::DB* db_;
 };
 
 void RunServer(rocksdb::DB* db, const std::string& server_addr) {
   
-  RubbleKvServiceImpl service(db);
+  // RubbleKvServiceImpl service(db);
 
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-  ServerBuilder builder;
+  // ServerBuilder builder;
 
-  builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
+  // builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
   std::cout << "Server listening on " << server_addr << std::endl;
-  builder.RegisterService(&service);
-  ServerImpl server_impl(builder, db);
+  // builder.RegisterService(&service);
+  ServerImpl server_impl(server_addr, db);
   server_impl.Run();
   // std::unique_ptr<Server> server(builder.BuildAndStart());
   // server->Wait();

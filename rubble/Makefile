@@ -67,10 +67,10 @@ RM = /usr/local/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /mnt/sdb/EECS_6897_Distributed_Storage_System_Project_Scripts/version_edit_sync/cpp
+CMAKE_SOURCE_DIR = /mnt/sdb/my_rocksdb/rubble
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /mnt/sdb/EECS_6897_Distributed_Storage_System_Project_Scripts/version_edit_sync/cpp
+CMAKE_BINARY_DIR = /mnt/sdb/my_rocksdb/rubble
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -99,9 +99,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/sdb/EECS_6897_Distributed_Storage_System_Project_Scripts/version_edit_sync/cpp/CMakeFiles /mnt/sdb/EECS_6897_Distributed_Storage_System_Project_Scripts/version_edit_sync/cpp//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/sdb/my_rocksdb/rubble/CMakeFiles /mnt/sdb/my_rocksdb/rubble//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/sdb/EECS_6897_Distributed_Storage_System_Project_Scripts/version_edit_sync/cpp/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/sdb/my_rocksdb/rubble/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -130,19 +130,6 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named version_edit_sync_primary
-
-# Build rule for target.
-version_edit_sync_primary: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 version_edit_sync_primary
-.PHONY : version_edit_sync_primary
-
-# fast build rule for target.
-version_edit_sync_primary/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_primary.dir/build.make CMakeFiles/version_edit_sync_primary.dir/build
-.PHONY : version_edit_sync_primary/fast
-
-#=============================================================================
 # Target rules for targets named kv_store_client
 
 # Build rule for target.
@@ -156,17 +143,30 @@ kv_store_client/fast:
 .PHONY : kv_store_client/fast
 
 #=============================================================================
-# Target rules for targets named version_edit_sync_secondary
+# Target rules for targets named primary_server
 
 # Build rule for target.
-version_edit_sync_secondary: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 version_edit_sync_secondary
-.PHONY : version_edit_sync_secondary
+primary_server: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 primary_server
+.PHONY : primary_server
 
 # fast build rule for target.
-version_edit_sync_secondary/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_secondary.dir/build.make CMakeFiles/version_edit_sync_secondary.dir/build
-.PHONY : version_edit_sync_secondary/fast
+primary_server/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_server.dir/build.make CMakeFiles/primary_server.dir/build
+.PHONY : primary_server/fast
+
+#=============================================================================
+# Target rules for targets named secondary_server
+
+# Build rule for target.
+secondary_server: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 secondary_server
+.PHONY : secondary_server
+
+# fast build rule for target.
+secondary_server/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_server.dir/build.make CMakeFiles/secondary_server.dir/build
+.PHONY : secondary_server/fast
 
 kv_store_client.o: kv_store_client.cc.o
 
@@ -195,125 +195,59 @@ kv_store_client.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/kv_store_client.cc.s
 .PHONY : kv_store_client.cc.s
 
-version_edit_sync.grpc.pb.o: version_edit_sync.grpc.pb.cc.o
+primary_server.o: primary_server.cc.o
 
-.PHONY : version_edit_sync.grpc.pb.o
-
-# target to build an object file
-version_edit_sync.grpc.pb.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_primary.dir/build.make CMakeFiles/version_edit_sync_primary.dir/version_edit_sync.grpc.pb.cc.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/version_edit_sync.grpc.pb.cc.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_secondary.dir/build.make CMakeFiles/version_edit_sync_secondary.dir/version_edit_sync.grpc.pb.cc.o
-.PHONY : version_edit_sync.grpc.pb.cc.o
-
-version_edit_sync.grpc.pb.i: version_edit_sync.grpc.pb.cc.i
-
-.PHONY : version_edit_sync.grpc.pb.i
-
-# target to preprocess a source file
-version_edit_sync.grpc.pb.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_primary.dir/build.make CMakeFiles/version_edit_sync_primary.dir/version_edit_sync.grpc.pb.cc.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/version_edit_sync.grpc.pb.cc.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_secondary.dir/build.make CMakeFiles/version_edit_sync_secondary.dir/version_edit_sync.grpc.pb.cc.i
-.PHONY : version_edit_sync.grpc.pb.cc.i
-
-version_edit_sync.grpc.pb.s: version_edit_sync.grpc.pb.cc.s
-
-.PHONY : version_edit_sync.grpc.pb.s
-
-# target to generate assembly for a file
-version_edit_sync.grpc.pb.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_primary.dir/build.make CMakeFiles/version_edit_sync_primary.dir/version_edit_sync.grpc.pb.cc.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/version_edit_sync.grpc.pb.cc.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_secondary.dir/build.make CMakeFiles/version_edit_sync_secondary.dir/version_edit_sync.grpc.pb.cc.s
-.PHONY : version_edit_sync.grpc.pb.cc.s
-
-version_edit_sync.pb.o: version_edit_sync.pb.cc.o
-
-.PHONY : version_edit_sync.pb.o
+.PHONY : primary_server.o
 
 # target to build an object file
-version_edit_sync.pb.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_primary.dir/build.make CMakeFiles/version_edit_sync_primary.dir/version_edit_sync.pb.cc.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/version_edit_sync.pb.cc.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_secondary.dir/build.make CMakeFiles/version_edit_sync_secondary.dir/version_edit_sync.pb.cc.o
-.PHONY : version_edit_sync.pb.cc.o
+primary_server.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_server.dir/build.make CMakeFiles/primary_server.dir/primary_server.cc.o
+.PHONY : primary_server.cc.o
 
-version_edit_sync.pb.i: version_edit_sync.pb.cc.i
+primary_server.i: primary_server.cc.i
 
-.PHONY : version_edit_sync.pb.i
+.PHONY : primary_server.i
 
 # target to preprocess a source file
-version_edit_sync.pb.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_primary.dir/build.make CMakeFiles/version_edit_sync_primary.dir/version_edit_sync.pb.cc.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/version_edit_sync.pb.cc.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_secondary.dir/build.make CMakeFiles/version_edit_sync_secondary.dir/version_edit_sync.pb.cc.i
-.PHONY : version_edit_sync.pb.cc.i
+primary_server.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_server.dir/build.make CMakeFiles/primary_server.dir/primary_server.cc.i
+.PHONY : primary_server.cc.i
 
-version_edit_sync.pb.s: version_edit_sync.pb.cc.s
+primary_server.s: primary_server.cc.s
 
-.PHONY : version_edit_sync.pb.s
+.PHONY : primary_server.s
 
 # target to generate assembly for a file
-version_edit_sync.pb.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_primary.dir/build.make CMakeFiles/version_edit_sync_primary.dir/version_edit_sync.pb.cc.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/version_edit_sync.pb.cc.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_secondary.dir/build.make CMakeFiles/version_edit_sync_secondary.dir/version_edit_sync.pb.cc.s
-.PHONY : version_edit_sync.pb.cc.s
+primary_server.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_server.dir/build.make CMakeFiles/primary_server.dir/primary_server.cc.s
+.PHONY : primary_server.cc.s
 
-version_edit_sync_primary.o: version_edit_sync_primary.cc.o
+secondary_server.o: secondary_server.cc.o
 
-.PHONY : version_edit_sync_primary.o
+.PHONY : secondary_server.o
 
 # target to build an object file
-version_edit_sync_primary.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_primary.dir/build.make CMakeFiles/version_edit_sync_primary.dir/version_edit_sync_primary.cc.o
-.PHONY : version_edit_sync_primary.cc.o
+secondary_server.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_server.dir/build.make CMakeFiles/secondary_server.dir/secondary_server.cc.o
+.PHONY : secondary_server.cc.o
 
-version_edit_sync_primary.i: version_edit_sync_primary.cc.i
+secondary_server.i: secondary_server.cc.i
 
-.PHONY : version_edit_sync_primary.i
-
-# target to preprocess a source file
-version_edit_sync_primary.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_primary.dir/build.make CMakeFiles/version_edit_sync_primary.dir/version_edit_sync_primary.cc.i
-.PHONY : version_edit_sync_primary.cc.i
-
-version_edit_sync_primary.s: version_edit_sync_primary.cc.s
-
-.PHONY : version_edit_sync_primary.s
-
-# target to generate assembly for a file
-version_edit_sync_primary.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_primary.dir/build.make CMakeFiles/version_edit_sync_primary.dir/version_edit_sync_primary.cc.s
-.PHONY : version_edit_sync_primary.cc.s
-
-version_edit_sync_secondary.o: version_edit_sync_secondary.cc.o
-
-.PHONY : version_edit_sync_secondary.o
-
-# target to build an object file
-version_edit_sync_secondary.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_secondary.dir/build.make CMakeFiles/version_edit_sync_secondary.dir/version_edit_sync_secondary.cc.o
-.PHONY : version_edit_sync_secondary.cc.o
-
-version_edit_sync_secondary.i: version_edit_sync_secondary.cc.i
-
-.PHONY : version_edit_sync_secondary.i
+.PHONY : secondary_server.i
 
 # target to preprocess a source file
-version_edit_sync_secondary.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_secondary.dir/build.make CMakeFiles/version_edit_sync_secondary.dir/version_edit_sync_secondary.cc.i
-.PHONY : version_edit_sync_secondary.cc.i
+secondary_server.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_server.dir/build.make CMakeFiles/secondary_server.dir/secondary_server.cc.i
+.PHONY : secondary_server.cc.i
 
-version_edit_sync_secondary.s: version_edit_sync_secondary.cc.s
+secondary_server.s: secondary_server.cc.s
 
-.PHONY : version_edit_sync_secondary.s
+.PHONY : secondary_server.s
 
 # target to generate assembly for a file
-version_edit_sync_secondary.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/version_edit_sync_secondary.dir/build.make CMakeFiles/version_edit_sync_secondary.dir/version_edit_sync_secondary.cc.s
-.PHONY : version_edit_sync_secondary.cc.s
+secondary_server.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_server.dir/build.make CMakeFiles/secondary_server.dir/secondary_server.cc.s
+.PHONY : secondary_server.cc.s
 
 # Help Target
 help:
@@ -324,23 +258,17 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... kv_store_client"
-	@echo "... version_edit_sync_primary"
-	@echo "... version_edit_sync_secondary"
+	@echo "... primary_server"
+	@echo "... secondary_server"
 	@echo "... kv_store_client.o"
 	@echo "... kv_store_client.i"
 	@echo "... kv_store_client.s"
-	@echo "... version_edit_sync.grpc.pb.o"
-	@echo "... version_edit_sync.grpc.pb.i"
-	@echo "... version_edit_sync.grpc.pb.s"
-	@echo "... version_edit_sync.pb.o"
-	@echo "... version_edit_sync.pb.i"
-	@echo "... version_edit_sync.pb.s"
-	@echo "... version_edit_sync_primary.o"
-	@echo "... version_edit_sync_primary.i"
-	@echo "... version_edit_sync_primary.s"
-	@echo "... version_edit_sync_secondary.o"
-	@echo "... version_edit_sync_secondary.i"
-	@echo "... version_edit_sync_secondary.s"
+	@echo "... primary_server.o"
+	@echo "... primary_server.i"
+	@echo "... primary_server.s"
+	@echo "... secondary_server.o"
+	@echo "... secondary_server.i"
+	@echo "... secondary_server.s"
 .PHONY : help
 
 

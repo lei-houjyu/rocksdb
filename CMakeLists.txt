@@ -1023,8 +1023,8 @@ set(rubble_kv_store_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/rubble/rubble_kv_stor
 add_custom_command(
       OUTPUT "${rubble_kv_store_srcs}" "${rubble_kv_store_hdrs}" "${rubble_kv_store_grpc_srcs}" "${rubble_kv_store_grpc_hdrs}"
       COMMAND ${_PROTOBUF_PROTOC}
-      ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}/grpc"
-        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}/grpc"
+      ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}/rubble"
+        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}/rubble"
         -I "${rubble_kv_store_path}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
         "${rubble_kv_store}"
@@ -1043,7 +1043,7 @@ target_link_libraries(${ROCKSDB_STATIC_LIB} PRIVATE
   ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} 
   ${_REFLECTION}
   ${_GRPC_GRPCPP}
-  nlohmann_json::nlohmann_json
+  # nlohmann_json::nlohmann_json
   ${_PROTOBUF_LIBPROTOBUF})
 
 if(ROCKSDB_BUILD_SHARED)
@@ -1052,7 +1052,7 @@ if(ROCKSDB_BUILD_SHARED)
     ${THIRDPARTY_LIBS} ${SYSTEM_LIBS} 
     ${_REFLECTION} 
     ${_GRPC_GRPCPP}
-    nlohmann_json::nlohmann_json
+    # nlohmann_json::nlohmann_json
     ${_PROTOBUF_LIBPROTOBUF})
 
   if(WIN32)

@@ -498,13 +498,30 @@ class OpReply PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kValueFieldNumber = 2,
-    kStatusFieldNumber = 3,
+    kKeyFieldNumber = 2,
+    kValueFieldNumber = 3,
+    kStatusFieldNumber = 4,
     kOkFieldNumber = 1,
-    kTypeFieldNumber = 5,
-    kIdFieldNumber = 4,
+    kTypeFieldNumber = 6,
+    kIdFieldNumber = 5,
   };
-  // string value = 2;
+  // string key = 2;
+  void clear_key();
+  const std::string& key() const;
+  void set_key(const std::string& value);
+  void set_key(std::string&& value);
+  void set_key(const char* value);
+  void set_key(const char* value, size_t size);
+  std::string* mutable_key();
+  std::string* release_key();
+  void set_allocated_key(std::string* key);
+  private:
+  const std::string& _internal_key() const;
+  void _internal_set_key(const std::string& value);
+  std::string* _internal_mutable_key();
+  public:
+
+  // string value = 3;
   void clear_value();
   const std::string& value() const;
   void set_value(const std::string& value);
@@ -520,7 +537,7 @@ class OpReply PROTOBUF_FINAL :
   std::string* _internal_mutable_value();
   public:
 
-  // string status = 3;
+  // string status = 4;
   void clear_status();
   const std::string& status() const;
   void set_status(const std::string& value);
@@ -545,7 +562,7 @@ class OpReply PROTOBUF_FINAL :
   void _internal_set_ok(bool value);
   public:
 
-  // .rubble.OpReply.OpType type = 5;
+  // .rubble.OpReply.OpType type = 6;
   void clear_type();
   ::rubble::OpReply_OpType type() const;
   void set_type(::rubble::OpReply_OpType value);
@@ -554,7 +571,7 @@ class OpReply PROTOBUF_FINAL :
   void _internal_set_type(::rubble::OpReply_OpType value);
   public:
 
-  // int64 Id = 4;
+  // int64 Id = 5;
   void clear_id();
   ::PROTOBUF_NAMESPACE_ID::int64 id() const;
   void set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
@@ -570,6 +587,7 @@ class OpReply PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr key_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr value_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr status_;
   bool ok_;
@@ -1065,7 +1083,69 @@ inline void OpReply::set_ok(bool value) {
   // @@protoc_insertion_point(field_set:rubble.OpReply.ok)
 }
 
-// string value = 2;
+// string key = 2;
+inline void OpReply::clear_key() {
+  key_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& OpReply::key() const {
+  // @@protoc_insertion_point(field_get:rubble.OpReply.key)
+  return _internal_key();
+}
+inline void OpReply::set_key(const std::string& value) {
+  _internal_set_key(value);
+  // @@protoc_insertion_point(field_set:rubble.OpReply.key)
+}
+inline std::string* OpReply::mutable_key() {
+  // @@protoc_insertion_point(field_mutable:rubble.OpReply.key)
+  return _internal_mutable_key();
+}
+inline const std::string& OpReply::_internal_key() const {
+  return key_.Get();
+}
+inline void OpReply::_internal_set_key(const std::string& value) {
+  
+  key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void OpReply::set_key(std::string&& value) {
+  
+  key_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:rubble.OpReply.key)
+}
+inline void OpReply::set_key(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:rubble.OpReply.key)
+}
+inline void OpReply::set_key(const char* value,
+    size_t size) {
+  
+  key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:rubble.OpReply.key)
+}
+inline std::string* OpReply::_internal_mutable_key() {
+  
+  return key_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* OpReply::release_key() {
+  // @@protoc_insertion_point(field_release:rubble.OpReply.key)
+  return key_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void OpReply::set_allocated_key(std::string* key) {
+  if (key != nullptr) {
+    
+  } else {
+    
+  }
+  key_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), key,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:rubble.OpReply.key)
+}
+
+// string value = 3;
 inline void OpReply::clear_value() {
   value_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
@@ -1127,7 +1207,7 @@ inline void OpReply::set_allocated_value(std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:rubble.OpReply.value)
 }
 
-// string status = 3;
+// string status = 4;
 inline void OpReply::clear_status() {
   status_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
@@ -1189,7 +1269,7 @@ inline void OpReply::set_allocated_status(std::string* status) {
   // @@protoc_insertion_point(field_set_allocated:rubble.OpReply.status)
 }
 
-// int64 Id = 4;
+// int64 Id = 5;
 inline void OpReply::clear_id() {
   id_ = PROTOBUF_LONGLONG(0);
 }
@@ -1209,7 +1289,7 @@ inline void OpReply::set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
   // @@protoc_insertion_point(field_set:rubble.OpReply.Id)
 }
 
-// .rubble.OpReply.OpType type = 5;
+// .rubble.OpReply.OpType type = 6;
 inline void OpReply::clear_type() {
   type_ = 0;
 }

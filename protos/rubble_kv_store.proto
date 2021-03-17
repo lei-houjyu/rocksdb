@@ -36,10 +36,11 @@ message Op{
 
 message OpReply{
   bool ok = 1;
-  string value = 2;
-  string status = 3;
+  string key = 2;
+  string value = 3;
+  string status = 4;
 
-  int64  Id = 4;
+  int64  Id = 5;
   enum  OpType {
     GET = 0;
     PUT = 1;
@@ -47,7 +48,7 @@ message OpReply{
     UPDATE = 3;
   }
 
-  OpType type = 5;
+  OpType type = 6;
 }
 
 

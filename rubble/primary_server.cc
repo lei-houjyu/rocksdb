@@ -48,6 +48,6 @@ int main(int argc, char** argv) {
   rocksdb::DB* primary_db = GetPrimaryDBInstance("/tmp/rocksdb_primary_test", secondary_server_address);
 
   // primary server is running on localhost:50051
-  RunServer(primary_db, primary_server_address, true);
+  RunServer(primary_db, primary_server_address);
   return 0;
 }
