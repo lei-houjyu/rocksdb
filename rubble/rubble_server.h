@@ -42,8 +42,6 @@ using json = nlohmann::json;
 int g_thread_num = 1;
 int g_cq_num = 1;
 int g_pool = 1;
-int g_port = 50051;
-
 
 class CallDataBase {
 public:
@@ -51,7 +49,7 @@ public:
    :service_(service), cq_(cq), db_(db){
       rocksdb::DBImpl* impl = (rocksdb::DBImpl*)db_;
       auto version_set = impl->TEST_GetVersionSet();
-      auto db_options = version_set->db_options();
+      db_options_ = version_set->db_options();
       kvstore_client_ = db_options->kvstore_client;
    }
 
@@ -66,6 +64,8 @@ protected:
 
   // status of the db after performing an operation.
   rocksdb::Status s_;
+
+  rocksdb::ImmutableDBOptions* db_options_;
 
   std::shared_ptr<KvStoreClient> kvstore_client_; 
   // The means of communication with the gRPC runtime for an asynchronous
@@ -109,7 +109,7 @@ class CallDataBidi : CallDataBase {
     // the memory address of this CallData instance.
     service_->RequestDoOp(&ctx_, &rw_, cq_, cq_, (void*)this);
   }
-
+  // async version of DoOp
   void Proceed(bool ok) override {
 
     std::unique_lock<std::mutex> _wlock(this->m_mutex);
@@ -133,9 +133,16 @@ class CallDataBidi : CallDataBase {
 
         // Handle a db operation
         HandleOp();
-        // Forward the request to the downstream node in the chain
-        kvstore_client_->SetRequest(request_);
-        kvstore_client_->AsynDoOp();
+        // assert(db_options.is_ruuble);
+        // Forward the request to the downstream node in the chain if it's not a tail node
+        if(db_options.is_ruuble && !db_options_.is_tail){
+          kvstore_client_->SetRequest(request_);
+          kvstore_client_->AsynDoOp();
+        }else if(db_options.is_ruuble &&db_options_.is_tail) {
+          // tail node
+          // TODO: send the true reply back to replicator
+          
+        }
 
         if(request_.type() == Op::GET){
           // if it's a Get Op, should return reply back to the client
@@ -243,6 +250,8 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
        is_rubble_(db_options_.is_rubble),
        is_head_(db_options_.is_primary),
        is_tail_(db_options_.is_tail),
+       sync_client_(db_options_.sync_client),
+       kvstore_client_(db_options_.kvstore_client),
        column_family_set_(version_set_->GetColumnFamilySet()),
        default_cf_(column_family_set_->GetDefault()),
        ioptions_(default_cf_->ioptions()),
@@ -330,7 +339,7 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
   }
 
 
-  //a Unary RPC call used by the non-tail node to sync Version(view of sst files) states to the downstream node 
+  //an Unary RPC call used by the non-tail node to sync Version(view of sst files) states to the downstream node 
   Status Sync(ServerContext* context, const SyncRequest* request, 
                           SyncReply* reply) override {
     log_apply_counter_++;
@@ -381,8 +390,8 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
 
     // If it's neither primary/head nor tail(second node in the chain in a 3-node setting)
     // should call Sync rpc to downstream node also should ship sst files to the downstream node
-    assert(is_rubble_);
-    if(!is_head_ && ! is_tail_){
+    // assert(is_rubble_);
+    if(is_rubble_ && !is_head_ && ! is_tail_){
       s = ShipSstFiles(edit);
       std::string sync_reply = db_options_->sync_client->Sync(*request);
       std::cout << "[ Reply Status ]: " << sync_reply << std::endl;
@@ -680,7 +689,6 @@ class ServerImpl final {
   public:
   ServerImpl(ServerBuilder& builder, Rocksdb::DB* db)
    :builder_(builder), db_(db){
-    
   }
   ~ServerImpl() {
     server_->Shutdown();
@@ -746,7 +754,7 @@ class ServerImpl final {
 
   std::vector<std::unique_ptr<ServerCompletionQueue>>  m_cq;
 
-  MultiGreeter::AsyncService service_;
+  RubbleKvStoreService::AsyncService service_;
   std::unique_ptr<Server> server_;
   ServerBuilder builder_;
   rocksdb::DB* db_;
