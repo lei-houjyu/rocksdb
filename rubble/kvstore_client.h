@@ -24,6 +24,7 @@ using grpc::CompletionQueue;
 using rubble::RubbleKvStoreService;
 using rubble::Op;
 using rubble::OpReply;
+using rubble::Op_OpType_Name;
 
 // client class used to send db operations to the server
 class KvStoreClient{
@@ -43,7 +44,7 @@ class KvStoreClient{
       stream_ = stub_->AsyncDoOp(&context_, &cq_,
                                    reinterpret_cast<void*>(Type::CONNECT));
       
-      sync_stream_ = stub_->DoOp(&context_);
+      // sync_stream_ = stub_->DoOp(&sync_context_);
     };
 
     ~KvStoreClient(){
@@ -58,7 +59,7 @@ class KvStoreClient{
   }
 
 
-  void Get(const std::vector<std::string>& keys, std::vector<std::string>& vals){
+  void Get(const std::vector<std::string>& keys){
     for(const auto& key : keys){
         AsyncDoGet(key);
     }
@@ -85,74 +86,32 @@ class KvStoreClient{
   // value as a pair
   void SyncDoGet(const std::string& key, std::string& val) {
  
-    // for (const auto& key : keys) {
-      // Key we are sending to the server.
-      Op request;
-      request.set_key(key);
-      request.set_type(Op::GET);
-      sync_stream_->Write(request);
+    // Key we are sending to the server.
+    Op request;
+    request.set_key(key);
+    request.set_type(Op::GET);
+    sync_stream_->Write(request);
 
-      // Get the value for the sent key
-      OpReply response;
-      sync_stream_->Read(&response);
+    // Get the value for the sent key
+    OpReply response;
+    sync_stream_->Read(&response);
 
-      if(!response.ok()){
-        std::cout << " Get key : " << key << " Failed: " << response.status() << "\n";
-      }else{
-         val = response.value();
-         std::cout << " Get Key : " << key << " returned val : " << val << std::endl;
-      }
-      // std::cout << key << " : " << response.value() << "\n";
-    // }
-
-    // sync_stream_->WritesDone();
-    // Status status = sync_stream_->Finish();
-    
+    if(!response.ok()){
+      std::cout << "Get key : " << key << " Failed: " << response.status() << "\n";
+    }else{
+        val = response.value();
+        std::cout << "Get Key : " << key << " returned val : " << val << std::endl;
+    }
     return ;
   }
 
-  void SyncDoPut(const std::pair<std::string, std::string>& kv){
-  
-    // for(const auto& kv: kvs){
-        
+  void SyncDoPut(const std::pair<std::string, std::string>& kv){   
       Op request;
       request.set_key(kv.first);
       request.set_value(kv.second);
       request.set_type(Op::PUT);
       
       sync_stream_->Write(request);
-
-      // OpReply reply;
-      // sync_stream_->Read(&reply);
-
-      // if(put_count_ % 1000 == 0 ){
-        // std::cout << " Put ----> " ;
-        // if(to_primary_){
-        //   std::cout << "Primary   ";
-        // }else{
-        //   std::cout << "Secondary ";
-        // }
-      // std::cout <<" ( " << kv.first << " ," << kv.second << " ) , status : " ;
-      // if(reply.ok()){
-      //   std::cout << "Succeeds";
-      // } else{
-        
-      //   std::cout << "Failed ( " << reply.status() << " )";
-      // }
-      // std::cout << "\n";  
-
-        // }
-    // }
-
-    // Signal the client is done with the writes (half-close the client stream).
-    // sync_stream_->WritesDone();
-    // Status status = sync_stream_->Finish();
-    // if(!status.ok()){
-    //     std::cout << status.error_code() << ": " << status.error_message()
-    //             << std::endl;
-    //     std::cout << "RPC failed";
-    // }
-    // return s;
   }
 
   // Put is client-to-server streaming async rpc
@@ -180,19 +139,23 @@ class KvStoreClient{
 
   // could be run in multiple threads
   void AsyncDoOp(){
+    op_counter_++;
     {
     // check if it's ready to call Write
-      if(!ready_.load()){
-          // If not, gonna wait for cv_.notify
-          // std::cout << "[m] wait : " << message << std::endl;
+      if(!ready_.load()){ // If not ready, gonna wait for cv_.notify
+          std::cout << "[m] wait : " <<  op_counter_ <<"\n"; 
+          // std::cout <<  Op_OpType_Name(request_.type()) << " -> " << request_.key() << std::endl;
           std::unique_lock<std::mutex> lk(mu_);
+          // std::cout << "[m] lock\n";
           // wait until got notified when cq received a tag and ready_ set to true
-          cv_.wait(lk, [&](){return ready_.load();});
-          // std::cout << "[m] Notified \n";
-          ready_.store(false);
+          cv_.wait_for(lk, std::chrono::milliseconds(100), [&](){return ready_.load();});
+          // std::cout << "[m] Notified\n";
+          // ready_.store(false);
       }
     }
-
+      
+    ready_.store(false);
+    // assert(request_.type() == Op::PUT);
     // This is important: You can have at most one write or at most one read
     // at any given time. The throttling is performed by gRPC completion
     // queue.
@@ -204,9 +167,9 @@ class KvStoreClient{
     // are independent of each other in terms of ordering/delivery.
     //std::cout << " ** Sending request: " << user << std::endl;
     stream_->Write(request_, reinterpret_cast<void*>(Type::WRITE));  
-
+    
+    // std::cout << "[Write " << Op_OpType_Name(request_.type()) << " op with key : " << request_.key() << "]\n";
     // if(ready_.load()){
-      ready_.store(false);
     // }
     return;
   }
@@ -218,12 +181,16 @@ class KvStoreClient{
   private:
     // read a reply back for a Get request
      void ReadReplyForGet() {
-
         // The tag is the link between our thread (main thread) and the completion
         // queue thread. The tag allows the completion queue to fan off
         // notification handlers for the specified read/write requests as they
         // are being processed by gRPC.
         stream_->Read(&reply_, reinterpret_cast<void*>(Type::READ));
+        if(reply_.ok()){
+          std::cout << "returned val for key " << reply_.key() << " : " << reply_.value() << std::endl;
+        }else{
+          std::cout << reply_.status() << std::endl;
+        }
     }
 
     // Runs a gRPC completion-queue processing thread. Checks for 'Next' tag
@@ -243,11 +210,10 @@ class KvStoreClient{
           case Type::READ:
               // in this case, means we get a reply from the server, which is for a Get operation
               if(reply_.ok()){
-                std::cout << " Get for key : " << reply_.key() << " , returned value : " << reply_.value() << std::endl;
+                std::cout << "Get for key : " << reply_.key() << " , returned value : " << reply_.value() << std::endl;
               }else{
-                std::cout << " Get for key : " << reply_.key() << " , returned status : " << reply_.status() << std::endl;
+                std::cout << "Get for key : " << reply_.key() << " , returned status : " << reply_.status() << std::endl;
               }
-              
               // notify that we're ready to process next request
               ready_.store(true);
               cv_.notify_one();
@@ -256,19 +222,18 @@ class KvStoreClient{
               switch (request_.type())
               {
               case Op::GET:
-                std::cout << "Get : " << request_.key() << std::endl;
+                std::cout << "Get -> " << request_.key() << std::endl;
                 ReadReplyForGet();
                 break;
               case Op::PUT:
-                std::cout << "Put : (" << request_.key() << ", " << request_.value() << ")\n";
                 // std::cout << "[g] polled :" << request_.name() << std::endl;
+                // std::cout << "Put -> (" << request_.key() << ", " << request_.value() << ")\n";
                 // received a tag on the cq, notify the main thread that we can start a new Write
-                
-                // if(!ready_.load()){
-                    ready_.store(true);
-                    // std::cout << "[g] Notifying \n";
-                    cv_.notify_one();
-                // }
+                ready_.store(true);
+                // std::cout << "[g] Notify\n";
+                cv_.notify_one();
+
+                // stream_->Write(request_, reinterpret_cast<void*>(Type::WRITE));  
                 break;
               
               case Op::DELETE:
@@ -288,7 +253,7 @@ class KvStoreClient{
               }
               break;
           case Type::CONNECT:
-              std::cout << "Server connected." << std::endl;
+              // std::cout << "Server connected." << std::endl;
               break;
           case Type::WRITES_DONE:
               std::cout << "writesdone sent,sleeping 5s" << std::endl;
@@ -324,6 +289,9 @@ class KvStoreClient{
     // the server and/or tweak certain RPC behaviors.
     ClientContext context_;
 
+    // Context used for doing sync ops
+    ClientContext sync_context_;
+
     // Storage for the status of the RPC upon completion.
     Status status_;
 
@@ -346,4 +314,6 @@ class KvStoreClient{
 
     // Finish status when the client is done with the stream.
     grpc::Status finish_status_ = grpc::Status::OK;
+
+    std::atomic<uint64_t> op_counter_{0};
 };
