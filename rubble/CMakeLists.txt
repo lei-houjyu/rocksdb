@@ -154,8 +154,9 @@ link_libraries("${ROCKSDB_DIR}/librocksdb.a")
 # Targets greeter_[async_](client|server)
 foreach(_target
   rocksdb_server
-  primary_server
-  secondary_server
+  primary_node
+  secondary_node
+  tail_node
   kv_store_client
   )
   add_executable(${_target} "${_target}.cc"

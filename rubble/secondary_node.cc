@@ -1,9 +1,18 @@
 #include "rubble_server.h"
 
+/**
+ * second node the chain 
+ * default remote sst directory : /mnt/sdb/archive_dbs/tail/sst_dir
+ */
 int main(int argc, char** argv) {
 
+  if(argc != 2){
+    std::cout << "usage: ./program tail_node_addr(example: 10.10.1.2:50049)\n";
+    return 0;
+  }
+
   //secondary db path
-  std::string kDBPath = "/tmp/rocksdb_secondary_test";
+  std::string kDBPath = "/tmp/rubble_secondary";
   std::string secondary_server_address = "localhost:50050";
 
   rocksdb::DB* db;
@@ -14,6 +23,8 @@ int main(int argc, char** argv) {
   db_options.create_if_missing = true;
 
   db_options.is_rubble = true;
+  db_options.target_address = argv[1];
+  db_options.remote_sst_dir = "/mnt/sdb/archive_dbs/tail/sst_dir";
 
   // secondary is really not doing flush sst to this dir, but in case of failure, secondary may needs to restart flush/compaction 
   // to recover to the previous state, so this dir is needed by the secondary

@@ -1,5 +1,12 @@
 #include "rubble_server.h"
 
+/**
+ * primary/first node in the chain
+ * 
+ * for a 3-node setting, bring up a primary node, pass the secondary node's address
+ * for a 2-node setting, pass the tail node's address
+ */
+
 rocksdb::DB* GetPrimaryDBInstance(const std::string& db_path, const std::string& secondary_server_address){
 
   rocksdb::DB* db;
@@ -43,9 +50,14 @@ rocksdb::DB* GetPrimaryDBInstance(const std::string& db_path, const std::string&
 int main(int argc, char** argv) {
   
   const std::string primary_server_address = "localhost:50051";
-  const std::string secondary_server_address = "localhost:50050";
+  if(argc != 2){
+    std::cout << "Usage: ./program secondary_addr(example: 10.10.1.2:50050)\n";
+    return 0;
+  }
+
+  const std::string secondary_server_address= argv[1];
   // secondary server is running on localhost:50050
-  rocksdb::DB* primary_db = GetPrimaryDBInstance("/tmp/rocksdb_primary_test", secondary_server_address);
+  rocksdb::DB* primary_db = GetPrimaryDBInstance("/tmp/rubble_primary", secondary_server_address);
 
   // primary server is running on localhost:50051
   RunServer(primary_db, primary_server_address);

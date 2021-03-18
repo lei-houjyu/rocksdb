@@ -130,30 +130,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named kv_store_client
+# Target rules for targets named primary_node
 
 # Build rule for target.
-kv_store_client: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kv_store_client
-.PHONY : kv_store_client
+primary_node: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 primary_node
+.PHONY : primary_node
 
 # fast build rule for target.
-kv_store_client/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/build
-.PHONY : kv_store_client/fast
-
-#=============================================================================
-# Target rules for targets named secondary_server
-
-# Build rule for target.
-secondary_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 secondary_server
-.PHONY : secondary_server
-
-# fast build rule for target.
-secondary_server/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_server.dir/build.make CMakeFiles/secondary_server.dir/build
-.PHONY : secondary_server/fast
+primary_node/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/build
+.PHONY : primary_node/fast
 
 #=============================================================================
 # Target rules for targets named rocksdb_server
@@ -169,17 +156,43 @@ rocksdb_server/fast:
 .PHONY : rocksdb_server/fast
 
 #=============================================================================
-# Target rules for targets named primary_server
+# Target rules for targets named secondary_node
 
 # Build rule for target.
-primary_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 primary_server
-.PHONY : primary_server
+secondary_node: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 secondary_node
+.PHONY : secondary_node
 
 # fast build rule for target.
-primary_server/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_server.dir/build.make CMakeFiles/primary_server.dir/build
-.PHONY : primary_server/fast
+secondary_node/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_node.dir/build.make CMakeFiles/secondary_node.dir/build
+.PHONY : secondary_node/fast
+
+#=============================================================================
+# Target rules for targets named kv_store_client
+
+# Build rule for target.
+kv_store_client: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kv_store_client
+.PHONY : kv_store_client
+
+# fast build rule for target.
+kv_store_client/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/build
+.PHONY : kv_store_client/fast
+
+#=============================================================================
+# Target rules for targets named tail_node
+
+# Build rule for target.
+tail_node: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tail_node
+.PHONY : tail_node
+
+# fast build rule for target.
+tail_node/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/build
+.PHONY : tail_node/fast
 
 kv_store_client.o: kv_store_client.cc.o
 
@@ -208,32 +221,32 @@ kv_store_client.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/kv_store_client.cc.s
 .PHONY : kv_store_client.cc.s
 
-primary_server.o: primary_server.cc.o
+primary_node.o: primary_node.cc.o
 
-.PHONY : primary_server.o
+.PHONY : primary_node.o
 
 # target to build an object file
-primary_server.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_server.dir/build.make CMakeFiles/primary_server.dir/primary_server.cc.o
-.PHONY : primary_server.cc.o
+primary_node.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/primary_node.cc.o
+.PHONY : primary_node.cc.o
 
-primary_server.i: primary_server.cc.i
+primary_node.i: primary_node.cc.i
 
-.PHONY : primary_server.i
+.PHONY : primary_node.i
 
 # target to preprocess a source file
-primary_server.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_server.dir/build.make CMakeFiles/primary_server.dir/primary_server.cc.i
-.PHONY : primary_server.cc.i
+primary_node.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/primary_node.cc.i
+.PHONY : primary_node.cc.i
 
-primary_server.s: primary_server.cc.s
+primary_node.s: primary_node.cc.s
 
-.PHONY : primary_server.s
+.PHONY : primary_node.s
 
 # target to generate assembly for a file
-primary_server.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_server.dir/build.make CMakeFiles/primary_server.dir/primary_server.cc.s
-.PHONY : primary_server.cc.s
+primary_node.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/primary_node.cc.s
+.PHONY : primary_node.cc.s
 
 rocksdb_server.o: rocksdb_server.cc.o
 
@@ -262,32 +275,59 @@ rocksdb_server.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_server.dir/build.make CMakeFiles/rocksdb_server.dir/rocksdb_server.cc.s
 .PHONY : rocksdb_server.cc.s
 
-secondary_server.o: secondary_server.cc.o
+secondary_node.o: secondary_node.cc.o
 
-.PHONY : secondary_server.o
+.PHONY : secondary_node.o
 
 # target to build an object file
-secondary_server.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_server.dir/build.make CMakeFiles/secondary_server.dir/secondary_server.cc.o
-.PHONY : secondary_server.cc.o
+secondary_node.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_node.dir/build.make CMakeFiles/secondary_node.dir/secondary_node.cc.o
+.PHONY : secondary_node.cc.o
 
-secondary_server.i: secondary_server.cc.i
+secondary_node.i: secondary_node.cc.i
 
-.PHONY : secondary_server.i
+.PHONY : secondary_node.i
 
 # target to preprocess a source file
-secondary_server.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_server.dir/build.make CMakeFiles/secondary_server.dir/secondary_server.cc.i
-.PHONY : secondary_server.cc.i
+secondary_node.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_node.dir/build.make CMakeFiles/secondary_node.dir/secondary_node.cc.i
+.PHONY : secondary_node.cc.i
 
-secondary_server.s: secondary_server.cc.s
+secondary_node.s: secondary_node.cc.s
 
-.PHONY : secondary_server.s
+.PHONY : secondary_node.s
 
 # target to generate assembly for a file
-secondary_server.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_server.dir/build.make CMakeFiles/secondary_server.dir/secondary_server.cc.s
-.PHONY : secondary_server.cc.s
+secondary_node.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_node.dir/build.make CMakeFiles/secondary_node.dir/secondary_node.cc.s
+.PHONY : secondary_node.cc.s
+
+tail_node.o: tail_node.cc.o
+
+.PHONY : tail_node.o
+
+# target to build an object file
+tail_node.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/tail_node.cc.o
+.PHONY : tail_node.cc.o
+
+tail_node.i: tail_node.cc.i
+
+.PHONY : tail_node.i
+
+# target to preprocess a source file
+tail_node.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/tail_node.cc.i
+.PHONY : tail_node.cc.i
+
+tail_node.s: tail_node.cc.s
+
+.PHONY : tail_node.s
+
+# target to generate assembly for a file
+tail_node.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/tail_node.cc.s
+.PHONY : tail_node.cc.s
 
 # Help Target
 help:
@@ -298,21 +338,25 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... kv_store_client"
-	@echo "... primary_server"
+	@echo "... primary_node"
 	@echo "... rocksdb_server"
-	@echo "... secondary_server"
+	@echo "... secondary_node"
+	@echo "... tail_node"
 	@echo "... kv_store_client.o"
 	@echo "... kv_store_client.i"
 	@echo "... kv_store_client.s"
-	@echo "... primary_server.o"
-	@echo "... primary_server.i"
-	@echo "... primary_server.s"
+	@echo "... primary_node.o"
+	@echo "... primary_node.i"
+	@echo "... primary_node.s"
 	@echo "... rocksdb_server.o"
 	@echo "... rocksdb_server.i"
 	@echo "... rocksdb_server.s"
-	@echo "... secondary_server.o"
-	@echo "... secondary_server.i"
-	@echo "... secondary_server.s"
+	@echo "... secondary_node.o"
+	@echo "... secondary_node.i"
+	@echo "... secondary_node.s"
+	@echo "... tail_node.o"
+	@echo "... tail_node.i"
+	@echo "... tail_node.s"
 .PHONY : help
 
 
