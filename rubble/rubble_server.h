@@ -47,15 +47,6 @@ int g_pool = 1;
 
 std::unordered_map<std::thread::id, int> map;
 
-const char* ParseCmdPara( char* argv,const char* para) {
-    auto p_target = std::strstr(argv,para);
-    if (p_target == nullptr) {
-        printf("para error argv[%s] should be %s \n",argv,para);
-        return nullptr;
-    }
-    p_target += std::strlen(para);
-    return p_target;
-}
 
 
 class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
