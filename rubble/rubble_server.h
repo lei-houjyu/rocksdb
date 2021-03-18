@@ -1,14 +1,15 @@
 #pragma once
 
 #include <iostream>
-#include <string>
-#include <sstream>   
+#include <iomanip>
+#include <string> 
 #include <memory>
-#include <typeinfo> 
 #include <nlohmann/json.hpp>
+#include <unordered_map>
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include <grpcpp/alarm.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include "rubble_kv_store.grpc.pb.h"
 
@@ -36,12 +37,15 @@ using rubble::SyncRequest;
 using rubble::SyncReply;
 using rubble::Op;
 using rubble::OpReply;
+using rubble::Op_OpType_Name;
 
 using json = nlohmann::json;
 
-int g_thread_num = 1;
+int g_thread_num = 16;
 int g_cq_num = 1;
 int g_pool = 1;
+
+std::unordered_map<std::thread::id, int> map;
 
 class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
   public:
@@ -561,21 +565,19 @@ class CallDataBidi : CallDataBase {
 
     switch (status_) {
     case BidiStatus::READ:
-
+        // std::cout << "I'm at READ state ! \n";
         //Meaning client said it wants to end the stream either by a 'writedone' or 'finish' call.
         if (!ok) {
-            std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " CQ returned false." << std::endl;
+            std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " CQ returned false." << std::endl;
             Status _st(StatusCode::OUT_OF_RANGE,"test error msg");
             // rw_.Write(reply_, (void*)this);
             rw_.Finish(_st,(void*)this);
             status_ = BidiStatus::DONE;
-            std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " after call Finish(), cancelled:" << this->ctx_.IsCancelled() << std::endl;
+            std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " after call Finish(), cancelled:" << this->ctx_.IsCancelled() << std::endl;
             break;
         }
 
-        // read a request from the client through the stream
-        rw_.Read(&request_, (void*)this);
-        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " Received a new " << request_.type() << " op " << std::endl;
+        // std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " Received a new " << Op_OpType_Name(request_.type()) << " op witk key : " << request_.key() << std::endl;
 
         // Handle a db operation
         HandleOp();
@@ -587,31 +589,37 @@ class CallDataBidi : CallDataBase {
         }else {
           // tail node
           // TODO: send the true reply back to replicator
-          
         }
 
         if(request_.type() == Op::GET){
           // if it's a Get Op, should return reply back to the client
+          // alarm_.Set(cq_, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
+          rw_.Write(reply_, (void*)this); 
           status_ = BidiStatus::WRITE;
-        }else{
+        }else {
+          rw_.Read(&request_, (void*)this);
           status_ = BidiStatus::READ;
         }
         break;
 
     case BidiStatus::WRITE:
-        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " Get For key : " << request_.key() << " , status : " << reply_.status() << std::endl;
+        // std::cout << "I'm at WRITE state ! \n";
+        std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " Get For key : " << request_.key() << " , status : " << reply_.status() << std::endl;
         // For a get request, return a reply back to the client
-        rw_.Write(reply_, (void*)this);
+        rw_.Read(&request_, (void*)this);
+
         status_ = BidiStatus::READ;
         break;
 
     case BidiStatus::CONNECT:
-        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this << " connected:" << std::endl;
+        std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " connected:" << std::endl;
         // Spawn a new CallData instance to serve new clients while we process
         // the one for this CallData. The instance will deallocate itself as
         // part of its FINISH state.
         new CallDataBidi(service_, cq_, db_);
         rw_.Read(&request_, (void*)this);
+        // request_.set_type(Op::PUT);
+        // std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " Received a new " << Op_OpType_Name(request_.type()) << " op witk key : " << request_.key() << std::endl;
         status_ = BidiStatus::READ;
         break;
 
@@ -622,7 +630,7 @@ class CallDataBidi : CallDataBase {
         break;
 
     case BidiStatus::FINISH:
-        std::cout << "thread:" << std::this_thread::get_id() <<  "tag:" << this << " Server finish, cancelled:" << this->ctx_.IsCancelled() << std::endl;
+        std::cout << "thread:" << map[std::this_thread::get_id()] <<  "tag:" << this << " Server finish, cancelled:" << this->ctx_.IsCancelled() << std::endl;
         _wlock.unlock();
         delete this;
         break;
@@ -637,11 +645,25 @@ class CallDataBidi : CallDataBase {
 
   void HandleOp() override {
       std::string value;
+      if(!op_counter_.load()){
+        start_time_ = std::chrono::high_resolution_clock::now();
+      }
 
+      if(op_counter_.load() == right_boundary_.load()){
+        end_time_ = std::chrono::high_resolution_clock::now();
+        auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
+        std::cout << "Throughput : " << 100000/(millisecs.count()/1000) << " op/s\n";
+        start_time_ = end_time_;
+        left_boundary_.store(right_boundary_);
+        right_boundary_ += 100000;
+      }
+
+      op_counter_++;
       switch (request_.type())
       {
       case Op::GET:
         s_ = db_->Get(rocksdb::ReadOptions(), request_.key(), &value);
+        reply_.set_key(request_.key());
         reply_.set_type(OpReply::GET);
         reply_.set_status(s_.ToString());
         if(s_.ok()){
@@ -654,13 +676,15 @@ class CallDataBidi : CallDataBase {
 
       case Op::PUT:
         s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
-        reply_.set_type(OpReply::PUT);
-        if(s_.ok()){
-          reply_.set_ok(true);
-        }else{
-          reply_.set_ok(false);
-          reply_.set_status(s_.ToString());
-        }
+
+        // reply_.set_type(OpReply::PUT);
+        // if(s_.ok()){
+        //   std::cout << "Put : (" << request_.key() << " ," << request_.value() << ")\n"; 
+        // //   reply_.set_ok(true);
+        // }else{
+        // //   reply_.set_ok(false);
+        // //   reply_.set_status(s_.ToString());
+        // }
         break;
 
       case Op::DELETE:
@@ -676,6 +700,9 @@ class CallDataBidi : CallDataBase {
         break;
       }
   }
+  
+  // alarm object to put a new task into the cq_
+  grpc::Alarm alarm_;
 
   // The means to get back to the client.
   ServerAsyncReaderWriter<OpReply, Op>  rw_;
@@ -685,6 +712,17 @@ class CallDataBidi : CallDataBase {
   BidiStatus status_;
 
   std::mutex   m_mutex;
+
+  // measure thoughput for every 1000000 ops, set this to the current op_counter_ val whenever we take a measurement
+  std::atomic<uint64_t> left_boundary_{0};
+  // we take a measure whenever right - left = 1000000;
+  std::atomic<uint64_t> right_boundary_{100000};
+
+  std::atomic<uint64_t> op_counter_{0};
+
+  std::chrono::time_point<std::chrono::high_resolution_clock> start_time_;
+
+  std::chrono::time_point<std::chrono::high_resolution_clock> end_time_;
 };
 
 class ServerImpl final {
@@ -725,8 +763,9 @@ class ServerImpl final {
         for (int j = 0; j < g_pool; ++j) {
             new CallDataBidi(&service_, m_cq[_cq_idx].get(), db_);
         }
-
-        _vec_threads.emplace_back(new std::thread(&ServerImpl::HandleRpcs, this, _cq_idx));
+        auto new_thread =  new std::thread(&ServerImpl::HandleRpcs, this, _cq_idx);
+        map[new_thread->get_id()] = i;
+        _vec_threads.emplace_back(new_thread);
     }
 
     std::cout << g_thread_num << " working aysnc threads spawned" << std::endl;
@@ -764,10 +803,10 @@ class ServerImpl final {
   rocksdb::DB* db_;
 };
 
-void RunServer(rocksdb::DB* db, const std::string& server_addr) {
+void RunServer(rocksdb::DB* db, const std::string& server_addr, int thread_num = 1) {
   
   // RubbleKvServiceImpl service(db);
-
+  g_thread_num = thread_num;
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
   // ServerBuilder builder;

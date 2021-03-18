@@ -8,6 +8,7 @@ rocksdb::DB* GetDBInstance(const std::string& db_path){
   db_options.IncreaseParallelism();
   // create the DB if it's not already present
   db_options.create_if_missing = true;
+  db_options.is_tail=true;
 
   db_options.db_paths.emplace_back(rocksdb::DbPath("/mnt/sdb/archive_dbs/vanila/sst_dir", 10000000000));
   
@@ -35,12 +36,29 @@ rocksdb::DB* GetDBInstance(const std::string& db_path){
   return db;
 }
 
+const char* ParseCmdPara( char* argv,const char* para) {
+    auto p_target = std::strstr(argv,para);
+    if (p_target == nullptr) {
+        printf("para error argv[%s] should be %s \n",argv,para);
+        return nullptr;
+    }
+    p_target += std::strlen(para);
+    return p_target;
+}
+
+
 int main(int argc, char** argv) {
-  
+
+  if (argc != 2) {
+      std::cout << "Usage:./program --thread=xx";
+      return 0;
+  }
+
+  int thread_num = std::atoi(ParseCmdPara(argv[1],"--thread="));
   //server is running on localhost:50051
   const std::string server_address = "localhost:50051";
-  rocksdb::DB* primary_db = GetDBInstance("/tmp/rocksdb_primary_test");
+  rocksdb::DB* db = GetDBInstance("/tmp/rocksdb_vanila_test");
 
-  RunServer(primary_db, server_address);
+  RunServer(db, server_address, thread_num);
   return 0;
 }
