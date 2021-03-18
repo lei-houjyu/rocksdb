@@ -47,6 +47,17 @@ int g_pool = 1;
 
 std::unordered_map<std::thread::id, int> map;
 
+const char* ParseCmdPara( char* argv,const char* para) {
+    auto p_target = std::strstr(argv,para);
+    if (p_target == nullptr) {
+        printf("para error argv[%s] should be %s \n",argv,para);
+        return nullptr;
+    }
+    p_target += std::strlen(para);
+    return p_target;
+}
+
+
 class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
   public:
     explicit RubbleKvServiceImpl(rocksdb::DB* db)
@@ -740,7 +751,7 @@ class ServerImpl final {
   // There is no shutdown handling in this code.
   void Run() {
 
-     builder_.AddListeningPort(server_addr_, grpc::InsecureServerCredentials());
+    builder_.AddListeningPort(server_addr_, grpc::InsecureServerCredentials());
     // Register "service_" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *asynchronous* service.
     builder_.RegisterService(&service_);

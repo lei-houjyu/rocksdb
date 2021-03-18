@@ -6,7 +6,10 @@
 #include <deque>
 #include <thread>
 #include <mutex>
+#include <chrono>
 #include <condition_variable>
+#include <random>
+#include <limits>
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -25,6 +28,9 @@ using rubble::RubbleKvStoreService;
 using rubble::Op;
 using rubble::OpReply;
 using rubble::Op_OpType_Name;
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
+using std::chrono::milliseconds;
 
 // client class used to send db operations to the server
 class KvStoreClient{
@@ -54,24 +60,22 @@ class KvStoreClient{
     }
 
   void DoOp(const Op& op){
-    request_ = op;
-    AsyncDoOp();
+    {
+      std::unique_lock<std::mutex> lk{mu_};
+      requests_.emplace_back(op);
+    }
+    cv_.notify_all();
   }
 
-
   void Get(const std::vector<std::string>& keys){
-    for(const auto& key : keys){
-        AsyncDoGet(key);
-    }
+    AsyncDoGets(keys);
   }
 
   void Put(const std::vector<std::pair<std::string, std::string>>& kvs){
-    for(const auto& kv: kvs){
-      AsyncDoPut(kv.first, kv.second);
-    }
+    AsyncDoPuts(kvs);
   }
 
-  Status SyncOpDone(){
+  Status SyncDoOpDone(){
     sync_stream_->WritesDone();
     Status status = sync_stream_->Finish();
     if (!status.ok()) {
@@ -117,18 +121,40 @@ class KvStoreClient{
   // Put is client-to-server streaming async rpc
   // since it's a chain replication, we don't need a reply when we send a put operation to a server
   // instead, the true reply is returned by the tail node in the chain to the client
-  void AsyncDoPut(const std::string& key, const std::string& val){
-    request_.set_key(key);
-    request_.set_value(val);
-    request_.set_type(Op::PUT);
-    AsyncDoOp();
+  void AsyncDoPuts(const std::vector<std::pair<std::string, std::string>>& kvs){
+    {
+      std::unique_lock<std::mutex> lk{mu_};
+      Op request;
+      for(const auto& kv : kvs){
+        request.set_type(Op::PUT);
+        request.set_key(kv.first);
+        request.set_value(kv.second);
+        // request.set_id(distr_(eng_));
+        requests_.emplace_back(request);
+      }
+      ready_.store(true);
+    }
+    start_time_ = high_resolution_clock::now();
+    start_op_count_.store(op_counter_);
+    cv_.notify_all();
   }
 
   // Get should return back a reply, this is sending a Get request, the actual returned reply is in ReadReplyForGet
-  void AsyncDoGet(const std::string& key) {
-      request_.set_key(key);
-      request_.set_type(Op::GET);
-      AsyncDoOp();
+  void AsyncDoGets(const std::vector<std::string>& keys){
+    {
+      std::unique_lock<std::mutex> lk{mu_};
+      Op request;
+      for(const auto& key : keys){
+        request.set_type(Op::GET);
+        request.set_key(key);
+        // request.set_id(distr_(eng_));
+        requests_.emplace_back(request);
+      }
+      ready_.store(true);
+      start_time_ = high_resolution_clock::now();
+      start_op_count_.store(op_counter_);
+    }
+    cv_.notify_all();
   }
 
   //tell the server we're done sending the ops
@@ -140,21 +166,32 @@ class KvStoreClient{
   // could be run in multiple threads
   void AsyncDoOp(){
     op_counter_++;
-    {
-    // check if it's ready to call Write
-      if(!ready_.load()){ // If not ready, gonna wait for cv_.notify
-          std::cout << "[m] wait : " <<  op_counter_ <<"\n"; 
-          // std::cout <<  Op_OpType_Name(request_.type()) << " -> " << request_.key() << std::endl;
-          std::unique_lock<std::mutex> lk(mu_);
-          // std::cout << "[m] lock\n";
-          // wait until got notified when cq received a tag and ready_ set to true
-          cv_.wait_for(lk, std::chrono::milliseconds(100), [&](){return ready_.load();});
-          // std::cout << "[m] Notified\n";
-          // ready_.store(false);
-      }
+    // {
+    // // check if it's ready to call Write
+    //   if(!ready_.load()){ // If not ready, gonna wait for cv_.notify
+    //       std::cout << "[m] wait : " <<  op_counter_ <<"\n"; 
+    //       // std::cout <<  Op_OpType_Name(request_.type()) << " -> " << request_.key() << std::endl;
+    //       std::unique_lock<std::mutex> lk(mu_);
+    //       // std::cout << "[m] lock\n";
+    //       // wait until got notified when cq received a tag and ready_ set to true
+    //       cv_.wait(lk,  [&](){return ready_.load();});
+    //       // std::cout << "[m] Notified\n";
+    //       // ready_.store(false);
+    //   }
+    // }
+    if(requests_.empty()){// don't have any requests to process, wait for producer
+      end_time_ = high_resolution_clock::now();
+      auto milisecs = duration_cast<milliseconds>(end_time_ - start_time_);
+      std::cout << "Druration(millisecs): " << (int)(milisecs.count()) << std::endl;
+      std::cout << "Throughput : " << (op_counter_ - start_op_count_)/(milisecs.count()/1000) << " op/s" << std::endl;
+      ready_.store(false);
+      std::unique_lock<std::mutex> lk{mu_};
+      cv_.wait(lk, [&](){return ready_.load();});
+      // hold the lock now
     }
-      
-    ready_.store(false);
+    request_ = requests_.front();
+    requests_.pop_front();
+
     // assert(request_.type() == Op::PUT);
     // This is important: You can have at most one write or at most one read
     // at any given time. The throttling is performed by gRPC completion
@@ -215,8 +252,7 @@ class KvStoreClient{
                 std::cout << "Get for key : " << reply_.key() << " , returned status : " << reply_.status() << std::endl;
               }
               // notify that we're ready to process next request
-              ready_.store(true);
-              cv_.notify_one();
+              AsyncDoOp();
               break;
           case Type::WRITE:
               switch (request_.type())
@@ -224,16 +260,16 @@ class KvStoreClient{
               case Op::GET:
                 std::cout << "Get -> " << request_.key() << std::endl;
                 ReadReplyForGet();
+                // AysncDoOp() /* call Write here ? */
                 break;
               case Op::PUT:
                 // std::cout << "[g] polled :" << request_.name() << std::endl;
                 // std::cout << "Put -> (" << request_.key() << ", " << request_.value() << ")\n";
-                // received a tag on the cq, notify the main thread that we can start a new Write
-                ready_.store(true);
+                // ready_.store(true);
                 // std::cout << "[g] Notify\n";
-                cv_.notify_one();
-
-                // stream_->Write(request_, reinterpret_cast<void*>(Type::WRITE));  
+                // cv_.notify_one();
+                // received a tag on the cq, we can start a new Write
+                AsyncDoOp();
                 break;
               
               case Op::DELETE:
@@ -266,8 +302,7 @@ class KvStoreClient{
               break;
           default:
               std::cerr << "Unexpected tag " << got_tag << std::endl;
-              // assert(false);
-              break;
+              assert(false);
         }
       }
     }
@@ -276,10 +311,12 @@ class KvStoreClient{
     Op request_;
     // reply returned from the server for the request sent
     OpReply reply_;
-
+    
+    // hold the requests client needs to process
+    std::deque<Op> requests_;
     // indicator of whether the client is ready to call Write
     // at the initial state, we can call Write, so ready_ defaults to true
-    std::atomic<bool> ready_ {true};
+    std::atomic<bool> ready_ {false};
 
     std::mutex mu_;
 
@@ -316,4 +353,15 @@ class KvStoreClient{
     grpc::Status finish_status_ = grpc::Status::OK;
 
     std::atomic<uint64_t> op_counter_{0};
+
+    // std::random_device rd;     //Get a random seed from the OS entropy device, or whatever
+    // std::mt19937_64 eng_(rd());
+
+    // std::uniform_int_distribution<unsigned long> distr_;
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_time_;
+    std::chrono::time_point<std::chrono::high_resolution_clock> end_time_;
+
+    std::atomic<uint64_t> start_op_count_{0};
+    std::atomic<uint64_t> end_op_count_{0};
 };

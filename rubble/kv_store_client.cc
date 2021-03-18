@@ -49,8 +49,7 @@ void Put(KvStoreClient& client){
     cout << " num of digits : " << num_of_digits << endl;
     int current_num_of_digits = 0;
     string prefix;
-
-    auto start_time = chrono::high_resolution_clock::now();
+    std::vector<std::pair<std::string, std::string>> kvs;
     while(current_num_of_digits < num_of_digits - 1){
       prefix = string(7 - current_num_of_digits , '0');
       int start = 1;
@@ -60,7 +59,8 @@ void Put(KvStoreClient& client){
       int end = start*10;
       // cout << "start key : " << start << ", end key :" << end << endl;
       for(int i = start ; i < end ; i++){
-          client.AsyncDoPut("key" + prefix + to_string(i), "val" + prefix + to_string(i));
+          kvs.emplace_back("key" + prefix + to_string(i), "val" + prefix + to_string(i));
+          // client.AsyncDoPut("key" + prefix + to_string(i), "val" + prefix + to_string(i));
       }
       current_num_of_digits++;
     }
@@ -72,14 +72,17 @@ void Put(KvStoreClient& client){
     }
 
     for(int i = start; i <= num_of_kvs; i++){
-      client.AsyncDoPut("key" +  prefix + to_string(i) , "val" + prefix + to_string(i));
+      kvs.emplace_back("key" + prefix + to_string(i), "val" + prefix + to_string(i));
+      // client.AsyncDoPut("key" +  prefix + to_string(i) , "val" + prefix + to_string(i));
     }
-    
-    auto end_time = chrono::high_resolution_clock::now();
-    auto milisecs = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
-    cout << "Druration(millisecs): " << (int)(milisecs.count()) << endl;
 
-    cout << "Throughput : " << num_of_kvs/(milisecs.count()/1000) << " op/s" << endl;
+    // auto start_time = chrono::high_resolution_clock::now();
+    client.AsyncDoPuts(kvs);
+    // auto end_time = chrono::high_resolution_clock::now();
+    // auto milisecs = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
+    // cout << "Druration(millisecs): " << (int)(milisecs.count()) << endl;
+
+    // cout << "Throughput : " << num_of_kvs/(milisecs.count()/1000) << " op/s" << endl;
   }
 }
 
@@ -93,7 +96,9 @@ void GetByKey(KvStoreClient& client){
     }
     int num_len = key.length();
     key = "key" + string("00000000").replace(8 - num_len, num_len, key);
-    client.AsyncDoGet(key);
+    vector<string> keys;
+    keys.emplace_back(key); 
+    client.AsyncDoGets(keys);
   }
 }
 
@@ -111,15 +116,16 @@ void GetByKeyRange(KvStoreClient& client){
     cout << "end key :";
     cin >> end_key;
 
-    auto start_time = chrono::high_resolution_clock::now();
+    vector<string> keys;
+    // auto start_time = chrono::high_resolution_clock::now();
     for(int i = start_key ; i <= end_key; i++){
       int num_len = to_string(i).length();
-      key = "key" + string("00000000").replace(8 - num_len, num_len, to_string(i));
-      client.AsyncDoGet(key);
+      keys.emplace_back("key" + string("00000000").replace(8 - num_len, num_len, to_string(i)));
     }
-    auto end_time = chrono::high_resolution_clock::now();
-    auto milisecs = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
-    cout << " millisecs : " << (int)(milisecs.count()) << endl;
+    client.AsyncDoGets(keys);
+    // auto end_time = chrono::high_resolution_clock::now();
+    // auto milisecs = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
+    // cout << " millisecs : " << (int)(milisecs.count()) << endl;
   }
 }
 

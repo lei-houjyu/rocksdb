@@ -1,5 +1,6 @@
 #include "rubble_server.h"
 
+/* a server running a vanila rocksdb */
 rocksdb::DB* GetDBInstance(const std::string& db_path){
 
   rocksdb::DB* db;
@@ -35,17 +36,6 @@ rocksdb::DB* GetDBInstance(const std::string& db_path){
 
   return db;
 }
-
-const char* ParseCmdPara( char* argv,const char* para) {
-    auto p_target = std::strstr(argv,para);
-    if (p_target == nullptr) {
-        printf("para error argv[%s] should be %s \n",argv,para);
-        return nullptr;
-    }
-    p_target += std::strlen(para);
-    return p_target;
-}
-
 
 int main(int argc, char** argv) {
 
