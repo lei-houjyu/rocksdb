@@ -2885,7 +2885,7 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
                            f->file_creation_time, f->file_checksum,
                            f->file_checksum_func_name);
 
-        std::cout << " ----------- Trivial Move Compaction  [ "<< job_context->job_id <<" ]  ----------------- \n";
+        // std::cout << " ----------- Trivial Move Compaction  [ "<< job_context->job_id <<" ]  ----------------- \n";
         // std::cout  << " Version Edit : " << c->edit()->DebugString(false) << std::endl;
         ROCKS_LOG_BUFFER(
             log_buffer,
