@@ -72,34 +72,40 @@ class KvStoreClient{
 
   // Requests each key in the vector and displays the key and its corresponding
   // value as a pair
-  void SyncDoGet(const std::string& key, std::string& val) {
- 
-    // Key we are sending to the server.
-    Op request;
-    request.set_key(key);
-    request.set_type(Op::GET);
-    sync_stream_->Write(request);
-
-    // Get the value for the sent key
-    OpReply response;
-    sync_stream_->Read(&response);
-
-    if(!response.ok()){
-      std::cout << "Get key : " << key << " Failed: " << response.status() << "\n";
-    }else{
-        val = response.value();
-        std::cout << "Get Key : " << key << " returned val : " << val << std::endl;
+  void SyncDoGets(const std::vector<std::string>& keys) {
+    auto start_time = high_resolution_clock::now();
+    for(const auto& key:keys){
+      // Keys we are sending to the server.
+      Op request;
+      request.set_key(key);
+      request.set_type(Op::GET);
+      sync_stream_->Write(request);
+      // Get the value for the sent key
+      OpReply response;
+      sync_stream_->Read(&response);
+      if(!response.ok()){
+        std::cout << "Get -> " << key << " ,Failed: " << response.status() << "\n";
+      }else{
+        std::cout << "Get -> " << key << " ,returned val : " << response.value(); << std::endl;
+      }
     }
-    return ;
+    auto end_time = high_resolution_clock::now();
+    auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    std::cout << "send " << keys.size()<< " get ops in " << millisecs.count() << " millisecs \n";
   }
 
-  void SyncDoPut(const std::pair<std::string, std::string>& kv){   
+  void SyncDoPuts(const std::vector<std::pair<std::string, std::string>>& kvs){   
+    auto start_time = high_resolution_clock::now();
+    for(const auto& kv: kv){
       Op request;
       request.set_key(kv.first);
       request.set_value(kv.second);
       request.set_type(Op::PUT);
-      
       sync_stream_->Write(request);
+    }
+    auto end_time = high_resolution_clock::now();
+    auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    std::cout << "send " << kvs.size()<< " put ops in " << millisecs.count() << " millisecs \n";
   }
 
   //tell the server we're done sending the ops
