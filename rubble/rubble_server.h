@@ -634,15 +634,13 @@ class CallDataBidi : CallDataBase {
         start_time_ = high_resolution_clock::now();
       }
 
-      if(op_counter_.load() == right_boundary_.load()){
+      if(op_counter_.load() && op_counter_.load()%100000 == 0){
         end_time_ = high_resolution_clock::now();
         auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
-        std::cout << "Throughput : " << 100000/(millisecs.count()/1000) << " op/s\n";
+        std::cout << "Throughput : handled 100000 ops in " << millisecs.count() << " millisecs\n";
         start_time_ = end_time_;
-        left_boundary_.store(right_boundary_);
-        right_boundary_ += 100000;
       }
-
+      
       op_counter_++;
       switch (request_.type())
       {
@@ -699,12 +697,7 @@ class CallDataBidi : CallDataBase {
 
   std::mutex   m_mutex;
 
-  // measure thoughput for every 1000000 ops, set this to the current op_counter_ val whenever we take a measurement
-  std::atomic<uint64_t> left_boundary_{0};
-  std::atomic<uint64_t> right_boundary_{100000};
-
   std::atomic<uint64_t> op_counter_{0};
-
   time_point<high_resolution_clock> start_time_;
   time_point<high_resolution_clock> end_time_;
 };

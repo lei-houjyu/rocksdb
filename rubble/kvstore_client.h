@@ -86,7 +86,7 @@ class KvStoreClient{
       if(!response.ok()){
         std::cout << "Get -> " << key << " ,Failed: " << response.status() << "\n";
       }else{
-        std::cout << "Get -> " << key << " ,returned val : " << response.value(); << std::endl;
+        std::cout << "Get -> " << key << " ,returned val : " << response.value() << std::endl;
       }
     }
     auto end_time = high_resolution_clock::now();
@@ -96,7 +96,7 @@ class KvStoreClient{
 
   void SyncDoPuts(const std::vector<std::pair<std::string, std::string>>& kvs){   
     auto start_time = high_resolution_clock::now();
-    for(const auto& kv: kv){
+    for(const auto& kv: kvs){
       Op request;
       request.set_key(kv.first);
       request.set_value(kv.second);
@@ -179,7 +179,7 @@ class KvStoreClient{
     start_time_ = start_time;
   }
 
-  void AddRequests(Op& request){
+  void AddRequests(const Op& request){
     requests_.push_back(std::move(request));
   }
   
