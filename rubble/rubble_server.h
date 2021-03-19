@@ -49,7 +49,7 @@ int g_pool = 1;
 
 std::unordered_map<std::thread::id, int> map;
 
-class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
+class RubbleKvServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp<RubbleKvStoreService::Service> {
   public:
     explicit RubbleKvServiceImpl(rocksdb::DB* db)
       :db_(db), impl_((rocksdb::DBImpl*)db_), 
@@ -390,58 +390,45 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
 
 
   // synchronous version of DoOp
-  Status DoOp(ServerContext* context, 
-              ServerReaderWriter<OpReply, Op>* stream) override {
-      std::string value;
-
-      while ( stream->Read(&request_)){
-        switch (request_.type())
-        {
-        case Op::GET:
-          s_ = db_->Get(rocksdb::ReadOptions(), request_.key(), &value);
-          if(s_.ok()){
-            // find the value for the key
-            reply_.set_value(value);
-            reply_.set_ok(true);
-          }else {
-            reply_.set_ok(false);
-            reply_.set_status(s_.ToString());
-          }
-          // For a Get op, we return a reply back to the client
-          stream->Write(reply_);
-          break;
-        
-        case Op::PUT:
-          s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
-          // assert(is_rubble_);
-          if(!is_tail_){
-            kvstore_client_->SyncDoPut(std::pair<std::string, std::string>{request_.key(), request_.value()});
-          }else{
-            // TODO: tail node should be responsible for sending the true reply back to replicator
-
-          }
-
-          break;
-        
-        case Op::DELETE:
-          //TODO:
-          break;
-        
-        case Op::UPDATE:
-          //TODO:
-          break;
-
-        default:
-        std::cerr << "Unsupported Operation \n";
-          break;
-        }
-      }
-
-      return Status::OK;
-  }
+  // Status DoOp(ServerContext* context, 
+  //             ServerReaderWriter<OpReply, Op>* stream) override {
+  //     std::string value;
+  //     while ( stream->Read(&request_)){
+  //       switch (request_.type())
+  //       {
+  //       case Op::GET:
+  //         s_ = db_->Get(rocksdb::ReadOptions(), request_.key(), &value);
+  //         if(s_.ok()){
+  //           // find the value for the key
+  //           reply_.set_value(value);
+  //           reply_.set_ok(true);
+  //         }else {
+  //           reply_.set_ok(false);
+  //           reply_.set_status(s_.ToString());
+  //         }
+  //         // For a Get op, we return a reply back to the client
+  //         stream->Write(reply_);
+  //         break;
+  //       case Op::PUT:
+  //         s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
+  //         // assert(is_rubble_);
+  //         if(!is_tail_){
+  //           kvstore_client_->SyncDoPut(std::pair<std::string, std::string>{request_.key(), request_.value()});
+  //         }else{
+  //           // TODO: tail node should be responsible for sending the true reply back to replicator
+  //         }
+  //         break;
+  //       default:
+  //       std::cerr << "Unsupported Operation \n";
+  //         break;
+  //       }
+  //     }
+  //     return Status::OK;
+  // }
 
 
   private:
+
     // a db op request we get from the client
     Op request_;
     //reply we get back to the client for a db op
@@ -496,7 +483,7 @@ class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
 
 class CallDataBase {
 public:
-  CallDataBase(RubbleKvStoreService::AsyncService* service, ServerCompletionQueue* cq, rocksdb::DB* db)
+  CallDataBase(RubbleKvServiceImpl* service, ServerCompletionQueue* cq, rocksdb::DB* db)
    :service_(service), cq_(cq), db_(db){
       rocksdb::DBImpl* impl = (rocksdb::DBImpl*)db_;
       auto version_set = impl->TEST_GetVersionSet();
@@ -521,7 +508,7 @@ protected:
   std::shared_ptr<KvStoreClient> kvstore_client_; 
   // The means of communication with the gRPC runtime for an asynchronous
   // server.
-  RubbleKvStoreService::AsyncService* service_;
+  RubbleKvServiceImpl* service_;
   // The producer-consumer queue where for asynchronous server notifications.
   ServerCompletionQueue* cq_;
 
@@ -545,7 +532,7 @@ class CallDataBidi : CallDataBase {
   // Take in the "service" instance (in this case representing an asynchronous
   // server) and the completion queue "cq" used for asynchronous communication
   // with the gRPC runtime.
-  CallDataBidi(RubbleKvStoreService::AsyncService* service, ServerCompletionQueue* cq, rocksdb::DB* db)
+  CallDataBidi(RubbleKvServiceImpl* service, ServerCompletionQueue* cq, rocksdb::DB* db)
    :CallDataBase(service, cq, db),rw_(&ctx_){
     // Invoke the serving logic right away.
 
@@ -586,6 +573,7 @@ class CallDataBidi : CallDataBase {
         /* chain replication */
         // Forward the request to the downstream node in the chain if it's not a tail node
         if(!db_options_->is_tail){
+          std::cout << "Forward an op \n";
           kvstore_client_->ForwardOp(request_);
         }else {
           // tail node
@@ -604,7 +592,7 @@ class CallDataBidi : CallDataBase {
         break;
 
     case BidiStatus::WRITE:
-        // std::cout << "I'm at WRITE state ! \n";
+        std::cout << "I'm at WRITE state ! \n";
         std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " Get For key : " << request_.key() << " , status : " << reply_.status() << std::endl;
         // For a get request, return a reply back to the client
         rw_.Read(&request_, (void*)this);
@@ -727,8 +715,8 @@ class CallDataBidi : CallDataBase {
 
 class ServerImpl final {
   public:
-  ServerImpl(const std::string& server_addr, rocksdb::DB* db)
-   :server_addr_(server_addr), db_(db){
+  ServerImpl(const std::string& server_addr, rocksdb::DB* db, RubbleKvServiceImpl* service)
+   :server_addr_(server_addr), db_(db), service_(service){
   }
   ~ServerImpl() {
     server_->Shutdown();
@@ -740,14 +728,12 @@ class ServerImpl final {
   // There is no shutdown handling in this code.
   void Run() {
     // service for accepting sync rpc and synchronous DoOps rpc
-    RubbleKvServiceImpl sync_service(db_);
+    // RubbleKvServiceImpl sync_service(db_);
 
     builder_.AddListeningPort(server_addr_, grpc::InsecureServerCredentials());
     // Register "service_" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *asynchronous* service.
-    builder_.RegisterService(&service_);
-    // Register the Sync service and Synchronous DoOps
-    builder_.RegisterService(&sync_service);
+    builder_.RegisterService(service_);
     // Get hold of the completion queue used for the asynchronous communication
     // with the gRPC runtime.
 
@@ -765,7 +751,7 @@ class ServerImpl final {
     for (int i = 0; i < g_thread_num; ++i) {
         int _cq_idx = i % g_cq_num;
         for (int j = 0; j < g_pool; ++j) {
-            new CallDataBidi(&service_, m_cq[_cq_idx].get(), db_);
+            new CallDataBidi(service_, m_cq[_cq_idx].get(), db_);
         }
         auto new_thread =  new std::thread(&ServerImpl::HandleRpcs, this, _cq_idx);
         map[new_thread->get_id()] = i;
@@ -800,7 +786,7 @@ class ServerImpl final {
 
   std::vector<std::unique_ptr<ServerCompletionQueue>>  m_cq;
 
-  RubbleKvStoreService::AsyncService service_;
+  RubbleKvServiceImpl* service_;
   std::unique_ptr<Server> server_;
   const std::string& server_addr_;
   ServerBuilder builder_;
@@ -809,7 +795,7 @@ class ServerImpl final {
 
 void RunServer(rocksdb::DB* db, const std::string& server_addr, int thread_num = 1) {
   
-  // RubbleKvServiceImpl service(db);
+  RubbleKvServiceImpl service(db);
   g_thread_num = thread_num;
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
@@ -818,7 +804,7 @@ void RunServer(rocksdb::DB* db, const std::string& server_addr, int thread_num =
   // builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
   std::cout << "Server listening on " << server_addr << std::endl;
   // builder.RegisterService(&service);
-  ServerImpl server_impl(server_addr, db);
+  ServerImpl server_impl(server_addr, db, &service);
   server_impl.Run();
   // std::unique_ptr<Server> server(builder.BuildAndStart());
   // server->Wait();
