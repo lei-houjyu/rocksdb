@@ -38,7 +38,7 @@ void Put(KvStoreClient& client){
   string input;
   int num_of_kvs;
   while(true){
-    cout << "Enter the number of kv pairs to put or Enter \"quit\" to go back to options\n:";
+    // cout << "Enter the number of kv pairs to put or Enter \"quit\" to go back to options\n:";
     cin >> input;
     if(input == "quit"){
       break;
@@ -46,7 +46,6 @@ void Put(KvStoreClient& client){
     num_of_kvs = stoi(input);
 
     int num_of_digits = numDigits(num_of_kvs);
-    cout << " num of digits : " << num_of_digits << endl;
     int current_num_of_digits = 0;
     string prefix;
     std::vector<std::pair<std::string, std::string>> kvs;

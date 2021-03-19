@@ -108,6 +108,7 @@ class KvStoreClient{
   // since it's a chain replication, we don't need a reply when we send a put operation to a server
   // instead, the true reply is returned by the tail node in the chain to the client
   void AsyncDoPuts(const std::vector<std::pair<std::string, std::string>>& kvs){
+    assert(!op_counter_);
     std::thread worker(std::bind(&KvStoreClient::AsyncDoOps, this));
     {
       std::unique_lock<std::mutex> lk{mu_};
@@ -124,8 +125,11 @@ class KvStoreClient{
       }
       empty_.store(false);
     }
+    // std::cout << "data stored\n";
     start_time_ = high_resolution_clock::now();
+    // std::cout << "signals data ready for processing \n";
     cv_empty_.notify_one();
+    worker.join();
   }
 
   // Get should return back a reply, this is sending a Get request, the actual returned reply is in ReadReplyForGet
@@ -147,6 +151,7 @@ class KvStoreClient{
     }
     start_time_ = high_resolution_clock::now();
     cv_empty_.notify_one();
+    worker.join();
   }
 
   //tell the server we're done sending the ops
@@ -188,21 +193,28 @@ class KvStoreClient{
   // could be run in multiple threads, used by the kvstore client to send requests
   void AsyncDoOps(){
     if(requests_.empty()){
+      // std::cout << "[w] empty queue\n";
       // op_counter != 0 calculate the throughput
       if(op_counter_){
         end_time_ = high_resolution_clock::now();
         auto milisecs = duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
         std::cout << "Druration(millisecs): " << (int)(milisecs.count()) << std::endl;
-        std::cout << "Throughput : " << (op_counter_)/(milisecs.count()/1000) << " op/s" << std::endl;
+        // if(!milisecs.count()){
+        //   std::cout << "Throughput : " << (op_counter_)/(milisecs.count()/1000) << " op/s" << std::endl;
+        // }
+        // reset op counter
+        op_counter_.store(0);
         return;
       }else{ // start of a new round
         std::unique_lock<std::mutex> lk(mu_);
+        // std::cout << "worker wait for data\n";
         cv_empty_.wait(lk, [&](){return !empty_.load();});
+        // std::cout << "[w] Notified \n";
       }
     }
-
+    // std::cout <<  Op_OpType_Name(request_.type()) << " -> " << request_.key() << std::endl;
     request_ = requests_.front();
-    requests_.pop_front();
+    // requests_.pop_front();
     
     op_counter_++;
     stream_->Write(request_, reinterpret_cast<void*>(Type::WRITE));
@@ -261,7 +273,6 @@ class KvStoreClient{
                 // AysncDoOp() /* call Write here ? */
                 break;
               case Op::PUT:
-                // std::cout << "[g] polled :" << request_.name() << std::endl;
                 // std::cout << "Put -> (" << request_.key() << ", " << request_.value() << ")\n";
                 // received a tag on the cq, we can start a new Write
                 if(is_forwarder_){
@@ -270,6 +281,8 @@ class KvStoreClient{
                   cv_ready_.notify_one();
                   // ForwardOp();
                 }else{ //it's kvstore client 
+                //  std::cout << "[g] polled :" << request_.key()  << std::endl;
+                  requests_.pop_front();
                   AsyncDoOps();
                 }
                 break;
@@ -316,14 +329,10 @@ class KvStoreClient{
     bool is_forwarder_ = true;
     // hold the requests client needs to process
     std::deque<Op> requests_;
-   
-    std::atomic<bool> processed_{false};
-    std::atomic<bool> done_{false};
-    // at the initial state, we can call Write, so ready_ defaults to true
     std::mutex mu_;
 
     //used by forwarder to wait for cq received a new tag, then it can start a new Write(forward a op)
-    std::condition_variable_any cv_ready_;
+    std::condition_variable cv_ready_;
     std::atomic<bool> ready_ {false};
     // used by the kvstore client to wait for the requests queue to become empty(client is done processing all the previous requests)
     std::condition_variable cv_empty_;
@@ -332,7 +341,6 @@ class KvStoreClient{
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
     ClientContext context_;
-
     // Context used for doing sync ops
     ClientContext sync_context_;
 
@@ -341,8 +349,7 @@ class KvStoreClient{
 
     // The bidirectional,synchronous stream for sending/receiving messages.
     std::unique_ptr<ClientReaderWriter<Op, OpReply>> sync_stream_;
-
-    // The bidirectional, asynchronous stream for sending/receiving messages.
+    // The bidirectional, asynchronous stream
     std::unique_ptr<ClientAsyncReaderWriter<Op, OpReply>> stream_;
 
     // Out of the passed in Channel comes the stub, stored here, our view of the
