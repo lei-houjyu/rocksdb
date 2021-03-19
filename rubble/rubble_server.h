@@ -40,14 +40,14 @@ using rubble::OpReply;
 using rubble::Op_OpType_Name;
 
 using json = nlohmann::json;
+using std::chrono::time_point;
+using std::chrono::high_resolution_clock;
 
 int g_thread_num = 16;
 int g_cq_num = 1;
 int g_pool = 1;
 
 std::unordered_map<std::thread::id, int> map;
-
-
 
 class RubbleKvServiceImpl final : public RubbleKvStoreService::Service {
   public:
@@ -586,8 +586,7 @@ class CallDataBidi : CallDataBase {
         /* chain replication */
         // Forward the request to the downstream node in the chain if it's not a tail node
         if(!db_options_->is_tail){
-          kvstore_client_->SetRequest(request_);
-          kvstore_client_->AsyncDoOp();
+          kvstore_client_->ForwardOp(request_);
         }else {
           // tail node
           // TODO: send the true reply back to replicator
@@ -648,11 +647,11 @@ class CallDataBidi : CallDataBase {
   void HandleOp() override {
       std::string value;
       if(!op_counter_.load()){
-        start_time_ = std::chrono::high_resolution_clock::now();
+        start_time_ = high_resolution_clock::now();
       }
 
       if(op_counter_.load() == right_boundary_.load()){
-        end_time_ = std::chrono::high_resolution_clock::now();
+        end_time_ = high_resolution_clock::now();
         auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
         std::cout << "Throughput : " << 100000/(millisecs.count()/1000) << " op/s\n";
         start_time_ = end_time_;
@@ -722,9 +721,8 @@ class CallDataBidi : CallDataBase {
 
   std::atomic<uint64_t> op_counter_{0};
 
-  std::chrono::time_point<std::chrono::high_resolution_clock> start_time_;
-
-  std::chrono::time_point<std::chrono::high_resolution_clock> end_time_;
+  time_point<high_resolution_clock> start_time_;
+  time_point<high_resolution_clock> end_time_;
 };
 
 class ServerImpl final {
@@ -741,11 +739,15 @@ class ServerImpl final {
 
   // There is no shutdown handling in this code.
   void Run() {
+    // service for accepting sync rpc and synchronous DoOps rpc
+    RubbleKvServiceImpl sync_service(db_);
 
     builder_.AddListeningPort(server_addr_, grpc::InsecureServerCredentials());
     // Register "service_" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *asynchronous* service.
     builder_.RegisterService(&service_);
+    // Register the Sync service and Synchronous DoOps
+    builder_.RegisterService(&sync_service);
     // Get hold of the completion queue used for the asynchronous communication
     // with the gRPC runtime.
 

@@ -134,14 +134,8 @@ int main(){
 // client used to send kv to ptimary
   KvStoreClient client1(grpc::CreateChannel(
     "localhost:50051", grpc::InsecureChannelCredentials()));
-    this_thread::sleep_for(chrono::milliseconds(100));
+  client1.SetKvClient(true);
 
-// sending kv to the secondary
-  // KvStoreClient client2(grpc::CreateChannel(
-  //   "localhost:50050", grpc::InsecureChannelCredentials()));
-
-  grpc::Status s;
-  vector<pair<string, string>> kvs;
   int size_of_kv_pairs = sizeof("key00000000") + sizeof("val00000000");
   cout << "size of kv pairs : " << size_of_kv_pairs << "bytes" << endl;
 
