@@ -24,13 +24,10 @@
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
-using grpc::ServerCompletionQueue;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::ServerReaderWriter;
-using grpc::ServerAsyncReaderWriter;
 using grpc::Status;
-using grpc::StatusCode;
 
 using rubble::RubbleKvStoreService;
 using rubble::SyncRequest;
@@ -43,15 +40,9 @@ using json = nlohmann::json;
 using std::chrono::time_point;
 using std::chrono::high_resolution_clock;
 
-int g_thread_num = 16;
-int g_cq_num = 1;
-int g_pool = 1;
-
-std::unordered_map<std::thread::id, int> map;
-
-class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp<RubbleKvStoreService::Service> {
+class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
   public:
-    explicit SyncServiceImpl(rocksdb::DB* db)
+    explicit RubbleKvServiceImpl(rocksdb::DB* db)
       :db_(db), impl_((rocksdb::DBImpl*)db_), 
        mu_(impl_->mutex()),
        version_set_(impl_->TEST_GetVersionSet()),
@@ -68,7 +59,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           
     };
 
-    ~SyncServiceImpl() {
+    ~RubbleKvServiceImpl() {
       delete db_;
     }
 
@@ -389,41 +380,64 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
   }
 
   // synchronous version of DoOp
-  // Status DoOp(ServerContext* context, 
-  //             ServerReaderWriter<OpReply, Op>* stream) override {
-  //     std::string value;
-  //     while ( stream->Read(&request_)){
-  //       switch (request_.type())
-  //       {
-  //       case Op::GET:
-  //         s_ = db_->Get(rocksdb::ReadOptions(), request_.key(), &value);
-  //         if(s_.ok()){
-  //           // find the value for the key
-  //           reply_.set_value(value);
-  //           reply_.set_ok(true);
-  //         }else {
-  //           reply_.set_ok(false);
-  //           reply_.set_status(s_.ToString());
-  //         }
-  //         // For a Get op, we return a reply back to the client
-  //         stream->Write(reply_);
-  //         break;
-  //       case Op::PUT:
-  //         s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
-  //         // assert(is_rubble_);
-  //         if(!is_tail_){
-  //           forwarder_->SyncDoPut(std::pair<std::string, std::string>{request_.key(), request_.value()});
-  //         }else{
-  //           // TODO: tail node should be responsible for sending the true reply back to replicator
-  //         }
-  //         break;
-  //       default:
-  //       std::cerr << "Unsupported Operation \n";
-  //         break;
-  //       }
-  //     }
-  //     return Status::OK;
-  // }
+  Status DoOp(ServerContext* context, 
+              ServerReaderWriter<OpReply, Op>* stream) override {
+      std::string value;
+      if(!op_counter_.load()){
+        start_time_ = high_resolution_clock::now();
+      }
+
+      if(op_counter_.load()%1000000 == 0){
+        end_time_ = high_resolution_clock::now();
+        auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
+        // std::cout << "Throughput : " << 1000000/(millisecs.count()/1000) << " op/s\n";
+        std::cout << "Throughput : handle 1000000  in " << millisecs.count()/1000 << "secs \n";
+        start_time_ = end_time_;
+      }
+
+      op_counter_.fetch_add(1);
+      while (stream->Read(&request_)){
+        switch (request_.type())
+        {
+        case Op::GET:
+          s_ = db_->Get(rocksdb::ReadOptions(), request_.key(), &value);
+          if(s_.ok()){
+            // find the value for the key
+            reply_.set_value(value);
+            reply_.set_ok(true);
+          }else {
+            reply_.set_ok(false);
+            reply_.set_status(s_.ToString());
+          }
+          // For a Get op, we return a reply back to the client
+          stream->Write(reply_);
+          break;
+
+        case Op::PUT:
+          s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
+          if(!is_tail_){
+            forwarder_->ForwardOp(request_);
+          }else{
+            // TODO: tail node should be responsible for sending the true reply back to replicator
+
+          }
+          break;
+        
+        case Op::DELETE:
+          //TODO
+          break;
+        
+        case Op::UPDATE:
+          //TODO
+          break;
+
+        default:
+        std::cerr << "Unsupported Operation \n";
+          break;
+        }
+      }
+      return Status::OK;
+  }
 
   private:
 
@@ -432,6 +446,9 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     //reply we get back to the client for a db op
     OpReply reply_;
 
+    std::atomic<uint64_t> op_counter_{0};
+    time_point<high_resolution_clock> start_time_;
+    time_point<high_resolution_clock> end_time_;
     // db instance
     rocksdb::DB* db_ = nullptr;
     rocksdb::DBImpl* impl_ = nullptr;
@@ -477,328 +494,16 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     int next_file_num_ = 0;
 };
 
-class CallDataBase {
-public:
-  CallDataBase(SyncServiceImpl* service, ServerCompletionQueue* cq, rocksdb::DB* db)
-   :service_(service), cq_(cq), db_(db){
-      rocksdb::DBImpl* impl = (rocksdb::DBImpl*)db_;
-      auto version_set = impl->TEST_GetVersionSet();
-      db_options_ = version_set->db_options();
-      forwarder_ = db_options_->kvstore_client;
-   }
-
-  virtual void Proceed(bool ok) = 0;
-
-  virtual void HandleOp() = 0;
-
-protected:
-
-  // db instance
-  rocksdb::DB* db_;
-
-  // status of the db after performing an operation.
-  rocksdb::Status s_;
-
-  const rocksdb::ImmutableDBOptions* db_options_;
-
-  std::shared_ptr<KvStoreClient> forwarder_; 
-  // The means of communication with the gRPC runtime for an asynchronous
-  // server.
-  SyncServiceImpl* service_;
-  // The producer-consumer queue where for asynchronous server notifications.
-  ServerCompletionQueue* cq_;
-
-  // Context for the rpc, allowing to tweak aspects of it such as the use
-  // of compression, authentication, as well as to send metadata back to the
-  // client.
-  ServerContext ctx_;
-
-  // What we get from the client.
-  Op request_;
-  // What we send back to the client.
-  OpReply reply_;
-
-};
-
-// CallData for Bidirectional streaming rpc 
-class CallDataBidi : CallDataBase {
-
- public:
-
-  // Take in the "service" instance (in this case representing an asynchronous
-  // server) and the completion queue "cq" used for asynchronous communication
-  // with the gRPC runtime.
-  CallDataBidi(SyncServiceImpl* service, ServerCompletionQueue* cq, rocksdb::DB* db)
-   :CallDataBase(service, cq, db),rw_(&ctx_){
-    // Invoke the serving logic right away.
-
-    status_ = BidiStatus::CONNECT;
-
-    ctx_.AsyncNotifyWhenDone((void*)this);
-
-    // As part of the initial CREATE state, we *request* that the system
-    // start processing DoOp requests. In this request, "this" acts are
-    // the tag uniquely identifying the request (so that different CallData
-    // instances can serve different requests concurrently), in this case
-    // the memory address of this CallData instance.
-    service_->RequestDoOp(&ctx_, &rw_, cq_, cq_, (void*)this);
-  }
-  // async version of DoOp
-  void Proceed(bool ok) override {
-
-    std::unique_lock<std::mutex> _wlock(this->m_mutex);
-
-    switch (status_) {
-    case BidiStatus::READ:
-        // std::cout << "I'm at READ state ! \n";
-        //Meaning client said it wants to end the stream either by a 'writedone' or 'finish' call.
-        if (!ok) {
-            std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " CQ returned false." << std::endl;
-            Status _st(StatusCode::OUT_OF_RANGE,"test error msg");
-            // rw_.Write(reply_, (void*)this);
-            rw_.Finish(_st,(void*)this);
-            status_ = BidiStatus::DONE;
-            std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " after call Finish(), cancelled:" << this->ctx_.IsCancelled() << std::endl;
-            break;
-        }
-
-        // std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " Received a new " << Op_OpType_Name(request_.type()) << " op witk key : " << request_.key() << std::endl;
-
-        // Handle a db operation
-        HandleOp();
-        /* chain replication */
-        // Forward the request to the downstream node in the chain if it's not a tail node
-        if(!db_options_->is_tail){
-          std::cout << "Forward an op \n";
-          forwarder_->ForwardOp(request_);
-        }else {
-          // tail node
-          // TODO: send the true reply back to replicator
-        }
-
-        if(request_.type() == Op::GET){
-          // if it's a Get Op, should return reply back to the client
-          // alarm_.Set(cq_, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
-          rw_.Write(reply_, (void*)this); 
-          status_ = BidiStatus::WRITE;
-        }else {
-          rw_.Read(&request_, (void*)this);
-          status_ = BidiStatus::READ;
-        }
-        break;
-
-    case BidiStatus::WRITE:
-        std::cout << "I'm at WRITE state ! \n";
-        std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " Get For key : " << request_.key() << " , status : " << reply_.status() << std::endl;
-        // For a get request, return a reply back to the client
-        rw_.Read(&request_, (void*)this);
-
-        status_ = BidiStatus::READ;
-        break;
-
-    case BidiStatus::CONNECT:
-        std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " connected:" << std::endl;
-        // Spawn a new CallData instance to serve new clients while we process
-        // the one for this CallData. The instance will deallocate itself as
-        // part of its FINISH state.
-        new CallDataBidi(service_, cq_, db_);
-        rw_.Read(&request_, (void*)this);
-        // request_.set_type(Op::PUT);
-        // std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " Received a new " << Op_OpType_Name(request_.type()) << " op witk key : " << request_.key() << std::endl;
-        status_ = BidiStatus::READ;
-        break;
-
-    case BidiStatus::DONE:
-        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this
-                << " Server done, cancelled:" << this->ctx_.IsCancelled() << std::endl;
-        status_ = BidiStatus::FINISH;
-        break;
-
-    case BidiStatus::FINISH:
-        std::cout << "thread:" << map[std::this_thread::get_id()] <<  "tag:" << this << " Server finish, cancelled:" << this->ctx_.IsCancelled() << std::endl;
-        _wlock.unlock();
-        delete this;
-        break;
-
-    default:
-        std::cerr << "Unexpected tag " << int(status_) << std::endl;
-        assert(false);
-    }
-  }
-
- private:
-
-  void HandleOp() override {
-      std::string value;
-      if(!op_counter_.load()){
-        start_time_ = high_resolution_clock::now();
-      }
-
-      if(op_counter_.load() == right_boundary_.load()){
-        end_time_ = high_resolution_clock::now();
-        auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
-        std::cout << "Throughput : " << 100000/(millisecs.count()/1000) << " op/s\n";
-        start_time_ = end_time_;
-        left_boundary_.store(right_boundary_);
-        right_boundary_ += 100000;
-      }
-
-      op_counter_++;
-      switch (request_.type())
-      {
-      case Op::GET:
-        s_ = db_->Get(rocksdb::ReadOptions(), request_.key(), &value);
-        reply_.set_key(request_.key());
-        reply_.set_type(OpReply::GET);
-        reply_.set_status(s_.ToString());
-        if(s_.ok()){
-          reply_.set_ok(true);
-          reply_.set_value(value);
-        }else{
-          reply_.set_ok(false);
-        }
-        break;
-
-      case Op::PUT:
-        s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
-        assert(s_.ok());
-        // reply_.set_type(OpReply::PUT);
-        // if(s_.ok()){
-        //   std::cout << "Put : (" << request_.key() << " ," << request_.value() << ")\n"; 
-        //   reply_.set_ok(true);
-        // }else{
-        //   std::cout << "Put Failed : " << s_.ToString() << std::endl;
-        //   reply_.set_ok(false);
-        //   reply_.set_status(s_.ToString());
-        // }
-        break;
-
-      case Op::DELETE:
-        //TODO
-        break;
-
-      case Op::UPDATE:
-        //TODO
-        break;
-
-      default:
-        std::cerr << "Unsupported Operation \n";
-        break;
-      }
-  }
+void RunServer(rocksdb::DB* db, const std::string& server_addr) {
   
-  // alarm object to put a new task into the cq_
-  // grpc::Alarm alarm_;
-
-  // The means to get back to the client.
-  ServerAsyncReaderWriter<OpReply, Op>  rw_;
-
-  // Let's implement a tiny state machine with the following states.
-  enum class BidiStatus { READ = 1, WRITE = 2, CONNECT = 3, DONE = 4, FINISH = 5 };
-  BidiStatus status_;
-
-  std::mutex   m_mutex;
-
-  // measure thoughput for every 1000000 ops, set this to the current op_counter_ val whenever we take a measurement
-  std::atomic<uint64_t> left_boundary_{0};
-  std::atomic<uint64_t> right_boundary_{100000};
-
-  std::atomic<uint64_t> op_counter_{0};
-
-  time_point<high_resolution_clock> start_time_;
-  time_point<high_resolution_clock> end_time_;
-};
-
-class ServerImpl final {
-  public:
-  ServerImpl(const std::string& server_addr, rocksdb::DB* db, SyncServiceImpl* service)
-   :server_addr_(server_addr), db_(db), service_(service){
-  }
-  ~ServerImpl() {
-    server_->Shutdown();
-    // Always shutdown the completion queue after the server.
-    for (const auto& _cq : m_cq)
-        _cq->Shutdown();
-  }
-
-  // There is no shutdown handling in this code.
-  void Run() {
-
-    builder_.AddListeningPort(server_addr_, grpc::InsecureServerCredentials());
-    // Register "service_" as the instance through which we'll communicate with
-    // clients. In this case it corresponds to an asynchronous DoOp service and synchronous Sync service
-    builder_.RegisterService(service_);
-    // Get hold of the completion queue used for the asynchronous communication
-    // with the gRPC runtime.
-
-    for (int i = 0; i < g_cq_num; ++i) {
-        //cq_ = builder.AddCompletionQueue();
-        m_cq.emplace_back(builder_.AddCompletionQueue());
-    }
-
-    // Finally assemble the server.
-    server_ = builder_.BuildAndStart();
-
-    // Proceed to the server's main loop.
-    std::vector<std::thread*> _vec_threads;
-
-    for (int i = 0; i < g_thread_num; ++i) {
-        int _cq_idx = i % g_cq_num;
-        for (int j = 0; j < g_pool; ++j) {
-            new CallDataBidi(service_, m_cq[_cq_idx].get(), db_);
-        }
-        auto new_thread =  new std::thread(&ServerImpl::HandleRpcs, this, _cq_idx);
-        map[new_thread->get_id()] = i;
-        _vec_threads.emplace_back(new_thread);
-    }
-
-    std::cout << g_thread_num << " working aysnc threads spawned" << std::endl;
-
-    for (const auto& _t : _vec_threads)
-        _t->join();
-  }
-
- private:
-
-  // This can be run in multiple threads if needed.
-  void HandleRpcs(int cq_idx) {
-    // Spawn a new CallDataUnary instance to serve new clients.
-    void* tag;  // uniquely identifies a request.
-    bool ok;
-    while (true) {
-      // Block waiting to read the next event from the completion queue. The
-      // event is uniquely identified by its tag, which in this case is the
-      // memory address of a CallDataUnary instance.
-      // The return value of Next should always be checked. This return value
-      // tells us whether there is any kind of event or cq_ is shutting down.
-      GPR_ASSERT(m_cq[cq_idx]->Next(&tag, &ok));
-
-      CallDataBase* _p_ins = (CallDataBase*)tag;
-      _p_ins->Proceed(ok);
-    }
-  }
-
-  std::vector<std::unique_ptr<ServerCompletionQueue>>  m_cq;
-  SyncServiceImpl* service_;
-  std::unique_ptr<Server> server_;
-  const std::string& server_addr_;
-  ServerBuilder builder_;
-  rocksdb::DB* db_;
-};
-
-void RunServer(rocksdb::DB* db, const std::string& server_addr, int thread_num = 1) {
-  
-  SyncServiceImpl service(db);
-  g_thread_num = thread_num;
+  RubbleKvServiceImpl service(db);
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-  // ServerBuilder builder;
+  ServerBuilder builder;
 
-  // builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
+  builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
   std::cout << "Server listening on " << server_addr << std::endl;
-  // builder.RegisterService(&service);
-  ServerImpl server_impl(server_addr, db, &service);
-  server_impl.Run();
-  // std::unique_ptr<Server> server(builder.BuildAndStart());
-  // server->Wait();
+  builder.RegisterService(&service);
+  std::unique_ptr<Server> server(builder.BuildAndStart());
+  server->Wait();
 }

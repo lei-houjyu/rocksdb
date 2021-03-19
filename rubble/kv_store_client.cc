@@ -47,7 +47,7 @@ void Put(KvStoreClient& client){
     int num_of_digits = numDigits(num_of_kvs);
     int current_num_of_digits = 0;
     string prefix;
-    Op request;
+    vector<pair<string, string>> kvs;
     while(current_num_of_digits < num_of_digits - 1){
       prefix = string(7 - current_num_of_digits , '0');
       int start = 1;
@@ -57,10 +57,7 @@ void Put(KvStoreClient& client){
       int end = start*10;
   
       for(int i = start ; i < end ; i++){
-          request.set_type(Op::PUT);
-          request.set_key("key" + prefix + to_string(i));
-          request.set_value("val" + prefix + to_string(i));
-          client.AddRequests(request);
+        kvs.emplace_back("key" + prefix + to_string(i), "val" + prefix + to_string(i));
       }
       current_num_of_digits++;
     }
@@ -72,13 +69,9 @@ void Put(KvStoreClient& client){
     }
 
     for(int i = start; i <= num_of_kvs; i++){
-      request.set_type(Op::PUT);
-      request.set_key("key" + prefix + to_string(i));
-      request.set_value("val" + prefix + to_string(i));
-      client.AddRequests(request);
+      kvs.emplace_back("key" + prefix + to_string(i), "val" + prefix + to_string(i));
     }
-    client.SetStartTime(high_resolution_clock::now());
-    client.AsyncDoOps();
+    client.SyncDoPuts(kvs);
   }
 }
 
@@ -91,12 +84,9 @@ void GetByKey(KvStoreClient& client){
       break;
     }
     int num_len = key.length();
-    key = "key" + string("00000000").replace(8 - num_len, num_len, key);
-    Op request;
-    request.set_type(Op::GET);
-    request.set_key(key);
-    client.AddRequests(request);
-    client.AsyncDoOps();
+    vector<string> keys;
+    keys.emplace_back("key" + string("00000000").replace(8 - num_len, num_len, key));
+    client.SyncDoGets(keys);
   }
 }
 
@@ -114,15 +104,12 @@ void GetByKeyRange(KvStoreClient& client){
     cout << "end key :";
     cin >> end_key;
 
-    Op request;
+    vector<string> keys;
     for(int i = start_key ; i <= end_key; i++){
       int num_len = to_string(i).length();
-      request.set_type(Op::GET);
-      request.set_key("key" + string("00000000").replace(8 - num_len, num_len, to_string(i)));
-      client.AddRequests(request);
+      keys.emplace_back("key" + string("00000000").replace(8 - num_len, num_len, to_string(i)));
     }
-    client.SetStartTime(high_resolution_clock::now());
-    client.AsyncDoOps();
+    client.SyncDoGets(keys);
   }
 }
 
@@ -131,7 +118,6 @@ int main(){
 // client used to send kv to ptimary
   KvStoreClient client1(grpc::CreateChannel(
     "localhost:50051", grpc::InsecureChannelCredentials()));
-  client1.SetKvClient(true);
 
   int size_of_kv_pairs = sizeof("key00000000") + sizeof("val00000000");
   cout << "size of kv pairs : " << size_of_kv_pairs << "bytes" << endl;
