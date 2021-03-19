@@ -3,7 +3,7 @@
 #include <chrono>
 #include <cmath>
 using namespace std;
-using chrono::system_clock;
+using std::chrono::high_resolution_clock;
 
 int numDigits(int x)
 {
@@ -33,12 +33,11 @@ int numDigits(int x)
     return 1;
 }
 
-
 void Put(KvStoreClient& client){
   string input;
   int num_of_kvs;
   while(true){
-    // cout << "Enter the number of kv pairs to put or Enter \"quit\" to go back to options\n:";
+    cout << "Enter the number of kv pairs to put or Enter \"quit\" to go back to options\n:";
     cin >> input;
     if(input == "quit"){
       break;
@@ -48,7 +47,7 @@ void Put(KvStoreClient& client){
     int num_of_digits = numDigits(num_of_kvs);
     int current_num_of_digits = 0;
     string prefix;
-    std::vector<std::pair<std::string, std::string>> kvs;
+    Op request;
     while(current_num_of_digits < num_of_digits - 1){
       prefix = string(7 - current_num_of_digits , '0');
       int start = 1;
@@ -56,10 +55,12 @@ void Put(KvStoreClient& client){
         start *= 10;
       }
       int end = start*10;
-      // cout << "start key : " << start << ", end key :" << end << endl;
+  
       for(int i = start ; i < end ; i++){
-          kvs.emplace_back("key" + prefix + to_string(i), "val" + prefix + to_string(i));
-          // client.AsyncDoPut("key" + prefix + to_string(i), "val" + prefix + to_string(i));
+          request.set_type(Op::PUT);
+          request.set_key("key" + prefix + to_string(i));
+          request.set_value("val" + prefix + to_string(i));
+          client.AddRequests(request);
       }
       current_num_of_digits++;
     }
@@ -71,17 +72,13 @@ void Put(KvStoreClient& client){
     }
 
     for(int i = start; i <= num_of_kvs; i++){
-      kvs.emplace_back("key" + prefix + to_string(i), "val" + prefix + to_string(i));
-      // client.AsyncDoPut("key" +  prefix + to_string(i) , "val" + prefix + to_string(i));
+      request.set_type(Op::PUT);
+      request.set_key("key" + prefix + to_string(i));
+      request.set_value("val" + prefix + to_string(i));
+      client.AddRequests(request);
     }
-
-    // auto start_time = chrono::high_resolution_clock::now();
-    client.AsyncDoPuts(kvs);
-    // auto end_time = chrono::high_resolution_clock::now();
-    // auto milisecs = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
-    // cout << "Druration(millisecs): " << (int)(milisecs.count()) << endl;
-
-    // cout << "Throughput : " << num_of_kvs/(milisecs.count()/1000) << " op/s" << endl;
+    client.SetStartTime(high_resolution_clock::now());
+    client.AsyncDoOps();
   }
 }
 
@@ -95,9 +92,11 @@ void GetByKey(KvStoreClient& client){
     }
     int num_len = key.length();
     key = "key" + string("00000000").replace(8 - num_len, num_len, key);
-    vector<string> keys;
-    keys.emplace_back(key); 
-    client.AsyncDoGets(keys);
+    Op request;
+    request.set_type(Op::GET);
+    request.set_key(key);
+    client.AddRequests(request);
+    client.AsyncDoOps();
   }
 }
 
@@ -115,16 +114,15 @@ void GetByKeyRange(KvStoreClient& client){
     cout << "end key :";
     cin >> end_key;
 
-    vector<string> keys;
-    // auto start_time = chrono::high_resolution_clock::now();
+    Op request;
     for(int i = start_key ; i <= end_key; i++){
       int num_len = to_string(i).length();
-      keys.emplace_back("key" + string("00000000").replace(8 - num_len, num_len, to_string(i)));
+      request.set_type(Op::GET);
+      request.set_key("key" + string("00000000").replace(8 - num_len, num_len, to_string(i)));
+      client.AddRequests(request);
     }
-    client.AsyncDoGets(keys);
-    // auto end_time = chrono::high_resolution_clock::now();
-    // auto milisecs = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
-    // cout << " millisecs : " << (int)(milisecs.count()) << endl;
+    client.SetStartTime(high_resolution_clock::now());
+    client.AsyncDoOps();
   }
 }
 
