@@ -534,6 +534,10 @@ class VersionEdit {
     return is_flush_;
   }
 
+  int GetBactchCount(){
+    return batch_count_;
+  }
+
   void SetBatchCount(int batch_count ){
     batch_count_ = batch_count;
   }

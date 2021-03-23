@@ -71,6 +71,9 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
 
   // open DB
   rocksdb::Status s = rocksdb::DB::Open(options, db_path, &db);
+  if(!s.ok()){
+    std::cout << "DB open failed : " << s.ToString() << std::endl;
+  }
   assert(s.ok());
 
   return db;

@@ -60,8 +60,9 @@
 #include "util/stop_watch.h"
 #include "util/string_util.h"
 #include "util/user_comparator_wrapper.h"
+#include <nlohmann/json.hpp>
 
-
+using json = nlohmann::json;
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -4347,22 +4348,30 @@ Status VersionSet::LogAndApply(
 
       MemTableList* imm = default_cf->imm();
       MemTable* m = default_cf->mem();
-      uint32_t ve_count{0};
+    
+      // right now, only support one cloumn family(the default one)
+      assert(edit_lists.size() == 1);
+
+      json j_args;
+      if(edit_lists.back().back()->IsFlush()){
+        j_args["IsFlush"] = true;
+        j_args["BatchCount"] = edit_lists.back().back()->GetBactchCount();
+      }
+      j_args["NextFileNum"] = next_file_number_.load();
+      std::vector<std::string> version_edits;
+      SyncRequest request;
       for (auto edit_list: edit_lists){
         for (auto e: edit_list) {
-          ve_count++;
-
-          // auto j_edit = nlohmann::json::parse(e->DebugJSON((int)log_and_apply_counter , false));
-          // std::cout << j_edit.dump(4) << std::endl;
-
-          // Form SyncRequest
-          SyncRequest request;
-          request.set_args(e->DebugJSON((int)log_and_apply_counter , false));
-
-          std::string reply = db_options_->sync_client->Sync(request);
-          std::cerr << "[ Reply Status ]: " << reply << std::endl;
+          version_edits.emplace_back(e->DebugJSON((int) log_and_apply_counter, false));
         }
       }
+  
+      json j_vec(version_edits);
+      j_args["EditList"] = j_vec;
+      // std::cout << j_args.dump(4) << std::endl;
+      request.set_args(json::dump(j_args));
+      std::string reply = db_options_->sync_client->Sync(request);
+      std::cerr << "[ Reply Status ]: " << reply << std::endl;
       
       // Arena arena;
       // const ReadOptions read_options = ReadOptions();
@@ -4380,10 +4389,10 @@ Status VersionSet::LogAndApply(
 
       // std::cout  << nlohmann::json::parse(m->DebugJson()).dump(4) << std::endl;
       // std::cout << " ----------- ImmutableList : " << nlohmann::json::parse(imm->DebugJson()).dump(4) << " ----------------\n";
-      std::cout << " ----------- ImmutableList : " << imm->DebugJson()<< " ----------------\n";
+      // std::cout << " ----------- ImmutableList : " << imm->DebugJson()<< " ----------------\n";
 
-      std::cout << " Current Version: \n " << default_cf->current()->DebugString(false) << std::endl;
-      assert(ve_count == 1);
+      // std::cout << " Current Version: \n " << default_cf->current()->DebugString(false) << std::endl;
+      // assert(ve_count == 1);
   
   }else if (db_options_->is_rubble && !db_options_->is_primary){
     std::cout << "[secondary] calling logAndApply " << std::endl;

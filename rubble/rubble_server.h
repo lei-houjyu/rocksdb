@@ -63,32 +63,24 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
       delete db_;
     }
 
-  void ParseJsonStringToVersionEdit(const json& j /* json version edit */, rocksdb::VersionEdit* edit){
+  void ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */, rocksdb::VersionEdit* edit){
 
-      // std::cout << "Dumped VersionEdit : " << j.dump(4) << std::endl;
-
-      assert(j.contains("AddedFiles"));
-      if(j.contains("IsFlush")){ // means edit corresponds to a flush job
-        is_flush_ = true;
-        num_of_added_files_ = j["AddedFiles"].get<std::vector<json>>().size();
-        auto added_file = j["AddedFiles"].get<std::vector<json>>().front();
-        added_file_num_ = added_file["FileNumber"].get<uint64_t>();
-        batch_count_ = j["BatchCount"].get<int>();
+      // std::cout << "Dumped VersionEdit : " << j_edit.dump(4) << std::endl;
+      if(j_edit.contains("IsFlush")){ // means edit corresponds to a flush job
+        num_of_added_files_ += j_edit["AddedFiles"].get<std::vector<json>>().size();
       }
 
-      if(j.contains("LogNumber")){
-        edit->SetLogNumber(j["LogNumber"].get<uint64_t>());
+      if(j_edit.contains("LogNumber")){
+        edit->SetLogNumber(j_edit["LogNumber"].get<uint64_t>());
       }
 
-      if(j.contains("PrevLogNumber")){
-        edit->SetPrevLogNumber(j["PrevLogNumber"].get<uint64_t>());
+      if(j_edit.contains("PrevLogNumber")){
+        edit->SetPrevLogNumber(j_edit["PrevLogNumber"].get<uint64_t>());
       }
-      assert(!j["ColumnFamily"].is_null());
-      edit->SetColumnFamily(j["ColumnFamily"].get<uint32_t>());
-
-      int max_file_num = 0;
+      assert(!j_edit["ColumnFamily"].is_null());
+      edit->SetColumnFamily(j_edit["ColumnFamily"].get<uint32_t>());
      
-      for(auto& j_added_file : j["AddedFiles"].get<std::vector<json>>()){
+      for(auto& j_added_file : j_edit["AddedFiles"].get<std::vector<json>>()){
           
           assert(!j_added_file["SmallestUserKey"].is_null());
           assert(!j_added_file["SmallestSeqno"].is_null());
@@ -113,7 +105,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
           int level = j_added_file["Level"].get<int>();
 
           uint64_t file_num = j_added_file["FileNumber"].get<uint64_t>();
-          max_file_num = std::max(max_file_num, (int)file_num);
+          // max_file_num = std::max(max_file_num, (int)file_num);
 
           uint64_t file_size = j_added_file["FileSize"].get<uint64_t>();
 
@@ -129,10 +121,9 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
                       rocksdb::kUnknownFileChecksumFuncName
                       );
       }
-      next_file_num_ = max_file_num + 1;
 
-      if(j.contains("DeletedFiles")){
-        for(auto j_delete_file : j["DeletedFiles"].get<std::vector<json>>()){
+      if(j_edit.contains("DeletedFiles")){
+        for(auto j_delete_file : j_edit["DeletedFiles"].get<std::vector<json>>()){
           edit->DeleteFile(j_delete_file["Level"].get<int>(), j_delete_file["FileNumber"].get<uint64_t>());
         }
       }
@@ -144,65 +135,51 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
                           SyncReply* reply) override {
     log_apply_counter_++;
     std::cout << " --------[Secondary] Accepting Sync RPC " << log_apply_counter_.load() << " th times --------- \n";
-    rocksdb::VersionEdit edit;
-    /**
-     * example args json: 
-     * 
-     *  {
-     *     "AddedFiles": [
-     *          {
-     *             "FileNumber": 12,
-     *             "FileSize": 71819,
-     *             "LargestSeqno": 7173,
-     *             "LargestUserKey": "key7172",
-     *             "Level": 0,
-     *             "SmallestSeqno": 3607,
-     *             "SmallestUserKey": "key3606"
-     *          }
-     *      ],
-     *      "ColumnFamily": 0,
-     *      "DeletedFiles": [
-     *          {
-     *              "FileNumber": 8,
-     *              "Level": 0
-     *          },
-     *          {
-     *              "FileNumber": 12,
-     *              "Level": 0
-     *          }
-     *       ],
-     *      "EditNumber": 2,
-     *      "LogNumber": 11,
-     *      "PrevLogNumber": 0,
-     * 
-     *       // fields exist only when it's triggered by a flush
-     *      "IsFlush" : 1,
-     *      "BatchCount" : 2
-     *  }
-     *  
-     */ 
-    
+    // example args json :
+    // For a Flush:
+    //{
+    //     "BatchCount": 2,
+    //     "IsFlush": true,
+    //     "NextFileNum": 16,
+    //     "EditList": [
+    //         "{\"EditNumber\": 4, \"LogNumber\": 14, \"PrevLogNumber\": 0, \"BatchCount\": 2, \"AddedFiles\": [{\"Level\": 0, \"FileNumber\": 15, \"FileSize\": 64858, \"SmallestUserKey\": \"key00005281\", \"SmallestSeqno\": 5281, \"LargestUserKey\": \"key00007922\", \"LargestSeqno\": 7922}], \"ColumnFamily\": 0, \"IsFlush\": 1}"
+    //     ]
+    // }
+    // For a compaction:
+    //{
+    //     "NextFileNum": 16,
+    //     "EditList": [
+    //         "{\"EditNumber\": 5, \"DeletedFiles\": [{\"Level\": 0, \"FileNumber\": 15}], \"AddedFiles\": [{\"Level\": 1, \"FileNumber\": 15, \"FileSize\": 64858, \"SmallestUserKey\": \"key00005281\", \"SmallestSeqno\": 5281, \"LargestUserKey\": \"key00007922\", \"LargestSeqno\": 7922}], \"ColumnFamily\": 0}"
+    //     ]
+    // }
+
     std::string args = request->args();
     const json j_args = json::parse(args);
-    ParseJsonStringToVersionEdit(j_args, &edit);
-
-    rocksdb::Status s;
+    num_of_added_files_ = 0;
+    if(j_args.contains("IsFlush")){
+      assert(j_args["IsFlush"].get<bool>());
+      batch_count_ = j_args["BatchCount"].get<int>();
+      is_flush_ = true;
+    }
+    next_file_num_ = j_args["NextFileNum"].get<uint64_t>();
+    rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
+    for(const auto& j_edit : j_args["EditList"].get<std::vector<json>>()){   
+      rocksdb::VersionEdit edit;
+      ParseJsonStringToVersionEdit(j_edit, &edit);
+      edit_list.emplace_back(&edit);
+    }
 
     // If it's neither primary/head nor tail(second node in the chain in a 3-node setting)
     // should call Sync rpc to downstream node also should ship sst files to the downstream node
     // assert(is_rubble_);
     if(is_rubble_ && !is_head_ && ! is_tail_){
-      s = ShipSstFiles(edit);
+      for(const auto& edit: edit_list){
+        s_ = ShipSstFiles(*edit);
+      }
       std::string sync_reply = db_options_->sync_client->Sync(*request);
       std::cout << "[ Reply Status ]: " << sync_reply << std::endl;
     }
- 
-    // logAndApply needs to hold the mutex
-    rocksdb::InstrumentedMutexLock l(mu_);
-    // std::cout << " --------------- mutex lock ----------------- \n ";
 
-    uint64_t current_next_file_num = version_set_->current_next_file_number();
-    
     const rocksdb::MutableCFOptions* cf_options = default_cf_->GetCurrentMutableCFOptions();
 
     rocksdb::autovector<rocksdb::ColumnFamilyData*> cfds;
@@ -210,9 +187,6 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     rocksdb::autovector<const rocksdb::MutableCFOptions*> mutable_cf_options_list;
     mutable_cf_options_list.emplace_back(cf_options);
-
-    rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
-    edit_list.emplace_back(&edit);
 
     rocksdb::autovector<rocksdb::autovector<rocksdb::VersionEdit*>> edit_lists;
     edit_lists.emplace_back(edit_list);
@@ -224,22 +198,23 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     std::cout  << "Immutable MemTable list : " << json::parse(imm->DebugJson()).dump(4) << std::endl;
     std::cout << " Current Version :\n " << default_cf_->current()->DebugString(false) <<std::endl;
 
+    uint64_t current_next_file_num = version_set_->current_next_file_number();
     // set secondary version set's next file num according to the primary's next_file_num_
     version_set_->FetchAddFileNumber(next_file_num_ - current_next_file_num);
     assert(version_set_->current_next_file_number() == next_file_num_);
 
+    // logAndApply needs to hold the mutex
+    rocksdb::InstrumentedMutexLock l(mu_);
+    
     // Calling LogAndApply on the secondary
-    s = version_set_->LogAndApply(cfds, mutable_cf_options_list, edit_lists, mu_,
+    s_ = version_set_->LogAndApply(cfds, mutable_cf_options_list, edit_lists, mu_,
                       db_directory);
 
 
     //Drop The corresponding MemTables in the Immutable MemTable List
     //If this version edit corresponds to a flush job
     if(is_flush_){
-      //flush always output one file?
-      assert(num_of_added_files_ == 1);
-      // batch count is always 2 ?
-      assert(batch_count_ == 2);
+      assert(batch_count_ % num_of_added_files_ == 0);
       // creating a new verion after we applied the edit
       imm->InstallNewVersion();
 
@@ -248,54 +223,49 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
       uint64_t mem_id = 1;  // how many memtables have been flushed.
       
       rocksdb::autovector<rocksdb::MemTable*> to_delete;
-      if(s.ok() &&!default_cf_->IsDropped()){
+      if(s_.ok() &&!default_cf_->IsDropped()){
 
-        while(num_of_added_files_-- > 0){
-            rocksdb::SuperVersion* sv = default_cf_->GetSuperVersion();
-          
-            rocksdb::MemTableListVersion*  current = imm->current();
-            rocksdb::MemTable* m = current->GetMemlist().back();
+        rocksdb::SuperVersion* sv = default_cf_->GetSuperVersion();
+        rocksdb::MemTableListVersion* current = imm->current();
+        // assert(imm->current()->GetMemlist().size() >= batch_count_) ? 
+        // This is not always the case, sometimes secondary has only one immutable memtable in the list, say ID 89,
+        // while the primary has 2 immutable memtables, say 89 and 90, with a more latest one,
+        // so should set the number_of_immutable_memtable_to_delete to be the minimum of batch count and immutable memlist size
+        int num_of_imm_to_delete = std::min(batch_count_, (int)current->GetMemlist().size());
+        while(num_of_imm_to_delete -- > 0){
 
-            m->SetFlushCompleted(true);
-            m->SetFileNumber(added_file_num_); 
+          rocksdb::MemTable* m = current->GetMemlist().back();
+          m->SetFlushCompleted(true);
+          // m->SetFileNumber(next_file_num_ - num_of_imm_to_delete/(batch_count_/num_of_added_files_)); 
 
-            // if (m->GetEdits().GetBlobFileAdditions().empty()) {
-            //   ROCKS_LOG_BUFFER(log_buffer,
-            //                   "[%s] Level-0 commit table #%" PRIu64
-            //                   ": memtable #%" PRIu64 " done",
-            //                   cfd->GetName().c_str(), m->file_number_, mem_id);
-            // } else {
-            //   ROCKS_LOG_BUFFER(log_buffer,
-            //                   "[%s] Level-0 commit table #%" PRIu64
-            //                   " (+%zu blob files)"
-            //                   ": memtable #%" PRIu64 " done",
-            //                   cfd->GetName().c_str(), m->file_number_,
-            //                   m->edit_.GetBlobFileAdditions().size(), mem_id);
-            // }
+          // if (m->GetEdits().GetBlobFileAdditions().empty()) {
+          //   ROCKS_LOG_BUFFER(log_buffer,
+          //                   "[%s] Level-0 commit table #%" PRIu64
+          //                   ": memtable #%" PRIu64 " done",
+          //                   default_cf_->GetName().c_str(), m->file_number_, mem_id);
+          // } else {
+          //   ROCKS_LOG_BUFFER(log_buffer,
+          //                   "[%s] Level-0 commit table #%" PRIu64
+          //                   " (+%zu blob files)"
+          //                   ": memtable #%" PRIu64 " done",
+          //                   default_cf_->GetName().c_str(), m->file_number_,
+          //                   m->edit_.GetBlobFileAdditions().size(), mem_id);
+          // }
 
-            // assert(imm->current()->GetMemlist().size() >= batch_count) ? 
-            // This is not always the case, sometimes secondary has only one immutable memtable in the list, say ID 89,
-            // while the primary has 2 immutable memtables, say 89 and 90, with a more latest one,
-            // so should set the number_of_immutable_memtable_to_delete to be the minimum of batch count and immutable memlist size
-            int num_of_imm_to_delete = std::min(batch_count_, (int)imm->current()->GetMemlist().size());
-
-            assert(m->GetFileNumber() > 0);
-            while(num_of_imm_to_delete-- > 0){
-              /* drop the corresponding immutable memtable in the list if version edit corresponds to a flush */
-              // according the code comment in the MemTableList class : "The memtables are flushed to L0 as soon as possible and in any order." 
-              // as far as I observe, it's always the back of the imm memlist gets flushed first, which is the earliest memtable
-              // so here we always drop the memtable in the back of the list
-              current->RemoveLast(sv->GetToDelete());
-            }
-
-            imm->SetNumFlushNotStarted(current->GetMemlist().size());
-            imm->UpdateCachedValuesFromMemTableListVersion();
-            imm->ResetTrimHistoryNeeded();
-            ++mem_id;
+          // assert(m->GetFileNumber() > 0);
+          /* drop the corresponding immutable memtable in the list if version edit corresponds to a flush */
+          // according the code comment in the MemTableList class : "The memtables are flushed to L0 as soon as possible and in any order." 
+          // as far as I observe, it's always the back of the imm memlist gets flushed first, which is the earliest memtable
+          // so here we always drop the memtable in the back of the list
+          current->RemoveLast(sv->GetToDelete());
+          imm->SetNumFlushNotStarted(current->GetMemlist().size());
+          imm->UpdateCachedValuesFromMemTableListVersion();
+          imm->ResetTrimHistoryNeeded();
+          ++mem_id;
         }
       }else {
         //TODO : Commit Failed For Some reason, need to reset state
-        std::cout << s.ToString() << std::endl;
+        std::cout << s_.ToString() << std::endl;
       }
 
       imm->SetCommitInProgress(false);
@@ -306,19 +276,16 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     }
 
-    if(s.ok()){
+    if(s_.ok()){
       reply->set_message("Succeeds");
     }else{
-      std::string failed = "Failed : " + s.ToString();
+      std::string failed = "Failed : " + s_.ToString();
       reply->set_message(failed);
     }
-
-    rocksdb::VersionStorageInfo::LevelSummaryStorage tmp;
-
-    auto vstorage = default_cf_->current()->storage_info();
+    // rocksdb::VersionStorageInfo::LevelSummaryStorage tmp;
+    // auto vstorage = default_cf_->current()->storage_info();
     // const char* c = vstorage->LevelSummary(&tmp);
     // std::cout << " VersionStorageInfo->LevelSummary : " << std::string(c) << std::endl;
-
     return Status::OK;
   }
 
@@ -329,7 +296,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
    * @param edit The version edit received from the priamry 
    * 
    */
-  rocksdb::Status ShipSstFiles(rocksdb::VersionEdit& edit){
+  rocksdb::Status ShipSstFiles(const rocksdb::VersionEdit& edit){
 
     assert(db_options_->remote_sst_dir != "");
     std::string remote_sst_dir = db_options_->remote_sst_dir;
@@ -387,11 +354,11 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
         start_time_ = high_resolution_clock::now();
       }
 
-      if(op_counter_.load()%1000000 == 0){
+      if(op_counter_.load() && op_counter_.load()%100000 == 0){
         end_time_ = high_resolution_clock::now();
         auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
-        // std::cout << "Throughput : " << 1000000/(millisecs.count()/1000) << " op/s\n";
-        std::cout << "Throughput : handle 1000000  in " << millisecs.count()/1000 << "secs \n";
+        // why this doesn't print anything?
+        std::cout << "Throughput : handle 100000  in " << millisecs.count() << " milisecs\n";
         start_time_ = end_time_;
       }
 
