@@ -24,6 +24,7 @@ namespace rubble {
 static const char* RubbleKvStoreService_method_names[] = {
   "/rubble.RubbleKvStoreService/Sync",
   "/rubble.RubbleKvStoreService/DoOp",
+  "/rubble.RubbleKvStoreService/SendReply",
 };
 
 std::unique_ptr< RubbleKvStoreService::Stub> RubbleKvStoreService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -35,6 +36,7 @@ std::unique_ptr< RubbleKvStoreService::Stub> RubbleKvStoreService::NewStub(const
 RubbleKvStoreService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
   : channel_(channel), rpcmethod_Sync_(RubbleKvStoreService_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_DoOp_(RubbleKvStoreService_method_names[1], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
+  , rpcmethod_SendReply_(RubbleKvStoreService_method_names[2], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
   {}
 
 ::grpc::Status RubbleKvStoreService::Stub::Sync(::grpc::ClientContext* context, const ::rubble::SyncRequest& request, ::rubble::SyncReply* response) {
@@ -76,6 +78,22 @@ void RubbleKvStoreService::Stub::experimental_async::DoOp(::grpc::ClientContext*
   return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::Op, ::rubble::OpReply>::Create(channel_.get(), cq, rpcmethod_DoOp_, context, false, nullptr);
 }
 
+::grpc::ClientReaderWriter< ::rubble::OpReply, ::rubble::Reply>* RubbleKvStoreService::Stub::SendReplyRaw(::grpc::ClientContext* context) {
+  return ::grpc::internal::ClientReaderWriterFactory< ::rubble::OpReply, ::rubble::Reply>::Create(channel_.get(), rpcmethod_SendReply_, context);
+}
+
+void RubbleKvStoreService::Stub::experimental_async::SendReply(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::OpReply,::rubble::Reply>* reactor) {
+  ::grpc::internal::ClientCallbackReaderWriterFactory< ::rubble::OpReply,::rubble::Reply>::Create(stub_->channel_.get(), stub_->rpcmethod_SendReply_, context, reactor);
+}
+
+::grpc::ClientAsyncReaderWriter< ::rubble::OpReply, ::rubble::Reply>* RubbleKvStoreService::Stub::AsyncSendReplyRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::OpReply, ::rubble::Reply>::Create(channel_.get(), cq, rpcmethod_SendReply_, context, true, tag);
+}
+
+::grpc::ClientAsyncReaderWriter< ::rubble::OpReply, ::rubble::Reply>* RubbleKvStoreService::Stub::PrepareAsyncSendReplyRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::OpReply, ::rubble::Reply>::Create(channel_.get(), cq, rpcmethod_SendReply_, context, false, nullptr);
+}
+
 RubbleKvStoreService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       RubbleKvStoreService_method_names[0],
@@ -97,6 +115,16 @@ RubbleKvStoreService::Service::Service() {
              ::rubble::Op>* stream) {
                return service->DoOp(ctx, stream);
              }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      RubbleKvStoreService_method_names[2],
+      ::grpc::internal::RpcMethod::BIDI_STREAMING,
+      new ::grpc::internal::BidiStreamingHandler< RubbleKvStoreService::Service, ::rubble::OpReply, ::rubble::Reply>(
+          [](RubbleKvStoreService::Service* service,
+             ::grpc::ServerContext* ctx,
+             ::grpc::ServerReaderWriter<::rubble::Reply,
+             ::rubble::OpReply>* stream) {
+               return service->SendReply(ctx, stream);
+             }, this)));
 }
 
 RubbleKvStoreService::Service::~Service() {
@@ -110,6 +138,12 @@ RubbleKvStoreService::Service::~Service() {
 }
 
 ::grpc::Status RubbleKvStoreService::Service::DoOp(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::OpReply, ::rubble::Op>* stream) {
+  (void) context;
+  (void) stream;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status RubbleKvStoreService::Service::SendReply(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::Reply, ::rubble::OpReply>* stream) {
   (void) context;
   (void) stream;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");

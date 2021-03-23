@@ -48,7 +48,7 @@ struct TableStruct_rubble_5fkv_5fstore_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[4]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[5]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -62,6 +62,9 @@ extern OpDefaultTypeInternal _Op_default_instance_;
 class OpReply;
 class OpReplyDefaultTypeInternal;
 extern OpReplyDefaultTypeInternal _OpReply_default_instance_;
+class Reply;
+class ReplyDefaultTypeInternal;
+extern ReplyDefaultTypeInternal _Reply_default_instance_;
 class SyncReply;
 class SyncReplyDefaultTypeInternal;
 extern SyncReplyDefaultTypeInternal _SyncReply_default_instance_;
@@ -72,6 +75,7 @@ extern SyncRequestDefaultTypeInternal _SyncRequest_default_instance_;
 PROTOBUF_NAMESPACE_OPEN
 template<> ::rubble::Op* Arena::CreateMaybeMessage<::rubble::Op>(Arena*);
 template<> ::rubble::OpReply* Arena::CreateMaybeMessage<::rubble::OpReply>(Arena*);
+template<> ::rubble::Reply* Arena::CreateMaybeMessage<::rubble::Reply>(Arena*);
 template<> ::rubble::SyncReply* Arena::CreateMaybeMessage<::rubble::SyncReply>(Arena*);
 template<> ::rubble::SyncRequest* Arena::CreateMaybeMessage<::rubble::SyncRequest>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
@@ -598,6 +602,143 @@ class OpReply PROTOBUF_FINAL :
 };
 // -------------------------------------------------------------------
 
+class Reply PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.Reply) */ {
+ public:
+  inline Reply() : Reply(nullptr) {}
+  virtual ~Reply();
+
+  Reply(const Reply& from);
+  Reply(Reply&& from) noexcept
+    : Reply() {
+    *this = ::std::move(from);
+  }
+
+  inline Reply& operator=(const Reply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Reply& operator=(Reply&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const Reply& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const Reply* internal_default_instance() {
+    return reinterpret_cast<const Reply*>(
+               &_Reply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    2;
+
+  friend void swap(Reply& a, Reply& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Reply* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Reply* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline Reply* New() const final {
+    return CreateMaybeMessage<Reply>(nullptr);
+  }
+
+  Reply* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<Reply>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const Reply& from);
+  void MergeFrom(const Reply& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Reply* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "rubble.Reply";
+  }
+  protected:
+  explicit Reply(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
+    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kOkFieldNumber = 1,
+  };
+  // bool ok = 1;
+  void clear_ok();
+  bool ok() const;
+  void set_ok(bool value);
+  private:
+  bool _internal_ok() const;
+  void _internal_set_ok(bool value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:rubble.Reply)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  bool ok_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
+};
+// -------------------------------------------------------------------
+
 class SyncRequest PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.SyncRequest) */ {
  public:
@@ -640,7 +781,7 @@ class SyncRequest PROTOBUF_FINAL :
                &_SyncRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    3;
 
   friend void swap(SyncRequest& a, SyncRequest& b) {
     a.Swap(&b);
@@ -784,7 +925,7 @@ class SyncReply PROTOBUF_FINAL :
                &_SyncReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    4;
 
   friend void swap(SyncReply& a, SyncReply& b) {
     a.Swap(&b);
@@ -1311,6 +1452,30 @@ inline void OpReply::set_type(::rubble::OpReply_OpType value) {
 
 // -------------------------------------------------------------------
 
+// Reply
+
+// bool ok = 1;
+inline void Reply::clear_ok() {
+  ok_ = false;
+}
+inline bool Reply::_internal_ok() const {
+  return ok_;
+}
+inline bool Reply::ok() const {
+  // @@protoc_insertion_point(field_get:rubble.Reply.ok)
+  return _internal_ok();
+}
+inline void Reply::_internal_set_ok(bool value) {
+  
+  ok_ = value;
+}
+inline void Reply::set_ok(bool value) {
+  _internal_set_ok(value);
+  // @@protoc_insertion_point(field_set:rubble.Reply.ok)
+}
+
+// -------------------------------------------------------------------
+
 // SyncRequest
 
 // string args = 1;
@@ -1444,6 +1609,8 @@ inline void SyncReply::set_allocated_message(std::string* message) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
