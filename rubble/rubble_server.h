@@ -12,6 +12,7 @@
 #include <grpcpp/alarm.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include "rubble_kv_store.grpc.pb.h"
+#include "reply_client.h"
 
 #include "rocksdb/db.h"
 #include "port/port_posix.h"
@@ -56,7 +57,11 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
        default_cf_(column_family_set_->GetDefault()),
        ioptions_(default_cf_->ioptions()),
        fs_(ioptions_->fs){
-          
+          if(is_rubble_ && is_tail_){
+            assert(db_options_->target_address != "");
+            reply_client_ = std::make_shared<ReplyClient>(grpc::CreateChannel(
+            db_options_->target_address, grpc::InsecureChannelCredentials()));
+          }
     };
 
     ~RubbleKvServiceImpl() {
@@ -205,7 +210,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     // logAndApply needs to hold the mutex
     rocksdb::InstrumentedMutexLock l(mu_);
-    
+
     // Calling LogAndApply on the secondary
     s_ = version_set_->LogAndApply(cfds, mutable_cf_options_list, edit_lists, mu_,
                       db_directory);
@@ -363,30 +368,45 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
       }
 
       op_counter_.fetch_add(1);
-      while (stream->Read(&request_)){
+      rocksdb::Status s;
+      Op request;
+      OpReply reply;
+      Status status;
+      while (stream->Read(&request)){
         switch (request_.type())
         {
         case Op::GET:
-          s_ = db_->Get(rocksdb::ReadOptions(), request_.key(), &value);
-          if(s_.ok()){
+          s = db_->Get(rocksdb::ReadOptions(), request.key(), &value);
+         
+          if(s.ok()){
             // find the value for the key
-            reply_.set_value(value);
-            reply_.set_ok(true);
+            reply.set_value(value);
+            reply.set_ok(true);
           }else {
-            reply_.set_ok(false);
-            reply_.set_status(s_.ToString());
+            reply.set_ok(false);
+            reply.set_status(s_.ToString());
           }
           // For a Get op, we return a reply back to the client
-          stream->Write(reply_);
+          stream->Write(reply);
           break;
 
         case Op::PUT:
-          s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
+          s = db_->Put(rocksdb::WriteOptions(), request.key(), request.value());
           if(!is_tail_){
-            forwarder_->ForwardOp(request_);
+            forwarder_->ForwardOp(request);
           }else{
             // TODO: tail node should be responsible for sending the true reply back to replicator
-
+            reply.set_id(request.id());
+            if(s.ok()){
+              reply.set_ok(true);
+            }else{
+              reply.set_status(s.ToString());
+            }
+            status = reply_client_->SendReply(reply);
+            if(!status.ok()){
+              std::cout << status.error_code() << ": " << status.error_message()
+                << std::endl;
+            }
           }
           break;
         
@@ -443,6 +463,8 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     std::shared_ptr<SyncClient> sync_client_;
     // client for forwarding op to downstream node
     std::shared_ptr<KvStoreClient> forwarder_;
+    // client for sending the reply back to the replicator
+    std::shared_ptr<ReplyClient> reply_client_;
 
     // is rubble mode? If set to false, server runs a vanilla rocksdb
     bool is_rubble_ = false;

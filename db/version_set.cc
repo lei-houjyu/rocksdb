@@ -4369,7 +4369,7 @@ Status VersionSet::LogAndApply(
       json j_vec(version_edits);
       j_args["EditList"] = j_vec;
       // std::cout << j_args.dump(4) << std::endl;
-      request.set_args(json::dump(j_args));
+      request.set_args(j_args.dump());
       std::string reply = db_options_->sync_client->Sync(request);
       std::cerr << "[ Reply Status ]: " << reply << std::endl;
       
