@@ -113,11 +113,16 @@ void GetByKeyRange(KvStoreClient& client){
   }
 }
 
-int main(){
+int main(int argc, char** argv){
 
+  
+if(argc != 2){
+  std::cout << "Usage : ./program server's address\n";
+  return 0;
+}
 // client used to send kv to ptimary
   KvStoreClient client1(grpc::CreateChannel(
-    "localhost:50051", grpc::InsecureChannelCredentials()));
+    argv[1], grpc::InsecureChannelCredentials()));
 
   int size_of_kv_pairs = sizeof("key00000000") + sizeof("val00000000");
   cout << "size of kv pairs : " << size_of_kv_pairs << "bytes" << endl;

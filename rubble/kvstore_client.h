@@ -57,10 +57,12 @@ class KvStoreClient{
   void SyncDoGets(const std::vector<std::string>& keys) {
     auto start_time = high_resolution_clock::now();
     for(const auto& key:keys){
+      op_counter_.fetch_add(1);
       // Keys we are sending to the server.
       Op request;
       request.set_key(key);
       request.set_type(Op::GET);
+      request.set_id(op_counter_.load());
       stream_->Write(request);
       // Get the value for the sent key
       OpReply response;
@@ -79,11 +81,19 @@ class KvStoreClient{
   void SyncDoPuts(const std::vector<std::pair<std::string, std::string>>& kvs){   
     auto start_time = high_resolution_clock::now();
     for(const auto& kv: kvs){
+      op_counter_.fetch_add(1);
       Op request;
       request.set_key(kv.first);
       request.set_value(kv.second);
       request.set_type(Op::PUT);
+      request.set_id(op_counter_.load());
       stream_->Write(request);
+
+      OpReply response;
+      stream_->Read(&response);
+      if(!response.ok()){
+        std::cout << "Put Failed :  " << response.status() << "\n";
+      }
     }
     auto end_time = high_resolution_clock::now();
     auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
@@ -92,9 +102,7 @@ class KvStoreClient{
 
   // used by server node to forward op 
   void ForwardOp(const Op& op){
-    request_ = op;
-    stream_->Write(request_);  
-    return;
+    stream_->Write(op);  
   }
 
   private:

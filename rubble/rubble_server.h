@@ -9,7 +9,6 @@
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
-#include <grpcpp/alarm.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include "rubble_kv_store.grpc.pb.h"
 #include "reply_client.h"
@@ -57,7 +56,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
        default_cf_(column_family_set_->GetDefault()),
        ioptions_(default_cf_->ioptions()),
        fs_(ioptions_->fs){
-          if(is_rubble_ && is_tail_){
+          if(is_tail_){
             assert(db_options_->target_address != "");
             reply_client_ = std::make_shared<ReplyClient>(grpc::CreateChannel(
             db_options_->target_address, grpc::InsecureChannelCredentials()));
@@ -68,74 +67,83 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
       delete db_;
     }
 
-  void ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */, rocksdb::VersionEdit* edit){
-
-      // std::cout << "Dumped VersionEdit : " << j_edit.dump(4) << std::endl;
-      if(j_edit.contains("IsFlush")){ // means edit corresponds to a flush job
-        num_of_added_files_ += j_edit["AddedFiles"].get<std::vector<json>>().size();
+  // synchronous version of DoOp
+  Status DoOp(ServerContext* context, 
+              ServerReaderWriter<OpReply, Op>* stream) override {
+      std::string value;
+      if(!op_counter_.load()){
+        start_time_ = high_resolution_clock::now();
       }
 
-      if(j_edit.contains("LogNumber")){
-        edit->SetLogNumber(j_edit["LogNumber"].get<uint64_t>());
+      if(op_counter_.load() && op_counter_.load()%100000 == 0){
+        end_time_ = high_resolution_clock::now();
+        auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
+        // why this doesn't print anything?
+        std::cout << "Throughput : handle 100000  in " << millisecs.count() << " milisecs\n";
+        start_time_ = end_time_;
       }
 
-      if(j_edit.contains("PrevLogNumber")){
-        edit->SetPrevLogNumber(j_edit["PrevLogNumber"].get<uint64_t>());
-      }
-      assert(!j_edit["ColumnFamily"].is_null());
-      edit->SetColumnFamily(j_edit["ColumnFamily"].get<uint32_t>());
-     
-      for(auto& j_added_file : j_edit["AddedFiles"].get<std::vector<json>>()){
-          
-          assert(!j_added_file["SmallestUserKey"].is_null());
-          assert(!j_added_file["SmallestSeqno"].is_null());
-          // TODO: should decide ValueType according to the info in the received version edit 
-          // basically pass the ValueType of the primary's version Edit's smallest/largest InterKey's ValueType
-          rocksdb::InternalKey smallest(rocksdb::Slice(j_added_file["SmallestUserKey"].get<std::string>()), 
-                                          j_added_file["SmallestSeqno"].get<uint64_t>(),rocksdb::ValueType::kTypeValue);
-
-          assert(smallest.Valid());
-  
-          uint64_t smallest_seqno = j_added_file["SmallestSeqno"].get<uint64_t>();
+      op_counter_.fetch_add(1);
+      rocksdb::Status s;
+      Op request;
+      OpReply reply;
+      // Status status;
+      while (stream->Read(&request)){
+        switch (request.type())
+        {
+        case Op::GET:
+          s = db_->Get(rocksdb::ReadOptions(), request.key(), &value);
          
-          assert(!j_added_file["LargestUserKey"].is_null());
-          assert(!j_added_file["LargestSeqno"].is_null());
-          rocksdb::InternalKey largest(rocksdb::Slice(j_added_file["LargestUserKey"].get<std::string>()), 
-                                          j_added_file["LargestSeqno"].get<uint64_t>(),rocksdb::ValueType::kTypeValue);
+          if(s.ok()){
+            // find the value for the key
+            reply.set_value(value);
+            reply.set_ok(true);
+          }else {
+            reply.set_ok(false);
+            reply.set_status(s_.ToString());
+          }
+          // For a Get op, we return a reply back to the client
+          stream->Write(reply);
+          break;
 
-          assert(largest.Valid());
+        case Op::PUT:
+          s = db_->Put(rocksdb::WriteOptions(), request.key(), request.value());
+          if(!is_tail_){
+            // std::cout << "handled op : " << request.id() << std::endl;
+            forwarder_->ForwardOp(request);
+          }else{
+            // tail node should be responsible for sending the reply back to replicator
+            reply.set_id(request.id());
+            if(s.ok()){
+              reply.set_ok(true);
+            }
+            reply.set_status(s.ToString());
+            
+            reply_client_->SendReply(reply);
+            // std::cout << "tail : send reply for op " << reply.id() <<"\n";
+            // if(!status.ok()){
+            //   std::cout << status.error_code() << ": " << status.error_message()
+            //     << std::endl;
+            // }
+          }
+          break;
+        
+        case Op::DELETE:
+          //TODO
+          break;
+        
+        case Op::UPDATE:
+          //TODO
+          break;
 
-          uint64_t largest_seqno = j_added_file["LargestSeqno"].get<uint64_t>();
-
-          int level = j_added_file["Level"].get<int>();
-
-          uint64_t file_num = j_added_file["FileNumber"].get<uint64_t>();
-          // max_file_num = std::max(max_file_num, (int)file_num);
-
-          uint64_t file_size = j_added_file["FileSize"].get<uint64_t>();
-
-          edit->AddFile(level, file_num, 0 /* path_id shoule be 0*/,
-                      file_size, 
-                      smallest, largest, 
-                      smallest_seqno, largest_seqno,
-                      false, 
-                      rocksdb::kInvalidBlobFileNumber,
-                      rocksdb::kUnknownOldestAncesterTime,
-                      rocksdb::kUnknownFileCreationTime,
-                      rocksdb::kUnknownFileChecksum, 
-                      rocksdb::kUnknownFileChecksumFuncName
-                      );
-      }
-
-      if(j_edit.contains("DeletedFiles")){
-        for(auto j_delete_file : j_edit["DeletedFiles"].get<std::vector<json>>()){
-          edit->DeleteFile(j_delete_file["Level"].get<int>(), j_delete_file["FileNumber"].get<uint64_t>());
+        default:
+        std::cerr << "Unsupported Operation \n";
+          break;
         }
       }
+      return Status::OK;
   }
-
-
-  //an Unary RPC call used by the non-tail node to sync Version(view of sst files) states to the downstream node 
+    //an Unary RPC call used by the non-tail node to sync Version(view of sst files) states to the downstream node 
   Status Sync(ServerContext* context, const SyncRequest* request, 
                           SyncReply* reply) override {
     log_apply_counter_++;
@@ -160,23 +168,31 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     std::string args = request->args();
     const json j_args = json::parse(args);
+    // std::cout << j_args.dump(4) << std::endl;
+
+    // reset those variables every time called Sync
     num_of_added_files_ = 0;
+    is_flush_ = false;
+    batch_count_ = 0;
+
     if(j_args.contains("IsFlush")){
       assert(j_args["IsFlush"].get<bool>());
       batch_count_ = j_args["BatchCount"].get<int>();
       is_flush_ = true;
     }
+
     next_file_num_ = j_args["NextFileNum"].get<uint64_t>();
     rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
-    for(const auto& j_edit : j_args["EditList"].get<std::vector<json>>()){   
-      rocksdb::VersionEdit edit;
-      ParseJsonStringToVersionEdit(j_edit, &edit);
-      edit_list.emplace_back(&edit);
+    rocksdb::VersionEdit edit;
+    for(const auto& edit_string : j_args["EditList"].get<std::vector<string>>()){ 
+      // std::cout << edit_string.dump() <<std::endl;  
+      auto j_edit = json::parse(edit_string);
+      edit = ParseJsonStringToVersionEdit(j_edit);
+      edit_list.push_back(&edit);
     }
 
     // If it's neither primary/head nor tail(second node in the chain in a 3-node setting)
     // should call Sync rpc to downstream node also should ship sst files to the downstream node
-    // assert(is_rubble_);
     if(is_rubble_ && !is_head_ && ! is_tail_){
       for(const auto& edit: edit_list){
         s_ = ShipSstFiles(*edit);
@@ -200,8 +216,8 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     rocksdb::MemTableList* imm = default_cf_->imm();
     
     // std::cout << "MemTable : " <<  json::parse(default_cf->mem()->DebugJson()).dump(4) << std::endl;
-    std::cout  << "Immutable MemTable list : " << json::parse(imm->DebugJson()).dump(4) << std::endl;
-    std::cout << " Current Version :\n " << default_cf_->current()->DebugString(false) <<std::endl;
+    // std::cout  << "Immutable MemTable list : " << json::parse(imm->DebugJson()).dump(4) << std::endl;
+    // std::cout << " Current Version :\n " << default_cf_->current()->DebugString(false) <<std::endl;
 
     uint64_t current_next_file_num = version_set_->current_next_file_number();
     // set secondary version set's next file num according to the primary's next_file_num_
@@ -215,7 +231,6 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     s_ = version_set_->LogAndApply(cfds, mutable_cf_options_list, edit_lists, mu_,
                       db_directory);
 
-
     //Drop The corresponding MemTables in the Immutable MemTable List
     //If this version edit corresponds to a flush job
     if(is_flush_){
@@ -228,7 +243,8 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
       uint64_t mem_id = 1;  // how many memtables have been flushed.
       
       rocksdb::autovector<rocksdb::MemTable*> to_delete;
-      if(s_.ok() &&!default_cf_->IsDropped()){
+      std::cout << s_.ToString() << std::endl;
+      if(s_.ok() && !default_cf_->IsDropped()){
 
         rocksdb::SuperVersion* sv = default_cf_->GetSuperVersion();
         rocksdb::MemTableListVersion* current = imm->current();
@@ -241,7 +257,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
           rocksdb::MemTable* m = current->GetMemlist().back();
           m->SetFlushCompleted(true);
-          // m->SetFileNumber(next_file_num_ - num_of_imm_to_delete/(batch_count_/num_of_added_files_)); 
+          m->SetFileNumber(next_file_num_ - num_of_imm_to_delete/(batch_count_/num_of_added_files_)); 
 
           // if (m->GetEdits().GetBlobFileAdditions().empty()) {
           //   ROCKS_LOG_BUFFER(log_buffer,
@@ -257,12 +273,13 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
           //                   m->edit_.GetBlobFileAdditions().size(), mem_id);
           // }
 
-          // assert(m->GetFileNumber() > 0);
+          assert(m->GetFileNumber() > 0);
           /* drop the corresponding immutable memtable in the list if version edit corresponds to a flush */
           // according the code comment in the MemTableList class : "The memtables are flushed to L0 as soon as possible and in any order." 
           // as far as I observe, it's always the back of the imm memlist gets flushed first, which is the earliest memtable
           // so here we always drop the memtable in the back of the list
           current->RemoveLast(sv->GetToDelete());
+
           imm->SetNumFlushNotStarted(current->GetMemlist().size());
           imm->UpdateCachedValuesFromMemTableListVersion();
           imm->ResetTrimHistoryNeeded();
@@ -274,7 +291,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
       }
 
       imm->SetCommitInProgress(false);
-      std::cout << " ----------- After RemoveLast : ( ImmutableList : " << json::parse(imm->DebugJson()).dump(4) << " ) ----------------\n";
+      // std::cout << " ----------- After RemoveLast : ( ImmutableList : " << json::parse(imm->DebugJson()).dump(4) << " ) ----------------\n";
       int size = static_cast<int> (imm->current()->GetMemlist().size());
       // std::cout << " memlist size : " << size << " , num_flush_not_started : " << imm->GetNumFlushNotStarted() << std::endl;
     }else { // It is either a trivial move compaction or a full compaction
@@ -294,139 +311,150 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     return Status::OK;
   }
 
-  // In a 3-node setting, if it's the second node in the chain it should also ship sst files it received from the primary/first node
-  // to the tail/downstream node and also delete the ones that get deleted in the compaction
-  // since second node's flush is disabled ,we should do the shipping here when it received Sync rpc call from the primary
-  /**
-   * @param edit The version edit received from the priamry 
-   * 
-   */
-  rocksdb::Status ShipSstFiles(const rocksdb::VersionEdit& edit){
-
-    assert(db_options_->remote_sst_dir != "");
-    std::string remote_sst_dir = db_options_->remote_sst_dir;
-    if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
-        remote_sst_dir = remote_sst_dir + '/';
-    }
-
-    rocksdb::IOStatus ios;
-    for(const auto& new_file: edit.GetNewFiles()){
-      const rocksdb::FileMetaData& meta = new_file.second;
-      std::string sst_num = std::to_string(meta.fd.GetNumber());
-      std::string sst_file_name = std::string("000000").replace(6 - sst_num.length(), sst_num.length(), sst_num) + ".sst";
-
-      std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
-                      meta.fd.GetNumber(), meta.fd.GetPathId());
-
-      std::string remote_sst_fname = remote_sst_dir + sst_file_name;
-      ios = CopyFile(fs_, fname, remote_sst_fname, 0,  true);
-
-      if (!ios.ok()){
-        std::cerr << "[ File Ship Failed ] : " << meta.fd.GetNumber() << std::endl;
-      }else {
-        std::cout << "[ File Shipped ] : " << meta.fd.GetNumber() << std::endl;
-      }
-    }
-
-    for(const auto& delete_file : edit.GetDeletedFiles()){
-      std::string file_number = std::to_string(delete_file.second);
-      std::string sst_file_name = std::string("000000").replace(6 - file_number.length(), file_number.length(), file_number) + ".sst";
-
-      std::string remote_sst_fname = remote_sst_dir + sst_file_name;
-      ios = fs_->FileExists(remote_sst_fname, rocksdb::IOOptions(), nullptr);
-      if (ios.ok()){
-        ios = fs_->DeleteFile(remote_sst_fname, rocksdb::IOOptions(), nullptr);
-        
-        if(ios.IsIOError()){
-          std::cerr << "[ File Deletion Failed ]:" <<  file_number << std::endl;
-        }else if(ios.ok()){
-          std::cout << "[ File Deleted ] : " <<  file_number << std::endl;
-        }
-      }else {
-        if (ios.IsNotFound()){
-          std::cerr << "file :" << file_number << "does not exist \n";
-        }
-      }
-    }
-    return rocksdb::Status::OK();
-  }
-
-  // synchronous version of DoOp
-  Status DoOp(ServerContext* context, 
-              ServerReaderWriter<OpReply, Op>* stream) override {
-      std::string value;
-      if(!op_counter_.load()){
-        start_time_ = high_resolution_clock::now();
-      }
-
-      if(op_counter_.load() && op_counter_.load()%100000 == 0){
-        end_time_ = high_resolution_clock::now();
-        auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
-        // why this doesn't print anything?
-        std::cout << "Throughput : handle 100000  in " << millisecs.count() << " milisecs\n";
-        start_time_ = end_time_;
-      }
-
-      op_counter_.fetch_add(1);
-      rocksdb::Status s;
-      Op request;
-      OpReply reply;
-      Status status;
-      while (stream->Read(&request)){
-        switch (request_.type())
-        {
-        case Op::GET:
-          s = db_->Get(rocksdb::ReadOptions(), request.key(), &value);
-         
-          if(s.ok()){
-            // find the value for the key
-            reply.set_value(value);
-            reply.set_ok(true);
-          }else {
-            reply.set_ok(false);
-            reply.set_status(s_.ToString());
-          }
-          // For a Get op, we return a reply back to the client
-          stream->Write(reply);
-          break;
-
-        case Op::PUT:
-          s = db_->Put(rocksdb::WriteOptions(), request.key(), request.value());
-          if(!is_tail_){
-            forwarder_->ForwardOp(request);
-          }else{
-            // TODO: tail node should be responsible for sending the true reply back to replicator
-            reply.set_id(request.id());
-            if(s.ok()){
-              reply.set_ok(true);
-            }else{
-              reply.set_status(s.ToString());
-            }
-            status = reply_client_->SendReply(reply);
-            if(!status.ok()){
-              std::cout << status.error_code() << ": " << status.error_message()
-                << std::endl;
-            }
-          }
-          break;
-        
-        case Op::DELETE:
-          //TODO
-          break;
-        
-        case Op::UPDATE:
-          //TODO
-          break;
-
-        default:
-        std::cerr << "Unsupported Operation \n";
-          break;
-        }
-      }
-      return Status::OK;
-  }
 
   private:
+
+   rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */){
+     rocksdb::VersionEdit edit;
+      // std::cout << "Dumped VersionEdit : " << j_edit.dump(4) << std::endl;
+      // Dumped VersionEdit : {
+      //     "AddedFiles": [
+      //         {
+      //             "FileNumber": 12,
+      //             "FileSize": 64547,
+      //             "LargestSeqno": 5272,
+      //             "LargestUserKey": "key00005272",
+      //             "Level": 0,
+      //             "SmallestSeqno": 2644,
+      //             "SmallestUserKey": "key00002644"
+      //         }
+      //     ],
+      //     "BatchCount": 2,
+      //     "ColumnFamily": 0,
+      //     "EditNumber": 2,
+      //     "IsFlush": 1,
+      //     "LogNumber": 11,
+      //     "PrevLogNumber": 0
+      // }
+
+      assert(j_edit.contains("AddedFiles"));
+      if(j_edit.contains("IsFlush")){ // means edit corresponds to a flush job
+        num_of_added_files_ += j_edit["AddedFiles"].get<std::vector<json>>().size();
+      }
+
+      if(j_edit.contains("LogNumber")){
+        edit.SetLogNumber(j_edit["LogNumber"].get<uint64_t>());
+      }
+      if(j_edit.contains("PrevLogNumber")){
+        edit.SetPrevLogNumber(j_edit["PrevLogNumber"].get<uint64_t>());
+      }
+      assert(!j_edit["ColumnFamily"].is_null());
+      edit.SetColumnFamily(j_edit["ColumnFamily"].get<uint32_t>());
+     
+      for(auto& j_added_file : j_edit["AddedFiles"].get<std::vector<json>>()){
+          // std::cout << j_added_file.dump(4) << std::endl;
+          assert(!j_added_file["SmallestUserKey"].is_null());
+          assert(!j_added_file["SmallestSeqno"].is_null());
+          // TODO: should decide ValueType according to the info in the received version edit 
+          // basically pass the ValueType of the primary's version Edit's smallest/largest InterKey's ValueType
+          rocksdb::InternalKey smallest(rocksdb::Slice(j_added_file["SmallestUserKey"].get<std::string>()), 
+                                          j_added_file["SmallestSeqno"].get<uint64_t>(),rocksdb::ValueType::kTypeValue);
+
+          assert(smallest.Valid());
+  
+          uint64_t smallest_seqno = j_added_file["SmallestSeqno"].get<uint64_t>();
+         
+          assert(!j_added_file["LargestUserKey"].is_null());
+          assert(!j_added_file["LargestSeqno"].is_null());
+          rocksdb::InternalKey largest(rocksdb::Slice(j_added_file["LargestUserKey"].get<std::string>()), 
+                                          j_added_file["LargestSeqno"].get<uint64_t>(),rocksdb::ValueType::kTypeValue);
+    
+          assert(largest.Valid());
+
+          uint64_t largest_seqno = j_added_file["LargestSeqno"].get<uint64_t>();
+          int level = j_added_file["Level"].get<int>();
+          uint64_t file_num = j_added_file["FileNumber"].get<uint64_t>();
+          // max_file_num = std::max(max_file_num, (int)file_num);
+          uint64_t file_size = j_added_file["FileSize"].get<uint64_t>();
+    
+          const rocksdb::FileMetaData meta(file_num, 0/* path_id shoule be 0*/,
+                                          file_size, 
+                                          smallest, largest, 
+                                          smallest_seqno, largest_seqno,
+                                          false, 
+                                          rocksdb::kInvalidBlobFileNumber,
+                                          rocksdb::kUnknownOldestAncesterTime,
+                                          rocksdb::kUnknownFileCreationTime,
+                                          rocksdb::kUnknownFileChecksum, 
+                                          rocksdb::kUnknownFileChecksumFuncName);
+
+          edit.AddFile(level, meta);
+      }
+
+      if(j_edit.contains("DeletedFiles")){
+        for(auto j_delete_file : j_edit["DeletedFiles"].get<std::vector<json>>()){
+          edit.DeleteFile(j_delete_file["Level"].get<int>(), j_delete_file["FileNumber"].get<uint64_t>());
+        }
+      }
+      return edit;
+    }
+
+    // In a 3-node setting, if it's the second node in the chain it should also ship sst files it received from the primary/first node
+    // to the tail/downstream node and also delete the ones that get deleted in the compaction
+    // since second node's flush is disabled ,we should do the shipping here when it received Sync rpc call from the primary
+    /**
+     * @param edit The version edit received from the priamry 
+     * 
+     */
+    rocksdb::Status ShipSstFiles(const rocksdb::VersionEdit& edit){
+
+      assert(db_options_->remote_sst_dir != "");
+      std::string remote_sst_dir = db_options_->remote_sst_dir;
+      if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
+          remote_sst_dir = remote_sst_dir + '/';
+      }
+
+      rocksdb::IOStatus ios;
+      for(const auto& new_file: edit.GetNewFiles()){
+        const rocksdb::FileMetaData& meta = new_file.second;
+        std::string sst_num = std::to_string(meta.fd.GetNumber());
+        std::string sst_file_name = std::string("000000").replace(6 - sst_num.length(), sst_num.length(), sst_num) + ".sst";
+
+        std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
+                        meta.fd.GetNumber(), meta.fd.GetPathId());
+
+        std::string remote_sst_fname = remote_sst_dir + sst_file_name;
+        ios = CopyFile(fs_, fname, remote_sst_fname, 0,  true);
+
+        if (!ios.ok()){
+          std::cerr << "[ File Ship Failed ] : " << meta.fd.GetNumber() << std::endl;
+        }else {
+          std::cout << "[ File Shipped ] : " << meta.fd.GetNumber() << std::endl;
+        }
+      }
+
+      for(const auto& delete_file : edit.GetDeletedFiles()){
+        std::string file_number = std::to_string(delete_file.second);
+        std::string sst_file_name = std::string("000000").replace(6 - file_number.length(), file_number.length(), file_number) + ".sst";
+
+        std::string remote_sst_fname = remote_sst_dir + sst_file_name;
+        ios = fs_->FileExists(remote_sst_fname, rocksdb::IOOptions(), nullptr);
+        if (ios.ok()){
+          ios = fs_->DeleteFile(remote_sst_fname, rocksdb::IOOptions(), nullptr);
+          
+          if(ios.IsIOError()){
+            std::cerr << "[ File Deletion Failed ]:" <<  file_number << std::endl;
+          }else if(ios.ok()){
+            std::cout << "[ File Deleted ] : " <<  file_number << std::endl;
+          }
+        }else {
+          if (ios.IsNotFound()){
+            std::cerr << "file :" << file_number << "does not exist \n";
+          }
+        }
+      }
+      return rocksdb::Status::OK();
+    }
 
     // a db op request we get from the client
     Op request_;
@@ -476,7 +504,6 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     bool is_flush_ = false; 
     // number of added sst files
     int num_of_added_files_ = 0;
-    int added_file_num_ = 0;
     // number of memtables get flushed in a flush job, looks like is always 2
     int batch_count_ = 0;
     // get the next file num of secondary, which is the maximum file number of the AddedFiles in the shipped vesion edit plus 1
