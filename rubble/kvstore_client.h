@@ -178,7 +178,8 @@ class KvStoreClient{
   void SetStartTime(std::chrono::time_point<std::chrono::high_resolution_clock> start_time){
     start_time_ = start_time;
   }
-
+  
+  // before call AsyncDoOps, push the request into the queue.
   void AddRequests(const Op& request){
     requests_.push_back(std::move(request));
   }
