@@ -448,10 +448,12 @@ public:
       db_options_ = version_set->db_options();
       // forwarder_ = db_options_->kvstore_client;
       if(db_options_->is_tail){
+        // init reply client for tail nodes
         assert(db_options_->target_address != "");
-        reply_client_ = std::make_shared<ReplyClient>(grpc::CreateChannel(
-        db_options_->target_address, grpc::InsecureChannelCredentials()));
+        // reply_client_ = std::make_shared<ReplyClient>(grpc::CreateChannel(
+        // db_options_->target_address, grpc::InsecureChannelCredentials()));
       }else{
+        // init the forwarder with downstream if not tail
         forwarder_ = std::make_shared<Forwarder>(grpc::CreateChannel(
         db_options_->target_address, grpc::InsecureChannelCredentials()));
       }
@@ -473,7 +475,7 @@ protected:
 
   std::shared_ptr<Forwarder> forwarder_; 
   // client for sending the reply back to the replicator
-  std::shared_ptr<ReplyClient> reply_client_;
+  std::shared_ptr<ReplyClient> reply_client_ = nullptr;
   // The means of communication with the gRPC runtime for an asynchronous
   // server.
   SyncServiceImpl* service_;
@@ -522,7 +524,7 @@ class CallDataBidi : CallDataBase {
 
     switch (status_) {
     case BidiStatus::READ:
-        // std::cout << "I'm at READ state ! \n";
+        std::cout << "I'm at READ state ! \n";
         //Meaning client said it wants to end the stream either by a 'writedone' or 'finish' call.
         if (!ok) {
             std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " CQ returned false." << std::endl;
@@ -537,6 +539,7 @@ class CallDataBidi : CallDataBase {
         // std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " Received a new " << Op_OpType_Name(request_.type()) << " op witk key : " << request_.key() << std::endl;
 
         // Handle a db operation
+        // std::cout << "entering HandleOp\n";
         HandleOp();
         /* chain replication */
         // Forward the request to the downstream node in the chain if it's not a tail node
@@ -544,9 +547,17 @@ class CallDataBidi : CallDataBase {
           std::cout << "Forward an op \n";
           forwarder_->Forward(request_);
         }else {
-          // tail node should be responsible for sending the reply back to replicator
-          // use the sync stream to write the reply back
+          // // tail node should be responsible for sending the reply back to replicator
+          // // use the sync stream to write the reply back
+          if (reply_client_ == nullptr) {
+            std::cout << "init the reply client" << "\n";
+            reply_client_ = std::make_shared<ReplyClient>(grpc::CreateChannel(
+            db_options_->target_address, grpc::InsecureChannelCredentials()));
+          }
           reply_client_->SendReply(reply_);
+          std::cout << "Reply for key: " << reply_.key() << " through sendReply\n";
+          // rw_.Write(reply_, (void*)this); 
+          // status_ = BidiStatus::WRITE;
         }
 
         // if(request_.type() == Op::GET && db_options_->is_tail){
@@ -555,13 +566,14 @@ class CallDataBidi : CallDataBase {
         //   rw_.Write(reply_, (void*)this); 
         //   status_ = BidiStatus::WRITE;
         // }else {
+
           rw_.Read(&request_, (void*)this);
           status_ = BidiStatus::READ;
         // }
         break;
 
     case BidiStatus::WRITE:
-        // std::cout << "I'm at WRITE state ! \n";
+        std::cout << "I'm at WRITE state ! \n";
         // std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " Get For key : " << request_.key() << " , status : " << reply_.status() << std::endl;
         // For a get request, return a reply back to the client
         rw_.Read(&request_, (void*)this);
@@ -615,6 +627,8 @@ class CallDataBidi : CallDataBase {
       }
       
       op_counter_++;
+      std::cout << "handling a " << request_.type() <<" " <<  request_.id() << " op...\n";
+      reply_.set_id(request_.id());
       switch (request_.type())
       {
       case Op::GET:
@@ -632,11 +646,13 @@ class CallDataBidi : CallDataBase {
 
       case Op::PUT:
         s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
+        std::cout << "Put ok\n";
         assert(s_.ok());
         if(db_options_->is_tail){
           reply_.set_type(OpReply::PUT);
+          reply_.set_key(request_.key());
           if(s_.ok()){
-            std::cout << "Put : (" << request_.key() << " ," << request_.value() << ")\n"; 
+            std::cout << "Put : (" << request_.key() /* << " ," << request_.value() */ << ")\n"; 
             reply_.set_ok(true);
           }else{
             std::cout << "Put Failed : " << s_.ToString() << std::endl;
