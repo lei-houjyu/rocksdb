@@ -45,7 +45,7 @@ class RubbleKvStoreService final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::rubble::SyncReply>> PrepareAsyncSync(::grpc::ClientContext* context, const ::rubble::SyncRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::rubble::SyncReply>>(PrepareAsyncSyncRaw(context, request, cq));
     }
-    // perform a db operation (CRUD)
+    // perform a single db operation (CRUD)
     std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::Op, ::rubble::OpReply>> DoOp(::grpc::ClientContext* context) {
       return std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::Op, ::rubble::OpReply>>(DoOpRaw(context));
     }
@@ -54,6 +54,16 @@ class RubbleKvStoreService final {
     }
     std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::Op, ::rubble::OpReply>> PrepareAsyncDoOp(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::Op, ::rubble::OpReply>>(PrepareAsyncDoOpRaw(context, cq));
+    }
+    // perform db operations in a batch
+    std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::Ops, ::rubble::OpReplies>> DoBatch(::grpc::ClientContext* context) {
+      return std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::Ops, ::rubble::OpReplies>>(DoBatchRaw(context));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::Ops, ::rubble::OpReplies>> AsyncDoBatch(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::Ops, ::rubble::OpReplies>>(AsyncDoBatchRaw(context, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::Ops, ::rubble::OpReplies>> PrepareAsyncDoBatch(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::Ops, ::rubble::OpReplies>>(PrepareAsyncDoBatchRaw(context, cq));
     }
     // used by the tail node to send the true rely to the replicator
     std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::rubble::OpReply, ::rubble::Reply>> SendReply(::grpc::ClientContext* context) {
@@ -76,11 +86,17 @@ class RubbleKvStoreService final {
       #else
       virtual void Sync(::grpc::ClientContext* context, const ::rubble::SyncRequest* request, ::rubble::SyncReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      // perform a db operation (CRUD)
+      // perform a single db operation (CRUD)
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void DoOp(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::Op,::rubble::OpReply>* reactor) = 0;
       #else
       virtual void DoOp(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::Op,::rubble::OpReply>* reactor) = 0;
+      #endif
+      // perform db operations in a batch
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void DoBatch(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::Ops,::rubble::OpReplies>* reactor) = 0;
+      #else
+      virtual void DoBatch(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::Ops,::rubble::OpReplies>* reactor) = 0;
       #endif
       // used by the tail node to send the true rely to the replicator
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
@@ -102,6 +118,9 @@ class RubbleKvStoreService final {
     virtual ::grpc::ClientReaderWriterInterface< ::rubble::Op, ::rubble::OpReply>* DoOpRaw(::grpc::ClientContext* context) = 0;
     virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::Op, ::rubble::OpReply>* AsyncDoOpRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) = 0;
     virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::Op, ::rubble::OpReply>* PrepareAsyncDoOpRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientReaderWriterInterface< ::rubble::Ops, ::rubble::OpReplies>* DoBatchRaw(::grpc::ClientContext* context) = 0;
+    virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::Ops, ::rubble::OpReplies>* AsyncDoBatchRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::Ops, ::rubble::OpReplies>* PrepareAsyncDoBatchRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientReaderWriterInterface< ::rubble::OpReply, ::rubble::Reply>* SendReplyRaw(::grpc::ClientContext* context) = 0;
     virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::OpReply, ::rubble::Reply>* AsyncSendReplyRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) = 0;
     virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::OpReply, ::rubble::Reply>* PrepareAsyncSendReplyRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) = 0;
@@ -124,6 +143,15 @@ class RubbleKvStoreService final {
     }
     std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::rubble::Op, ::rubble::OpReply>> PrepareAsyncDoOp(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::rubble::Op, ::rubble::OpReply>>(PrepareAsyncDoOpRaw(context, cq));
+    }
+    std::unique_ptr< ::grpc::ClientReaderWriter< ::rubble::Ops, ::rubble::OpReplies>> DoBatch(::grpc::ClientContext* context) {
+      return std::unique_ptr< ::grpc::ClientReaderWriter< ::rubble::Ops, ::rubble::OpReplies>>(DoBatchRaw(context));
+    }
+    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::rubble::Ops, ::rubble::OpReplies>> AsyncDoBatch(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::rubble::Ops, ::rubble::OpReplies>>(AsyncDoBatchRaw(context, cq, tag));
+    }
+    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::rubble::Ops, ::rubble::OpReplies>> PrepareAsyncDoBatch(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::rubble::Ops, ::rubble::OpReplies>>(PrepareAsyncDoBatchRaw(context, cq));
     }
     std::unique_ptr< ::grpc::ClientReaderWriter< ::rubble::OpReply, ::rubble::Reply>> SendReply(::grpc::ClientContext* context) {
       return std::unique_ptr< ::grpc::ClientReaderWriter< ::rubble::OpReply, ::rubble::Reply>>(SendReplyRaw(context));
@@ -149,6 +177,11 @@ class RubbleKvStoreService final {
       void DoOp(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::Op,::rubble::OpReply>* reactor) override;
       #endif
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void DoBatch(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::Ops,::rubble::OpReplies>* reactor) override;
+      #else
+      void DoBatch(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::Ops,::rubble::OpReplies>* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void SendReply(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::OpReply,::rubble::Reply>* reactor) override;
       #else
       void SendReply(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::OpReply,::rubble::Reply>* reactor) override;
@@ -169,11 +202,15 @@ class RubbleKvStoreService final {
     ::grpc::ClientReaderWriter< ::rubble::Op, ::rubble::OpReply>* DoOpRaw(::grpc::ClientContext* context) override;
     ::grpc::ClientAsyncReaderWriter< ::rubble::Op, ::rubble::OpReply>* AsyncDoOpRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) override;
     ::grpc::ClientAsyncReaderWriter< ::rubble::Op, ::rubble::OpReply>* PrepareAsyncDoOpRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientReaderWriter< ::rubble::Ops, ::rubble::OpReplies>* DoBatchRaw(::grpc::ClientContext* context) override;
+    ::grpc::ClientAsyncReaderWriter< ::rubble::Ops, ::rubble::OpReplies>* AsyncDoBatchRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncReaderWriter< ::rubble::Ops, ::rubble::OpReplies>* PrepareAsyncDoBatchRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientReaderWriter< ::rubble::OpReply, ::rubble::Reply>* SendReplyRaw(::grpc::ClientContext* context) override;
     ::grpc::ClientAsyncReaderWriter< ::rubble::OpReply, ::rubble::Reply>* AsyncSendReplyRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) override;
     ::grpc::ClientAsyncReaderWriter< ::rubble::OpReply, ::rubble::Reply>* PrepareAsyncSendReplyRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) override;
     const ::grpc::internal::RpcMethod rpcmethod_Sync_;
     const ::grpc::internal::RpcMethod rpcmethod_DoOp_;
+    const ::grpc::internal::RpcMethod rpcmethod_DoBatch_;
     const ::grpc::internal::RpcMethod rpcmethod_SendReply_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
@@ -185,8 +222,10 @@ class RubbleKvStoreService final {
     // an internal rpc call used by the upstream (except the tail node) 
     // to synchronize states to the downstream nodes in the chain
     virtual ::grpc::Status Sync(::grpc::ServerContext* context, const ::rubble::SyncRequest* request, ::rubble::SyncReply* response);
-    // perform a db operation (CRUD)
+    // perform a single db operation (CRUD)
     virtual ::grpc::Status DoOp(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::OpReply, ::rubble::Op>* stream);
+    // perform db operations in a batch
+    virtual ::grpc::Status DoBatch(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::OpReplies, ::rubble::Ops>* stream);
     // used by the tail node to send the true rely to the replicator
     virtual ::grpc::Status SendReply(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::Reply, ::rubble::OpReply>* stream);
   };
@@ -231,12 +270,32 @@ class RubbleKvStoreService final {
     }
   };
   template <class BaseClass>
+  class WithAsyncMethod_DoBatch : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_DoBatch() {
+      ::grpc::Service::MarkMethodAsync(2);
+    }
+    ~WithAsyncMethod_DoBatch() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status DoBatch(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::OpReplies, ::rubble::Ops>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestDoBatch(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::rubble::OpReplies, ::rubble::Ops>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncBidiStreaming(2, context, stream, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
   class WithAsyncMethod_SendReply : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithAsyncMethod_SendReply() {
-      ::grpc::Service::MarkMethodAsync(2);
+      ::grpc::Service::MarkMethodAsync(3);
     }
     ~WithAsyncMethod_SendReply() override {
       BaseClassMustBeDerivedFromService(this);
@@ -247,10 +306,10 @@ class RubbleKvStoreService final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestSendReply(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::rubble::Reply, ::rubble::OpReply>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncBidiStreaming(2, context, stream, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncBidiStreaming(3, context, stream, new_call_cq, notification_cq, tag);
     }
   };
-  typedef WithAsyncMethod_Sync<WithAsyncMethod_DoOp<WithAsyncMethod_SendReply<Service > > > AsyncService;
+  typedef WithAsyncMethod_Sync<WithAsyncMethod_DoOp<WithAsyncMethod_DoBatch<WithAsyncMethod_SendReply<Service > > > > AsyncService;
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_Sync : public BaseClass {
    private:
@@ -337,6 +396,44 @@ class RubbleKvStoreService final {
       { return nullptr; }
   };
   template <class BaseClass>
+  class ExperimentalWithCallbackMethod_DoBatch : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithCallbackMethod_DoBatch() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(2,
+          new ::grpc::internal::CallbackBidiHandler< ::rubble::Ops, ::rubble::OpReplies>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context) { return this->DoBatch(context); }));
+    }
+    ~ExperimentalWithCallbackMethod_DoBatch() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status DoBatch(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::OpReplies, ::rubble::Ops>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerBidiReactor< ::rubble::Ops, ::rubble::OpReplies>* DoBatch(
+      ::grpc::CallbackServerContext* /*context*/)
+    #else
+    virtual ::grpc::experimental::ServerBidiReactor< ::rubble::Ops, ::rubble::OpReplies>* DoBatch(
+      ::grpc::experimental::CallbackServerContext* /*context*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
   class ExperimentalWithCallbackMethod_SendReply : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
@@ -347,7 +444,7 @@ class RubbleKvStoreService final {
     #else
       ::grpc::Service::experimental().
     #endif
-        MarkMethodCallback(2,
+        MarkMethodCallback(3,
           new ::grpc::internal::CallbackBidiHandler< ::rubble::OpReply, ::rubble::Reply>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
@@ -375,10 +472,10 @@ class RubbleKvStoreService final {
       { return nullptr; }
   };
   #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_DoOp<ExperimentalWithCallbackMethod_SendReply<Service > > > CallbackService;
+  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_DoOp<ExperimentalWithCallbackMethod_DoBatch<ExperimentalWithCallbackMethod_SendReply<Service > > > > CallbackService;
   #endif
 
-  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_DoOp<ExperimentalWithCallbackMethod_SendReply<Service > > > ExperimentalCallbackService;
+  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_DoOp<ExperimentalWithCallbackMethod_DoBatch<ExperimentalWithCallbackMethod_SendReply<Service > > > > ExperimentalCallbackService;
   template <class BaseClass>
   class WithGenericMethod_Sync : public BaseClass {
    private:
@@ -414,12 +511,29 @@ class RubbleKvStoreService final {
     }
   };
   template <class BaseClass>
+  class WithGenericMethod_DoBatch : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_DoBatch() {
+      ::grpc::Service::MarkMethodGeneric(2);
+    }
+    ~WithGenericMethod_DoBatch() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status DoBatch(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::OpReplies, ::rubble::Ops>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
   class WithGenericMethod_SendReply : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithGenericMethod_SendReply() {
-      ::grpc::Service::MarkMethodGeneric(2);
+      ::grpc::Service::MarkMethodGeneric(3);
     }
     ~WithGenericMethod_SendReply() override {
       BaseClassMustBeDerivedFromService(this);
@@ -471,12 +585,32 @@ class RubbleKvStoreService final {
     }
   };
   template <class BaseClass>
+  class WithRawMethod_DoBatch : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_DoBatch() {
+      ::grpc::Service::MarkMethodRaw(2);
+    }
+    ~WithRawMethod_DoBatch() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status DoBatch(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::OpReplies, ::rubble::Ops>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestDoBatch(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncBidiStreaming(2, context, stream, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
   class WithRawMethod_SendReply : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawMethod_SendReply() {
-      ::grpc::Service::MarkMethodRaw(2);
+      ::grpc::Service::MarkMethodRaw(3);
     }
     ~WithRawMethod_SendReply() override {
       BaseClassMustBeDerivedFromService(this);
@@ -487,7 +621,7 @@ class RubbleKvStoreService final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestSendReply(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncBidiStreaming(2, context, stream, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncBidiStreaming(3, context, stream, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -567,6 +701,44 @@ class RubbleKvStoreService final {
       { return nullptr; }
   };
   template <class BaseClass>
+  class ExperimentalWithRawCallbackMethod_DoBatch : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithRawCallbackMethod_DoBatch() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(2,
+          new ::grpc::internal::CallbackBidiHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context) { return this->DoBatch(context); }));
+    }
+    ~ExperimentalWithRawCallbackMethod_DoBatch() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status DoBatch(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::OpReplies, ::rubble::Ops>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerBidiReactor< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* DoBatch(
+      ::grpc::CallbackServerContext* /*context*/)
+    #else
+    virtual ::grpc::experimental::ServerBidiReactor< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* DoBatch(
+      ::grpc::experimental::CallbackServerContext* /*context*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_SendReply : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
@@ -577,7 +749,7 @@ class RubbleKvStoreService final {
     #else
       ::grpc::Service::experimental().
     #endif
-        MarkMethodRawCallback(2,
+        MarkMethodRawCallback(3,
           new ::grpc::internal::CallbackBidiHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL

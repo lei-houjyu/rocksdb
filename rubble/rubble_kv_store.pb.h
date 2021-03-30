@@ -48,7 +48,7 @@ struct TableStruct_rubble_5fkv_5fstore_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[5]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[7]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -59,9 +59,15 @@ namespace rubble {
 class Op;
 class OpDefaultTypeInternal;
 extern OpDefaultTypeInternal _Op_default_instance_;
+class OpReplies;
+class OpRepliesDefaultTypeInternal;
+extern OpRepliesDefaultTypeInternal _OpReplies_default_instance_;
 class OpReply;
 class OpReplyDefaultTypeInternal;
 extern OpReplyDefaultTypeInternal _OpReply_default_instance_;
+class Ops;
+class OpsDefaultTypeInternal;
+extern OpsDefaultTypeInternal _Ops_default_instance_;
 class Reply;
 class ReplyDefaultTypeInternal;
 extern ReplyDefaultTypeInternal _Reply_default_instance_;
@@ -74,7 +80,9 @@ extern SyncRequestDefaultTypeInternal _SyncRequest_default_instance_;
 }  // namespace rubble
 PROTOBUF_NAMESPACE_OPEN
 template<> ::rubble::Op* Arena::CreateMaybeMessage<::rubble::Op>(Arena*);
+template<> ::rubble::OpReplies* Arena::CreateMaybeMessage<::rubble::OpReplies>(Arena*);
 template<> ::rubble::OpReply* Arena::CreateMaybeMessage<::rubble::OpReply>(Arena*);
+template<> ::rubble::Ops* Arena::CreateMaybeMessage<::rubble::Ops>(Arena*);
 template<> ::rubble::Reply* Arena::CreateMaybeMessage<::rubble::Reply>(Arena*);
 template<> ::rubble::SyncReply* Arena::CreateMaybeMessage<::rubble::SyncReply>(Arena*);
 template<> ::rubble::SyncRequest* Arena::CreateMaybeMessage<::rubble::SyncRequest>(Arena*);
@@ -355,6 +363,152 @@ class Op PROTOBUF_FINAL :
 };
 // -------------------------------------------------------------------
 
+class Ops PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.Ops) */ {
+ public:
+  inline Ops() : Ops(nullptr) {}
+  virtual ~Ops();
+
+  Ops(const Ops& from);
+  Ops(Ops&& from) noexcept
+    : Ops() {
+    *this = ::std::move(from);
+  }
+
+  inline Ops& operator=(const Ops& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Ops& operator=(Ops&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const Ops& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const Ops* internal_default_instance() {
+    return reinterpret_cast<const Ops*>(
+               &_Ops_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    1;
+
+  friend void swap(Ops& a, Ops& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Ops* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Ops* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline Ops* New() const final {
+    return CreateMaybeMessage<Ops>(nullptr);
+  }
+
+  Ops* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<Ops>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const Ops& from);
+  void MergeFrom(const Ops& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Ops* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "rubble.Ops";
+  }
+  protected:
+  explicit Ops(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
+    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kOpFieldNumber = 1,
+  };
+  // repeated .rubble.Op op = 1;
+  int op_size() const;
+  private:
+  int _internal_op_size() const;
+  public:
+  void clear_op();
+  ::rubble::Op* mutable_op(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::Op >*
+      mutable_op();
+  private:
+  const ::rubble::Op& _internal_op(int index) const;
+  ::rubble::Op* _internal_add_op();
+  public:
+  const ::rubble::Op& op(int index) const;
+  ::rubble::Op* add_op();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::Op >&
+      op() const;
+
+  // @@protoc_insertion_point(class_scope:rubble.Ops)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::Op > op_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
+};
+// -------------------------------------------------------------------
+
 class OpReply PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.OpReply) */ {
  public:
@@ -397,7 +551,7 @@ class OpReply PROTOBUF_FINAL :
                &_OpReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    1;
+    2;
 
   friend void swap(OpReply& a, OpReply& b) {
     a.Swap(&b);
@@ -602,6 +756,152 @@ class OpReply PROTOBUF_FINAL :
 };
 // -------------------------------------------------------------------
 
+class OpReplies PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.OpReplies) */ {
+ public:
+  inline OpReplies() : OpReplies(nullptr) {}
+  virtual ~OpReplies();
+
+  OpReplies(const OpReplies& from);
+  OpReplies(OpReplies&& from) noexcept
+    : OpReplies() {
+    *this = ::std::move(from);
+  }
+
+  inline OpReplies& operator=(const OpReplies& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline OpReplies& operator=(OpReplies&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const OpReplies& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const OpReplies* internal_default_instance() {
+    return reinterpret_cast<const OpReplies*>(
+               &_OpReplies_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    3;
+
+  friend void swap(OpReplies& a, OpReplies& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(OpReplies* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(OpReplies* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline OpReplies* New() const final {
+    return CreateMaybeMessage<OpReplies>(nullptr);
+  }
+
+  OpReplies* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<OpReplies>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const OpReplies& from);
+  void MergeFrom(const OpReplies& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(OpReplies* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "rubble.OpReplies";
+  }
+  protected:
+  explicit OpReplies(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
+    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kReplyFieldNumber = 1,
+  };
+  // repeated .rubble.OpReply reply = 1;
+  int reply_size() const;
+  private:
+  int _internal_reply_size() const;
+  public:
+  void clear_reply();
+  ::rubble::OpReply* mutable_reply(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::OpReply >*
+      mutable_reply();
+  private:
+  const ::rubble::OpReply& _internal_reply(int index) const;
+  ::rubble::OpReply* _internal_add_reply();
+  public:
+  const ::rubble::OpReply& reply(int index) const;
+  ::rubble::OpReply* add_reply();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::OpReply >&
+      reply() const;
+
+  // @@protoc_insertion_point(class_scope:rubble.OpReplies)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::OpReply > reply_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
+};
+// -------------------------------------------------------------------
+
 class Reply PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.Reply) */ {
  public:
@@ -644,7 +944,7 @@ class Reply PROTOBUF_FINAL :
                &_Reply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    4;
 
   friend void swap(Reply& a, Reply& b) {
     a.Swap(&b);
@@ -781,7 +1081,7 @@ class SyncRequest PROTOBUF_FINAL :
                &_SyncRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    5;
 
   friend void swap(SyncRequest& a, SyncRequest& b) {
     a.Swap(&b);
@@ -925,7 +1225,7 @@ class SyncReply PROTOBUF_FINAL :
                &_SyncReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    6;
 
   friend void swap(SyncReply& a, SyncReply& b) {
     a.Swap(&b);
@@ -1202,6 +1502,49 @@ inline void Op::set_type(::rubble::Op_OpType value) {
 
 // -------------------------------------------------------------------
 
+// Ops
+
+// repeated .rubble.Op op = 1;
+inline int Ops::_internal_op_size() const {
+  return op_.size();
+}
+inline int Ops::op_size() const {
+  return _internal_op_size();
+}
+inline void Ops::clear_op() {
+  op_.Clear();
+}
+inline ::rubble::Op* Ops::mutable_op(int index) {
+  // @@protoc_insertion_point(field_mutable:rubble.Ops.op)
+  return op_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::Op >*
+Ops::mutable_op() {
+  // @@protoc_insertion_point(field_mutable_list:rubble.Ops.op)
+  return &op_;
+}
+inline const ::rubble::Op& Ops::_internal_op(int index) const {
+  return op_.Get(index);
+}
+inline const ::rubble::Op& Ops::op(int index) const {
+  // @@protoc_insertion_point(field_get:rubble.Ops.op)
+  return _internal_op(index);
+}
+inline ::rubble::Op* Ops::_internal_add_op() {
+  return op_.Add();
+}
+inline ::rubble::Op* Ops::add_op() {
+  // @@protoc_insertion_point(field_add:rubble.Ops.op)
+  return _internal_add_op();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::Op >&
+Ops::op() const {
+  // @@protoc_insertion_point(field_list:rubble.Ops.op)
+  return op_;
+}
+
+// -------------------------------------------------------------------
+
 // OpReply
 
 // bool ok = 1;
@@ -1452,6 +1795,49 @@ inline void OpReply::set_type(::rubble::OpReply_OpType value) {
 
 // -------------------------------------------------------------------
 
+// OpReplies
+
+// repeated .rubble.OpReply reply = 1;
+inline int OpReplies::_internal_reply_size() const {
+  return reply_.size();
+}
+inline int OpReplies::reply_size() const {
+  return _internal_reply_size();
+}
+inline void OpReplies::clear_reply() {
+  reply_.Clear();
+}
+inline ::rubble::OpReply* OpReplies::mutable_reply(int index) {
+  // @@protoc_insertion_point(field_mutable:rubble.OpReplies.reply)
+  return reply_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::OpReply >*
+OpReplies::mutable_reply() {
+  // @@protoc_insertion_point(field_mutable_list:rubble.OpReplies.reply)
+  return &reply_;
+}
+inline const ::rubble::OpReply& OpReplies::_internal_reply(int index) const {
+  return reply_.Get(index);
+}
+inline const ::rubble::OpReply& OpReplies::reply(int index) const {
+  // @@protoc_insertion_point(field_get:rubble.OpReplies.reply)
+  return _internal_reply(index);
+}
+inline ::rubble::OpReply* OpReplies::_internal_add_reply() {
+  return reply_.Add();
+}
+inline ::rubble::OpReply* OpReplies::add_reply() {
+  // @@protoc_insertion_point(field_add:rubble.OpReplies.reply)
+  return _internal_add_reply();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::OpReply >&
+OpReplies::reply() const {
+  // @@protoc_insertion_point(field_list:rubble.OpReplies.reply)
+  return reply_;
+}
+
+// -------------------------------------------------------------------
+
 // Reply
 
 // bool ok = 1;
@@ -1609,6 +1995,10 @@ inline void SyncReply::set_allocated_message(std::string* message) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
