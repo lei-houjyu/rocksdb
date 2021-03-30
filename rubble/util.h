@@ -61,7 +61,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   cf_options.compression=rocksdb::kNoCompression;
   // cf_options.compression_per_level=rocksdb::kNoCompression:kNoCompression:kNoCompression:kNoCompression:kNoCompression;
 
-  const int kWriteBufferSize = 64*1024;
+  const int kWriteBufferSize = 4*(1<<20);
   // memtable size set to 4MB
   cf_options.write_buffer_size=kWriteBufferSize;
   // sst file size 4MB

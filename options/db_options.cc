@@ -595,9 +595,10 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
             target_address, grpc::InsecureChannelCredentials()));
           kvstore_client = std::make_shared<KvStoreClient>(grpc::CreateChannel(
             target_address, grpc::InsecureChannelCredentials()));
-         }else if(is_rubble && is_tail){
-           //TODO: tail node needs to do rpc call to replicator to return the true reply
-
+         }
+         if(is_rubble && !is_primary){
+           //only non-primary nodes need to pre-allocate sst pool
+           preallocated_sst_pool_size = options.preallocated_sst_pool_size;
          }
 }
 

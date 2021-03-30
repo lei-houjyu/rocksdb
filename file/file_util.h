@@ -23,6 +23,11 @@ extern IOStatus CopyFile(FileSystem* fs, const std::string& source,
                          bool use_fsync,
                          const std::shared_ptr<IOTracer>& io_tracer = nullptr);
 
+extern IOStatus CopySstFile(FileSystem* fs, const std::string& source,
+                         const std::string& destination, uint64_t size,
+                         bool use_fsync,
+                         const std::shared_ptr<IOTracer>& io_tracer = nullptr);
+
 extern IOStatus CreateFile(FileSystem* fs, const std::string& destination,
                            const std::string& contents, bool use_fsync);
 

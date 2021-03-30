@@ -102,6 +102,7 @@ struct ImmutableDBOptions {
   bool is_tail;
   std::string target_address;
   std::string remote_sst_dir;
+  int preallocated_sst_pool_size;
   std::shared_ptr<SyncClient> sync_client;
   std::shared_ptr<KvStoreClient> kvstore_client;
 };

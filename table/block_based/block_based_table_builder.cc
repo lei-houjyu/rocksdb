@@ -1610,14 +1610,38 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
   footer.set_checksum(r->table_options.checksum);
   std::string footer_encoding;
   footer.EncodeTo(&footer_encoding);
+
+  auto mutable_cf_options = r->moptions;
+  size_t write_buffer_size = mutable_cf_options.write_buffer_size;
+  std::cout << "[WriteFooter] " << r->file->file_name() << "\n";
+  std::cout << "[WriteFooter] " << footer.ToString() << "\n";
+  std::cout << "[WriteFooter] footer_encoding.size() " << footer_encoding.size() << "\n";
+  std::cout << "[WriteFooter] offset: r->get_offset() " << r->get_offset() << "\n";
+  // assume writer_buffer_size if an integer multiple of 1024*1024 Bytes
+  int pad_len = (((write_buffer_size >> 20) + 1) << 20) - r->get_offset() - footer_encoding.size();
+  assert(pad_len >= 0);
+  std::string pad_str((size_t)pad_len, '.');
+  Slice pad_slice(pad_str);
+  std::cout << "[WriteFooter] pad_len " << pad_len << "pad_str.size() " << pad_str.size() << " slice.size() " << pad_slice.size() << "\n";
+  assert(pad_slice.size() == (size_t)pad_len);
+  IOStatus ios = r->file->Append(pad_slice);
+  if (ios.ok()) {
+    r->set_offset(r->get_offset() + pad_slice.size());
+  } else {
+    r->SetIOStatus(ios);
+    r->SetStatus(ios);
+  }
+  std::cout << "[WriteFooter] offset: r->get_offset() " << r->get_offset() << "\n";
+
   assert(ok());
-  IOStatus ios = r->file->Append(footer_encoding);
+  ios = r->file->Append(footer_encoding);
   if (ios.ok()) {
     r->set_offset(r->get_offset() + footer_encoding.size());
   } else {
     r->SetIOStatus(ios);
     r->SetStatus(ios);
   }
+  std::cout << "[WriteFooter] offset: r->get_offset() " << r->get_offset() << "\n";
 }
 
 void BlockBasedTableBuilder::EnterUnbuffered() {

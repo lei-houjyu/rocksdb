@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdlib.h>
+#include <unistd.h>
 #include <iostream>
 #include <iomanip>
 #include <string> 
@@ -46,7 +48,7 @@ using std::chrono::time_point;
 using std::chrono::high_resolution_clock;
 
 int g_thread_num = 16;
-int g_cq_num = 1;
+int g_cq_num = 8;
 int g_pool = 1;
 
 std::unordered_map<std::thread::id, int> map;
@@ -62,19 +64,25 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
        is_rubble_(db_options_->is_rubble),
        is_head_(db_options_->is_primary),
        is_tail_(db_options_->is_tail),
+       db_path_(db_options_->db_paths.front()),
        sync_client_(db_options_->sync_client),
-      //  forwarder_(db_options_->kvstore_client),
        column_family_set_(version_set_->GetColumnFamilySet()),
        default_cf_(column_family_set_->GetDefault()),
        ioptions_(default_cf_->ioptions()),
+       cf_options_(default_cf_->GetCurrentMutableCFOptions()),
        fs_(ioptions_->fs){
-        
+         if(is_rubble_ && !is_head_){
+           ios_ = CreateSstPool();
+           if(!ios_.ok()){
+             std::cout << "allocate sst pool failed \n";
+             assert(false);
+           }
+         }
     };
 
     ~SyncServiceImpl() {
       delete db_;
     }
-
   
     //an Unary RPC call used by the non-tail node to sync Version(view of sst files) states to the downstream node 
   Status Sync(ServerContext* context, const SyncRequest* request, 
@@ -126,16 +134,19 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
 
     // If it's neither primary/head nor tail(second node in the chain in a 3-node setting)
     // should call Sync rpc to downstream node also should ship sst files to the downstream node
-    if(is_rubble_ && !is_head_ && ! is_tail_){
+    if(is_rubble_ && !is_head_ ){
       for(const auto& edit: edit_list){
-        s_ = ShipSstFiles(*edit);
+        ios_ = ShipSstFiles(*edit);
+        assert(ios_.ok());
       }
       std::string sync_reply = db_options_->sync_client->Sync(*request);
       std::cout << "[ Reply Status ]: " << sync_reply << std::endl;
     }
 
-    const rocksdb::MutableCFOptions* cf_options = default_cf_->GetCurrentMutableCFOptions();
+    // logAndApply needs to hold the mutex
+    rocksdb::InstrumentedMutexLock l(mu_);
 
+    const rocksdb::MutableCFOptions* cf_options = default_cf_->GetCurrentMutableCFOptions();
     rocksdb::autovector<rocksdb::ColumnFamilyData*> cfds;
     cfds.emplace_back(default_cf_);
 
@@ -156,9 +167,6 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     // set secondary version set's next file num according to the primary's next_file_num_
     version_set_->FetchAddFileNumber(next_file_num_ - current_next_file_num);
     assert(version_set_->current_next_file_number() == next_file_num_);
-
-    // logAndApply needs to hold the mutex
-    rocksdb::InstrumentedMutexLock l(mu_);
 
     // Calling LogAndApply on the secondary
     s_ = version_set_->LogAndApply(cfds, mutable_cf_options_list, edit_lists, mu_,
@@ -244,9 +252,56 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     return Status::OK;
   }
 
-
   private:
+    //called by secondary nodes to create a pool of preallocated ssts in rubble mode
+    rocksdb::IOStatus CreateSstPool(){
+      const std::string sst_dir = db_path_.path;
+      uint64_t target_size = db_path_.target_size;
+      size_t write_buffer_size = cf_options_->write_buffer_size;
+      //assume the write buffer size is an interger multiple of 1MB
+      uint64_t buffer_size = (((uint64_t)write_buffer_size >> 20) + 1) << 20;
+      // int num_of_sst = target_size / buffer_size;
+      std::cout << "sst file size : " << buffer_size << std::endl;
 
+      int num_of_sst =  db_options_->preallocated_sst_pool_size;
+      assert(num_of_sst * write_buffer_size <= target_size);
+
+      rocksdb::IOStatus s;
+      for (int i = 1; i <= num_of_sst; i++) {
+        // std::string sst_num = std::to_string(i);
+        // std::string fname = std::string("000000").replace(6 - sst_num.length(), sst_num.length(), sst_num) + ".sst";
+        std::string fname = std::to_string(i);
+        // const std::string data((size_t)buffer_size, 'c');
+      
+        std::unique_ptr<rocksdb::FSWritableFile> file;
+        rocksdb::EnvOptions soptions;
+        soptions.use_direct_writes = true;
+        s = fs_->NewWritableFile(db_path_.path + "/" + fname, soptions, &file, nullptr);
+        if (!s.ok()) {
+          return s;
+        }
+        unsigned char *buf;
+        int ret = posix_memalign((void **)&buf, 512, buffer_size);
+        if (ret) {
+            perror("posix_memalign failed");
+            exit(1);
+        }
+        memset(buf, 'c', buffer_size);
+        rocksdb::Slice slice(reinterpret_cast<const char*>(buf));
+        s = file->Append(slice, rocksdb::IOOptions(), nullptr);
+        if (s.ok()) {
+          s = file->Sync(rocksdb::IOOptions(), nullptr);
+        }
+        if (!s.ok()) {
+          fs_->DeleteFile(fname, rocksdb::IOOptions(), nullptr);
+          return s;
+        }
+      }
+      std::cout << "allocated " << num_of_sst << " ssts in " << sst_dir << std::endl;
+      return s;
+    }
+
+   // parse the version edit json string to rocksdb::VersionEdit 
    rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */){
      rocksdb::VersionEdit edit;
       // std::cout << "Dumped VersionEdit : " << j_edit.dump(4) << std::endl;
@@ -339,7 +394,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
      * @param edit The version edit received from the priamry 
      * 
      */
-    rocksdb::Status ShipSstFiles(const rocksdb::VersionEdit& edit){
+    rocksdb::IOStatus ShipSstFiles(const rocksdb::VersionEdit& edit){
 
       assert(db_options_->remote_sst_dir != "");
       std::string remote_sst_dir = db_options_->remote_sst_dir;
@@ -350,31 +405,37 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       rocksdb::IOStatus ios;
       for(const auto& new_file: edit.GetNewFiles()){
         const rocksdb::FileMetaData& meta = new_file.second;
-        std::string sst_num = std::to_string(meta.fd.GetNumber());
+        std::string sst_num = std::to_string(meta.fd.GetNumber() % db_options_->preallocated_sst_pool_size);
         std::string sst_file_name = std::string("000000").replace(6 - sst_num.length(), sst_num.length(), sst_num) + ".sst";
 
         std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
                         meta.fd.GetNumber(), meta.fd.GetPathId());
+        // update secondary's view of sst files
+        ios = fs_->LinkFile(db_path_.path + "/" + sst_num, fname, rocksdb::IOOptions(), nullptr);
+        if(!ios.ok()){
+          std::cout << ios.ToString() << std::endl;
+          return ios;
+        }
 
-        std::string remote_sst_fname = remote_sst_dir + sst_file_name;
-        ios = CopyFile(fs_, fname, remote_sst_fname, 0,  true);
-
-        if (!ios.ok()){
-          std::cerr << "[ File Ship Failed ] : " << meta.fd.GetNumber() << std::endl;
-        }else {
-          std::cout << "[ File Shipped ] : " << meta.fd.GetNumber() << std::endl;
+        // only needs to ship for non-tail nodes
+        if(!is_tail_){
+          std::string remote_sst_fname = remote_sst_dir + sst_file_name;
+          ios = rocksdb::CopySstFile(fs_, fname, remote_sst_fname, 0,  true);
+          if (!ios.ok()){
+            std::cerr << "[ File Ship Failed ] : " << meta.fd.GetNumber() << std::endl;
+          }else {
+            std::cout << "[ File Shipped ] : " << meta.fd.GetNumber() << std::endl;
+          }
         }
       }
-
+      // delete the ssts(the symbolic link) that get deleted in a compaction
       for(const auto& delete_file : edit.GetDeletedFiles()){
         std::string file_number = std::to_string(delete_file.second);
         std::string sst_file_name = std::string("000000").replace(6 - file_number.length(), file_number.length(), file_number) + ".sst";
-
-        std::string remote_sst_fname = remote_sst_dir + sst_file_name;
-        ios = fs_->FileExists(remote_sst_fname, rocksdb::IOOptions(), nullptr);
+        std::string fname = db_path_.path + "/" + sst_file_name;
+        ios = fs_->FileExists(fname, rocksdb::IOOptions(), nullptr);
         if (ios.ok()){
-          ios = fs_->DeleteFile(remote_sst_fname, rocksdb::IOOptions(), nullptr);
-          
+          ios = fs_->DeleteFile(fname, rocksdb::IOOptions(), nullptr); 
           if(ios.IsIOError()){
             std::cerr << "[ File Deletion Failed ]:" <<  file_number << std::endl;
           }else if(ios.ok()){
@@ -386,7 +447,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           }
         }
       }
-      return rocksdb::Status::OK();
+      return ios;
     }
 
     // a db op request we get from the client
@@ -404,6 +465,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     rocksdb::InstrumentedMutex* mu_;
     // db status after processing an operation
     rocksdb::Status s_;
+    rocksdb::IOStatus ios_;
 
     // rocksdb's version set
     rocksdb::VersionSet* version_set_;
@@ -415,6 +477,10 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     const rocksdb::ImmutableDBOptions* db_options_;
     // rocksdb internal immutable column family options
     const rocksdb::ImmutableCFOptions* ioptions_;
+    const rocksdb::MutableCFOptions* cf_options_;
+  
+    // right now, just put all sst files under one path
+    rocksdb::DbPath db_path_;
 
     rocksdb::FileSystem* fs_;
 
