@@ -489,7 +489,7 @@ Status FlushJob::WriteLevel0Table() {
           std::cout << "NewSequentialFile failed : " << ios.ToString() << std::endl;
         }
 
-        int kBufferSize = 32;
+        int kBufferSize = 128;
         char* space = new char[kBufferSize];
         Slice fragment;
         ios = file->Read(kBufferSize, IOOptions(), &fragment, space,

@@ -97,6 +97,7 @@ IOStatus CopySstFile(FileSystem* fs, const std::string& source,
     if (size == 0) {
       // default argument means copy everything
       io_s = fs->GetFileSize(source, IOOptions(), &size, nullptr);
+      std::cout << "sst file size : " << size << std::endl;
       if (!io_s.ok()) {
         return io_s;
       }

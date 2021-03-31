@@ -46,11 +46,8 @@ class KvStoreClient{
     KvStoreClient(std::shared_ptr<Channel> channel)
         : stub_(RubbleKvStoreService::NewStub(channel)) {
       grpc_thread_.reset(new std::thread(std::bind(&KvStoreClient::AsyncCompleteRpc, this)));
-      // aysnc_do_op_thread_.reset(new std::thread(&KvStoreClient::AsyncDoOp, this));
       stream_ = stub_->AsyncDoOp(&context_, &cq_,
                                    reinterpret_cast<void*>(Type::CONNECT));
-      
-      // sync_stream_ = stub_->DoOp(&sync_context_);
     };
 
     ~KvStoreClient(){
@@ -114,7 +111,7 @@ class KvStoreClient{
       return;
   }
 
-  // used by server node to forward op 
+  // used by server node to forward op asynchronously
   void ForwardOp(const Op& op){
     request_ = op;
     // check if it's ready to call Write
@@ -265,7 +262,7 @@ class KvStoreClient{
               }
               break;
           case Type::CONNECT:
-              // std::cout << "Server connected." << std::endl;
+              std::cout << "Server connected." << std::endl;
               break;
           case Type::WRITES_DONE:
               std::cout << "writesdone sent,sleeping 5s" << std::endl;

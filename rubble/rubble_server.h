@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 #include <string> 
 #include <memory>
@@ -25,6 +26,7 @@
 #include "rocksdb/slice.h"
 #include "rocksdb/options.h"
 #include "util/aligned_buffer.h"
+#include "file/read_write_util.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -265,7 +267,8 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       //assume the write buffer size is an integer multiple of 1MB
       // use one more MB because of the footer, and pad to the buffer_size
       assert((write_buffer_size % (1 << 20)) == 0);
-      uint64_t buffer_size = (((uint64_t)write_buffer_size >> 20) + 1) << 20;
+      uint64_t buffer_size = ( write_buffer_size + ( 1 << 17));
+      // uint64_t buffer_size = (((uint64_t)write_buffer_size >> 20) + 1) << 20;
       // int num_of_sst = target_size / buffer_size;
       std::cout << "sst file size : " << buffer_size << std::endl;
 
@@ -299,7 +302,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           }
         }
       }
-      std::cout << "allocated " << db_options_->preallocated_sst_pool_size << " ssts in " << sst_dir << std::endl;
+      std::cout << "allocated " << db_options_->preallocated_sst_pool_size << " sst slots in " << sst_dir << std::endl;
       return s;
     }
 
@@ -389,6 +392,36 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       return edit;
     }
 
+    void DirectReadKBytes(int sst_real, int size){
+      rocksdb::IOStatus io_s;
+      std::unique_ptr<rocksdb::SequentialFileReader> reader;
+      std::string data;
+      rocksdb::FileOptions soptions;
+      soptions.use_direct_reads = true;
+      std::string fname = db_path_.path + "/" + std::to_string(sst_real);
+      {
+        std::unique_ptr<rocksdb::FSSequentialFile> file;
+        io_s = fs_->NewSequentialFile(fname, soptions, &file, nullptr);
+        if (!io_s.ok()) {
+          std::cout << "NewSequentialFile failed : " << io_s.ToString() << std::endl;
+          return;
+        }
+        reader.reset(new rocksdb::SequentialFileReader(std::move(file), fname, nullptr));
+      }
+
+      char buffer[4096];
+      rocksdb::Slice fragment;
+      assert(reader->use_direct_io());
+      size_t bytes_to_read = std::min(sizeof(buffer), static_cast<size_t>(size));
+      io_s = rocksdb::status_to_io_status(reader->Read(bytes_to_read, &fragment, buffer));
+      if (!io_s.ok()) {
+        std::cout << " IO error : " << io_s.ToString() << std::endl;
+        return;
+      }
+      data.append(fragment.data(), fragment.size());
+      std::cout << "new file data : " << data << std::endl;
+    }
+
     // In a 3-node setting, if it's the second node in the chain it should also ship sst files it received from the primary/first node
     // to the tail/downstream node and also delete the ones that get deleted in the compaction
     // for non-head node, should update sst bit map
@@ -412,7 +445,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
         }
         assert(sst_real != 0);
         sst_bit_map_.emplace(sst_real, meta.fd.GetNumber());
-
+        DirectReadKBytes(sst_real, 128);
         std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
                         meta.fd.GetNumber(), meta.fd.GetPathId());
         // update secondary's view of sst files
@@ -601,7 +634,7 @@ class CallDataBidi : CallDataBase {
     service_->RequestDoOp(&ctx_, &rw_, cq_, cq_, (void*)this);
     db_options_ = ((rocksdb::DBImpl*)db_)->TEST_GetVersionSet()->db_options(); 
     if(db_options_->is_tail){
-        reply_client_ =std::make_shared<ReplyClient>(channel_);
+        // reply_client_ =std::make_shared<ReplyClient>(channel_);
     }else{
       // std::cout << " creating forwarder for thread  " << map[std::this_thread::get_id()] << " \n";
       forwarder_ = std::make_shared<Forwarder>(channel_);
@@ -770,7 +803,7 @@ class ServerImpl final {
   ServerImpl(const std::string& server_addr, rocksdb::DB* db, SyncServiceImpl* service)
    :server_addr_(server_addr), db_(db), service_(service){
       auto db_options = ((rocksdb::DBImpl*)db_)->TEST_GetVersionSet()->db_options(); 
-      std::cout << " target address : " << db_options->target_address << std::endl;
+      std::cout << "target address : " << db_options->target_address << std::endl;
       if(db_options->target_address != ""){
         channel_ = grpc::CreateChannel(db_options->target_address, grpc::InsecureChannelCredentials());
         assert(channel_ != nullptr);
