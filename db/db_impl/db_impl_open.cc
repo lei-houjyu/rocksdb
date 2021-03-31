@@ -1466,12 +1466,6 @@ Status DB::Open(const DBOptions& db_options, const std::string& dbname,
   const bool kBatchPerTxn = true;
   // ASH: changes to add db_paths
 
-  // DBOptions temp_db_options = db_options;
-  // temp_db_options.statistics = CreateDBStatistics();
-  // temp_db_options.stats_dump_period_sec = 60;
-  // temp_db_options.db_paths.emplace_back(rocksdb::DbPath("/mnt/sdb/archive_dbs/sst_dir/sst_last_run", 10000000000));
-  // return DBImpl::Open(temp_db_options, dbname, column_families, handles, dbptr,
-  //                     !kSeqPerBatch, kBatchPerTxn);
   std::cout << " -------- sst directory : " << db_options.db_paths.back().path << "--------" << std::endl;
   return DBImpl::Open(db_options, dbname, column_families, handles, dbptr, !kSeqPerBatch, kBatchPerTxn);
 }
@@ -1531,7 +1525,6 @@ Status DBImpl::Open(const DBOptions& db_options, const std::string& dbname,
   if (!s.ok()) {
     return s;
   }
-
   *dbptr = nullptr;
   handles->clear();
 
@@ -1540,7 +1533,6 @@ Status DBImpl::Open(const DBOptions& db_options, const std::string& dbname,
     max_write_buffer_size =
         std::max(max_write_buffer_size, cf.options.write_buffer_size);
   }
-
   DBImpl* impl = new DBImpl(db_options, dbname, seq_per_batch, batch_per_txn);
   s = impl->env_->CreateDirIfMissing(impl->immutable_db_options_.wal_dir);
   if (s.ok()) {

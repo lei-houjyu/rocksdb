@@ -13,6 +13,8 @@
 
 #include <algorithm>
 #include <vector>
+#include <unordered_map>
+#include <iostream>
 
 #include "db/builder.h"
 #include "db/db_iter.h"
@@ -469,20 +471,36 @@ Status FlushJob::WriteLevel0Table() {
                         meta_.fd.GetNumber(), meta_.fd.GetPathId());
 
       // write_L0_Table_counter++;
-      std::string sst_number = std::to_string(meta_.fd.GetNumber());
-      std::string sst_file_name = std::string("000000").replace(6 - sst_number.length(), sst_number.length(), sst_number) + ".sst";
-
-      if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
-        remote_sst_dir = remote_sst_dir + '/';
-      }
-      ios = CopyFile(db_options_.fs.get(), fname, remote_sst_dir + sst_file_name, 0,  true);
-
+      int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size,meta_.fd.GetNumber());
+      std::cout << "Found an available sst slot : " << sst_real << std::endl;
+      std::string sst_number = std::to_string(sst_real);
+     
+      ios = CopySstFile(db_options_.fs.get(), fname, remote_sst_dir + "/" + sst_number, 0,  false);
       if (!ios.ok()){
         fprintf(stderr, "[ File Shipping Failed ] : %lu\n", meta_.fd.GetNumber());
       }else {
-        fprintf(stdout, "[ File Shipped] : %lu \n", meta_.fd.GetNumber());
-      }
+        fprintf(stdout, "[ File Shipped] : %lu , sst slot : %u\n", meta_.fd.GetNumber(), sst_real);
+        std::string data;
+        FileOptions soptions;
+        // soptions.use_direct_reads = true;
+        std::unique_ptr<FSSequentialFile> file;
+        ios = db_options_.fs->NewSequentialFile(remote_sst_dir + "/" + sst_number, soptions, &file, nullptr);
+        if (!ios.ok()) {
+          std::cout << "NewSequentialFile failed : " << ios.ToString() << std::endl;
+        }
 
+        int kBufferSize = 32;
+        char* space = new char[kBufferSize];
+        Slice fragment;
+        ios = file->Read(kBufferSize, IOOptions(), &fragment, space,
+                   nullptr);
+        if(!ios.ok()){
+          std::cout << "Read failed : " << ios.ToString() << std::endl;
+        }
+        data.append(fragment.data(), fragment.size());
+        std::cout << "new file data : " << data << std::endl;
+        delete[] space;
+      }
     }
    
   }

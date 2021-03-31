@@ -45,11 +45,12 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   db_options.is_tail=is_tail;
   db_options.target_address=target_addr;
 
-    // for non-tail nodes in rubble mode, it's shipping sst file to the remote_sst_dir;
-    if(is_rubble && !is_tail){
-        db_options.remote_sst_dir=remote_sst_dir;
-    }
-
+  // for non-tail nodes in rubble mode, it's shipping sst file to the remote_sst_dir;
+  if(is_rubble && !is_tail){
+      db_options.remote_sst_dir=remote_sst_dir;
+  }
+  
+  uint64_t target_size = 10000000000;
   db_options.db_paths.emplace_back(rocksdb::DbPath(sst_dir, 10000000000));
   
   rocksdb::ColumnFamilyOptions cf_options;
@@ -61,11 +62,19 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   cf_options.compression=rocksdb::kNoCompression;
   // cf_options.compression_per_level=rocksdb::kNoCompression:kNoCompression:kNoCompression:kNoCompression:kNoCompression;
 
-  const int kWriteBufferSize = 4*(1<<20);
+  size_t kWriteBufferSize = 4*(1<<20);
   // memtable size set to 4MB
   cf_options.write_buffer_size=kWriteBufferSize;
   // sst file size 4MB
   cf_options.target_file_size_base=4194304;
+
+  // right now, just set sst pool size to 100 if it's sufficient
+  if(is_rubble && !is_primary){
+    // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);
+    db_options.preallocated_sst_pool_size = 100;
+  }
+  uint64_t sst_file_size = ((kWriteBufferSize >> 20) + 1) << 20;
+  assert(db_options.preallocated_sst_pool_size * sst_file_size <= target_size);
  
   rocksdb::Options options(db_options, cf_options);
 

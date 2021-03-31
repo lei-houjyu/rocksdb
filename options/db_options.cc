@@ -586,19 +586,15 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       is_primary(options.is_primary),
       is_tail(options.is_tail),
       target_address(options.target_address),
-      remote_sst_dir(options.remote_sst_dir)
+      remote_sst_dir(options.remote_sst_dir),
+      preallocated_sst_pool_size(options.preallocated_sst_pool_size)
        {
          // all nodes except tail needs to do Sync rpc and forward operations to target_address
          if(is_rubble && !is_tail){
-          assert(target_address != "");
-          sync_client = std::make_shared<SyncClient>(grpc::CreateChannel(
-            target_address, grpc::InsecureChannelCredentials()));
-          kvstore_client = std::make_shared<KvStoreClient>(grpc::CreateChannel(
-            target_address, grpc::InsecureChannelCredentials()));
-         }
-         if(is_rubble && !is_primary){
-           //only non-primary nodes need to pre-allocate sst pool
-           preallocated_sst_pool_size = options.preallocated_sst_pool_size;
+          if(target_address != ""){
+            sync_client = std::make_shared<SyncClient>(grpc::CreateChannel(
+              target_address, grpc::InsecureChannelCredentials()));
+          }
          }
 }
 

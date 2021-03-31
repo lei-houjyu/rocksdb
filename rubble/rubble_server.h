@@ -24,6 +24,7 @@
 #include "db/db_impl/db_impl.h"
 #include "rocksdb/slice.h"
 #include "rocksdb/options.h"
+#include "util/aligned_buffer.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -132,15 +133,18 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       edit_list.push_back(&edit);
     }
 
-    // If it's neither primary/head nor tail(second node in the chain in a 3-node setting)
-    // should call Sync rpc to downstream node also should ship sst files to the downstream node
+    // called by secondary node
     if(is_rubble_ && !is_head_ ){
       for(const auto& edit: edit_list){
-        ios_ = ShipSstFiles(*edit);
+        // this function is called by secondary nodes in the chain in rubble
+        ios_ = UpdateSstBitMapAndShipSstFiles(*edit);
         assert(ios_.ok());
       }
-      std::string sync_reply = db_options_->sync_client->Sync(*request);
-      std::cout << "[ Reply Status ]: " << sync_reply << std::endl;
+      if(!is_tail_){
+        // non-tail node should also issue Sync rpc call to downstream node
+        std::string sync_reply = db_options_->sync_client->Sync(*request);
+        std::cout << "[ Reply Status ]: " << sync_reply << std::endl;
+      }
     }
 
     // logAndApply needs to hold the mutex
@@ -258,46 +262,44 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       const std::string sst_dir = db_path_.path;
       uint64_t target_size = db_path_.target_size;
       size_t write_buffer_size = cf_options_->write_buffer_size;
-      //assume the write buffer size is an interger multiple of 1MB
+      //assume the write buffer size is an integer multiple of 1MB
+      // use one more MB because of the footer, and pad to the buffer_size
+      assert((write_buffer_size % (1 << 20)) == 0);
       uint64_t buffer_size = (((uint64_t)write_buffer_size >> 20) + 1) << 20;
       // int num_of_sst = target_size / buffer_size;
       std::cout << "sst file size : " << buffer_size << std::endl;
 
-      int num_of_sst =  db_options_->preallocated_sst_pool_size;
-      assert(num_of_sst * write_buffer_size <= target_size);
-
+      rocksdb::AlignedBuffer buf;
       rocksdb::IOStatus s;
-      for (int i = 1; i <= num_of_sst; i++) {
-        // std::string sst_num = std::to_string(i);
-        // std::string fname = std::string("000000").replace(6 - sst_num.length(), sst_num.length(), sst_num) + ".sst";
-        std::string fname = std::to_string(i);
-        // const std::string data((size_t)buffer_size, 'c');
-      
-        std::unique_ptr<rocksdb::FSWritableFile> file;
-        rocksdb::EnvOptions soptions;
-        soptions.use_direct_writes = true;
-        s = fs_->NewWritableFile(db_path_.path + "/" + fname, soptions, &file, nullptr);
-        if (!s.ok()) {
-          return s;
-        }
-        unsigned char *buf;
-        int ret = posix_memalign((void **)&buf, 512, buffer_size);
-        if (ret) {
-            perror("posix_memalign failed");
-            exit(1);
-        }
-        memset(buf, 'c', buffer_size);
-        rocksdb::Slice slice(reinterpret_cast<const char*>(buf));
-        s = file->Append(slice, rocksdb::IOOptions(), nullptr);
-        if (s.ok()) {
-          s = file->Sync(rocksdb::IOOptions(), nullptr);
-        }
-        if (!s.ok()) {
-          fs_->DeleteFile(fname, rocksdb::IOOptions(), nullptr);
-          return s;
+      for (int i = 1; i <= db_options_->preallocated_sst_pool_size; i++) {
+        std::string sst_num = std::to_string(i);
+        // rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size, 'c')), sst_dir + "/" + fname, true);
+        std::string sst_name = sst_dir + "/" + sst_num;
+        s = fs_->FileExists(sst_name, rocksdb::IOOptions(), nullptr);
+        if(!s.ok()) {
+          std::unique_ptr<rocksdb::FSWritableFile> file;
+          rocksdb::EnvOptions soptions;
+          soptions.use_direct_writes = true;
+          s = fs_->NewWritableFile(sst_name, soptions, &file, nullptr);
+          if (!s.ok()) {
+            return s;
+          }
+          if(i == 1){
+            buf.Alignment(file->GetRequiredBufferAlignment());
+            buf.AllocateNewBuffer(buffer_size);
+            buf.PadWith(buffer_size, 'c');
+          }
+          s = file->Append(rocksdb::Slice(buf.BufferStart()), rocksdb::IOOptions(), nullptr);
+          if (s.ok()) {
+            s = file->Sync(rocksdb::IOOptions(), nullptr);
+          }
+          if (!s.ok()) {
+            fs_->DeleteFile(sst_name, rocksdb::IOOptions(), nullptr);
+            return s;
+          }
         }
       }
-      std::cout << "allocated " << num_of_sst << " ssts in " << sst_dir << std::endl;
+      std::cout << "allocated " << db_options_->preallocated_sst_pool_size << " ssts in " << sst_dir << std::endl;
       return s;
     }
 
@@ -389,37 +391,47 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
 
     // In a 3-node setting, if it's the second node in the chain it should also ship sst files it received from the primary/first node
     // to the tail/downstream node and also delete the ones that get deleted in the compaction
+    // for non-head node, should update sst bit map
     // since second node's flush is disabled ,we should do the shipping here when it received Sync rpc call from the primary
     /**
      * @param edit The version edit received from the priamry 
      * 
      */
-    rocksdb::IOStatus ShipSstFiles(const rocksdb::VersionEdit& edit){
-
-      assert(db_options_->remote_sst_dir != "");
-      std::string remote_sst_dir = db_options_->remote_sst_dir;
-      if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
-          remote_sst_dir = remote_sst_dir + '/';
-      }
+    rocksdb::IOStatus UpdateSstBitMapAndShipSstFiles(const rocksdb::VersionEdit& edit){
 
       rocksdb::IOStatus ios;
       for(const auto& new_file: edit.GetNewFiles()){
         const rocksdb::FileMetaData& meta = new_file.second;
-        std::string sst_num = std::to_string(meta.fd.GetNumber() % db_options_->preallocated_sst_pool_size);
-        std::string sst_file_name = std::string("000000").replace(6 - sst_num.length(), sst_num.length(), sst_num) + ".sst";
+        int sst_real;
+        for(int i = 1; i <= db_options_->preallocated_sst_pool_size; i++){
+          if(sst_bit_map_.find(i) == sst_bit_map_.end()){
+            // if not found, means slot is not occupied
+            sst_real = i;
+            break;
+          }
+        }
+        assert(sst_real != 0);
+        sst_bit_map_.emplace(sst_real, meta.fd.GetNumber());
 
         std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
                         meta.fd.GetNumber(), meta.fd.GetPathId());
         // update secondary's view of sst files
-        ios = fs_->LinkFile(db_path_.path + "/" + sst_num, fname, rocksdb::IOOptions(), nullptr);
+        ios = fs_->LinkFile(db_path_.path + "/" + std::to_string(sst_real), fname, rocksdb::IOOptions(), nullptr);
         if(!ios.ok()){
           std::cout << ios.ToString() << std::endl;
           return ios;
+        }else{
+          std::cout << "[create new sst]: "  << fname << " , linking to " << sst_real << std::endl;
         }
 
         // only needs to ship for non-tail nodes
         if(!is_tail_){
-          std::string remote_sst_fname = remote_sst_dir + sst_file_name;
+          assert(db_options_->remote_sst_dir != "");
+          std::string remote_sst_dir = db_options_->remote_sst_dir;
+          if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
+              remote_sst_dir = remote_sst_dir + '/';
+          }
+          std::string remote_sst_fname = remote_sst_dir + std::to_string(sst_real);
           ios = rocksdb::CopySstFile(fs_, fname, remote_sst_fname, 0,  true);
           if (!ios.ok()){
             std::cerr << "[ File Ship Failed ] : " << meta.fd.GetNumber() << std::endl;
@@ -435,11 +447,16 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
         std::string fname = db_path_.path + "/" + sst_file_name;
         ios = fs_->FileExists(fname, rocksdb::IOOptions(), nullptr);
         if (ios.ok()){
+          // delete the symbolic link
           ios = fs_->DeleteFile(fname, rocksdb::IOOptions(), nullptr); 
           if(ios.IsIOError()){
             std::cerr << "[ File Deletion Failed ]:" <<  file_number << std::endl;
           }else if(ios.ok()){
-            std::cout << "[ File Deleted ] : " <<  file_number << std::endl;
+            auto it = sst_bit_map_.find(delete_file.second);
+            std::cout << "[ File Deleted ] : " <<  file_number << ", sst slot : " << it->first << std::endl;
+            assert(it != sst_bit_map_.end());
+            // if file gets deleted, free its occupied slot
+            sst_bit_map_.erase(it);
           }
         }else {
           if (ios.IsNotFound()){
@@ -482,6 +499,11 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     // right now, just put all sst files under one path
     rocksdb::DbPath db_path_;
 
+    // maintain a mapping between sst_number and slot_number
+    // sst_bit_map_[i] = j means sst_file with number j occupies the i-th slot
+    // secondary node will update it when received a Sync rpc call from the upstream node
+    std::unordered_map<int, uint64_t> sst_bit_map_;
+    
     rocksdb::FileSystem* fs_;
 
     std::atomic<uint64_t> log_apply_counter_;
@@ -507,20 +529,13 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
 
 class CallDataBase {
 public:
-  CallDataBase(SyncServiceImpl* service, ServerCompletionQueue* cq, rocksdb::DB* db)
-   :service_(service), cq_(cq), db_(db){
-      rocksdb::DBImpl* impl = (rocksdb::DBImpl*)db_;
-      auto version_set = impl->TEST_GetVersionSet();
-      db_options_ = version_set->db_options();
-      // forwarder_ = db_options_->kvstore_client;
-      if(db_options_->is_tail){
-        assert(db_options_->target_address != "");
-        reply_client_ = std::make_shared<ReplyClient>(grpc::CreateChannel(
-        db_options_->target_address, grpc::InsecureChannelCredentials()));
-      }else{
-        forwarder_ = std::make_shared<Forwarder>(grpc::CreateChannel(
-        db_options_->target_address, grpc::InsecureChannelCredentials()));
-      }
+  CallDataBase(SyncServiceImpl* service, 
+                ServerCompletionQueue* cq, 
+                rocksdb::DB* db, 
+                std::shared_ptr<Channel> channel)
+   :service_(service), cq_(cq), db_(db), 
+    channel_(channel){
+
    }
 
   virtual void Proceed(bool ok) = 0;
@@ -537,9 +552,10 @@ protected:
 
   const rocksdb::ImmutableDBOptions* db_options_;
 
-  std::shared_ptr<Forwarder> forwarder_; 
+  std::shared_ptr<Channel> channel_ = nullptr;
+  std::shared_ptr<Forwarder> forwarder_ = nullptr;
   // client for sending the reply back to the replicator
-  std::shared_ptr<ReplyClient> reply_client_;
+  std::shared_ptr<ReplyClient> reply_client_ = nullptr;
   // The means of communication with the gRPC runtime for an asynchronous
   // server.
   SyncServiceImpl* service_;
@@ -566,8 +582,11 @@ class CallDataBidi : CallDataBase {
   // Take in the "service" instance (in this case representing an asynchronous
   // server) and the completion queue "cq" used for asynchronous communication
   // with the gRPC runtime.
-  CallDataBidi(SyncServiceImpl* service, ServerCompletionQueue* cq, rocksdb::DB* db)
-   :CallDataBase(service, cq, db),rw_(&ctx_){
+  CallDataBidi(SyncServiceImpl* service, 
+                ServerCompletionQueue* cq, 
+                rocksdb::DB* db,
+                std::shared_ptr<Channel> channel)
+   :CallDataBase(service, cq, db, channel),rw_(&ctx_){
     // Invoke the serving logic right away.
 
     status_ = BidiStatus::CONNECT;
@@ -580,6 +599,14 @@ class CallDataBidi : CallDataBase {
     // instances can serve different requests concurrently), in this case
     // the memory address of this CallData instance.
     service_->RequestDoOp(&ctx_, &rw_, cq_, cq_, (void*)this);
+    db_options_ = ((rocksdb::DBImpl*)db_)->TEST_GetVersionSet()->db_options(); 
+    if(db_options_->is_tail){
+        reply_client_ =std::make_shared<ReplyClient>(channel_);
+    }else{
+      // std::cout << " creating forwarder for thread  " << map[std::this_thread::get_id()] << " \n";
+      forwarder_ = std::make_shared<Forwarder>(channel_);
+      // std::cout << " Forwarder created \n";
+    }
   }
   // async version of DoOp
   void Proceed(bool ok) override {
@@ -601,18 +628,16 @@ class CallDataBidi : CallDataBase {
         }
 
         // std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " Received a new " << Op_OpType_Name(request_.type()) << " op witk key : " << request_.key() << std::endl;
-
         // Handle a db operation
         HandleOp();
         /* chain replication */
         // Forward the request to the downstream node in the chain if it's not a tail node
         if(!db_options_->is_tail){
-          std::cout << "Forward an op \n";
           forwarder_->Forward(request_);
         }else {
           // tail node should be responsible for sending the reply back to replicator
           // use the sync stream to write the reply back
-          reply_client_->SendReply(reply_);
+          // reply_client_->SendReply(reply_);
         }
 
         // if(request_.type() == Op::GET && db_options_->is_tail){
@@ -640,7 +665,7 @@ class CallDataBidi : CallDataBase {
         // Spawn a new CallData instance to serve new clients while we process
         // the one for this CallData. The instance will deallocate itself as
         // part of its FINISH state.
-        new CallDataBidi(service_, cq_, db_);
+        new CallDataBidi(service_, cq_, db_, channel_);
         rw_.Read(&request_, (void*)this);
         // request_.set_type(Op::PUT);
         // std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " Received a new " << Op_OpType_Name(request_.type()) << " op witk key : " << request_.key() << std::endl;
@@ -669,17 +694,15 @@ class CallDataBidi : CallDataBase {
 
   void HandleOp() override {
       std::string value;
-      if(!op_counter_.load()){
-        start_time_ = high_resolution_clock::now();
-      }
-
-      if(op_counter_.load() && op_counter_.load()%100000 == 0){
-        end_time_ = high_resolution_clock::now();
-        auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
-        std::cout << "Throughput : handled 100000 ops in " << millisecs.count() << " millisecs\n";
-        start_time_ = end_time_;
-      }
-      
+      // if(!op_counter_.load()){
+      //   start_time_ = high_resolution_clock::now();
+      // }
+      // if(op_counter_.load() && op_counter_.load()%100000 == 0){
+      //   end_time_ = high_resolution_clock::now();
+      //   auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
+      //   std::cout << "Throughput : handled 100000 ops in " << millisecs.count() << " millisecs\n";
+      //   start_time_ = end_time_;
+      // }
       op_counter_++;
       switch (request_.type())
       {
@@ -702,7 +725,7 @@ class CallDataBidi : CallDataBase {
         if(db_options_->is_tail){
           reply_.set_type(OpReply::PUT);
           if(s_.ok()){
-            std::cout << "Put : (" << request_.key() << " ," << request_.value() << ")\n"; 
+            // std::cout << "Put : (" << request_.key() << " ," << request_.value() << ")\n"; 
             reply_.set_ok(true);
           }else{
             std::cout << "Put Failed : " << s_.ToString() << std::endl;
@@ -728,7 +751,6 @@ class CallDataBidi : CallDataBase {
   
   // alarm object to put a new task into the cq_
   // grpc::Alarm alarm_;
-
   // The means to get back to the client.
   ServerAsyncReaderWriter<OpReply, Op>  rw_;
 
@@ -747,6 +769,12 @@ class ServerImpl final {
   public:
   ServerImpl(const std::string& server_addr, rocksdb::DB* db, SyncServiceImpl* service)
    :server_addr_(server_addr), db_(db), service_(service){
+      auto db_options = ((rocksdb::DBImpl*)db_)->TEST_GetVersionSet()->db_options(); 
+      std::cout << " target address : " << db_options->target_address << std::endl;
+      if(db_options->target_address != ""){
+        channel_ = grpc::CreateChannel(db_options->target_address, grpc::InsecureChannelCredentials());
+        assert(channel_ != nullptr);
+      }
   }
   ~ServerImpl() {
     server_->Shutdown();
@@ -764,7 +792,7 @@ class ServerImpl final {
     builder_.RegisterService(service_);
     // Get hold of the completion queue used for the asynchronous communication
     // with the gRPC runtime.
-
+   
     for (int i = 0; i < g_cq_num; ++i) {
         //cq_ = builder.AddCompletionQueue();
         m_cq.emplace_back(builder_.AddCompletionQueue());
@@ -772,17 +800,18 @@ class ServerImpl final {
 
     // Finally assemble the server.
     server_ = builder_.BuildAndStart();
-
+  
     // Proceed to the server's main loop.
     std::vector<std::thread*> _vec_threads;
 
     for (int i = 0; i < g_thread_num; ++i) {
         int _cq_idx = i % g_cq_num;
         for (int j = 0; j < g_pool; ++j) {
-            new CallDataBidi(service_, m_cq[_cq_idx].get(), db_);
+            new CallDataBidi(service_, m_cq[_cq_idx].get(), db_, channel_);
         }
         auto new_thread =  new std::thread(&ServerImpl::HandleRpcs, this, _cq_idx);
         map[new_thread->get_id()] = i;
+        std::cout << i << " th thread spawned \n";
         _vec_threads.emplace_back(new_thread);
     }
 
@@ -812,6 +841,7 @@ class ServerImpl final {
     }
   }
 
+  std::shared_ptr<Channel> channel_ = nullptr;
   std::vector<std::unique_ptr<ServerCompletionQueue>>  m_cq;
   SyncServiceImpl* service_;
   std::unique_ptr<Server> server_;
@@ -823,7 +853,7 @@ class ServerImpl final {
 void RunServer(rocksdb::DB* db, const std::string& server_addr, int thread_num = 1) {
   
   SyncServiceImpl service(db);
-  g_thread_num = thread_num;
+  g_thread_num = 16;
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
   // ServerBuilder builder;

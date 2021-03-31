@@ -30,6 +30,9 @@
 
 namespace ROCKSDB_NAMESPACE {
 
+extern int GetAvailableSstSlot(int sst_pool_size, int sst_num);
+extern void FreeSstSlot(int sst_num);
+
 // The maximum length of a varint in bytes for 64-bit.
 const unsigned int kMaxVarint64Length = 10;
 

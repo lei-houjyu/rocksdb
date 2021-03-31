@@ -19,7 +19,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
-// RUBBLE:
+#include <unordered_map>
 #include <iostream>
 #include <fstream>
 
@@ -1522,30 +1522,28 @@ Status CompactionJob::InstallCompactionResults(
   // RUBBLE: ship new sst file to the remote dir and delete the input sst file at the remote sst dir
   // Only the primary node will get here, non-primary nodes' flush and compaction are disabled
   if(db_options_.is_rubble && db_options_.is_primary){
-
     assert(db_options_.remote_sst_dir != "");
-    std::string remote_sst_dir = db_options_.remote_sst_dir;
-    if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
-        remote_sst_dir = remote_sst_dir + '/';
-      }
-
     IOStatus ios;
+    // std::unordered_map<int, uint64_t>* map = db_options_.sst_bit_map.get();
     for (const auto& sub_compact : compact_->sub_compact_states) {
       for (const auto& out : sub_compact.outputs) {
         // copy the output sst files to remote sst directory
         std::string fname = TableFileName(sub_compact.compaction->immutable_cf_options()->cf_paths,
                         out.meta.fd.GetNumber(), out.meta.fd.GetPathId());
-        
-        // if the sst number exceeds the number of preallocated sst pool size, wrap around to the beginning and reuse those sst numbers
-        std::string sst_number = std::to_string(out.meta.fd.GetNumber() % db_options_.preallocated_sst_pool_size);
-        // std::string sst_file_name = std::string("000000").replace(6 - sst_number.length(), sst_number.length(), sst_number) + ".sst";
 
-        ios = CopySstFile(fs_.get(), fname, remote_sst_dir + sst_number, 0,  false);
+        int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, out.meta.fd.GetNumber());
+
+        ios = CopySstFile(fs_.get(), fname, db_options_.remote_sst_dir + "/" + std::to_string(sst_real), 0,  false);
         if (!ios.ok()){
           fprintf(stderr, "[ File Ship Failed ] : %lu, status : %s \n", out.meta.fd.GetNumber(), ios.ToString().c_str());
         }else {
-          fprintf(stdout, "[ File Shipped ] : %lu \n", out.meta.fd.GetNumber());
+          fprintf(stdout, "[ File Shipped ] : %lu , sst slot : %u\n", out.meta.fd.GetNumber(), sst_real);
         }
+      }
+    }
+    for (unsigned int i=0; i < compact_->compaction->num_input_levels(); i++){
+      for (auto f : *(compact_->compaction->inputs(i))){
+        FreeSstSlot(f->fd.GetNumber());
       }
     }
   }

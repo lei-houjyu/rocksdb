@@ -12,6 +12,8 @@
 #include <algorithm>
 #include "rocksdb/slice.h"
 #include "rocksdb/slice_transform.h"
+#include <unordered_map>
+#include <iostream>
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -84,6 +86,37 @@ const char* GetVarint64Ptr(const char* p, const char* limit, uint64_t* value) {
     }
   }
   return nullptr;
+}
+
+// maintain a view of secondary node's available sst slots
+// sst_bit_map maintains a mapping between the sst number and occupied slots
+// sst_bit_map[i] = j means sst_file with number j occupies the i-th slot where
+// i is within range [1, 2, ..., preallocated_sst_pool_size]
+// priamry node should update it when finish a flush/compaction
+// secondary node will update it when received a Sync rpc call from the upstream node
+static std::unordered_map<int, uint64_t> sst_bit_map;
+
+// get an available sst slot
+int GetAvailableSstSlot(int sst_pool_size, int sst_num){
+  int sst_real = 0;
+    for(int i = 1; i <= sst_pool_size; i++){
+        if(sst_bit_map.find(i) == sst_bit_map.end()){
+          // if not found, means slot is not occupied
+          sst_real = i;
+          break;
+        }
+    }
+  assert(sst_real != 0);
+  sst_bit_map.emplace(sst_real, sst_num);
+  return sst_real;
+}
+
+// called when a file gets deleted in a compaction to free the slot and update the bitmap
+void FreeSstSlot(int sst_num){
+    auto it = sst_bit_map.find(sst_num);
+    assert(it != sst_bit_map.end());
+    // if file gets deleted, free its occupied slot
+    sst_bit_map.erase(it);
 }
 
 }  // namespace ROCKSDB_NAMESPACE

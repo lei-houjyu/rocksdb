@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   }
 
   std::string tail_node_addr = argv[1];
-  rocksdb::DB* secondary = GetDBInstance("/tmp/rubble_secondary", "/mnt/sdb/archive_dbs/secondary/sst_dir","/mnt/sdb/archive_dbs/tail/sst_dir", tail_node_addr,true, false, false);
+  rocksdb::DB* secondary = GetDBInstance("/tmp/rubble_secondary", "/mnt/sdb/archive_dbs/sst_dir","/mnt/remote/archive_dbs/sst_dir", tail_node_addr,true, false, false);
   
   //secondary server running on port 50050
   RunServer(secondary, "localhost:50050");
