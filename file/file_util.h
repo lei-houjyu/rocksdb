@@ -28,6 +28,8 @@ extern IOStatus CopySstFile(FileSystem* fs, const std::string& source,
                          bool use_fsync,
                          const std::shared_ptr<IOTracer>& io_tracer = nullptr);
 
+extern IOStatus DirectReadKBytes(FileSystem* fs, int sst_real, int size, const std::string& db_path);
+
 extern IOStatus CreateFile(FileSystem* fs, const std::string& destination,
                            const std::string& contents, bool use_fsync);
 

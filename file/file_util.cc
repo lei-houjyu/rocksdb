@@ -130,6 +130,36 @@ IOStatus CopySstFile(FileSystem* fs, const std::string& source,
   return dest_writer->Sync(use_fsync);
 }
 
+IOStatus DirectReadKBytes(FileSystem* fs, int sst_real, int size, const std::string& db_path){
+  IOStatus io_s;
+  std::unique_ptr<SequentialFileReader> reader;
+  std::string data;
+  FileOptions soptions;
+  soptions.use_direct_reads = true;
+  std::string fname = db_path + std::to_string(sst_real);
+  {
+    std::unique_ptr<FSSequentialFile> file;
+    io_s = fs->NewSequentialFile(fname, soptions, &file, nullptr);
+    if (!io_s.ok()) {
+      std::cout << "NewSequentialFile failed : " << io_s.ToString() << std::endl;
+      return io_s;
+    }
+    reader.reset(new SequentialFileReader(std::move(file), fname, nullptr));
+  }
+
+  char buffer[4096];
+  Slice fragment;
+  assert(reader->use_direct_io());
+  size_t bytes_to_read = std::min(sizeof(buffer), static_cast<size_t>(size));
+  io_s = status_to_io_status(reader->Read(bytes_to_read, &fragment, buffer));
+  if (!io_s.ok()) {
+    std::cout << " IO error : " << io_s.ToString() << std::endl;
+    return io_s;
+  }
+  data.append(fragment.data(), fragment.size());
+  std::cout <<  "file " << std::to_string(sst_real)  << " new data : " << data << std::endl;
+  return io_s;
+}
 
 // Utility function to create a file with the provided contents
 IOStatus CreateFile(FileSystem* fs, const std::string& destination,

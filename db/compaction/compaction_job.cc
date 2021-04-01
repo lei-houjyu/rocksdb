@@ -1537,6 +1537,7 @@ Status CompactionJob::InstallCompactionResults(
     
         int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, out.meta.fd.GetNumber());
         int ret = copy_sst(fname , remote_sst_dir  + std::to_string(sst_real),static_cast<size_t>(out.meta.fd.GetFileSize()));
+        // rocksdb::DirectReadKBytes(fs_.get(), sst_real, 32, remote_sst_dir);
         // ios = CopySstFile(fs_.get(), fname, remote_sst_dir  + std::to_string(sst_real), 0,  false);
         if (ret){
           fprintf(stderr, "[ File Ship Failed ] : %lu, status : %s \n", out.meta.fd.GetNumber(), ios.ToString().c_str());

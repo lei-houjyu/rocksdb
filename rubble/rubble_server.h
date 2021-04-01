@@ -406,35 +406,6 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       return edit;
     }
 
-    void DirectReadKBytes(int sst_real, int size){
-      rocksdb::IOStatus io_s;
-      std::unique_ptr<rocksdb::SequentialFileReader> reader;
-      std::string data;
-      rocksdb::FileOptions soptions;
-      soptions.use_direct_reads = true;
-      std::string fname = db_path_.path + "/" + std::to_string(sst_real);
-      {
-        std::unique_ptr<rocksdb::FSSequentialFile> file;
-        io_s = fs_->NewSequentialFile(fname, soptions, &file, nullptr);
-        if (!io_s.ok()) {
-          std::cout << "NewSequentialFile failed : " << io_s.ToString() << std::endl;
-          return;
-        }
-        reader.reset(new rocksdb::SequentialFileReader(std::move(file), fname, nullptr));
-      }
-
-      char buffer[4096];
-      rocksdb::Slice fragment;
-      assert(reader->use_direct_io());
-      size_t bytes_to_read = std::min(sizeof(buffer), static_cast<size_t>(size));
-      io_s = rocksdb::status_to_io_status(reader->Read(bytes_to_read, &fragment, buffer));
-      if (!io_s.ok()) {
-        std::cout << " IO error : " << io_s.ToString() << std::endl;
-        return;
-      }
-      data.append(fragment.data(), fragment.size());
-      std::cout <<  "file " << std::to_string(sst_real)  << " new data : " << data << std::endl;
-    }
 
     // for a new added file, take a sst slot
     int TakeOneAvailableSstSlot(uint64_t file_number){
@@ -478,7 +449,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       for(const auto& new_file: edit.GetNewFiles()){
         const rocksdb::FileMetaData& meta = new_file.second;
         int sst_real = TakeOneAvailableSstSlot(meta.fd.GetNumber());
-        DirectReadKBytes(sst_real, 32);
+        // rocksdb::DirectReadKBytes(fs_, sst_real, 32, db_path_.path + "/");
         std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
                         meta.fd.GetNumber(), meta.fd.GetPathId());
         // update secondary's view of sst files

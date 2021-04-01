@@ -479,6 +479,7 @@ Status FlushJob::WriteLevel0Table() {
         remote_sst_dir += "/";
       }
       int ret = copy_sst(fname, remote_sst_dir + std::to_string(sst_real), static_cast<size_t>(meta_.fd.GetFileSize()));
+      // DirectReadKBytes(db_options_.fs.get(), sst_real, 32, remote_sst_dir);
       // ios = CopySstFile(db_options_.fs.get(), fname, remote_sst_dir + sst_number, 0,  false);
       if (ret){
         fprintf(stderr, "[ File Shipping Failed ] : %lu\n", meta_.fd.GetNumber());
