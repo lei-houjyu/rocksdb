@@ -131,6 +131,7 @@ Status TableCache::GetTableReader(
             std::move(file), fname, ioptions_.env, io_tracer_,
             record_read_stats ? ioptions_.statistics : nullptr, SST_READ_MICROS,
             file_read_hist, ioptions_.rate_limiter, ioptions_.listeners));
+    // std::cout << "NewTableReader\n ";
     s = ioptions_.table_factory->NewTableReader(
         ro,
         TableReaderOptions(ioptions_, prefix_extractor, file_options,
@@ -180,6 +181,7 @@ Status TableCache::FindTable(const ReadOptions& ro,
     }
 
     std::unique_ptr<TableReader> table_reader;
+    // std::cout << "GetTableReader\n";
     Status s = GetTableReader(
         ro, file_options, internal_comparator, fd, false /* sequential mode */,
         record_read_stats, file_read_hist, &table_reader, prefix_extractor,

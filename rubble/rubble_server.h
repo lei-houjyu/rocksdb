@@ -117,12 +117,16 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     // reset those variables every time called Sync
     num_of_added_files_ = 0;
     is_flush_ = false;
+    is_trivial_move_compaction_ = false;
     batch_count_ = 0;
 
     if(j_args.contains("IsFlush")){
       assert(j_args["IsFlush"].get<bool>());
       batch_count_ = j_args["BatchCount"].get<int>();
       is_flush_ = true;
+    }
+    if(j_args.contains("IsTrivial")){
+      is_trivial_move_compaction_ = true;
     }
 
     next_file_num_ = j_args["NextFileNum"].get<uint64_t>();
@@ -135,8 +139,9 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       edit_list.push_back(&edit);
     }
 
-    // called by secondary node
-    if(is_rubble_ && !is_head_ ){
+   // doesn't need to do anything for a trivial move compaction
+    if(!is_trivial_move_compaction_){
+      // called by secondary node
       for(const auto& edit: edit_list){
         // this function is called by secondary nodes in the chain in rubble
         ios_ = UpdateSstBitMapAndShipSstFiles(*edit);
@@ -144,7 +149,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       }
       if(!is_tail_){
         // non-tail node should also issue Sync rpc call to downstream node
-        std::string sync_reply = db_options_->sync_client->Sync(*request);
+        std::string sync_reply = sync_client_->Sync(*request);
         std::cout << "[ Reply Status ]: " << sync_reply << std::endl;
       }
     }
@@ -177,6 +182,9 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     // Calling LogAndApply on the secondary
     s_ = version_set_->LogAndApply(cfds, mutable_cf_options_list, edit_lists, mu_,
                       db_directory);
+    if(s_.ok()){
+      std::cout << "[Secondary] logAndApply succeeds\n";
+    }
 
     //Drop The corresponding MemTables in the Immutable MemTable List
     //If this version edit corresponds to a flush job
@@ -234,7 +242,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
         }
       }else {
         //TODO : Commit Failed For Some reason, need to reset state
-        std::cout << s_.ToString() << std::endl;
+        std::cout << "[Secondary] Flush logAndApply Failed : " << s_.ToString() << std::endl;
       }
 
       imm->SetCommitInProgress(false);
@@ -242,7 +250,13 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       int size = static_cast<int> (imm->current()->GetMemlist().size());
       // std::cout << " memlist size : " << size << " , num_flush_not_started : " << imm->GetNumFlushNotStarted() << std::endl;
     }else { // It is either a trivial move compaction or a full compaction
-
+      if(is_trivial_move_compaction_){
+        if(!s_.ok()){
+          std::cout << "[Secondary] Trivial Move LogAndApply Failed : " << s_.ToString() << std::endl;
+        }
+      }else{ // it's a full compaction
+        std::cout << " [Secondary] Full compaction LogAndApply status :" << s_.ToString() << std::endl;
+      }
     }
 
     if(s_.ok()){
@@ -323,7 +337,6 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       //         }
       //     ],
       //     "BatchCount": 2,
-      //     "ColumnFamily": 0,
       //     "EditNumber": 2,
       //     "IsFlush": 1,
       //     "LogNumber": 11,
@@ -341,8 +354,9 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       if(j_edit.contains("PrevLogNumber")){
         edit.SetPrevLogNumber(j_edit["PrevLogNumber"].get<uint64_t>());
       }
-      assert(!j_edit["ColumnFamily"].is_null());
-      edit.SetColumnFamily(j_edit["ColumnFamily"].get<uint32_t>());
+      // assert(!j_edit["ColumnFamily"].is_null());
+      // right now, just use one column family(the default one)
+      edit.SetColumnFamily(0);
      
       for(auto& j_added_file : j_edit["AddedFiles"].get<std::vector<json>>()){
           // std::cout << j_added_file.dump(4) << std::endl;
@@ -419,7 +433,34 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
         return;
       }
       data.append(fragment.data(), fragment.size());
-      std::cout << "new file data : " << data << std::endl;
+      std::cout <<  "file " << std::to_string(sst_real)  << " new data : " << data << std::endl;
+    }
+
+    // for a new added file, take a sst slot
+    int TakeOneAvailableSstSlot(uint64_t file_number){
+      int sst_real = 0;
+      for(int i = 1; i <= db_options_->preallocated_sst_pool_size; i++){
+          if(sst_bit_map_.find(i) == sst_bit_map_.end()){
+            // if not found, means slot is not occupied
+            sst_real = i;
+            break;
+          }
+        }
+        assert(sst_real != 0);
+        sst_bit_map_.emplace(sst_real,file_number);
+        return sst_real;
+    }
+
+    // if a file gets deleted, free its slot
+    void FreeSstSlot(uint64_t file_num){
+      auto it = sst_bit_map_.begin();
+      for(; it != sst_bit_map_.end(); ++it){
+        if(it->second == file_num){
+          std::cout << "[ File Deleted ] : " <<  std::to_string(file_num) << ", free slot : " << it->first << std::endl;
+          sst_bit_map_.erase(it);
+        }
+      }
+      assert(it != sst_bit_map_.end());
     }
 
     // In a 3-node setting, if it's the second node in the chain it should also ship sst files it received from the primary/first node
@@ -435,20 +476,12 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       rocksdb::IOStatus ios;
       for(const auto& new_file: edit.GetNewFiles()){
         const rocksdb::FileMetaData& meta = new_file.second;
-        int sst_real;
-        for(int i = 1; i <= db_options_->preallocated_sst_pool_size; i++){
-          if(sst_bit_map_.find(i) == sst_bit_map_.end()){
-            // if not found, means slot is not occupied
-            sst_real = i;
-            break;
-          }
-        }
-        assert(sst_real != 0);
-        sst_bit_map_.emplace(sst_real, meta.fd.GetNumber());
+        int sst_real = TakeOneAvailableSstSlot(meta.fd.GetNumber());
         DirectReadKBytes(sst_real, 128);
         std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
                         meta.fd.GetNumber(), meta.fd.GetPathId());
         // update secondary's view of sst files
+        std::cout << " Link " << sst_real << " to " << fname << std::endl;
         ios = fs_->LinkFile(db_path_.path + "/" + std::to_string(sst_real), fname, rocksdb::IOOptions(), nullptr);
         if(!ios.ok()){
           std::cout << ios.ToString() << std::endl;
@@ -456,8 +489,8 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
         }else{
           std::cout << "[create new sst]: "  << fname << " , linking to " << sst_real << std::endl;
         }
-
-        // only needs to ship for non-tail nodes
+        
+        // tail node doesn't need to ship sst files
         if(!is_tail_){
           assert(db_options_->remote_sst_dir != "");
           std::string remote_sst_dir = db_options_->remote_sst_dir;
@@ -473,7 +506,8 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           }
         }
       }
-      // delete the ssts(the symbolic link) that get deleted in a compaction
+      
+      // delete the ssts(the symbolic link) that get deleted in a non-trivial compaction
       for(const auto& delete_file : edit.GetDeletedFiles()){
         std::string file_number = std::to_string(delete_file.second);
         std::string sst_file_name = std::string("000000").replace(6 - file_number.length(), file_number.length(), file_number) + ".sst";
@@ -485,11 +519,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           if(ios.IsIOError()){
             std::cerr << "[ File Deletion Failed ]:" <<  file_number << std::endl;
           }else if(ios.ok()){
-            auto it = sst_bit_map_.find(delete_file.second);
-            std::cout << "[ File Deleted ] : " <<  file_number << ", sst slot : " << it->first << std::endl;
-            assert(it != sst_bit_map_.end());
-            // if file gets deleted, free its occupied slot
-            sst_bit_map_.erase(it);
+            FreeSstSlot(delete_file.second);
           }
         }else {
           if (ios.IsNotFound()){
@@ -552,9 +582,11 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     /* variables below are used for Sync method */
     // if true, means version edit received indicates a flush job
     bool is_flush_ = false; 
+    // indicates if version edit corresponds to a trivial move compaction
+    bool is_trivial_move_compaction_ = false;
     // number of added sst files
     int num_of_added_files_ = 0;
-    // number of memtables get flushed in a flush job, looks like is always 2
+    // number of memtables get flushed in a flush job
     int batch_count_ = 0;
     // get the next file num of secondary, which is the maximum file number of the AddedFiles in the shipped vesion edit plus 1
     int next_file_num_ = 0;

@@ -956,6 +956,7 @@ class VersionBuilder::Rep {
 
         auto* file_meta = files_meta[file_idx].first;
         int level = files_meta[file_idx].second;
+        // std::cout << "Find Table\n";
         statuses[file_idx] = table_cache_->FindTable(
             ReadOptions(), file_options_,
             *(base_vstorage_->InternalComparator()), file_meta->fd,

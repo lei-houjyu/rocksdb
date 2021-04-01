@@ -219,6 +219,7 @@ IOStatus WritableFileWriter::Flush() {
     if (use_direct_io()) {
 #ifndef ROCKSDB_LITE
       if (pending_sync_) {
+        // std::cout << " direct write \n";
         s = WriteDirect();
       }
 #endif  // !ROCKSDB_LITE

@@ -4056,6 +4056,7 @@ Status VersionSet::ProcessManifestWrites(
         assert(!mutable_cf_options_ptrs.empty() &&
                builder_guards.size() == versions.size());
         ColumnFamilyData* cfd = versions[i]->cfd_;
+        // std::cout << "load table handlers\n";
         s = builder_guards[i]->version_builder()->LoadTableHandlers(
             cfd->internal_stats(), 1 /* max_threads */,
             true /* prefetch_index_and_filter_in_cache */,
@@ -4356,6 +4357,9 @@ Status VersionSet::LogAndApply(
       if(edit_lists.back().back()->IsFlush()){
         j_args["IsFlush"] = true;
         j_args["BatchCount"] = edit_lists.back().back()->GetBactchCount();
+      }
+      if(edit_lists.back().back()->IsTrivialMove()){
+        j_args["IsTrivial"] = true;
       }
       j_args["NextFileNum"] = next_file_number_.load();
       std::vector<std::string> version_edits;

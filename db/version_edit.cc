@@ -876,7 +876,7 @@ std::string VersionEdit::DebugJSON(int edit_num, bool hex_key) const {
     jw.EndArray();
   }
 
-  jw << "ColumnFamily" << column_family_;
+  // jw << "ColumnFamily" << column_family_;
 
   if (is_column_family_add_) {
     jw << "ColumnFamilyAdd" << column_family_name_;

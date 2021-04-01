@@ -534,6 +534,14 @@ class VersionEdit {
     return is_flush_;
   }
 
+  void MarkTrivialMove(){
+    is_trivial_move_compaction_ = true;
+  }
+
+  bool IsTrivialMove(){
+    return is_trivial_move_compaction_;
+  }
+
   int GetBactchCount(){
     return batch_count_;
   }
@@ -601,7 +609,8 @@ class VersionEdit {
 
   // Does this edit corresponds to a flush
   bool is_flush_ = false;
-
+  // does this edit corresponds to a trivial move compaction
+  bool is_trivial_move_compaction_ = false;
   // how many memtables gets flushed in a batch in a flush job
   int batch_count_ = 0;
 };

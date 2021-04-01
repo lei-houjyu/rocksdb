@@ -75,21 +75,23 @@ IOStatus CopyFile(FileSystem* fs, const std::string& source,
 IOStatus CopySstFile(FileSystem* fs, const std::string& source,
                   const std::string& destination, uint64_t size, bool use_fsync,
                   const std::shared_ptr<IOTracer>& io_tracer) {
-  FileOptions soptions;
+  FileOptions src_options;
+  FileOptions des_options;
   // use direct io
-  soptions.use_direct_writes = true;
+  src_options.use_direct_reads = true;
+  des_options.use_direct_writes = true;
   IOStatus io_s;
   std::unique_ptr<SequentialFileReader> src_reader;
   std::unique_ptr<WritableFileWriter> dest_writer;
 
   {
     std::unique_ptr<FSSequentialFile> srcfile;
-    io_s = fs->NewSequentialFile(source, soptions, &srcfile, nullptr);
+    io_s = fs->NewSequentialFile(source, src_options, &srcfile, nullptr);
     if (!io_s.ok()) {
       return io_s;
     }
     std::unique_ptr<FSWritableFile> destfile;
-    io_s = fs->NewWritableFile(destination, soptions, &destfile, nullptr);
+    io_s = fs->NewWritableFile(destination, des_options, &destfile, nullptr);
     if (!io_s.ok()) {
       return io_s;
     }
@@ -97,7 +99,6 @@ IOStatus CopySstFile(FileSystem* fs, const std::string& source,
     if (size == 0) {
       // default argument means copy everything
       io_s = fs->GetFileSize(source, IOOptions(), &size, nullptr);
-      std::cout << "sst file size : " << size << std::endl;
       if (!io_s.ok()) {
         return io_s;
       }
@@ -105,10 +106,11 @@ IOStatus CopySstFile(FileSystem* fs, const std::string& source,
     src_reader.reset(
         new SequentialFileReader(std::move(srcfile), source, io_tracer));
     dest_writer.reset(
-        new WritableFileWriter(std::move(destfile), destination, soptions));
+        new WritableFileWriter(std::move(destfile), destination, des_options));
   }
 
-  char buffer[4096];
+  std::cout << "Copy " << source << " to " << destination << " , size : " << size << std::endl;
+  char buffer[size];
   Slice slice;
   while (size > 0) {
     size_t bytes_to_read = std::min(sizeof(buffer), static_cast<size_t>(size));

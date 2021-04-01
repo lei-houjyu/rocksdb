@@ -120,11 +120,16 @@ int GetAvailableSstSlot(int sst_pool_size, int sst_num){
 }
 
 // called when a file gets deleted in a compaction to free the slot and update the bitmap
-void FreeSstSlot(int sst_num){
-    auto it = sst_bit_map.find(sst_num);
-    assert(it != sst_bit_map.end());
+void FreeSstSlot(uint64_t sst_num){
+  auto it = sst_bit_map.begin();
+  for(; it != sst_bit_map.end(); it++){
+    if(it->second == sst_num){
     // if file gets deleted, free its occupied slot
-    sst_bit_map.erase(it);
+      sst_bit_map.erase(it);
+      break;
+    }
+  }
+  assert(it != sst_bit_map.end());
 }
 
 int copy_sst(const std::string& from, const std::string& to, size_t size){

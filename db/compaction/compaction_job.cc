@@ -1524,6 +1524,10 @@ Status CompactionJob::InstallCompactionResults(
   if(db_options_.is_rubble && db_options_.is_primary){
     assert(db_options_.remote_sst_dir != "");
     IOStatus ios;
+    std::string remote_sst_dir = db_options_.remote_sst_dir;
+    if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
+      remote_sst_dir += "/";
+    }
     // std::unordered_map<int, uint64_t>* map = db_options_.sst_bit_map.get();
     for (const auto& sub_compact : compact_->sub_compact_states) {
       for (const auto& out : sub_compact.outputs) {
@@ -1532,8 +1536,7 @@ Status CompactionJob::InstallCompactionResults(
                         out.meta.fd.GetNumber(), out.meta.fd.GetPathId());
 
         int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, out.meta.fd.GetNumber());
-
-        ios = CopySstFile(fs_.get(), fname, db_options_.remote_sst_dir + "/" + std::to_string(sst_real), 0,  false);
+        ios = CopySstFile(fs_.get(), fname, remote_sst_dir  + std::to_string(sst_real), 0,  false);
         if (!ios.ok()){
           fprintf(stderr, "[ File Ship Failed ] : %lu, status : %s \n", out.meta.fd.GetNumber(), ios.ToString().c_str());
         }else {

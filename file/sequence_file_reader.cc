@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <mutex>
+#include <iostream>
 
 #include "file/read_write_util.h"
 #include "monitoring/histogram.h"
@@ -36,6 +37,7 @@ Status SequentialFileReader::Read(size_t n, Slice* result, char* scratch) {
     buf.Alignment(alignment);
     buf.AllocateNewBuffer(size);
     Slice tmp;
+    //std::cout << "direct read \n";
     s = file_->PositionedRead(aligned_offset, size, IOOptions(), &tmp,
                               buf.BufferStart(), nullptr);
     if (s.ok() && offset_advance < tmp.size()) {

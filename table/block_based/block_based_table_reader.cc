@@ -633,6 +633,7 @@ Status BlockBasedTable::Open(
   IOOptions opts;
   s = PrepareIOFromReadOptions(ro, file->env(), opts);
   if (s.ok()) {
+    //std::cout << " BlockBasedTable::Open " << std::endl;
     s = ReadFooterFromFile(opts, file.get(), prefetch_buffer.get(), file_size,
                            &footer, kBlockBasedTableMagicNumber);
   }
