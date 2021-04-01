@@ -458,6 +458,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
         if(it->second == file_num){
           std::cout << "[ File Deleted ] : " <<  std::to_string(file_num) << ", free slot : " << it->first << std::endl;
           sst_bit_map_.erase(it);
+          break;
         }
       }
       assert(it != sst_bit_map_.end());
@@ -477,7 +478,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       for(const auto& new_file: edit.GetNewFiles()){
         const rocksdb::FileMetaData& meta = new_file.second;
         int sst_real = TakeOneAvailableSstSlot(meta.fd.GetNumber());
-        DirectReadKBytes(sst_real, 128);
+        DirectReadKBytes(sst_real, 32);
         std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
                         meta.fd.GetNumber(), meta.fd.GetPathId());
         // update secondary's view of sst files
@@ -876,7 +877,7 @@ class ServerImpl final {
         }
         auto new_thread =  new std::thread(&ServerImpl::HandleRpcs, this, _cq_idx);
         map[new_thread->get_id()] = i;
-        std::cout << i << " th thread spawned \n";
+        std::cout <<  std::setw(2) << i << " th thread spawned \n";
         _vec_threads.emplace_back(new_thread);
     }
 

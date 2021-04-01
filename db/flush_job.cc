@@ -472,16 +472,15 @@ Status FlushJob::WriteLevel0Table() {
 
       // write_L0_Table_counter++;
       int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size,meta_.fd.GetNumber());
-      std::cout << "Found an available sst slot : " << sst_real << std::endl;
+      std::cout << "Found an available sst slot " << sst_real << " for " << std::to_string(meta_.fd.GetNumber()) << std::endl;
       std::string sst_number = std::to_string(sst_real);
 
       if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
         remote_sst_dir += "/";
       }
-      std::cout << " File size : " << meta_.fd.GetFileSize() << std::endl;
-      // int ret = copy_sst(fname, remote_sst_dir + std::to_string(sst_real), (size_t)meta_.fd.GetFileSize());
-      ios = CopySstFile(db_options_.fs.get(), fname, remote_sst_dir + sst_number, 0,  false);
-      if (!ios.ok()){
+      int ret = copy_sst(fname, remote_sst_dir + std::to_string(sst_real), static_cast<size_t>(meta_.fd.GetFileSize()));
+      // ios = CopySstFile(db_options_.fs.get(), fname, remote_sst_dir + sst_number, 0,  false);
+      if (ret){
         fprintf(stderr, "[ File Shipping Failed ] : %lu\n", meta_.fd.GetNumber());
       }else {
         fprintf(stdout, "[ File Shipped] : %lu , sst slot : %u\n", meta_.fd.GetNumber(), sst_real);

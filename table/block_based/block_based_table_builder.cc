@@ -1640,7 +1640,7 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
     r->SetIOStatus(ios);
     r->SetStatus(ios);
   }
-  std::cout << "[WriteFooter] offset: r->get_offset() " << r->get_offset() << "\n";
+  // std::cout << "[WriteFooter] offset: r->get_offset() " << r->get_offset() << "\n";
 }
 
 void BlockBasedTableBuilder::EnterUnbuffered() {

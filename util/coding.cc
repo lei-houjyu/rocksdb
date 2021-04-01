@@ -125,6 +125,7 @@ void FreeSstSlot(uint64_t sst_num){
   for(; it != sst_bit_map.end(); it++){
     if(it->second == sst_num){
     // if file gets deleted, free its occupied slot
+     std::cout << "[File Deleted ] : " << std::to_string(sst_num) << " Free Slot : " << it->first << std::endl;
       sst_bit_map.erase(it);
       break;
     }

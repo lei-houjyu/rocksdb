@@ -4337,8 +4337,11 @@ Status VersionSet::LogAndApply(
   // RUBBLE: trigger RPC calls to downstream node to sync RocksDB states.
   if(db_options_->is_rubble && db_options_->is_primary){
       log_and_apply_counter++;
+      if(edit_lists.back().back()->IsTrivialMove()){
+        std::cout << "Trivial Move ";
+      }
 
-      std::cout << "[Primary] calling syncClient->Sync [" << log_and_apply_counter << "] times to " << db_options_->target_address << "\n"; 
+      std::cout << "[Primary] calling syncClient->Sync [" << log_and_apply_counter << "] times \n"; 
       // std::cout << "VersionStorageInfo->LevelSummary : ";
       // VersionStorageInfo::LevelSummaryStorage tmp;
 
