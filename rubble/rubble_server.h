@@ -627,13 +627,30 @@ class CallDataBidi : CallDataBase {
         start_time_ = end_time_;
       }
       
-      op_counter_++;
       // std::cout << "handling a " << request_.type() <<" " <<  request_.id() << " op...\n";
       reply_.set_id(request_.id());
+
+      int batch_size = 4;
+      op_counter_ += batch_size;
+      std::string key_batch = request_.key();
+      // std::cout << key_batch << "\n";
+      std::string delimiter = ";";
+      size_t pre, cur = 0;
+      std::string cur_key;
+      std::vector<std::string> keys(batch_size);
+      while ((cur = key_batch.find(delimiter, pre)) != std::string::npos) {
+        cur_key = key_batch.substr(pre, cur - pre);
+        keys.push_back(cur_key);
+        pre = cur + 1;
+      }
+
       switch (request_.type())
       {
       case Op::GET:
-        s_ = db_->Get(rocksdb::ReadOptions(), request_.key(), &value);
+        
+        for (int i = 0; i < batch_size; i++) {
+          s_ = db_->Get(rocksdb::ReadOptions(), keys[i], &value);
+        }
         reply_.set_key(request_.key());
         reply_.set_type(OpReply::GET);
         reply_.set_status(s_.ToString());
@@ -646,9 +663,12 @@ class CallDataBidi : CallDataBase {
         break;
 
       case Op::PUT:
-        s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
+        for (int i = 0; i < batch_size; i++) {
+          s_ = db_->Put(rocksdb::WriteOptions(), keys[i], request_.value());
+          assert(s_.ok());
+        }
         // std::cout << "Put ok\n";
-        assert(s_.ok());
+        
         if(db_options_->is_tail){
           reply_.set_type(OpReply::PUT);
           reply_.set_key(request_.key());
