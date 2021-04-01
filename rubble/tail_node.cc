@@ -12,8 +12,8 @@ int main(int argc, char** argv) {
   //std::string target_addr = std::atoi(ParseCmdPara(argv[2],"--target"));
   //server is running on localhost:50049;
   const std::string target_addr = argv[1];
-  const std::string server_addr = "localhost:50049"; 
-  rocksdb::DB* db = GetDBInstance("/tmp/rubble_tail", "/mnt/sdb/archive_dbs/tail/sst_dir","", target_addr, true, false, true);
+  const std::string server_addr = "128.110.153.146:50049"; 
+  rocksdb::DB* db = GetDBInstance("/tmp/rubble_tail", "/mnt/sdb/archive_dbs/tail/sst_dir","", target_addr, false, false, true);
 
   RunServer(db, server_addr /*, thread_num*/ );
   return 0;

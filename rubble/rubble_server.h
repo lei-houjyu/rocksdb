@@ -524,7 +524,7 @@ class CallDataBidi : CallDataBase {
 
     switch (status_) {
     case BidiStatus::READ:
-        std::cout << "I'm at READ state ! \n";
+        // std::cout << "I'm at READ state ! \n";
         //Meaning client said it wants to end the stream either by a 'writedone' or 'finish' call.
         if (!ok) {
             std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " CQ returned false." << std::endl;
@@ -544,18 +544,19 @@ class CallDataBidi : CallDataBase {
         /* chain replication */
         // Forward the request to the downstream node in the chain if it's not a tail node
         if(!db_options_->is_tail){
-          std::cout << "Forward an op \n";
+          // std::cout << "Forward an op " << request_.key() << "\n";
           forwarder_->Forward(request_);
+          // std::cout << "Complete forwarding an op " << request_.key() << "\n";
         }else {
           // // tail node should be responsible for sending the reply back to replicator
           // // use the sync stream to write the reply back
           if (reply_client_ == nullptr) {
-            std::cout << "init the reply client" << "\n";
+            // std::cout << "init the reply client" << "\n";
             reply_client_ = std::make_shared<ReplyClient>(grpc::CreateChannel(
             db_options_->target_address, grpc::InsecureChannelCredentials()));
           }
           reply_client_->SendReply(reply_);
-          std::cout << "Reply for key: " << reply_.key() << " through sendReply\n";
+          // std::cout << "Reply for key: " << reply_.key() << " through sendReply\n";
           // rw_.Write(reply_, (void*)this); 
           // status_ = BidiStatus::WRITE;
         }
@@ -627,7 +628,7 @@ class CallDataBidi : CallDataBase {
       }
       
       op_counter_++;
-      std::cout << "handling a " << request_.type() <<" " <<  request_.id() << " op...\n";
+      // std::cout << "handling a " << request_.type() <<" " <<  request_.id() << " op...\n";
       reply_.set_id(request_.id());
       switch (request_.type())
       {
@@ -646,13 +647,13 @@ class CallDataBidi : CallDataBase {
 
       case Op::PUT:
         s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
-        std::cout << "Put ok\n";
+        // std::cout << "Put ok\n";
         assert(s_.ok());
         if(db_options_->is_tail){
           reply_.set_type(OpReply::PUT);
           reply_.set_key(request_.key());
           if(s_.ok()){
-            std::cout << "Put : (" << request_.key() /* << " ," << request_.value() */ << ")\n"; 
+            // std::cout << "Put : (" << request_.key() /* << " ," << request_.value() */ << ")\n"; 
             reply_.set_ok(true);
           }else{
             std::cout << "Put Failed : " << s_.ToString() << std::endl;
@@ -770,7 +771,7 @@ class ServerImpl final {
   rocksdb::DB* db_;
 };
 
-void RunServer(rocksdb::DB* db, const std::string& server_addr, int thread_num = 1) {
+void RunServer(rocksdb::DB* db, const std::string& server_addr, int thread_num = 16) {
   
   SyncServiceImpl service(db);
   g_thread_num = thread_num;

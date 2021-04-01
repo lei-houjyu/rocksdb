@@ -210,7 +210,7 @@ class KvStoreClient{
       while (cq_.Next(&got_tag, &ok)) {
         // Verify that the request was completed successfully. Note that "ok"
         // corresponds solely to the request for updates introduced by Finish().
-        GPR_ASSERT(ok);
+        // GPR_ASSERT(ok);
 
         switch (static_cast<Type>(reinterpret_cast<long>(got_tag))) {
           case Type::READ:
