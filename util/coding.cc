@@ -15,6 +15,14 @@
 #include <unordered_map>
 #include <iostream>
 
+#include <stdio.h> 
+#include <unistd.h> 
+#include <stdlib.h>
+#include <sys/file.h>
+#include <sys/types.h>
+#include <sys/stat.h> 
+#include <string.h>
+
 namespace ROCKSDB_NAMESPACE {
 
 // conversion' conversion from 'type1' to 'type2', possible loss of data
@@ -117,6 +125,47 @@ void FreeSstSlot(int sst_num){
     assert(it != sst_bit_map.end());
     // if file gets deleted, free its occupied slot
     sst_bit_map.erase(it);
+}
+
+int copy_sst(const std::string& from, const std::string& to, size_t size){
+	int fd;
+  char *buf = NULL;
+	// 1. read primary's sst to buf
+  int ret = posix_memalign((void **)&buf, 512, size);
+  if (ret) {
+    perror("posix_memalign failed");
+    exit(1);
+  }
+  memset(buf, 0, size);
+ 
+  fd = open(from.c_str(), O_RDONLY | O_DIRECT, 0755);
+  if (fd < 0) {
+      perror("open sst failed");
+      exit(1);
+  }
+ 
+	ret = read(fd, buf, size);
+	if (ret < 0) {
+		perror("read sst failed");
+	}
+  close(fd);
+     
+  // 2. write buf to secondary's sst   
+  printf("write to %s\n", to.c_str());
+  fd = open(to.c_str(), O_WRONLY | O_DIRECT | O_CREAT, 0755);
+  if (fd < 0){
+      perror("open sst failed");
+      exit(1);
+  }
+ 
+	ret = write(fd, buf, size);
+	if (ret < 0) {
+		perror("write sst failed");
+	}
+
+  close(fd);
+  free(buf);
+	return 0;
 }
 
 }  // namespace ROCKSDB_NAMESPACE

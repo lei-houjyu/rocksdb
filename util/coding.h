@@ -30,6 +30,7 @@
 
 namespace ROCKSDB_NAMESPACE {
 
+int copy_sst(const std::string& from, const std::string& to, size_t size);
 extern int GetAvailableSstSlot(int sst_pool_size, int sst_num);
 extern void FreeSstSlot(int sst_num);
 

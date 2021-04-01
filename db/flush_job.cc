@@ -474,9 +474,13 @@ Status FlushJob::WriteLevel0Table() {
       int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size,meta_.fd.GetNumber());
       std::cout << "Found an available sst slot : " << sst_real << std::endl;
       std::string sst_number = std::to_string(sst_real);
-     
-      ios = CopySstFile(db_options_.fs.get(), fname, remote_sst_dir + "/" + sst_number, 0,  false);
-      if (!ios.ok()){
+
+      if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
+        remote_sst_dir += "/";
+      }
+      int ret = copy_sst(fname, remote_sst_dir + std::to_string(sst_real), (size_t)meta_.fd.GetFileSize());
+      // ios = CopySstFile(db_options_.fs.get(), fname, remote_sst_dir + sst_number, 0,  false);
+      if (ret){
         fprintf(stderr, "[ File Shipping Failed ] : %lu\n", meta_.fd.GetNumber());
       }else {
         fprintf(stdout, "[ File Shipped] : %lu , sst slot : %u\n", meta_.fd.GetNumber(), sst_real);
@@ -484,7 +488,7 @@ Status FlushJob::WriteLevel0Table() {
         FileOptions soptions;
         // soptions.use_direct_reads = true;
         std::unique_ptr<FSSequentialFile> file;
-        ios = db_options_.fs->NewSequentialFile(remote_sst_dir + "/" + sst_number, soptions, &file, nullptr);
+        ios = db_options_.fs->NewSequentialFile(remote_sst_dir + sst_number, soptions, &file, nullptr);
         if (!ios.ok()) {
           std::cout << "NewSequentialFile failed : " << ios.ToString() << std::endl;
         }
