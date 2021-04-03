@@ -1,0 +1,198 @@
+-------- Flush Job [3] : WriteLevel0Table [8] -------------- 
+Found an available sst slot 1 for 8
+Memalign time : 12 microsecs
+Memset time : 3090 microsecs
+open file time : 14 microsecs
+read file time : 2999 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/1
+open remote file time : 21 microsecs
+write file time : 6705 microsecs
+[ File Shipped] : 8, copy time : 13137 microseconds
+[Primary] calling syncClient->Sync [1] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [5] : WriteLevel0Table [12] -------------- 
+Found an available sst slot 2 for 12
+Memalign time : 13 microsecs
+Memset time : 2427 microsecs
+open file time : 22 microsecs
+read file time : 3138 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/2
+open remote file time : 25 microsecs
+write file time : 6431 microsecs
+[ File Shipped] : 12, copy time : 12100 microseconds
+[Primary] calling syncClient->Sync [2] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [3] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [8] : WriteLevel0Table [15] -------------- 
+Found an available sst slot 3 for 15
+Memalign time : 15 microsecs
+Memset time : 1944 microsecs
+open file time : 17 microsecs
+read file time : 3009 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/3
+open remote file time : 27 microsecs
+write file time : 6744 microsecs
+[ File Shipped] : 15, copy time : 11769 microseconds
+[Primary] calling syncClient->Sync [4] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [5] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [11] : WriteLevel0Table [18] -------------- 
+Found an available sst slot 4 for 18
+Memalign time : 26 microsecs
+Memset time : 4923 microsecs
+open file time : 21 microsecs
+read file time : 3062 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/4
+open remote file time : 21 microsecs
+write file time : 6293 microsecs
+[ File Shipped] : 18, copy time : 14365 microseconds
+[Primary] calling syncClient->Sync [6] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [7] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [14] : WriteLevel0Table [21] -------------- 
+Found an available sst slot 5 for 21
+Memalign time : 19 microsecs
+Memset time : 4555 microsecs
+open file time : 20 microsecs
+read file time : 3098 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/5
+open remote file time : 45 microsecs
+write file time : 21127 microsecs
+[ File Shipped] : 21, copy time : 28902 microseconds
+[Primary] calling syncClient->Sync [8] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [9] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [10] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [18] : WriteLevel0Table [24] -------------- 
+Found an available sst slot 6 for 24
+Memalign time : 20 microsecs
+Memset time : 5319 microsecs
+open file time : 23 microsecs
+read file time : 3073 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/6
+open remote file time : 40 microsecs
+write file time : 6153 microsecs
+[ File Shipped] : 24, copy time : 14649 microseconds
+[Primary] calling syncClient->Sync [11] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [12] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [13] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [22] : WriteLevel0Table [27] -------------- 
+Found an available sst slot 7 for 27
+Memalign time : 17 microsecs
+Memset time : 4271 microsecs
+open file time : 18 microsecs
+read file time : 3068 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/7
+open remote file time : 42 microsecs
+write file time : 6553 microsecs
+[ File Shipped] : 27, copy time : 14008 microseconds
+[Primary] calling syncClient->Sync [14] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [15] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [16] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [26] : WriteLevel0Table [30] -------------- 
+Found an available sst slot 8 for 30
+Memalign time : 28 microsecs
+Memset time : 7038 microsecs
+open file time : 29 microsecs
+read file time : 3041 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/8
+open remote file time : 22 microsecs
+write file time : 6592 microsecs
+[ File Shipped] : 30, copy time : 16789 microseconds
+[Primary] calling syncClient->Sync [17] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [18] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [19] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [30] : WriteLevel0Table [33] -------------- 
+Found an available sst slot 9 for 33
+Memalign time : 29 microsecs
+Memset time : 5941 microsecs
+open file time : 21 microsecs
+read file time : 3023 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/9
+open remote file time : 33 microsecs
+write file time : 6754 microsecs
+[ File Shipped] : 33, copy time : 15840 microseconds
+[Primary] calling syncClient->Sync [20] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [21] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [22] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [34] : WriteLevel0Table [36] -------------- 
+Found an available sst slot 10 for 36
+Memalign time : 22 microsecs
+Memset time : 4218 microsecs
+open file time : 20 microsecs
+read file time : 2972 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/10
+open remote file time : 37 microsecs
+write file time : 6756 microsecs
+[ File Shipped] : 36, copy time : 14045 microseconds
+[Primary] calling syncClient->Sync [23] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [24] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [25] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [38] : WriteLevel0Table [39] -------------- 
+Found an available sst slot 11 for 39
+Memalign time : 18 microsecs
+Memset time : 3912 microsecs
+open file time : 17 microsecs
+read file time : 3007 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/11
+open remote file time : 27 microsecs
+write file time : 6487 microsecs
+[ File Shipped] : 39, copy time : 13505 microseconds
+[Primary] calling syncClient->Sync [26] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [27] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [28] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [42] : WriteLevel0Table [42] -------------- 
+Found an available sst slot 12 for 42
+Memalign time : 15 microsecs
+Memset time : 3016 microsecs
+open file time : 13 microsecs
+read file time : 3065 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/12
+open remote file time : 42 microsecs
+write file time : 19751 microsecs
+[ File Shipped] : 42, copy time : 25920 microseconds
+[Primary] calling syncClient->Sync [29] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [30] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [31] times 
+[ Reply Status ]: Succeeds
+-------- Flush Job [46] : WriteLevel0Table [45] -------------- 
+Found an available sst slot 13 for 45
+Memalign time : 23 microsecs
+Memset time : 4452 microsecs
+open file time : 20 microsecs
+read file time : 3000 microsecs
+write to /mnt/remote/archive_dbs/sst_dir/13
+open remote file time : 20 microsecs
+write file time : 11638 microsecs
+[ File Shipped] : 45, copy time : 19190 microseconds
+[Primary] calling syncClient->Sync [32] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [33] times 
+[ Reply Status ]: Succeeds
+Trivial Move [Primary] calling syncClient->Sync [34] times 
+[ Reply Status ]: Succeeds
