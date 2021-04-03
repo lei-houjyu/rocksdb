@@ -12,6 +12,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <algorithm>
+#include <chrono>
+#include <iostream>
 #if defined(OS_LINUX)
 #include <linux/fs.h>
 #ifndef FALLOC_FL_KEEP_SIZE
@@ -37,6 +39,7 @@
 #include "util/autovector.h"
 #include "util/coding.h"
 #include "util/string_util.h"
+#include "options/db_options.h"
 
 #if defined(OS_LINUX) && !defined(F_SET_RW_HINT)
 #define F_LINUX_SPECIFIC_BASE 1024
@@ -491,6 +494,7 @@ size_t PosixHelper::GetLogicalBlockSizeOfFd(int fd) {
   if (!device_dir.empty() && device_dir.back() == '/') {
     device_dir.pop_back();
   }
+  // std::cout << "device dir : " << device_dir << std::endl;
   // NOTE: sda3 and nvme0n1p1 do not have a `queue/` subdir, only the parent sda
   // and nvme0n1 have it.
   // $ ls -al '/sys/dev/block/8:3'
@@ -1151,6 +1155,12 @@ PosixWritableFile::PosixWritableFile(const std::string& fname, int fd,
   assert(!options.use_mmap_writes);
 }
 
+void PosixWritableFile::SetRemoteFileInfo(const std::string& r_fname, 
+                                    const ImmutableDBOptions* db_options){
+  r_fname_ = r_fname;
+  db_options_ = db_options;
+}
+
 PosixWritableFile::~PosixWritableFile() {
   if (fd_ >= 0) {
     IOStatus s = PosixWritableFile::Close(IOOptions(), nullptr);
@@ -1166,6 +1176,35 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
   }
   const char* src = data.data();
   size_t nbytes = data.size();
+
+  // rubble : also write sst to remote sst dir using the same buffer when we write to the local sst dir
+  if(db_options_ != nullptr && db_options_->is_rubble && db_options_->is_primary){
+   // basic workflow is as follows : block contents(which are 4KB chunks) are continously copied into the WritableFileWriter.buf_
+   // and when the buffer is full, A WritableFileWriter::Flush call is triggered, then it calls WriteBuffered since 
+   // DirectIO is not enabled for rocksdb, then a FSWritable::Append is called, which in our case is PosixWritableFile::Append
+   // for rubble mode, the buffer size allocated is set to the sst file size,  
+   // so basically we're only inside this function call when all block contents get copied and the buffer is full 
+   // so we just write the sst to the remote dir as well to the local dir using the same buf
+    assert(IsSectorAligned(data.size(), GetRequiredBufferAlignment()));
+    assert(IsSectorAligned(data.data(), GetRequiredBufferAlignment()));
+    auto start_time = std::chrono::high_resolution_clock::now();
+    assert(r_fname_ != "");
+    int r_fd;
+    do {
+      r_fd = open(r_fname_.c_str(), O_WRONLY | O_DIRECT | O_CREAT, 0755);
+    } while (r_fd < 0 && errno == EINTR);
+    if (r_fd < 0) {
+      return IOError("While open a file for appending", r_fname_ , errno);
+    }
+    std::cout << "data : " << Slice(data.data(), 32).ToString()  << "size : " << nbytes << std::endl;
+    ssize_t done = write(r_fd, src, nbytes);
+    if(done < 0){
+      return IOError("while appending to file" , r_fname_, errno);
+    }
+    close(r_fd);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::cout << "write " << data.size() << " bytes to "  <<  r_fname_ << ", latency : "  <<  std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count()  << " micros\n";
+  }
 
   if (!PosixWrite(fd_, src, nbytes)) {
     return IOError("While appending to file", filename_, errno);

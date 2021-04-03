@@ -403,7 +403,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           edit.DeleteFile(j_delete_file["Level"].get<int>(), j_delete_file["FileNumber"].get<uint64_t>());
         }
       }
-      return edit;
+      return std::move(edit);
     }
 
 
@@ -679,7 +679,6 @@ class CallDataBidi : CallDataBase {
 
         // if(request_.type() == Op::GET && db_options_->is_tail){
         //   // if it's a Get Op to the tail node, should return reply back to the client
-        //   // alarm_.Set(cq_, gpr_now(gpr_clock_type::GPR_CLOCK_REALTIME), this);
         //   rw_.Write(reply_, (void*)this); 
         //   status_ = BidiStatus::WRITE;
         // }else {

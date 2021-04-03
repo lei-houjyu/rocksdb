@@ -38,6 +38,7 @@
 #include "table/internal_iterator.h"
 #include "test_util/sync_point.h"
 #include "util/stop_watch.h"
+#include "env/io_posix.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -113,6 +114,8 @@ Status BuildTable(
 
   std::string fname = TableFileName(ioptions.cf_paths, meta->fd.GetNumber(),
                                     meta->fd.GetPathId());
+  fprintf(stdout , "-------- Flush Job [%d] : WriteLevel0Table [%lu] -------------- \n", job_id, meta->fd.GetNumber());
+  auto db_options = versions->db_options();
   std::vector<std::string> blob_file_paths;
   std::string file_checksum = kUnknownFileChecksum;
   std::string file_checksum_func_name = kUnknownFileChecksumFuncName;
@@ -136,6 +139,12 @@ Status BuildTable(
       TEST_SYNC_POINT_CALLBACK("BuildTable:create_file", &use_direct_writes);
 #endif  // !NDEBUG
       IOStatus io_s = NewWritableFile(fs, fname, &file, file_options);
+      if(db_options->is_primary && db_options->is_rubble){
+        int sst_real = GetAvailableSstSlot(db_options->preallocated_sst_pool_size, meta->fd.GetNumber());
+        std::string r_fname = db_options->remote_sst_dir + std::to_string(sst_real);
+        //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
+        ((PosixWritableFile*)(file.get()))->SetRemoteFileInfo(r_fname, db_options);
+      }
       assert(s.ok());
       s = io_s;
       if (io_status->ok()) {
@@ -155,6 +164,17 @@ Status BuildTable(
           std::move(file), fname, file_options, env, io_tracer,
           ioptions.statistics, ioptions.listeners,
           ioptions.file_checksum_gen_factory));
+
+      if(db_options->is_rubble && db_options->is_primary){
+        // allocate an aligned buffer whose size is equal to the sst file size 
+        // so we can accumulate small block chunks into this buffer 
+        // and we can write the sst to the local sst_dir and remote sst_dir using the same buffer when the buffer is full
+        // basicall this avoids to read the table content into a buffer again since the content is already in the buffer
+        // see also PosixWritableFile::Append
+        size_t buffer_size = mutable_cf_options.write_buffer_size + (1<<20);
+        file_writer->SetBufferAlignment(file_writer->writable_file()->GetRequiredBufferAlignment());
+        file_writer->AllocateNewBuffer(buffer_size);
+      }   
 
       builder = NewTableBuilder(
           ioptions, mutable_cf_options, internal_comparator,

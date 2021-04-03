@@ -217,6 +217,8 @@ class PosixWritableFile : public FSWritableFile {
   const std::string filename_;
   const bool use_direct_io_;
   int fd_;
+  std::string r_fname_;
+  const ImmutableDBOptions* db_options_ = nullptr;
   uint64_t filesize_;
   size_t logical_sector_size_;
 #ifdef ROCKSDB_FALLOCATE_PRESENT
@@ -234,6 +236,9 @@ class PosixWritableFile : public FSWritableFile {
                              size_t logical_block_size,
                              const EnvOptions& options);
   virtual ~PosixWritableFile();
+
+  virtual void SetRemoteFileInfo(const std::string& r_fname, 
+                                const ImmutableDBOptions* db_options) ;
 
   // Need to implement this so the file is truncated correctly
   // with direct I/O

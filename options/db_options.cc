@@ -590,12 +590,15 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       preallocated_sst_pool_size(options.preallocated_sst_pool_size)
        {
          // all nodes except tail needs to do Sync rpc and forward operations to target_address
-         if(is_rubble && !is_tail){
+        if(is_rubble && !is_tail){
           if(target_address != ""){
             sync_client = std::make_shared<SyncClient>(grpc::CreateChannel(
               target_address, grpc::InsecureChannelCredentials()));
           }
-         }
+          if(remote_sst_dir.back() != '/'){
+            remote_sst_dir.append("/");
+          }
+        }
 }
 
 void ImmutableDBOptions::Dump(Logger* log) const {

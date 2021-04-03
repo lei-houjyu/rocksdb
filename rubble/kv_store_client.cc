@@ -5,38 +5,11 @@
 using namespace std;
 using std::chrono::high_resolution_clock;
 
-int numDigits(int x)
-{
-    if (x >= 10000) {
-        if (x >= 10000000) {
-            if (x >= 100000000) {
-                if (x >= 1000000000)
-                    return 10;
-                return 9;
-            }
-            return 8;
-        }
-        if (x >= 100000) {
-            if (x >= 1000000)
-                return 7;
-            return 6;
-        }
-        return 5;
-    }
-    if (x >= 100) {
-        if (x >= 1000)
-            return 4;
-        return 3;
-    }
-    if (x >= 10)
-        return 2;
-    return 1;
-}
-
 class AsyncKvStoreClient{
     public:
-      AsyncKvStoreClient(std::shared_ptr<KvStoreClient> client)
-        :client_(client){
+      AsyncKvStoreClient(std::shared_ptr<KvStoreClient> client, size_t kv_size)
+        :client_(client), kv_size_(kv_size){
+          prefix_len_ = std::string("key").length();
         }
 
       ~AsyncKvStoreClient(){
@@ -53,42 +26,18 @@ class AsyncKvStoreClient{
           break;
         }
         num_of_kvs = stoi(input);
-
-        int num_of_digits = numDigits(num_of_kvs);
-        int current_num_of_digits = 0;
-        string prefix;
-        Op request;
-        while(current_num_of_digits < num_of_digits - 1){
-          prefix = string(7 - current_num_of_digits , '0');
-          int start = 1;
-          for(int i = 0 ; i < current_num_of_digits; i++){
-            start *= 10;
-          }
-          int end = start*10;
-      
-          for(int i = start ; i < end ; i++){
-            op_counter_++;
-            request.set_id(op_counter_.load());
-            request.set_type(Op::PUT);
-            request.set_key("key" + prefix + to_string(i));
-            request.set_value("val" + prefix + to_string(i));
-            client_->AddRequests(request);
-          }
-          current_num_of_digits++;
-        }
-
-        prefix = string(8 - num_of_digits, '0');
-        int start = 1;
-        for(int i = 0 ; i < num_of_digits - 1; i++){
-          start *= 10;
-        }
-
-        for(int i = start; i <= num_of_kvs; i++){
+        for(int i = 0; i < num_of_kvs; i++){
+          std::string kv_num = std::to_string(op_counter_.load());
+          // kv_num.insert(0, kv_size_ - kv_num.length() - std::string("key").length(), '0');
+          Op request;
           op_counter_++;
           request.set_id(op_counter_.load());
           request.set_type(Op::PUT);
-          request.set_key("key" + prefix + to_string(i));
-          request.set_value("val" + prefix + to_string(i));
+          std::string key("key" + std::string(kv_size_ - prefix_len_ - kv_num.length(), '0') + kv_num);
+          std::string val("val" + std::string(kv_size_ - prefix_len_ - kv_num.length(), '0') + kv_num);
+          // std::cout << "kv pair size : " << key.size() + key.size() << std::endl;
+          request.set_key(std::move(key));
+          request.set_value(std::move(val));
           client_->AddRequests(request);
         }
         client_->SetStartTime(high_resolution_clock::now());
@@ -99,18 +48,18 @@ class AsyncKvStoreClient{
     void GetByKey(){
       while(true){
         cout << "Enter the key of kv pair you want to get or Enter \"quit\" to go back to options \n:";
-        string key;
-        cin >> key;
-        if(key == "quit"){
+        string input;
+        cin >> input;
+        if(input == "quit"){
           break;
         }
-        int num_len = key.length();
-        key = "key" + string("00000000").replace(8 - num_len, num_len, key);
+        input.insert(0, kv_size_ - input.length() - prefix_len_, '0');
+        input.insert(0, "key");
         Op request;
         op_counter_++;
         request.set_id(op_counter_.load());
         request.set_type(Op::GET);
-        request.set_key(key);
+        request.set_key(std::move(input));
         client_->AddRequests(request);
         client_->AsyncDoOps();
       }
@@ -136,7 +85,8 @@ class AsyncKvStoreClient{
           op_counter_++;
           request.set_id(op_counter_.load());
           request.set_type(Op::GET);
-          request.set_key("key" + string("00000000").replace(8 - num_len, num_len, to_string(i)));
+          std::string key = "key" + std::string(kv_size_ - std::string("key").length() - std::to_string(i).length(),'0') + std::to_string(i);
+          request.set_key(std::move(key));
           client_->AddRequests(request);
         }
         client_->SetStartTime(high_resolution_clock::now());
@@ -147,6 +97,9 @@ class AsyncKvStoreClient{
     private:
       std::shared_ptr<KvStoreClient> client_;
       atomic<uint64_t> op_counter_{0};
+      //size of a key and value
+      size_t kv_size_;
+      int prefix_len_;
 };
 
 
@@ -162,9 +115,8 @@ int main(int argc, char** argv){
  
   client1->SetKvClient(true);
 
-  AsyncKvStoreClient async_client(client1);
-  int size_of_kv_pairs = sizeof("key00000000") + sizeof("val00000000");
-  cout << "size of kv pairs : " << size_of_kv_pairs << "bytes" << endl;
+  AsyncKvStoreClient async_client(client1, 512);
+  cout << "size of kv pairs : " << 1024 << " bytes" << endl;
 
   int input;
   while (true)

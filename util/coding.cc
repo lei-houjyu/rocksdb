@@ -14,6 +14,7 @@
 #include "rocksdb/slice_transform.h"
 #include <unordered_map>
 #include <iostream>
+#include <chrono>
 
 #include <stdio.h> 
 #include <unistd.h> 
@@ -137,20 +138,28 @@ int copy_sst(const std::string& from, const std::string& to, size_t size){
 	int fd;
   char *buf = NULL;
 	// 1. read primary's sst to buf
+  auto time_point_1 = std::chrono::high_resolution_clock::now();
   int ret = posix_memalign((void **)&buf, 512, size);
+  auto time_point_2 = std::chrono::high_resolution_clock::now();
+  std::cout << "Memalign time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_2 - time_point_1).count() << " microsecs\n";
   if (ret) {
     perror("posix_memalign failed");
     exit(1);
   }
   memset(buf, 0, size);
- 
+  auto time_point_3 = std::chrono::high_resolution_clock::now();
+  std::cout << "Memset time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_3 - time_point_2).count() << " microsecs\n";
   fd = open(from.c_str(), O_RDONLY | O_DIRECT, 0755);
   if (fd < 0) {
       perror("open sst failed");
       exit(1);
   }
+  auto time_point_4 = std::chrono::high_resolution_clock::now();
+  std::cout << "open file time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_4 - time_point_3).count() << " microsecs\n";
  
 	ret = read(fd, buf, size);
+  auto time_point_5 = std::chrono::high_resolution_clock::now();
+  std::cout << "read file time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_5 - time_point_4).count() << " microsecs\n";
 	if (ret < 0) {
 		perror("read sst failed");
 	}
@@ -163,8 +172,12 @@ int copy_sst(const std::string& from, const std::string& to, size_t size){
       perror("open sst failed");
       exit(1);
   }
+  auto time_point_6 = std::chrono::high_resolution_clock::now();
+  std::cout << "open remote file time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_6 - time_point_5).count() << " microsecs\n";
  
 	ret = write(fd, buf, size);
+  auto time_point_7 = std::chrono::high_resolution_clock::now();
+  std::cout << "write file time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_7 - time_point_6).count() << " microsecs\n";
 	if (ret < 0) {
 		perror("write sst failed");
 	}

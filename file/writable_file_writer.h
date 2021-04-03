@@ -199,6 +199,19 @@ class WritableFileWriter {
     s.PermitUncheckedError();
   }
 
+  void AllocateNewBuffer(size_t requested_capacity,bool copy_data = false,
+                         uint64_t copy_offset = 0, size_t copy_len = 0){
+    buf_.AllocateNewBuffer(requested_capacity, copy_data, copy_offset, copy_len);
+  }
+
+  size_t GetAlignment(){
+    return buf_.Alignment();
+  }
+
+  void SetBufferAlignment(size_t size){
+    buf_.Alignment(size);
+  }
+
   std::string file_name() const { return file_name_; }
 
   IOStatus Append(const Slice& data);

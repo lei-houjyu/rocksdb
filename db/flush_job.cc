@@ -15,6 +15,7 @@
 #include <vector>
 #include <unordered_map>
 #include <iostream>
+#include <chrono>
 
 #include "db/builder.h"
 #include "db/db_iter.h"
@@ -460,53 +461,6 @@ Status FlushJob::WriteLevel0Table() {
 
     edit_->SetBlobFileAdditions(std::move(blob_file_additions));
 
-    // RUBBLE: ship L0 sst to remote sst directory
-    if(db_options_.is_rubble && db_options_.is_primary){
-
-      fprintf(stdout , "-------- Flush Job [%d] : WriteLevel0Table [%lu] -------------- \n", job_context_->job_id, meta_.fd.GetNumber());
-      std::string remote_sst_dir = db_options_.remote_sst_dir;
-
-      IOStatus ios;
-      std::string fname = TableFileName(cfd_->ioptions()->cf_paths,
-                        meta_.fd.GetNumber(), meta_.fd.GetPathId());
-
-      // write_L0_Table_counter++;
-      int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size,meta_.fd.GetNumber());
-      std::cout << "Found an available sst slot " << sst_real << " for " << std::to_string(meta_.fd.GetNumber()) << std::endl;
-      std::string sst_number = std::to_string(sst_real);
-
-      if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
-        remote_sst_dir += "/";
-      }
-      int ret = copy_sst(fname, remote_sst_dir + std::to_string(sst_real), static_cast<size_t>(meta_.fd.GetFileSize()));
-      // DirectReadKBytes(db_options_.fs.get(), sst_real, 32, remote_sst_dir);
-      // ios = CopySstFile(db_options_.fs.get(), fname, remote_sst_dir + sst_number, 0,  false);
-      if (ret){
-        fprintf(stderr, "[ File Shipping Failed ] : %lu\n", meta_.fd.GetNumber());
-      }else {
-        fprintf(stdout, "[ File Shipped] : %lu , sst slot : %u\n", meta_.fd.GetNumber(), sst_real);
-        // std::string data;
-        // FileOptions soptions;
-        // // soptions.use_direct_reads = true;
-        // std::unique_ptr<FSSequentialFile> file;
-        // ios = db_options_.fs->NewSequentialFile(remote_sst_dir + sst_number, soptions, &file, nullptr);
-        // if (!ios.ok()) {
-        //   std::cout << "NewSequentialFile failed : " << ios.ToString() << std::endl;
-        // }
-        // int kBufferSize = 128;
-        // char* space = new char[kBufferSize];
-        // Slice fragment;
-        // ios = file->Read(kBufferSize, IOOptions(), &fragment, space,
-        //            nullptr);
-        // if(!ios.ok()){
-        //   std::cout << "Read failed : " << ios.ToString() << std::endl;
-        // }
-        // data.append(fragment.data(), fragment.size());
-        // std::cout << "new file data : " << data << std::endl;
-        // delete[] space;
-      }
-    }
-   
   }
 #ifndef ROCKSDB_LITE
   // Piggyback FlushJobInfo on the first first flushed memtable.
