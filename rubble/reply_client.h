@@ -18,7 +18,7 @@ using grpc::ClientReaderWriter;
 using rubble::RubbleKvStoreService;
 using rubble::Reply;
 using rubble::OpReply;
-using rubble::Op_OpType_Name;
+// using rubble::Op_OpType_Name;
 
 
 // client class used by the tail node in the chain to send the true reply back to the replicator

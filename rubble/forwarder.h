@@ -18,7 +18,7 @@ using grpc::ClientReaderWriter;
 using rubble::RubbleKvStoreService;
 using rubble::Op;
 using rubble::OpReply;
-using rubble::Op_OpType_Name;
+// using rubble::SingleOp_OpType_Name;
 
 
 // client class used by the non-tail node in the chain to forward the op to the downstream node.

@@ -9,7 +9,7 @@
 
 int main(int argc, char** argv) {
   
-  const std::string primary_server_address = "128.110.153.146:50051";
+  const std::string primary_server_address = "128.110.154.78:50051";
   if(argc != 2){
     std::cout << "Usage: ./program secondary_addr(example: 10.10.1.2:50050)\n";
     return 0;
@@ -21,6 +21,6 @@ int main(int argc, char** argv) {
   rocksdb::DB* primary = GetDBInstance("/tmp/rubble_primary", "/mnt/sdb/archive_dbs/primary/sst_dir", remote_sst_dir, secondary_server_address, false, true, false);
 
   // primary server is running on localhost:50051
-  RunServer(primary, primary_server_address);
+  RunServer(primary, primary_server_address, 16);
   return 0;
 }
