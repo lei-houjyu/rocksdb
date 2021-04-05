@@ -281,7 +281,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       //assume the write buffer size is an integer multiple of 1MB
       // use one more MB because of the footer, and pad to the buffer_size
       assert((write_buffer_size % (1 << 20)) == 0);
-      uint64_t buffer_size = ( write_buffer_size + ( 1 << 17));
+      uint64_t buffer_size = ( write_buffer_size + ( 1 << 20));
       // uint64_t buffer_size = (((uint64_t)write_buffer_size >> 20) + 1) << 20;
       // int num_of_sst = target_size / buffer_size;
       std::cout << "sst file size : " << buffer_size << std::endl;
@@ -358,7 +358,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       // right now, just use one column family(the default one)
       edit.SetColumnFamily(0);
      
-      for(auto& j_added_file : j_edit["AddedFiles"].get<std::vector<json>>()){
+      for(const auto& j_added_file : j_edit["AddedFiles"].get<std::vector<json>>()){
           // std::cout << j_added_file.dump(4) << std::endl;
           assert(!j_added_file["SmallestUserKey"].is_null());
           assert(!j_added_file["SmallestSeqno"].is_null());
@@ -399,7 +399,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       }
 
       if(j_edit.contains("DeletedFiles")){
-        for(auto j_delete_file : j_edit["DeletedFiles"].get<std::vector<json>>()){
+        for(const auto& j_delete_file : j_edit["DeletedFiles"].get<std::vector<json>>()){
           edit.DeleteFile(j_delete_file["Level"].get<int>(), j_delete_file["FileNumber"].get<uint64_t>());
         }
       }
@@ -785,8 +785,6 @@ class CallDataBidi : CallDataBase {
       }
   }
   
-  // alarm object to put a new task into the cq_
-  // grpc::Alarm alarm_;
   // The means to get back to the client.
   ServerAsyncReaderWriter<OpReply, Op>  rw_;
 

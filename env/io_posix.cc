@@ -7,6 +7,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
+// #define ROCKSDB_LIB_IO_POSIX
 #ifdef ROCKSDB_LIB_IO_POSIX
 #include "env/io_posix.h"
 #include <errno.h>
@@ -1177,7 +1178,7 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
   const char* src = data.data();
   size_t nbytes = data.size();
 
-  // rubble : also write sst to remote sst dir using the same buffer when we write to the local sst dir
+  // rubble : also write the sst to remote sst dir using the same buffer when we write to the local sst dir
   if(db_options_ != nullptr && db_options_->is_rubble && db_options_->is_primary){
    // basic workflow is as follows : block contents(which are 4KB chunks) are continously copied into the WritableFileWriter.buf_
    // and when the buffer is full, A WritableFileWriter::Flush call is triggered, then it calls WriteBuffered since 
@@ -1196,14 +1197,14 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
     if (r_fd < 0) {
       return IOError("While open a file for appending", r_fname_ , errno);
     }
-    std::cout << "data : " << Slice(data.data(), 32).ToString()  << "size : " << nbytes << std::endl;
+    std::cout << "data : " << Slice(data.data(), 32).ToString()  << " , size : " << nbytes << std::endl;
     ssize_t done = write(r_fd, src, nbytes);
     if(done < 0){
       return IOError("while appending to file" , r_fname_, errno);
     }
     close(r_fd);
     auto end_time = std::chrono::high_resolution_clock::now();
-    std::cout << "write " << data.size() << " bytes to "  <<  r_fname_ << ", latency : "  <<  std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count()  << " micros\n";
+    std::cout << "write " << nbytes << " bytes to "  <<  r_fname_ << ", latency : "  <<  std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count()  << " micros\n";
   }
 
   if (!PosixWrite(fd_, src, nbytes)) {
