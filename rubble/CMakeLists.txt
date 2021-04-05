@@ -157,8 +157,8 @@ foreach(_target
   primary_node
   secondary_node
   tail_node
-  kv_store_client
-  replicator
+  # kv_store_client
+  # replicator
   )
   add_executable(${_target} "${_target}.cc"
   )
