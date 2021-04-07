@@ -44,7 +44,9 @@ using rubble::SyncRequest;
 using rubble::SyncReply;
 using rubble::Op;
 using rubble::OpReply;
-using rubble::Op_OpType_Name;
+using rubble::SingleOp;
+using rubble::SingleOpReply;
+using rubble::SingleOp_OpType_Name;
 
 using json = nlohmann::json;
 using std::chrono::time_point;
@@ -666,29 +668,33 @@ class CallDataBidi : CallDataBase {
 
         // std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " Received a new " << Op_OpType_Name(request_.type()) << " op witk key : " << request_.key() << std::endl;
         // Handle a db operation
+        // std::cout << "entering HandleOp\n";
         HandleOp();
         /* chain replication */
         // Forward the request to the downstream node in the chain if it's not a tail node
         if(!db_options_->is_tail){
+          // std::cout << "Forward an op " << request_.key() << "\n";
+          assert(request_.ops_size());
           forwarder_->Forward(request_);
+          // std::cout << "Complete forwarding an op " << request_.key() << "\n";
         }else {
           // tail node should be responsible for sending the reply back to replicator
           // use the sync stream to write the reply back
-          // reply_client_->SendReply(reply_);
-        }
+          if (reply_client_ == nullptr) {
+            // std::cout << "init the reply client" << "\n";
+            reply_client_ = std::make_shared<ReplyClient>(grpc::CreateChannel(
+            db_options_->target_address, grpc::InsecureChannelCredentials()));
+          }
+	  reply_client_->SendReply(reply_);
+          reply_.clear_replies();
 
-        // if(request_.type() == Op::GET && db_options_->is_tail){
-        //   // if it's a Get Op to the tail node, should return reply back to the client
-        //   rw_.Write(reply_, (void*)this); 
-        //   status_ = BidiStatus::WRITE;
-        // }else {
-          rw_.Read(&request_, (void*)this);
-          status_ = BidiStatus::READ;
-        // }
+        }
+        rw_.Read(&request_, (void*)this);
+        status_ = BidiStatus::READ;
         break;
 
     case BidiStatus::WRITE:
-        // std::cout << "I'm at WRITE state ! \n";
+        std::cout << "I'm at WRITE state ! \n";
         // std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " Get For key : " << request_.key() << " , status : " << reply_.status() << std::endl;
         // For a get request, return a reply back to the client
         rw_.Read(&request_, (void*)this);
@@ -729,60 +735,108 @@ class CallDataBidi : CallDataBase {
  private:
 
   void HandleOp() override {
-      std::string value;
-      // if(!op_counter_.load()){
-      //   start_time_ = high_resolution_clock::now();
-      // }
-      // if(op_counter_.load() && op_counter_.load()%100000 == 0){
-      //   end_time_ = high_resolution_clock::now();
-      //   auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
-      //   std::cout << "Throughput : handled 100000 ops in " << millisecs.count() << " millisecs\n";
-      //   start_time_ = end_time_;
-      // }
-      op_counter_++;
-      switch (request_.type())
-      {
-      case Op::GET:
-        s_ = db_->Get(rocksdb::ReadOptions(), request_.key(), &value);
-        reply_.set_key(request_.key());
-        reply_.set_type(OpReply::GET);
-        reply_.set_status(s_.ToString());
-        if(s_.ok()){
-          reply_.set_ok(true);
-          reply_.set_value(value);
-        }else{
-          reply_.set_ok(false);
-        }
-        break;
+    std::string value;
+    if(!op_counter_.load()){
+      start_time_ = high_resolution_clock::now();
+    }
 
-      case Op::PUT:
-        s_ = db_->Put(rocksdb::WriteOptions(), request_.key(), request_.value());
-        assert(s_.ok());
-        if(db_options_->is_tail){
-          reply_.set_type(OpReply::PUT);
+    if(op_counter_.load() && op_counter_.load()%100000 == 0){
+      end_time_ = high_resolution_clock::now();
+      auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
+      std::cout << "Throughput : handled 100000 ops in " << millisecs.count() << " millisecs\n";
+      start_time_ = end_time_;
+    }
+    
+    // std::cout << "handling a " << request_.type() <<" " <<  request_.id() << " op...\n";
+
+    // int batch_size = 4;
+    // op_counter_ += batch_size;
+    // std::string key_batch = request_.key();
+    // // std::cout << key_batch << "\n";
+    // std::string delimiter = ";";
+    // size_t pre, cur = 0;
+    // std::string cur_key;
+    // std::vector<std::string> keys(batch_size);
+    // while ((cur = key_batch.find(delimiter, pre)) != std::string::npos) {
+    //   cur_key = key_batch.substr(pre, cur - pre);
+    //   keys.push_back(cur_key);
+    //   pre = cur + 1;
+    // }
+
+    // ASSUME that each batch is with the same type of operation
+    assert(request_.ops_size() > 0);
+    op_counter_ += request_.ops_size();
+    SingleOpReply* reply;
+    reply_.clear_replies();
+    // std::cout << "thread: " << map[std::this_thread::get_id()] << " counter: " << op_counter_ 
+    //     <<  " first key in batch: " << request_.ops(0).key() << " size: " << request_.ops_size() << "\n";
+    switch (request_.ops(0).type())
+    {
+      case SingleOp::GET:
+        for(const auto& request: request_.ops()) {
+          reply = reply_.add_replies();
+          reply->set_id(request.id());
+          s_ = db_->Get(rocksdb::ReadOptions(), request.key(), &value);
+          reply->set_key(request.key());
+          reply->set_type(SingleOpReply::GET);
+          reply->set_status(s_.ToString());
           if(s_.ok()){
-            // std::cout << "Put : (" << request_.key() << " ," << request_.value() << ")\n"; 
-            reply_.set_ok(true);
+            reply->set_ok(true);
+            reply->set_value(value);
           }else{
-            std::cout << "Put Failed : " << s_.ToString() << std::endl;
-            reply_.set_ok(false);
-            reply_.set_status(s_.ToString());
+            reply->set_ok(false);
           }
         }
         break;
-
-      case Op::DELETE:
+      case SingleOp::PUT:
+        for(const auto& request: request_.ops()) {
+          s_ = db_->Put(rocksdb::WriteOptions(), request.key(), request.value());
+          assert(s_.ok());
+          // std::cout << "Put ok\n";
+          // return to replicator if tail
+          if(db_options_->is_tail){
+            reply = reply_.add_replies();
+            reply->set_id(request.id());
+            reply->set_type(SingleOpReply::PUT);
+            reply->set_key(request.key());
+            if(s_.ok()){
+              // std::cout << "Put : (" << request.key() /* << " ," << request_.value() */ << ")\n"; 
+              reply->set_ok(true);
+            }else{
+              std::cout << "Put Failed : " << s_.ToString() << std::endl;
+              reply->set_ok(false);
+              reply->set_status(s_.ToString());
+            }
+          }
+        }
+        break;
+      case SingleOp::DELETE:
         //TODO
         break;
 
-      case Op::UPDATE:
-        //TODO
+      case SingleOp::UPDATE:
+        // std::cout << "in UPDATE " << request_.ops(0).key() << "\n"; 
+        for(const auto& request: request_.ops()) {
+          reply = reply_.add_replies();
+          reply->set_id(request.id());
+          s_ = db_->Get(rocksdb::ReadOptions(), request.key(), &value);
+          s_ = db_->Put(rocksdb::WriteOptions(), request.key(), request.value());
+          reply->set_key(request.key());
+          reply->set_type(SingleOpReply::UPDATE);
+          reply->set_status(s_.ToString());
+          if(s_.ok()){
+            reply->set_ok(true);
+            reply->set_value(value);
+          }else{
+            reply->set_ok(false);
+          }
+        }
         break;
 
       default:
         std::cerr << "Unsupported Operation \n";
         break;
-      }
+    }
   }
   
   // The means to get back to the client.
@@ -795,6 +849,7 @@ class CallDataBidi : CallDataBase {
   std::mutex   m_mutex;
 
   std::atomic<uint64_t> op_counter_{0};
+  int reply_counter_{0};
   time_point<high_resolution_clock> start_time_;
   time_point<high_resolution_clock> end_time_;
 };
@@ -884,7 +939,7 @@ class ServerImpl final {
   rocksdb::DB* db_;
 };
 
-void RunServer(rocksdb::DB* db, const std::string& server_addr, int thread_num = 1) {
+void RunServer(rocksdb::DB* db, const std::string& server_addr, int thread_num = 16) {
   
   SyncServiceImpl service(db);
   g_thread_num = 16;

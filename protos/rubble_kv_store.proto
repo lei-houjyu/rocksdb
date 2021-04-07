@@ -17,14 +17,18 @@ service RubbleKvStoreService {
   rpc DoOp(stream Op) returns (stream OpReply){}
 
   // perform db operations in a batch
-  rpc DoBatch(stream Ops) returns (stream OpReplies){}
+  rpc DoBatch(stream Op) returns (stream OpReplies){}
 
   // used by the tail node to send the true rely to the replicator
   rpc SendReply(stream OpReply) returns (stream Reply){}
 }
 
+message Op {
+  repeated SingleOp ops = 1;
+}
+
 // operation to perform on a db
-message Op{
+message SingleOp{
   
   string key = 1;
   string value = 2;
@@ -40,11 +44,11 @@ message Op{
   OpType type = 4;
 }
 
-message Ops{
-  repeated Op op = 1;
+message OpReply {
+  repeated SingleOpReply replies = 1;
 }
 
-message OpReply{
+message SingleOpReply{
   bool ok = 1;
   string key = 2;
   string value = 3;

@@ -58,15 +58,10 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   cf_options.num_levels=5;
 
   // L0 size 16MB
-  cf_options.max_bytes_for_level_base=16777216;
+  cf_options.max_bytes_for_level_base=256*1024*1024;
   cf_options.compression=rocksdb::kNoCompression;
   // cf_options.compression_per_level=rocksdb::kNoCompression:kNoCompression:kNoCompression:kNoCompression:kNoCompression;
 
-  size_t kWriteBufferSize = 4*(1<<20);
-  // memtable size set to 4MB
-  cf_options.write_buffer_size=kWriteBufferSize;
-  // sst file size 4MB
-  cf_options.target_file_size_base=4194304;
 
   if(is_rubble && !is_primary){
     // db_options.use_direct_reads = true;
@@ -74,8 +69,11 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
     // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);
     db_options.preallocated_sst_pool_size = 100;
   }
-  uint64_t sst_file_size = ((kWriteBufferSize >> 20) + 1) << 20;
-  assert(db_options.preallocated_sst_pool_size * sst_file_size <= target_size);
+  const int kWriteBufferSize = 32*1024*1024;
+  // memtable size set to 4MB
+  cf_options.write_buffer_size=kWriteBufferSize;
+  // sst file size 4MB
+  cf_options.target_file_size_base=64*1024*1024;
  
   rocksdb::Options options(db_options, cf_options);
 

@@ -18,7 +18,7 @@ using grpc::ClientReaderWriter;
 using rubble::RubbleKvStoreService;
 using rubble::Op;
 using rubble::OpReply;
-using rubble::Op_OpType_Name;
+// using rubble::SingleOp_OpType_Name;
 
 
 // client class used by the non-tail node in the chain to forward the op to the downstream node.
@@ -35,14 +35,14 @@ class Forwarder{
     // forward the op to the next node
     void Forward(const Op& op){
       // std::cout << " forwarding op " << op.id() << std::endl;
-      Op request;
+      /* Op request;
       request.set_type(op.type());
       request.set_id(op.id());
       request.set_key(op.key());
       if(op.type() == Op::PUT){
         request.set_value(op.value());
-      }
-      stream_->Write(request);
+      }*/
+      stream_->Write(op);
     }
   
   private:

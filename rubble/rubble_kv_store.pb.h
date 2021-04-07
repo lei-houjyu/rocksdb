@@ -48,7 +48,7 @@ struct TableStruct_rubble_5fkv_5fstore_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[7]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[8]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -65,12 +65,15 @@ extern OpRepliesDefaultTypeInternal _OpReplies_default_instance_;
 class OpReply;
 class OpReplyDefaultTypeInternal;
 extern OpReplyDefaultTypeInternal _OpReply_default_instance_;
-class Ops;
-class OpsDefaultTypeInternal;
-extern OpsDefaultTypeInternal _Ops_default_instance_;
 class Reply;
 class ReplyDefaultTypeInternal;
 extern ReplyDefaultTypeInternal _Reply_default_instance_;
+class SingleOp;
+class SingleOpDefaultTypeInternal;
+extern SingleOpDefaultTypeInternal _SingleOp_default_instance_;
+class SingleOpReply;
+class SingleOpReplyDefaultTypeInternal;
+extern SingleOpReplyDefaultTypeInternal _SingleOpReply_default_instance_;
 class SyncReply;
 class SyncReplyDefaultTypeInternal;
 extern SyncReplyDefaultTypeInternal _SyncReply_default_instance_;
@@ -82,66 +85,67 @@ PROTOBUF_NAMESPACE_OPEN
 template<> ::rubble::Op* Arena::CreateMaybeMessage<::rubble::Op>(Arena*);
 template<> ::rubble::OpReplies* Arena::CreateMaybeMessage<::rubble::OpReplies>(Arena*);
 template<> ::rubble::OpReply* Arena::CreateMaybeMessage<::rubble::OpReply>(Arena*);
-template<> ::rubble::Ops* Arena::CreateMaybeMessage<::rubble::Ops>(Arena*);
 template<> ::rubble::Reply* Arena::CreateMaybeMessage<::rubble::Reply>(Arena*);
+template<> ::rubble::SingleOp* Arena::CreateMaybeMessage<::rubble::SingleOp>(Arena*);
+template<> ::rubble::SingleOpReply* Arena::CreateMaybeMessage<::rubble::SingleOpReply>(Arena*);
 template<> ::rubble::SyncReply* Arena::CreateMaybeMessage<::rubble::SyncReply>(Arena*);
 template<> ::rubble::SyncRequest* Arena::CreateMaybeMessage<::rubble::SyncRequest>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace rubble {
 
-enum Op_OpType : int {
-  Op_OpType_GET = 0,
-  Op_OpType_PUT = 1,
-  Op_OpType_DELETE = 2,
-  Op_OpType_UPDATE = 3,
-  Op_OpType_Op_OpType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
-  Op_OpType_Op_OpType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
+enum SingleOp_OpType : int {
+  SingleOp_OpType_GET = 0,
+  SingleOp_OpType_PUT = 1,
+  SingleOp_OpType_DELETE = 2,
+  SingleOp_OpType_UPDATE = 3,
+  SingleOp_OpType_SingleOp_OpType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
+  SingleOp_OpType_SingleOp_OpType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
-bool Op_OpType_IsValid(int value);
-constexpr Op_OpType Op_OpType_OpType_MIN = Op_OpType_GET;
-constexpr Op_OpType Op_OpType_OpType_MAX = Op_OpType_UPDATE;
-constexpr int Op_OpType_OpType_ARRAYSIZE = Op_OpType_OpType_MAX + 1;
+bool SingleOp_OpType_IsValid(int value);
+constexpr SingleOp_OpType SingleOp_OpType_OpType_MIN = SingleOp_OpType_GET;
+constexpr SingleOp_OpType SingleOp_OpType_OpType_MAX = SingleOp_OpType_UPDATE;
+constexpr int SingleOp_OpType_OpType_ARRAYSIZE = SingleOp_OpType_OpType_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* Op_OpType_descriptor();
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* SingleOp_OpType_descriptor();
 template<typename T>
-inline const std::string& Op_OpType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, Op_OpType>::value ||
+inline const std::string& SingleOp_OpType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, SingleOp_OpType>::value ||
     ::std::is_integral<T>::value,
-    "Incorrect type passed to function Op_OpType_Name.");
+    "Incorrect type passed to function SingleOp_OpType_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    Op_OpType_descriptor(), enum_t_value);
+    SingleOp_OpType_descriptor(), enum_t_value);
 }
-inline bool Op_OpType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, Op_OpType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<Op_OpType>(
-    Op_OpType_descriptor(), name, value);
+inline bool SingleOp_OpType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, SingleOp_OpType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<SingleOp_OpType>(
+    SingleOp_OpType_descriptor(), name, value);
 }
-enum OpReply_OpType : int {
-  OpReply_OpType_GET = 0,
-  OpReply_OpType_PUT = 1,
-  OpReply_OpType_DELETE = 2,
-  OpReply_OpType_UPDATE = 3,
-  OpReply_OpType_OpReply_OpType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
-  OpReply_OpType_OpReply_OpType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
+enum SingleOpReply_OpType : int {
+  SingleOpReply_OpType_GET = 0,
+  SingleOpReply_OpType_PUT = 1,
+  SingleOpReply_OpType_DELETE = 2,
+  SingleOpReply_OpType_UPDATE = 3,
+  SingleOpReply_OpType_SingleOpReply_OpType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
+  SingleOpReply_OpType_SingleOpReply_OpType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
-bool OpReply_OpType_IsValid(int value);
-constexpr OpReply_OpType OpReply_OpType_OpType_MIN = OpReply_OpType_GET;
-constexpr OpReply_OpType OpReply_OpType_OpType_MAX = OpReply_OpType_UPDATE;
-constexpr int OpReply_OpType_OpType_ARRAYSIZE = OpReply_OpType_OpType_MAX + 1;
+bool SingleOpReply_OpType_IsValid(int value);
+constexpr SingleOpReply_OpType SingleOpReply_OpType_OpType_MIN = SingleOpReply_OpType_GET;
+constexpr SingleOpReply_OpType SingleOpReply_OpType_OpType_MAX = SingleOpReply_OpType_UPDATE;
+constexpr int SingleOpReply_OpType_OpType_ARRAYSIZE = SingleOpReply_OpType_OpType_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* OpReply_OpType_descriptor();
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* SingleOpReply_OpType_descriptor();
 template<typename T>
-inline const std::string& OpReply_OpType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, OpReply_OpType>::value ||
+inline const std::string& SingleOpReply_OpType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, SingleOpReply_OpType>::value ||
     ::std::is_integral<T>::value,
-    "Incorrect type passed to function OpReply_OpType_Name.");
+    "Incorrect type passed to function SingleOpReply_OpType_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    OpReply_OpType_descriptor(), enum_t_value);
+    SingleOpReply_OpType_descriptor(), enum_t_value);
 }
-inline bool OpReply_OpType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, OpReply_OpType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<OpReply_OpType>(
-    OpReply_OpType_descriptor(), name, value);
+inline bool SingleOpReply_OpType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, SingleOpReply_OpType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<SingleOpReply_OpType>(
+    SingleOpReply_OpType_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -255,38 +259,184 @@ class Op PROTOBUF_FINAL :
 
   // nested types ----------------------------------------------------
 
-  typedef Op_OpType OpType;
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kOpsFieldNumber = 1,
+  };
+  // repeated .rubble.SingleOp ops = 1;
+  int ops_size() const;
+  private:
+  int _internal_ops_size() const;
+  public:
+  void clear_ops();
+  ::rubble::SingleOp* mutable_ops(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOp >*
+      mutable_ops();
+  private:
+  const ::rubble::SingleOp& _internal_ops(int index) const;
+  ::rubble::SingleOp* _internal_add_ops();
+  public:
+  const ::rubble::SingleOp& ops(int index) const;
+  ::rubble::SingleOp* add_ops();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOp >&
+      ops() const;
+
+  // @@protoc_insertion_point(class_scope:rubble.Op)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOp > ops_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
+};
+// -------------------------------------------------------------------
+
+class SingleOp PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.SingleOp) */ {
+ public:
+  inline SingleOp() : SingleOp(nullptr) {}
+  virtual ~SingleOp();
+
+  SingleOp(const SingleOp& from);
+  SingleOp(SingleOp&& from) noexcept
+    : SingleOp() {
+    *this = ::std::move(from);
+  }
+
+  inline SingleOp& operator=(const SingleOp& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline SingleOp& operator=(SingleOp&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const SingleOp& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const SingleOp* internal_default_instance() {
+    return reinterpret_cast<const SingleOp*>(
+               &_SingleOp_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    1;
+
+  friend void swap(SingleOp& a, SingleOp& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(SingleOp* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(SingleOp* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline SingleOp* New() const final {
+    return CreateMaybeMessage<SingleOp>(nullptr);
+  }
+
+  SingleOp* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<SingleOp>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const SingleOp& from);
+  void MergeFrom(const SingleOp& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(SingleOp* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "rubble.SingleOp";
+  }
+  protected:
+  explicit SingleOp(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
+    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  typedef SingleOp_OpType OpType;
   static constexpr OpType GET =
-    Op_OpType_GET;
+    SingleOp_OpType_GET;
   static constexpr OpType PUT =
-    Op_OpType_PUT;
+    SingleOp_OpType_PUT;
   static constexpr OpType DELETE =
-    Op_OpType_DELETE;
+    SingleOp_OpType_DELETE;
   static constexpr OpType UPDATE =
-    Op_OpType_UPDATE;
+    SingleOp_OpType_UPDATE;
   static inline bool OpType_IsValid(int value) {
-    return Op_OpType_IsValid(value);
+    return SingleOp_OpType_IsValid(value);
   }
   static constexpr OpType OpType_MIN =
-    Op_OpType_OpType_MIN;
+    SingleOp_OpType_OpType_MIN;
   static constexpr OpType OpType_MAX =
-    Op_OpType_OpType_MAX;
+    SingleOp_OpType_OpType_MAX;
   static constexpr int OpType_ARRAYSIZE =
-    Op_OpType_OpType_ARRAYSIZE;
+    SingleOp_OpType_OpType_ARRAYSIZE;
   static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
   OpType_descriptor() {
-    return Op_OpType_descriptor();
+    return SingleOp_OpType_descriptor();
   }
   template<typename T>
   static inline const std::string& OpType_Name(T enum_t_value) {
     static_assert(::std::is_same<T, OpType>::value ||
       ::std::is_integral<T>::value,
       "Incorrect type passed to function OpType_Name.");
-    return Op_OpType_Name(enum_t_value);
+    return SingleOp_OpType_Name(enum_t_value);
   }
   static inline bool OpType_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
       OpType* value) {
-    return Op_OpType_Parse(name, value);
+    return SingleOp_OpType_Parse(name, value);
   }
 
   // accessors -------------------------------------------------------
@@ -338,16 +488,16 @@ class Op PROTOBUF_FINAL :
   void _internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
-  // .rubble.Op.OpType type = 4;
+  // .rubble.SingleOp.OpType type = 4;
   void clear_type();
-  ::rubble::Op_OpType type() const;
-  void set_type(::rubble::Op_OpType value);
+  ::rubble::SingleOp_OpType type() const;
+  void set_type(::rubble::SingleOp_OpType value);
   private:
-  ::rubble::Op_OpType _internal_type() const;
-  void _internal_set_type(::rubble::Op_OpType value);
+  ::rubble::SingleOp_OpType _internal_type() const;
+  void _internal_set_type(::rubble::SingleOp_OpType value);
   public:
 
-  // @@protoc_insertion_point(class_scope:rubble.Op)
+  // @@protoc_insertion_point(class_scope:rubble.SingleOp)
  private:
   class _Internal;
 
@@ -358,152 +508,6 @@ class Op PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr value_;
   ::PROTOBUF_NAMESPACE_ID::uint64 id_;
   int type_;
-  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
-};
-// -------------------------------------------------------------------
-
-class Ops PROTOBUF_FINAL :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.Ops) */ {
- public:
-  inline Ops() : Ops(nullptr) {}
-  virtual ~Ops();
-
-  Ops(const Ops& from);
-  Ops(Ops&& from) noexcept
-    : Ops() {
-    *this = ::std::move(from);
-  }
-
-  inline Ops& operator=(const Ops& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  inline Ops& operator=(Ops&& from) noexcept {
-    if (GetArena() == from.GetArena()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-
-  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
-    return GetDescriptor();
-  }
-  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
-    return GetMetadataStatic().descriptor;
-  }
-  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
-    return GetMetadataStatic().reflection;
-  }
-  static const Ops& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const Ops* internal_default_instance() {
-    return reinterpret_cast<const Ops*>(
-               &_Ops_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    1;
-
-  friend void swap(Ops& a, Ops& b) {
-    a.Swap(&b);
-  }
-  inline void Swap(Ops* other) {
-    if (other == this) return;
-    if (GetArena() == other->GetArena()) {
-      InternalSwap(other);
-    } else {
-      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
-    }
-  }
-  void UnsafeArenaSwap(Ops* other) {
-    if (other == this) return;
-    GOOGLE_DCHECK(GetArena() == other->GetArena());
-    InternalSwap(other);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline Ops* New() const final {
-    return CreateMaybeMessage<Ops>(nullptr);
-  }
-
-  Ops* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
-    return CreateMaybeMessage<Ops>(arena);
-  }
-  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
-  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
-  void CopyFrom(const Ops& from);
-  void MergeFrom(const Ops& from);
-  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
-  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
-      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  inline void SharedCtor();
-  inline void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(Ops* other);
-  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
-  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "rubble.Ops";
-  }
-  protected:
-  explicit Ops(::PROTOBUF_NAMESPACE_ID::Arena* arena);
-  private:
-  static void ArenaDtor(void* object);
-  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
-  public:
-
-  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
-  private:
-  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
-    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
-    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
-  }
-
-  public:
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  enum : int {
-    kOpFieldNumber = 1,
-  };
-  // repeated .rubble.Op op = 1;
-  int op_size() const;
-  private:
-  int _internal_op_size() const;
-  public:
-  void clear_op();
-  ::rubble::Op* mutable_op(int index);
-  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::Op >*
-      mutable_op();
-  private:
-  const ::rubble::Op& _internal_op(int index) const;
-  ::rubble::Op* _internal_add_op();
-  public:
-  const ::rubble::Op& op(int index) const;
-  ::rubble::Op* add_op();
-  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::Op >&
-      op() const;
-
-  // @@protoc_insertion_point(class_scope:rubble.Ops)
- private:
-  class _Internal;
-
-  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
-  typedef void InternalArenaConstructable_;
-  typedef void DestructorSkippable_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::Op > op_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
 };
@@ -619,38 +623,184 @@ class OpReply PROTOBUF_FINAL :
 
   // nested types ----------------------------------------------------
 
-  typedef OpReply_OpType OpType;
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kRepliesFieldNumber = 1,
+  };
+  // repeated .rubble.SingleOpReply replies = 1;
+  int replies_size() const;
+  private:
+  int _internal_replies_size() const;
+  public:
+  void clear_replies();
+  ::rubble::SingleOpReply* mutable_replies(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOpReply >*
+      mutable_replies();
+  private:
+  const ::rubble::SingleOpReply& _internal_replies(int index) const;
+  ::rubble::SingleOpReply* _internal_add_replies();
+  public:
+  const ::rubble::SingleOpReply& replies(int index) const;
+  ::rubble::SingleOpReply* add_replies();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOpReply >&
+      replies() const;
+
+  // @@protoc_insertion_point(class_scope:rubble.OpReply)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOpReply > replies_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
+};
+// -------------------------------------------------------------------
+
+class SingleOpReply PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.SingleOpReply) */ {
+ public:
+  inline SingleOpReply() : SingleOpReply(nullptr) {}
+  virtual ~SingleOpReply();
+
+  SingleOpReply(const SingleOpReply& from);
+  SingleOpReply(SingleOpReply&& from) noexcept
+    : SingleOpReply() {
+    *this = ::std::move(from);
+  }
+
+  inline SingleOpReply& operator=(const SingleOpReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline SingleOpReply& operator=(SingleOpReply&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const SingleOpReply& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const SingleOpReply* internal_default_instance() {
+    return reinterpret_cast<const SingleOpReply*>(
+               &_SingleOpReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    3;
+
+  friend void swap(SingleOpReply& a, SingleOpReply& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(SingleOpReply* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(SingleOpReply* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline SingleOpReply* New() const final {
+    return CreateMaybeMessage<SingleOpReply>(nullptr);
+  }
+
+  SingleOpReply* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<SingleOpReply>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const SingleOpReply& from);
+  void MergeFrom(const SingleOpReply& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(SingleOpReply* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "rubble.SingleOpReply";
+  }
+  protected:
+  explicit SingleOpReply(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
+    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  typedef SingleOpReply_OpType OpType;
   static constexpr OpType GET =
-    OpReply_OpType_GET;
+    SingleOpReply_OpType_GET;
   static constexpr OpType PUT =
-    OpReply_OpType_PUT;
+    SingleOpReply_OpType_PUT;
   static constexpr OpType DELETE =
-    OpReply_OpType_DELETE;
+    SingleOpReply_OpType_DELETE;
   static constexpr OpType UPDATE =
-    OpReply_OpType_UPDATE;
+    SingleOpReply_OpType_UPDATE;
   static inline bool OpType_IsValid(int value) {
-    return OpReply_OpType_IsValid(value);
+    return SingleOpReply_OpType_IsValid(value);
   }
   static constexpr OpType OpType_MIN =
-    OpReply_OpType_OpType_MIN;
+    SingleOpReply_OpType_OpType_MIN;
   static constexpr OpType OpType_MAX =
-    OpReply_OpType_OpType_MAX;
+    SingleOpReply_OpType_OpType_MAX;
   static constexpr int OpType_ARRAYSIZE =
-    OpReply_OpType_OpType_ARRAYSIZE;
+    SingleOpReply_OpType_OpType_ARRAYSIZE;
   static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
   OpType_descriptor() {
-    return OpReply_OpType_descriptor();
+    return SingleOpReply_OpType_descriptor();
   }
   template<typename T>
   static inline const std::string& OpType_Name(T enum_t_value) {
     static_assert(::std::is_same<T, OpType>::value ||
       ::std::is_integral<T>::value,
       "Incorrect type passed to function OpType_Name.");
-    return OpReply_OpType_Name(enum_t_value);
+    return SingleOpReply_OpType_Name(enum_t_value);
   }
   static inline bool OpType_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
       OpType* value) {
-    return OpReply_OpType_Parse(name, value);
+    return SingleOpReply_OpType_Parse(name, value);
   }
 
   // accessors -------------------------------------------------------
@@ -720,13 +870,13 @@ class OpReply PROTOBUF_FINAL :
   void _internal_set_ok(bool value);
   public:
 
-  // .rubble.OpReply.OpType type = 6;
+  // .rubble.SingleOpReply.OpType type = 6;
   void clear_type();
-  ::rubble::OpReply_OpType type() const;
-  void set_type(::rubble::OpReply_OpType value);
+  ::rubble::SingleOpReply_OpType type() const;
+  void set_type(::rubble::SingleOpReply_OpType value);
   private:
-  ::rubble::OpReply_OpType _internal_type() const;
-  void _internal_set_type(::rubble::OpReply_OpType value);
+  ::rubble::SingleOpReply_OpType _internal_type() const;
+  void _internal_set_type(::rubble::SingleOpReply_OpType value);
   public:
 
   // int64 Id = 5;
@@ -738,7 +888,7 @@ class OpReply PROTOBUF_FINAL :
   void _internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
   public:
 
-  // @@protoc_insertion_point(class_scope:rubble.OpReply)
+  // @@protoc_insertion_point(class_scope:rubble.SingleOpReply)
  private:
   class _Internal;
 
@@ -798,7 +948,7 @@ class OpReplies PROTOBUF_FINAL :
                &_OpReplies_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    4;
 
   friend void swap(OpReplies& a, OpReplies& b) {
     a.Swap(&b);
@@ -944,7 +1094,7 @@ class Reply PROTOBUF_FINAL :
                &_Reply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    5;
 
   friend void swap(Reply& a, Reply& b) {
     a.Swap(&b);
@@ -1081,7 +1231,7 @@ class SyncRequest PROTOBUF_FINAL :
                &_SyncRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    6;
 
   friend void swap(SyncRequest& a, SyncRequest& b) {
     a.Swap(&b);
@@ -1225,7 +1375,7 @@ class SyncReply PROTOBUF_FINAL :
                &_SyncReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   friend void swap(SyncReply& a, SyncReply& b) {
     a.Swap(&b);
@@ -1336,58 +1486,101 @@ class SyncReply PROTOBUF_FINAL :
 #endif  // __GNUC__
 // Op
 
+// repeated .rubble.SingleOp ops = 1;
+inline int Op::_internal_ops_size() const {
+  return ops_.size();
+}
+inline int Op::ops_size() const {
+  return _internal_ops_size();
+}
+inline void Op::clear_ops() {
+  ops_.Clear();
+}
+inline ::rubble::SingleOp* Op::mutable_ops(int index) {
+  // @@protoc_insertion_point(field_mutable:rubble.Op.ops)
+  return ops_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOp >*
+Op::mutable_ops() {
+  // @@protoc_insertion_point(field_mutable_list:rubble.Op.ops)
+  return &ops_;
+}
+inline const ::rubble::SingleOp& Op::_internal_ops(int index) const {
+  return ops_.Get(index);
+}
+inline const ::rubble::SingleOp& Op::ops(int index) const {
+  // @@protoc_insertion_point(field_get:rubble.Op.ops)
+  return _internal_ops(index);
+}
+inline ::rubble::SingleOp* Op::_internal_add_ops() {
+  return ops_.Add();
+}
+inline ::rubble::SingleOp* Op::add_ops() {
+  // @@protoc_insertion_point(field_add:rubble.Op.ops)
+  return _internal_add_ops();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOp >&
+Op::ops() const {
+  // @@protoc_insertion_point(field_list:rubble.Op.ops)
+  return ops_;
+}
+
+// -------------------------------------------------------------------
+
+// SingleOp
+
 // string key = 1;
-inline void Op::clear_key() {
+inline void SingleOp::clear_key() {
   key_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline const std::string& Op::key() const {
-  // @@protoc_insertion_point(field_get:rubble.Op.key)
+inline const std::string& SingleOp::key() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOp.key)
   return _internal_key();
 }
-inline void Op::set_key(const std::string& value) {
+inline void SingleOp::set_key(const std::string& value) {
   _internal_set_key(value);
-  // @@protoc_insertion_point(field_set:rubble.Op.key)
+  // @@protoc_insertion_point(field_set:rubble.SingleOp.key)
 }
-inline std::string* Op::mutable_key() {
-  // @@protoc_insertion_point(field_mutable:rubble.Op.key)
+inline std::string* SingleOp::mutable_key() {
+  // @@protoc_insertion_point(field_mutable:rubble.SingleOp.key)
   return _internal_mutable_key();
 }
-inline const std::string& Op::_internal_key() const {
+inline const std::string& SingleOp::_internal_key() const {
   return key_.Get();
 }
-inline void Op::_internal_set_key(const std::string& value) {
+inline void SingleOp::_internal_set_key(const std::string& value) {
   
   key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
 }
-inline void Op::set_key(std::string&& value) {
+inline void SingleOp::set_key(std::string&& value) {
   
   key_.Set(
     &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
-  // @@protoc_insertion_point(field_set_rvalue:rubble.Op.key)
+  // @@protoc_insertion_point(field_set_rvalue:rubble.SingleOp.key)
 }
-inline void Op::set_key(const char* value) {
+inline void SingleOp::set_key(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
               GetArena());
-  // @@protoc_insertion_point(field_set_char:rubble.Op.key)
+  // @@protoc_insertion_point(field_set_char:rubble.SingleOp.key)
 }
-inline void Op::set_key(const char* value,
+inline void SingleOp::set_key(const char* value,
     size_t size) {
   
   key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
       reinterpret_cast<const char*>(value), size), GetArena());
-  // @@protoc_insertion_point(field_set_pointer:rubble.Op.key)
+  // @@protoc_insertion_point(field_set_pointer:rubble.SingleOp.key)
 }
-inline std::string* Op::_internal_mutable_key() {
+inline std::string* SingleOp::_internal_mutable_key() {
   
   return key_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline std::string* Op::release_key() {
-  // @@protoc_insertion_point(field_release:rubble.Op.key)
+inline std::string* SingleOp::release_key() {
+  // @@protoc_insertion_point(field_release:rubble.SingleOp.key)
   return key_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline void Op::set_allocated_key(std::string* key) {
+inline void SingleOp::set_allocated_key(std::string* key) {
   if (key != nullptr) {
     
   } else {
@@ -1395,61 +1588,61 @@ inline void Op::set_allocated_key(std::string* key) {
   }
   key_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), key,
       GetArena());
-  // @@protoc_insertion_point(field_set_allocated:rubble.Op.key)
+  // @@protoc_insertion_point(field_set_allocated:rubble.SingleOp.key)
 }
 
 // string value = 2;
-inline void Op::clear_value() {
+inline void SingleOp::clear_value() {
   value_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline const std::string& Op::value() const {
-  // @@protoc_insertion_point(field_get:rubble.Op.value)
+inline const std::string& SingleOp::value() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOp.value)
   return _internal_value();
 }
-inline void Op::set_value(const std::string& value) {
+inline void SingleOp::set_value(const std::string& value) {
   _internal_set_value(value);
-  // @@protoc_insertion_point(field_set:rubble.Op.value)
+  // @@protoc_insertion_point(field_set:rubble.SingleOp.value)
 }
-inline std::string* Op::mutable_value() {
-  // @@protoc_insertion_point(field_mutable:rubble.Op.value)
+inline std::string* SingleOp::mutable_value() {
+  // @@protoc_insertion_point(field_mutable:rubble.SingleOp.value)
   return _internal_mutable_value();
 }
-inline const std::string& Op::_internal_value() const {
+inline const std::string& SingleOp::_internal_value() const {
   return value_.Get();
 }
-inline void Op::_internal_set_value(const std::string& value) {
+inline void SingleOp::_internal_set_value(const std::string& value) {
   
   value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
 }
-inline void Op::set_value(std::string&& value) {
+inline void SingleOp::set_value(std::string&& value) {
   
   value_.Set(
     &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
-  // @@protoc_insertion_point(field_set_rvalue:rubble.Op.value)
+  // @@protoc_insertion_point(field_set_rvalue:rubble.SingleOp.value)
 }
-inline void Op::set_value(const char* value) {
+inline void SingleOp::set_value(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
               GetArena());
-  // @@protoc_insertion_point(field_set_char:rubble.Op.value)
+  // @@protoc_insertion_point(field_set_char:rubble.SingleOp.value)
 }
-inline void Op::set_value(const char* value,
+inline void SingleOp::set_value(const char* value,
     size_t size) {
   
   value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
       reinterpret_cast<const char*>(value), size), GetArena());
-  // @@protoc_insertion_point(field_set_pointer:rubble.Op.value)
+  // @@protoc_insertion_point(field_set_pointer:rubble.SingleOp.value)
 }
-inline std::string* Op::_internal_mutable_value() {
+inline std::string* SingleOp::_internal_mutable_value() {
   
   return value_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline std::string* Op::release_value() {
-  // @@protoc_insertion_point(field_release:rubble.Op.value)
+inline std::string* SingleOp::release_value() {
+  // @@protoc_insertion_point(field_release:rubble.SingleOp.value)
   return value_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline void Op::set_allocated_value(std::string* value) {
+inline void SingleOp::set_allocated_value(std::string* value) {
   if (value != nullptr) {
     
   } else {
@@ -1457,168 +1650,168 @@ inline void Op::set_allocated_value(std::string* value) {
   }
   value_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value,
       GetArena());
-  // @@protoc_insertion_point(field_set_allocated:rubble.Op.value)
+  // @@protoc_insertion_point(field_set_allocated:rubble.SingleOp.value)
 }
 
 // uint64 Id = 3;
-inline void Op::clear_id() {
+inline void SingleOp::clear_id() {
   id_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint64 Op::_internal_id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 SingleOp::_internal_id() const {
   return id_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint64 Op::id() const {
-  // @@protoc_insertion_point(field_get:rubble.Op.Id)
+inline ::PROTOBUF_NAMESPACE_ID::uint64 SingleOp::id() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOp.Id)
   return _internal_id();
 }
-inline void Op::_internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
+inline void SingleOp::_internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   id_ = value;
 }
-inline void Op::set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
+inline void SingleOp::set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_id(value);
-  // @@protoc_insertion_point(field_set:rubble.Op.Id)
+  // @@protoc_insertion_point(field_set:rubble.SingleOp.Id)
 }
 
-// .rubble.Op.OpType type = 4;
-inline void Op::clear_type() {
+// .rubble.SingleOp.OpType type = 4;
+inline void SingleOp::clear_type() {
   type_ = 0;
 }
-inline ::rubble::Op_OpType Op::_internal_type() const {
-  return static_cast< ::rubble::Op_OpType >(type_);
+inline ::rubble::SingleOp_OpType SingleOp::_internal_type() const {
+  return static_cast< ::rubble::SingleOp_OpType >(type_);
 }
-inline ::rubble::Op_OpType Op::type() const {
-  // @@protoc_insertion_point(field_get:rubble.Op.type)
+inline ::rubble::SingleOp_OpType SingleOp::type() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOp.type)
   return _internal_type();
 }
-inline void Op::_internal_set_type(::rubble::Op_OpType value) {
+inline void SingleOp::_internal_set_type(::rubble::SingleOp_OpType value) {
   
   type_ = value;
 }
-inline void Op::set_type(::rubble::Op_OpType value) {
+inline void SingleOp::set_type(::rubble::SingleOp_OpType value) {
   _internal_set_type(value);
-  // @@protoc_insertion_point(field_set:rubble.Op.type)
-}
-
-// -------------------------------------------------------------------
-
-// Ops
-
-// repeated .rubble.Op op = 1;
-inline int Ops::_internal_op_size() const {
-  return op_.size();
-}
-inline int Ops::op_size() const {
-  return _internal_op_size();
-}
-inline void Ops::clear_op() {
-  op_.Clear();
-}
-inline ::rubble::Op* Ops::mutable_op(int index) {
-  // @@protoc_insertion_point(field_mutable:rubble.Ops.op)
-  return op_.Mutable(index);
-}
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::Op >*
-Ops::mutable_op() {
-  // @@protoc_insertion_point(field_mutable_list:rubble.Ops.op)
-  return &op_;
-}
-inline const ::rubble::Op& Ops::_internal_op(int index) const {
-  return op_.Get(index);
-}
-inline const ::rubble::Op& Ops::op(int index) const {
-  // @@protoc_insertion_point(field_get:rubble.Ops.op)
-  return _internal_op(index);
-}
-inline ::rubble::Op* Ops::_internal_add_op() {
-  return op_.Add();
-}
-inline ::rubble::Op* Ops::add_op() {
-  // @@protoc_insertion_point(field_add:rubble.Ops.op)
-  return _internal_add_op();
-}
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::Op >&
-Ops::op() const {
-  // @@protoc_insertion_point(field_list:rubble.Ops.op)
-  return op_;
+  // @@protoc_insertion_point(field_set:rubble.SingleOp.type)
 }
 
 // -------------------------------------------------------------------
 
 // OpReply
 
+// repeated .rubble.SingleOpReply replies = 1;
+inline int OpReply::_internal_replies_size() const {
+  return replies_.size();
+}
+inline int OpReply::replies_size() const {
+  return _internal_replies_size();
+}
+inline void OpReply::clear_replies() {
+  replies_.Clear();
+}
+inline ::rubble::SingleOpReply* OpReply::mutable_replies(int index) {
+  // @@protoc_insertion_point(field_mutable:rubble.OpReply.replies)
+  return replies_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOpReply >*
+OpReply::mutable_replies() {
+  // @@protoc_insertion_point(field_mutable_list:rubble.OpReply.replies)
+  return &replies_;
+}
+inline const ::rubble::SingleOpReply& OpReply::_internal_replies(int index) const {
+  return replies_.Get(index);
+}
+inline const ::rubble::SingleOpReply& OpReply::replies(int index) const {
+  // @@protoc_insertion_point(field_get:rubble.OpReply.replies)
+  return _internal_replies(index);
+}
+inline ::rubble::SingleOpReply* OpReply::_internal_add_replies() {
+  return replies_.Add();
+}
+inline ::rubble::SingleOpReply* OpReply::add_replies() {
+  // @@protoc_insertion_point(field_add:rubble.OpReply.replies)
+  return _internal_add_replies();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOpReply >&
+OpReply::replies() const {
+  // @@protoc_insertion_point(field_list:rubble.OpReply.replies)
+  return replies_;
+}
+
+// -------------------------------------------------------------------
+
+// SingleOpReply
+
 // bool ok = 1;
-inline void OpReply::clear_ok() {
+inline void SingleOpReply::clear_ok() {
   ok_ = false;
 }
-inline bool OpReply::_internal_ok() const {
+inline bool SingleOpReply::_internal_ok() const {
   return ok_;
 }
-inline bool OpReply::ok() const {
-  // @@protoc_insertion_point(field_get:rubble.OpReply.ok)
+inline bool SingleOpReply::ok() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOpReply.ok)
   return _internal_ok();
 }
-inline void OpReply::_internal_set_ok(bool value) {
+inline void SingleOpReply::_internal_set_ok(bool value) {
   
   ok_ = value;
 }
-inline void OpReply::set_ok(bool value) {
+inline void SingleOpReply::set_ok(bool value) {
   _internal_set_ok(value);
-  // @@protoc_insertion_point(field_set:rubble.OpReply.ok)
+  // @@protoc_insertion_point(field_set:rubble.SingleOpReply.ok)
 }
 
 // string key = 2;
-inline void OpReply::clear_key() {
+inline void SingleOpReply::clear_key() {
   key_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline const std::string& OpReply::key() const {
-  // @@protoc_insertion_point(field_get:rubble.OpReply.key)
+inline const std::string& SingleOpReply::key() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOpReply.key)
   return _internal_key();
 }
-inline void OpReply::set_key(const std::string& value) {
+inline void SingleOpReply::set_key(const std::string& value) {
   _internal_set_key(value);
-  // @@protoc_insertion_point(field_set:rubble.OpReply.key)
+  // @@protoc_insertion_point(field_set:rubble.SingleOpReply.key)
 }
-inline std::string* OpReply::mutable_key() {
-  // @@protoc_insertion_point(field_mutable:rubble.OpReply.key)
+inline std::string* SingleOpReply::mutable_key() {
+  // @@protoc_insertion_point(field_mutable:rubble.SingleOpReply.key)
   return _internal_mutable_key();
 }
-inline const std::string& OpReply::_internal_key() const {
+inline const std::string& SingleOpReply::_internal_key() const {
   return key_.Get();
 }
-inline void OpReply::_internal_set_key(const std::string& value) {
+inline void SingleOpReply::_internal_set_key(const std::string& value) {
   
   key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
 }
-inline void OpReply::set_key(std::string&& value) {
+inline void SingleOpReply::set_key(std::string&& value) {
   
   key_.Set(
     &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
-  // @@protoc_insertion_point(field_set_rvalue:rubble.OpReply.key)
+  // @@protoc_insertion_point(field_set_rvalue:rubble.SingleOpReply.key)
 }
-inline void OpReply::set_key(const char* value) {
+inline void SingleOpReply::set_key(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
               GetArena());
-  // @@protoc_insertion_point(field_set_char:rubble.OpReply.key)
+  // @@protoc_insertion_point(field_set_char:rubble.SingleOpReply.key)
 }
-inline void OpReply::set_key(const char* value,
+inline void SingleOpReply::set_key(const char* value,
     size_t size) {
   
   key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
       reinterpret_cast<const char*>(value), size), GetArena());
-  // @@protoc_insertion_point(field_set_pointer:rubble.OpReply.key)
+  // @@protoc_insertion_point(field_set_pointer:rubble.SingleOpReply.key)
 }
-inline std::string* OpReply::_internal_mutable_key() {
+inline std::string* SingleOpReply::_internal_mutable_key() {
   
   return key_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline std::string* OpReply::release_key() {
-  // @@protoc_insertion_point(field_release:rubble.OpReply.key)
+inline std::string* SingleOpReply::release_key() {
+  // @@protoc_insertion_point(field_release:rubble.SingleOpReply.key)
   return key_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline void OpReply::set_allocated_key(std::string* key) {
+inline void SingleOpReply::set_allocated_key(std::string* key) {
   if (key != nullptr) {
     
   } else {
@@ -1626,61 +1819,61 @@ inline void OpReply::set_allocated_key(std::string* key) {
   }
   key_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), key,
       GetArena());
-  // @@protoc_insertion_point(field_set_allocated:rubble.OpReply.key)
+  // @@protoc_insertion_point(field_set_allocated:rubble.SingleOpReply.key)
 }
 
 // string value = 3;
-inline void OpReply::clear_value() {
+inline void SingleOpReply::clear_value() {
   value_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline const std::string& OpReply::value() const {
-  // @@protoc_insertion_point(field_get:rubble.OpReply.value)
+inline const std::string& SingleOpReply::value() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOpReply.value)
   return _internal_value();
 }
-inline void OpReply::set_value(const std::string& value) {
+inline void SingleOpReply::set_value(const std::string& value) {
   _internal_set_value(value);
-  // @@protoc_insertion_point(field_set:rubble.OpReply.value)
+  // @@protoc_insertion_point(field_set:rubble.SingleOpReply.value)
 }
-inline std::string* OpReply::mutable_value() {
-  // @@protoc_insertion_point(field_mutable:rubble.OpReply.value)
+inline std::string* SingleOpReply::mutable_value() {
+  // @@protoc_insertion_point(field_mutable:rubble.SingleOpReply.value)
   return _internal_mutable_value();
 }
-inline const std::string& OpReply::_internal_value() const {
+inline const std::string& SingleOpReply::_internal_value() const {
   return value_.Get();
 }
-inline void OpReply::_internal_set_value(const std::string& value) {
+inline void SingleOpReply::_internal_set_value(const std::string& value) {
   
   value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
 }
-inline void OpReply::set_value(std::string&& value) {
+inline void SingleOpReply::set_value(std::string&& value) {
   
   value_.Set(
     &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
-  // @@protoc_insertion_point(field_set_rvalue:rubble.OpReply.value)
+  // @@protoc_insertion_point(field_set_rvalue:rubble.SingleOpReply.value)
 }
-inline void OpReply::set_value(const char* value) {
+inline void SingleOpReply::set_value(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
               GetArena());
-  // @@protoc_insertion_point(field_set_char:rubble.OpReply.value)
+  // @@protoc_insertion_point(field_set_char:rubble.SingleOpReply.value)
 }
-inline void OpReply::set_value(const char* value,
+inline void SingleOpReply::set_value(const char* value,
     size_t size) {
   
   value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
       reinterpret_cast<const char*>(value), size), GetArena());
-  // @@protoc_insertion_point(field_set_pointer:rubble.OpReply.value)
+  // @@protoc_insertion_point(field_set_pointer:rubble.SingleOpReply.value)
 }
-inline std::string* OpReply::_internal_mutable_value() {
+inline std::string* SingleOpReply::_internal_mutable_value() {
   
   return value_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline std::string* OpReply::release_value() {
-  // @@protoc_insertion_point(field_release:rubble.OpReply.value)
+inline std::string* SingleOpReply::release_value() {
+  // @@protoc_insertion_point(field_release:rubble.SingleOpReply.value)
   return value_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline void OpReply::set_allocated_value(std::string* value) {
+inline void SingleOpReply::set_allocated_value(std::string* value) {
   if (value != nullptr) {
     
   } else {
@@ -1688,61 +1881,61 @@ inline void OpReply::set_allocated_value(std::string* value) {
   }
   value_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value,
       GetArena());
-  // @@protoc_insertion_point(field_set_allocated:rubble.OpReply.value)
+  // @@protoc_insertion_point(field_set_allocated:rubble.SingleOpReply.value)
 }
 
 // string status = 4;
-inline void OpReply::clear_status() {
+inline void SingleOpReply::clear_status() {
   status_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline const std::string& OpReply::status() const {
-  // @@protoc_insertion_point(field_get:rubble.OpReply.status)
+inline const std::string& SingleOpReply::status() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOpReply.status)
   return _internal_status();
 }
-inline void OpReply::set_status(const std::string& value) {
+inline void SingleOpReply::set_status(const std::string& value) {
   _internal_set_status(value);
-  // @@protoc_insertion_point(field_set:rubble.OpReply.status)
+  // @@protoc_insertion_point(field_set:rubble.SingleOpReply.status)
 }
-inline std::string* OpReply::mutable_status() {
-  // @@protoc_insertion_point(field_mutable:rubble.OpReply.status)
+inline std::string* SingleOpReply::mutable_status() {
+  // @@protoc_insertion_point(field_mutable:rubble.SingleOpReply.status)
   return _internal_mutable_status();
 }
-inline const std::string& OpReply::_internal_status() const {
+inline const std::string& SingleOpReply::_internal_status() const {
   return status_.Get();
 }
-inline void OpReply::_internal_set_status(const std::string& value) {
+inline void SingleOpReply::_internal_set_status(const std::string& value) {
   
   status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
 }
-inline void OpReply::set_status(std::string&& value) {
+inline void SingleOpReply::set_status(std::string&& value) {
   
   status_.Set(
     &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
-  // @@protoc_insertion_point(field_set_rvalue:rubble.OpReply.status)
+  // @@protoc_insertion_point(field_set_rvalue:rubble.SingleOpReply.status)
 }
-inline void OpReply::set_status(const char* value) {
+inline void SingleOpReply::set_status(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
               GetArena());
-  // @@protoc_insertion_point(field_set_char:rubble.OpReply.status)
+  // @@protoc_insertion_point(field_set_char:rubble.SingleOpReply.status)
 }
-inline void OpReply::set_status(const char* value,
+inline void SingleOpReply::set_status(const char* value,
     size_t size) {
   
   status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
       reinterpret_cast<const char*>(value), size), GetArena());
-  // @@protoc_insertion_point(field_set_pointer:rubble.OpReply.status)
+  // @@protoc_insertion_point(field_set_pointer:rubble.SingleOpReply.status)
 }
-inline std::string* OpReply::_internal_mutable_status() {
+inline std::string* SingleOpReply::_internal_mutable_status() {
   
   return status_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline std::string* OpReply::release_status() {
-  // @@protoc_insertion_point(field_release:rubble.OpReply.status)
+inline std::string* SingleOpReply::release_status() {
+  // @@protoc_insertion_point(field_release:rubble.SingleOpReply.status)
   return status_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline void OpReply::set_allocated_status(std::string* status) {
+inline void SingleOpReply::set_allocated_status(std::string* status) {
   if (status != nullptr) {
     
   } else {
@@ -1750,47 +1943,47 @@ inline void OpReply::set_allocated_status(std::string* status) {
   }
   status_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), status,
       GetArena());
-  // @@protoc_insertion_point(field_set_allocated:rubble.OpReply.status)
+  // @@protoc_insertion_point(field_set_allocated:rubble.SingleOpReply.status)
 }
 
 // int64 Id = 5;
-inline void OpReply::clear_id() {
+inline void SingleOpReply::clear_id() {
   id_ = PROTOBUF_LONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 OpReply::_internal_id() const {
+inline ::PROTOBUF_NAMESPACE_ID::int64 SingleOpReply::_internal_id() const {
   return id_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 OpReply::id() const {
-  // @@protoc_insertion_point(field_get:rubble.OpReply.Id)
+inline ::PROTOBUF_NAMESPACE_ID::int64 SingleOpReply::id() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOpReply.Id)
   return _internal_id();
 }
-inline void OpReply::_internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void SingleOpReply::_internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
   
   id_ = value;
 }
-inline void OpReply::set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void SingleOpReply::set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
   _internal_set_id(value);
-  // @@protoc_insertion_point(field_set:rubble.OpReply.Id)
+  // @@protoc_insertion_point(field_set:rubble.SingleOpReply.Id)
 }
 
-// .rubble.OpReply.OpType type = 6;
-inline void OpReply::clear_type() {
+// .rubble.SingleOpReply.OpType type = 6;
+inline void SingleOpReply::clear_type() {
   type_ = 0;
 }
-inline ::rubble::OpReply_OpType OpReply::_internal_type() const {
-  return static_cast< ::rubble::OpReply_OpType >(type_);
+inline ::rubble::SingleOpReply_OpType SingleOpReply::_internal_type() const {
+  return static_cast< ::rubble::SingleOpReply_OpType >(type_);
 }
-inline ::rubble::OpReply_OpType OpReply::type() const {
-  // @@protoc_insertion_point(field_get:rubble.OpReply.type)
+inline ::rubble::SingleOpReply_OpType SingleOpReply::type() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOpReply.type)
   return _internal_type();
 }
-inline void OpReply::_internal_set_type(::rubble::OpReply_OpType value) {
+inline void SingleOpReply::_internal_set_type(::rubble::SingleOpReply_OpType value) {
   
   type_ = value;
 }
-inline void OpReply::set_type(::rubble::OpReply_OpType value) {
+inline void SingleOpReply::set_type(::rubble::SingleOpReply_OpType value) {
   _internal_set_type(value);
-  // @@protoc_insertion_point(field_set:rubble.OpReply.type)
+  // @@protoc_insertion_point(field_set:rubble.SingleOpReply.type)
 }
 
 // -------------------------------------------------------------------
@@ -2007,6 +2200,8 @@ inline void SyncReply::set_allocated_message(std::string* message) {
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -2014,15 +2209,15 @@ inline void SyncReply::set_allocated_message(std::string* message) {
 
 PROTOBUF_NAMESPACE_OPEN
 
-template <> struct is_proto_enum< ::rubble::Op_OpType> : ::std::true_type {};
+template <> struct is_proto_enum< ::rubble::SingleOp_OpType> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::rubble::Op_OpType>() {
-  return ::rubble::Op_OpType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::rubble::SingleOp_OpType>() {
+  return ::rubble::SingleOp_OpType_descriptor();
 }
-template <> struct is_proto_enum< ::rubble::OpReply_OpType> : ::std::true_type {};
+template <> struct is_proto_enum< ::rubble::SingleOpReply_OpType> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::rubble::OpReply_OpType>() {
-  return ::rubble::OpReply_OpType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::rubble::SingleOpReply_OpType>() {
+  return ::rubble::SingleOpReply_OpType_descriptor();
 }
 
 PROTOBUF_NAMESPACE_CLOSE
