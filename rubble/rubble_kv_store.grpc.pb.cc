@@ -24,7 +24,6 @@ namespace rubble {
 static const char* RubbleKvStoreService_method_names[] = {
   "/rubble.RubbleKvStoreService/Sync",
   "/rubble.RubbleKvStoreService/DoOp",
-  "/rubble.RubbleKvStoreService/DoBatch",
   "/rubble.RubbleKvStoreService/SendReply",
 };
 
@@ -37,8 +36,7 @@ std::unique_ptr< RubbleKvStoreService::Stub> RubbleKvStoreService::NewStub(const
 RubbleKvStoreService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
   : channel_(channel), rpcmethod_Sync_(RubbleKvStoreService_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_DoOp_(RubbleKvStoreService_method_names[1], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
-  , rpcmethod_DoBatch_(RubbleKvStoreService_method_names[2], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
-  , rpcmethod_SendReply_(RubbleKvStoreService_method_names[3], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
+  , rpcmethod_SendReply_(RubbleKvStoreService_method_names[2], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
   {}
 
 ::grpc::Status RubbleKvStoreService::Stub::Sync(::grpc::ClientContext* context, const ::rubble::SyncRequest& request, ::rubble::SyncReply* response) {
@@ -78,22 +76,6 @@ void RubbleKvStoreService::Stub::experimental_async::DoOp(::grpc::ClientContext*
 
 ::grpc::ClientAsyncReaderWriter< ::rubble::Op, ::rubble::OpReply>* RubbleKvStoreService::Stub::PrepareAsyncDoOpRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::Op, ::rubble::OpReply>::Create(channel_.get(), cq, rpcmethod_DoOp_, context, false, nullptr);
-}
-
-::grpc::ClientReaderWriter< ::rubble::Op, ::rubble::OpReplies>* RubbleKvStoreService::Stub::DoBatchRaw(::grpc::ClientContext* context) {
-  return ::grpc::internal::ClientReaderWriterFactory< ::rubble::Op, ::rubble::OpReplies>::Create(channel_.get(), rpcmethod_DoBatch_, context);
-}
-
-void RubbleKvStoreService::Stub::experimental_async::DoBatch(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::Op,::rubble::OpReplies>* reactor) {
-  ::grpc::internal::ClientCallbackReaderWriterFactory< ::rubble::Op,::rubble::OpReplies>::Create(stub_->channel_.get(), stub_->rpcmethod_DoBatch_, context, reactor);
-}
-
-::grpc::ClientAsyncReaderWriter< ::rubble::Op, ::rubble::OpReplies>* RubbleKvStoreService::Stub::AsyncDoBatchRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::Op, ::rubble::OpReplies>::Create(channel_.get(), cq, rpcmethod_DoBatch_, context, true, tag);
-}
-
-::grpc::ClientAsyncReaderWriter< ::rubble::Op, ::rubble::OpReplies>* RubbleKvStoreService::Stub::PrepareAsyncDoBatchRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::rubble::Op, ::rubble::OpReplies>::Create(channel_.get(), cq, rpcmethod_DoBatch_, context, false, nullptr);
 }
 
 ::grpc::ClientReaderWriter< ::rubble::OpReply, ::rubble::Reply>* RubbleKvStoreService::Stub::SendReplyRaw(::grpc::ClientContext* context) {
@@ -136,16 +118,6 @@ RubbleKvStoreService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       RubbleKvStoreService_method_names[2],
       ::grpc::internal::RpcMethod::BIDI_STREAMING,
-      new ::grpc::internal::BidiStreamingHandler< RubbleKvStoreService::Service, ::rubble::Op, ::rubble::OpReplies>(
-          [](RubbleKvStoreService::Service* service,
-             ::grpc::ServerContext* ctx,
-             ::grpc::ServerReaderWriter<::rubble::OpReplies,
-             ::rubble::Op>* stream) {
-               return service->DoBatch(ctx, stream);
-             }, this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      RubbleKvStoreService_method_names[3],
-      ::grpc::internal::RpcMethod::BIDI_STREAMING,
       new ::grpc::internal::BidiStreamingHandler< RubbleKvStoreService::Service, ::rubble::OpReply, ::rubble::Reply>(
           [](RubbleKvStoreService::Service* service,
              ::grpc::ServerContext* ctx,
@@ -166,12 +138,6 @@ RubbleKvStoreService::Service::~Service() {
 }
 
 ::grpc::Status RubbleKvStoreService::Service::DoOp(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::OpReply, ::rubble::Op>* stream) {
-  (void) context;
-  (void) stream;
-  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-}
-
-::grpc::Status RubbleKvStoreService::Service::DoBatch(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::OpReplies, ::rubble::Op>* stream) {
   (void) context;
   (void) stream;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");

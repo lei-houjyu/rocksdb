@@ -13,11 +13,8 @@ service RubbleKvStoreService {
   // to synchronize states to the downstream nodes in the chain
   rpc Sync (SyncRequest) returns (SyncReply) {} 
 
-  // perform a single db operation (CRUD)
+  // perform db operations (CRUD)
   rpc DoOp(stream Op) returns (stream OpReply){}
-
-  // perform db operations in a batch
-  rpc DoBatch(stream Op) returns (stream OpReplies){}
 
   // used by the tail node to send the true rely to the replicator
   rpc SendReply(stream OpReply) returns (stream Reply){}

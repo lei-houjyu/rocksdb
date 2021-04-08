@@ -75,17 +75,6 @@ CMAKE_BINARY_DIR = /mnt/sdb/my_rocksdb/rubble
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target edit_cache
-edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/usr/local/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
-.PHONY : edit_cache
-
-# Special rule for the target edit_cache
-edit_cache/fast: edit_cache
-
-.PHONY : edit_cache/fast
-
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
@@ -96,6 +85,17 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 
 .PHONY : rebuild_cache/fast
+
+# Special rule for the target edit_cache
+edit_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
+	/usr/local/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+.PHONY : edit_cache
+
+# Special rule for the target edit_cache
+edit_cache/fast: edit_cache
+
+.PHONY : edit_cache/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -130,30 +130,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named primary_node
+# Target rules for targets named tail_node
 
 # Build rule for target.
-primary_node: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 primary_node
-.PHONY : primary_node
+tail_node: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tail_node
+.PHONY : tail_node
 
 # fast build rule for target.
-primary_node/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/build
-.PHONY : primary_node/fast
-
-#=============================================================================
-# Target rules for targets named rocksdb_server
-
-# Build rule for target.
-rocksdb_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rocksdb_server
-.PHONY : rocksdb_server
-
-# fast build rule for target.
-rocksdb_server/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_server.dir/build.make CMakeFiles/rocksdb_server.dir/build
-.PHONY : rocksdb_server/fast
+tail_node/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/build
+.PHONY : tail_node/fast
 
 #=============================================================================
 # Target rules for targets named secondary_node
@@ -169,70 +156,30 @@ secondary_node/fast:
 .PHONY : secondary_node/fast
 
 #=============================================================================
-# Target rules for targets named kv_store_client
+# Target rules for targets named rocksdb_server
 
 # Build rule for target.
-kv_store_client: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kv_store_client
-.PHONY : kv_store_client
+rocksdb_server: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rocksdb_server
+.PHONY : rocksdb_server
 
 # fast build rule for target.
-kv_store_client/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/build
-.PHONY : kv_store_client/fast
+rocksdb_server/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_server.dir/build.make CMakeFiles/rocksdb_server.dir/build
+.PHONY : rocksdb_server/fast
 
 #=============================================================================
-# Target rules for targets named tail_node
+# Target rules for targets named primary_node
 
 # Build rule for target.
-tail_node: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tail_node
-.PHONY : tail_node
+primary_node: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 primary_node
+.PHONY : primary_node
 
 # fast build rule for target.
-tail_node/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/build
-.PHONY : tail_node/fast
-
-#=============================================================================
-# Target rules for targets named replicator
-
-# Build rule for target.
-replicator: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 replicator
-.PHONY : replicator
-
-# fast build rule for target.
-replicator/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/replicator.dir/build.make CMakeFiles/replicator.dir/build
-.PHONY : replicator/fast
-
-kv_store_client.o: kv_store_client.cc.o
-
-.PHONY : kv_store_client.o
-
-# target to build an object file
-kv_store_client.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/kv_store_client.cc.o
-.PHONY : kv_store_client.cc.o
-
-kv_store_client.i: kv_store_client.cc.i
-
-.PHONY : kv_store_client.i
-
-# target to preprocess a source file
-kv_store_client.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/kv_store_client.cc.i
-.PHONY : kv_store_client.cc.i
-
-kv_store_client.s: kv_store_client.cc.s
-
-.PHONY : kv_store_client.s
-
-# target to generate assembly for a file
-kv_store_client.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kv_store_client.dir/build.make CMakeFiles/kv_store_client.dir/kv_store_client.cc.s
-.PHONY : kv_store_client.cc.s
+primary_node/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/build
+.PHONY : primary_node/fast
 
 primary_node.o: primary_node.cc.o
 
@@ -260,33 +207,6 @@ primary_node.s: primary_node.cc.s
 primary_node.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/primary_node.cc.s
 .PHONY : primary_node.cc.s
-
-replicator.o: replicator.cc.o
-
-.PHONY : replicator.o
-
-# target to build an object file
-replicator.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/replicator.dir/build.make CMakeFiles/replicator.dir/replicator.cc.o
-.PHONY : replicator.cc.o
-
-replicator.i: replicator.cc.i
-
-.PHONY : replicator.i
-
-# target to preprocess a source file
-replicator.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/replicator.dir/build.make CMakeFiles/replicator.dir/replicator.cc.i
-.PHONY : replicator.cc.i
-
-replicator.s: replicator.cc.s
-
-.PHONY : replicator.s
-
-# target to generate assembly for a file
-replicator.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/replicator.dir/build.make CMakeFiles/replicator.dir/replicator.cc.s
-.PHONY : replicator.cc.s
 
 rocksdb_server.o: rocksdb_server.cc.o
 
@@ -377,21 +297,13 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... kv_store_client"
 	@echo "... primary_node"
-	@echo "... replicator"
 	@echo "... rocksdb_server"
 	@echo "... secondary_node"
 	@echo "... tail_node"
-	@echo "... kv_store_client.o"
-	@echo "... kv_store_client.i"
-	@echo "... kv_store_client.s"
 	@echo "... primary_node.o"
 	@echo "... primary_node.i"
 	@echo "... primary_node.s"
-	@echo "... replicator.o"
-	@echo "... replicator.i"
-	@echo "... replicator.s"
 	@echo "... rocksdb_server.o"
 	@echo "... rocksdb_server.i"
 	@echo "... rocksdb_server.s"
