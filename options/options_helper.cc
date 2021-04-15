@@ -167,6 +167,10 @@ DBOptions BuildDBOptions(const ImmutableDBOptions& immutable_db_options,
   options.bgerror_resume_retry_interval =
       immutable_db_options.bgerror_resume_retry_interval;
   options.db_host_id = immutable_db_options.db_host_id;
+  //RUBBLE
+  options.is_rubble = immutable_db_options.is_rubble;
+  options.is_primary = immutable_db_options.is_primary;
+  options.is_tail = immutable_db_options.is_tail;
   return options;
 }
 
