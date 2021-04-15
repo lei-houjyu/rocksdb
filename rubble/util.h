@@ -52,20 +52,16 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   std::cout << "is_primary: " << db_options.is_primary << '\n';
   std::cout << "is_tail: " << db_options.is_tail << '\n';
   std::cout << "number of cf: " << loaded_cf_descs.size() << '\n';
-  for (auto &desc : loaded_cf_descs) {
-    std::cout << "cf name: " << desc.name << '\n';
-    std::cout << "write_buffer_size: " << desc.options.write_buffer_size << '\n';
-    std::cout << "target_file_size_base: " << desc.options.target_file_size_base << '\n';
-  }
+  // for (auto &desc : loaded_cf_descs) {
+  //   std::cout << "cf name: " << desc.name << '\n';
+  //   std::cout << "write_buffer_size: " << desc.options.write_buffer_size << '\n';
+  //   std::cout << "target_file_size_base: " << desc.options.target_file_size_base << '\n';
+  // }
   assert(loaded_cf_descs.size() == 1); // We currently only support one ColumnFamily
  
   // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
   db_options.IncreaseParallelism();
-  // create the DB if it's not already present
-  // db_options.create_if_missing = true;
-  // db_options.is_rubble=is_rubble;
-  // db_options.is_primary=is_primary;
-  // db_options.is_tail=is_tail;
+  
   db_options.target_address=target_addr; //TODO(add target_addr, remote_sst_dir and preallocated_sst_pool_size to option file)
 
   // for non-tail nodes in rubble mode, it's shipping sst file to the remote_sst_dir;
@@ -77,14 +73,6 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   db_options.db_paths.emplace_back(rocksdb::DbPath(sst_dir, 10000000000));
   
   rocksdb::ColumnFamilyOptions cf_options = loaded_cf_descs[0].options;
-  // cf_options.OptimizeLevelStyleCompaction();
-  // cf_options.num_levels=5;
-
-  // L0 size 16MB
-  // cf_options.max_bytes_for_level_base=256*1024*1024;
-  // cf_options.compression=rocksdb::kNoCompression;
-  // cf_options.compression_per_level=rocksdb::kNoCompression:kNoCompression:kNoCompression:kNoCompression:kNoCompression;
-
 
   if(is_rubble && !is_primary){
     // db_options.use_direct_reads = true;
@@ -92,12 +80,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
     // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);
     db_options.preallocated_sst_pool_size = 100;
   }
-  // const int kWriteBufferSize = 32*1024*1024;
-  // memtable size set to 4MB
-  // cf_options.write_buffer_size=kWriteBufferSize;
-  // sst file size 4MB
-  // cf_options.target_file_size_base=64*1024*1024;
- 
+
   std::cout << "write_buffer_size: " << cf_options.write_buffer_size << '\n';
   std::cout << "target_file_size_base: " << cf_options.target_file_size_base << '\n';
   rocksdb::Options options(db_options, cf_options);
