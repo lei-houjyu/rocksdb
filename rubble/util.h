@@ -5,7 +5,10 @@
 #include <cstring>
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
+#include "rocksdb/utilities/options_util.h"
+
 using std::string;
+using rocksdb::LoadOptionsFromFile;
 
 const char* ParseCmdPara( char* argv,const char* para) {
     auto p_target = std::strstr(argv,para);
@@ -35,6 +38,21 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
 
   rocksdb::DB* db;
   rocksdb::DBOptions db_options;
+  rocksdb::ConfigOptions config_options;
+  std::vector<rocksdb::ColumnFamilyDescriptor> loaded_cf_descs;
+  std::cout << "HELLO\n";
+  rocksdb::Status s = LoadOptionsFromFile(
+    /*config_options=*/config_options,
+    /*options_file_name=*/"/mnt/sdb/my_rocksdb/rubble/rocksdb_config_file.ini",
+    /*db_options=*/&db_options,
+    /*cf_descs=*/&loaded_cf_descs
+  );
+  if (!s.ok()) std::cout << s.getState() << '\n';
+  assert(s.ok());
+  std::cout << "is_rubble: " << db_options.is_rubble << '\n';
+  std::cout << "is_primary: " << db_options.is_primary << '\n';
+  std::cout << "is_tail: " << db_options.is_tail << '\n';
+
   // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
   db_options.IncreaseParallelism();
   // create the DB if it's not already present
@@ -78,7 +96,8 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   rocksdb::Options options(db_options, cf_options);
 
   // open DB
-  rocksdb::Status s = rocksdb::DB::Open(options, db_path, &db);
+  // rocksdb::Status s = rocksdb::DB::Open(options, db_path, &db);
+  s = rocksdb::DB::Open(options, db_path, &db);
   if(!s.ok()){
     std::cout << "DB open failed : " << s.ToString() << std::endl;
   }
