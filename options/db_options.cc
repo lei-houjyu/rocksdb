@@ -392,6 +392,16 @@ static std::unordered_map<std::string, OptionTypeInfo>
         {"db_host_id",
          {offsetof(struct ImmutableDBOptions, db_host_id), OptionType::kString,
           OptionVerificationType::kNormal, OptionTypeFlags::kCompareNever}},
+        //RUBBLE
+        {"is_rubble",
+          {offsetof(struct ImmutableDBOptions, is_rubble), OptionType::kBoolean,
+          OptionVerificationType::kNormal, OptionTypeFlags::kNone}},
+        {"is_primary",
+          {offsetof(struct ImmutableDBOptions, is_rubble), OptionType::kBoolean,
+          OptionVerificationType::kNormal, OptionTypeFlags::kNone}},
+        {"is_tail",
+          {offsetof(struct ImmutableDBOptions, is_rubble), OptionType::kBoolean,
+          OptionVerificationType::kNormal, OptionTypeFlags::kNone}},
         // The following properties were handled as special cases in ParseOption
         // This means that the properties could be read from the options file
         // but never written to the file or compared to each other.
