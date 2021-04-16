@@ -1465,8 +1465,9 @@ Status DB::Open(const DBOptions& db_options, const std::string& dbname,
   const bool kSeqPerBatch = true;
   const bool kBatchPerTxn = true;
   // ASH: changes to add db_paths
-
-  std::cout << " -------- sst directory : " << db_options.db_paths.back().path << "--------" << std::endl;
+  if(!db_options.db_paths.empty()){
+    std::cout << " -------- sst directory : " << db_options.db_paths.back().path << "--------" << std::endl;
+  }
   return DBImpl::Open(db_options, dbname, column_families, handles, dbptr, !kSeqPerBatch, kBatchPerTxn);
 }
 

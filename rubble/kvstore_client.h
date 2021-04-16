@@ -58,59 +58,6 @@ class KvStoreClient{
         grpc_thread_->join();
     }
 
-  Status SyncDoOpDone(){
-    sync_stream_->WritesDone();
-    Status status = sync_stream_->Finish();
-    if (!status.ok()) {
-      std::cout << status.error_code() << ": " << status.error_message()
-                << std::endl;
-      std::cout << "RPC failed";
-    }
-    return status;
-  }
-
-  // Requests each key in the vector and displays the key and its corresponding
-  // value as a pair
-  void SyncDoGets(const std::vector<std::string>& keys) {
-    auto start_time = high_resolution_clock::now();
-    Op request_batch;
-    for(const auto& key:keys){
-      // Keys we are sending to the server.
-      SingleOp* request = request_batch.add_ops();
-      request->set_key(key);
-      request->set_type(SingleOp::GET);
-    }
-    sync_stream_->Write(request_batch);
-    // Get the value for the sent key
-    OpReply response_batch;
-    sync_stream_->Read(&response_batch);
-    for(const auto& response: response_batch.replies()) {
-      if(!response.ok()){
-        std::cout << "Get -> " /*<< response.key()*/ << " ,Failed: " << response.status() << "\n";
-      }else{
-        std::cout << "Get -> " << response.key() << " ,returned val : " << response.value() << std::endl;
-      }
-    }
-    auto end_time = high_resolution_clock::now();
-    auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-    std::cout << "send " << keys.size()<< " get ops in " << millisecs.count() << " millisecs \n";
-  }
-
-  void SyncDoPuts(const std::vector<std::pair<std::string, std::string>>& kvs){   
-    auto start_time = high_resolution_clock::now();
-    Op request_batch;
-    for(const auto& kv: kvs){
-      SingleOp* request = request_batch.add_ops();
-      request->set_key(kv.first);
-      request->set_value(kv.second);
-      request->set_type(SingleOp::PUT);
-    }
-    sync_stream_->Write(request_batch);
-    auto end_time = high_resolution_clock::now();
-    auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-    std::cout << "send " << kvs.size()<< " put ops in " << millisecs.count() << " millisecs \n";
-  }
-
   //tell the server we're done sending the ops
   void WritesDone(){
       stream_->WritesDone(reinterpret_cast<void*>(Type::WRITES_DONE));
@@ -317,8 +264,6 @@ class KvStoreClient{
     // Storage for the status of the RPC upon completion.
     Status status_;
 
-    // The bidirectional,synchronous stream for sending/receiving messages.
-    std::unique_ptr<ClientReaderWriter<Op, OpReply>> sync_stream_;
     // The bidirectional, asynchronous stream
     std::unique_ptr<ClientAsyncReaderWriter<Op, OpReply>> stream_;
 

@@ -162,17 +162,20 @@ class CallDataBidi : CallDataBase {
         }else {
           // tail node should be responsible for sending the reply back to replicator
           // use the sync stream to write the reply back
-          if (reply_client_ == nullptr) {
+          if (reply_client_ == nullptr && db_options_->target_address != "") {
             // std::cout << "init the reply client" << "\n";
             reply_client_ = std::make_shared<ReplyClient>(grpc::CreateChannel(
             db_options_->target_address, grpc::InsecureChannelCredentials()));
           }
-	        reply_client_->SendReply(reply_);
-          reply_.clear_replies();
-
+          if(reply_client_ != nullptr){
+            reply_client_->SendReply(reply_);
+            reply_.clear_replies();
+          }
         }
         rw_.Read(&request_, (void*)this);
         status_ = BidiStatus::READ;
+        // rw_.Write(reply_, (void*)this);
+        // status_ = BidiStatus::WRITE;
         break;
 
     case BidiStatus::WRITE:
@@ -218,22 +221,22 @@ class CallDataBidi : CallDataBase {
 
   void HandleOp() override {
     std::string value;
-    // if(!op_counter_.load()){
-    //   start_time_ = high_resolution_clock::now();
-    // }
+    if(!op_counter_.load()){
+      start_time_ = high_resolution_clock::now();
+    }
 
-    // if(op_counter_.load() && op_counter_.load()%100000 == 0){
-    //   end_time_ = high_resolution_clock::now();
-    //   auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
-    //   std::cout << "Throughput : handled 100000 ops in " << millisecs.count() << " millisecs\n";
-    //   start_time_ = end_time_;
-    // }
+    if(op_counter_.load() && op_counter_.load()%100000 == 0){
+      end_time_ = high_resolution_clock::now();
+      auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
+      std::cout << "Throughput : handled 100000 ops in " << std::to_string(millisecs.count()) << " millisecs\n";
+      start_time_ = end_time_;
+    }
     
     // std::cout << "handling a " << request_.type() <<" " <<  request_.id() << " op...\n";
-
     // ASSUME that each batch is with the same type of operation
     assert(request_.ops_size() > 0);
     op_counter_ += request_.ops_size();
+
     SingleOpReply* reply;
     reply_.clear_replies();
     // std::cout << "thread: " << map[std::this_thread::get_id()] << " counter: " << op_counter_ 
@@ -258,6 +261,8 @@ class CallDataBidi : CallDataBase {
         }
         break;
       case SingleOp::PUT:
+        batch_start_time_ = high_resolution_clock::now();
+        batch_counter_++;
         for(const auto& request: request_.ops()) {
           s_ = db_->Put(rocksdb::WriteOptions(), request.key(), request.value());
           assert(s_.ok());
@@ -278,6 +283,11 @@ class CallDataBidi : CallDataBase {
             }
           }
         }
+        batch_end_time_ = high_resolution_clock::now();
+        std::cout << "thread " << map[std::this_thread::get_id()] << " processd batch " << batch_counter_.load() 
+                  << " in " << std::to_string(duration_cast<std::chrono::milliseconds>(batch_end_time_ - batch_start_time_).count())
+                  << " millisecs , size : " << request_.ops_size() << std::endl;
+
         break;
       case SingleOp::DELETE:
         //TODO
@@ -318,9 +328,13 @@ class CallDataBidi : CallDataBase {
   std::mutex   m_mutex;
 
   std::atomic<uint64_t> op_counter_{0};
+  std::atomic<uint64_t> batch_counter_{0};
   int reply_counter_{0};
+
   time_point<high_resolution_clock> start_time_;
   time_point<high_resolution_clock> end_time_;
+  time_point<high_resolution_clock> batch_start_time_;
+  time_point<high_resolution_clock> batch_end_time_;
 };
 
 class ServerImpl final {
@@ -369,7 +383,7 @@ class ServerImpl final {
         }
         auto new_thread =  new std::thread(&ServerImpl::HandleRpcs, this, _cq_idx);
         map[new_thread->get_id()] = i;
-        std::cout <<  std::setw(2) << i << " th thread spawned \n";
+        // std::cout <<  std::setw(2) << i << " th thread spawned \n";
         _vec_threads.emplace_back(new_thread);
     }
 
