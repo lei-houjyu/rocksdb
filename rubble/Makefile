@@ -130,30 +130,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named tail_node
+# Target rules for targets named primary_node
 
 # Build rule for target.
-tail_node: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tail_node
-.PHONY : tail_node
+primary_node: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 primary_node
+.PHONY : primary_node
 
 # fast build rule for target.
-tail_node/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/build
-.PHONY : tail_node/fast
-
-#=============================================================================
-# Target rules for targets named secondary_node
-
-# Build rule for target.
-secondary_node: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 secondary_node
-.PHONY : secondary_node
-
-# fast build rule for target.
-secondary_node/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_node.dir/build.make CMakeFiles/secondary_node.dir/build
-.PHONY : secondary_node/fast
+primary_node/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/build
+.PHONY : primary_node/fast
 
 #=============================================================================
 # Target rules for targets named rocksdb_server
@@ -169,17 +156,43 @@ rocksdb_server/fast:
 .PHONY : rocksdb_server/fast
 
 #=============================================================================
-# Target rules for targets named primary_node
+# Target rules for targets named secondary_node
 
 # Build rule for target.
-primary_node: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 primary_node
-.PHONY : primary_node
+secondary_node: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 secondary_node
+.PHONY : secondary_node
 
 # fast build rule for target.
-primary_node/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/build
-.PHONY : primary_node/fast
+secondary_node/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_node.dir/build.make CMakeFiles/secondary_node.dir/build
+.PHONY : secondary_node/fast
+
+#=============================================================================
+# Target rules for targets named tail_node
+
+# Build rule for target.
+tail_node: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tail_node
+.PHONY : tail_node
+
+# fast build rule for target.
+tail_node/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/build
+.PHONY : tail_node/fast
+
+#=============================================================================
+# Target rules for targets named sync_kvstore_client
+
+# Build rule for target.
+sync_kvstore_client: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sync_kvstore_client
+.PHONY : sync_kvstore_client
+
+# fast build rule for target.
+sync_kvstore_client/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sync_kvstore_client.dir/build.make CMakeFiles/sync_kvstore_client.dir/build
+.PHONY : sync_kvstore_client/fast
 
 primary_node.o: primary_node.cc.o
 
@@ -262,6 +275,33 @@ secondary_node.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_node.dir/build.make CMakeFiles/secondary_node.dir/secondary_node.cc.s
 .PHONY : secondary_node.cc.s
 
+sync_kvstore_client.o: sync_kvstore_client.cc.o
+
+.PHONY : sync_kvstore_client.o
+
+# target to build an object file
+sync_kvstore_client.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sync_kvstore_client.dir/build.make CMakeFiles/sync_kvstore_client.dir/sync_kvstore_client.cc.o
+.PHONY : sync_kvstore_client.cc.o
+
+sync_kvstore_client.i: sync_kvstore_client.cc.i
+
+.PHONY : sync_kvstore_client.i
+
+# target to preprocess a source file
+sync_kvstore_client.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sync_kvstore_client.dir/build.make CMakeFiles/sync_kvstore_client.dir/sync_kvstore_client.cc.i
+.PHONY : sync_kvstore_client.cc.i
+
+sync_kvstore_client.s: sync_kvstore_client.cc.s
+
+.PHONY : sync_kvstore_client.s
+
+# target to generate assembly for a file
+sync_kvstore_client.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sync_kvstore_client.dir/build.make CMakeFiles/sync_kvstore_client.dir/sync_kvstore_client.cc.s
+.PHONY : sync_kvstore_client.cc.s
+
 tail_node.o: tail_node.cc.o
 
 .PHONY : tail_node.o
@@ -300,6 +340,7 @@ help:
 	@echo "... primary_node"
 	@echo "... rocksdb_server"
 	@echo "... secondary_node"
+	@echo "... sync_kvstore_client"
 	@echo "... tail_node"
 	@echo "... primary_node.o"
 	@echo "... primary_node.i"
@@ -310,6 +351,9 @@ help:
 	@echo "... secondary_node.o"
 	@echo "... secondary_node.i"
 	@echo "... secondary_node.s"
+	@echo "... sync_kvstore_client.o"
+	@echo "... sync_kvstore_client.i"
+	@echo "... sync_kvstore_client.s"
 	@echo "... tail_node.o"
 	@echo "... tail_node.i"
 	@echo "... tail_node.s"

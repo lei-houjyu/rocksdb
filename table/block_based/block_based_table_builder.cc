@@ -1619,21 +1619,22 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
   // std::cout << "[WriteFooter] offset: r->get_offset() " << r->get_offset() << "\n";
   // assume writer_buffer_size if an integer multiple of 1024*1024 Bytes
   // pad the sst size to write_buffer_size + 1MB
-  int pad_len = (write_buffer_size + (1<<20)) - r->get_offset() - footer_encoding.size();
-  assert(pad_len >= 0);
-  std::string pad_str((size_t)pad_len, '.');
-  Slice pad_slice(pad_str);
-  // std::cout << "[WriteFooter] pad_len " << pad_len << "\n";
-  assert(pad_slice.size() == (size_t)pad_len);
-  IOStatus ios = r->file->Append(pad_slice);
-  if (ios.ok()) {
-    r->set_offset(r->get_offset() + pad_slice.size());
-  } else {
-    r->SetIOStatus(ios);
-    r->SetStatus(ios);
-  }
-  assert(ok());
-  ios = r->file->Append(footer_encoding);
+  // int pad_len = (write_buffer_size + (1<<20)) - r->get_offset() - footer_encoding.size();
+  // assert(pad_len >= 0);
+  // std::string pad_str((size_t)pad_len, '.');
+  // Slice pad_slice(pad_str);
+  // // std::cout << "[WriteFooter] pad_len " << pad_len << "\n";
+  // assert(pad_slice.size() == (size_t)pad_len);
+  // IOStatus ios = r->file->Append(pad_slice);
+  // if (ios.ok()) {
+  //   r->set_offset(r->get_offset() + pad_slice.size());
+  // } else {
+  //   r->SetIOStatus(ios);
+  //   r->SetStatus(ios);
+  // }
+
+  // assert(ok());
+  IOStatus ios = r->file->Append(footer_encoding);
   if (ios.ok()) {
     r->set_offset(r->get_offset() + footer_encoding.size());
   } else {

@@ -157,6 +157,8 @@ foreach(_target
   primary_node
   secondary_node
   tail_node
+  sync_kvstore_client
+  rocksdb_load_test
   # kv_store_client
   # replicator
   )
