@@ -75,17 +75,6 @@ CMAKE_BINARY_DIR = /mnt/sdb/my_rocksdb/rubble
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target rebuild_cache
-rebuild_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/usr/local/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : rebuild_cache
-
-# Special rule for the target rebuild_cache
-rebuild_cache/fast: rebuild_cache
-
-.PHONY : rebuild_cache/fast
-
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
@@ -96,6 +85,17 @@ edit_cache:
 edit_cache/fast: edit_cache
 
 .PHONY : edit_cache/fast
+
+# Special rule for the target rebuild_cache
+rebuild_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
+	/usr/local/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : rebuild_cache
+
+# Special rule for the target rebuild_cache
+rebuild_cache/fast: rebuild_cache
+
+.PHONY : rebuild_cache/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -194,6 +194,19 @@ sync_kvstore_client/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sync_kvstore_client.dir/build.make CMakeFiles/sync_kvstore_client.dir/build
 .PHONY : sync_kvstore_client/fast
 
+#=============================================================================
+# Target rules for targets named rocksdb_load_test
+
+# Build rule for target.
+rocksdb_load_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rocksdb_load_test
+.PHONY : rocksdb_load_test
+
+# fast build rule for target.
+rocksdb_load_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_load_test.dir/build.make CMakeFiles/rocksdb_load_test.dir/build
+.PHONY : rocksdb_load_test/fast
+
 primary_node.o: primary_node.cc.o
 
 .PHONY : primary_node.o
@@ -220,6 +233,33 @@ primary_node.s: primary_node.cc.s
 primary_node.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/primary_node.cc.s
 .PHONY : primary_node.cc.s
+
+rocksdb_load_test.o: rocksdb_load_test.cc.o
+
+.PHONY : rocksdb_load_test.o
+
+# target to build an object file
+rocksdb_load_test.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_load_test.dir/build.make CMakeFiles/rocksdb_load_test.dir/rocksdb_load_test.cc.o
+.PHONY : rocksdb_load_test.cc.o
+
+rocksdb_load_test.i: rocksdb_load_test.cc.i
+
+.PHONY : rocksdb_load_test.i
+
+# target to preprocess a source file
+rocksdb_load_test.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_load_test.dir/build.make CMakeFiles/rocksdb_load_test.dir/rocksdb_load_test.cc.i
+.PHONY : rocksdb_load_test.cc.i
+
+rocksdb_load_test.s: rocksdb_load_test.cc.s
+
+.PHONY : rocksdb_load_test.s
+
+# target to generate assembly for a file
+rocksdb_load_test.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_load_test.dir/build.make CMakeFiles/rocksdb_load_test.dir/rocksdb_load_test.cc.s
+.PHONY : rocksdb_load_test.cc.s
 
 rocksdb_server.o: rocksdb_server.cc.o
 
@@ -338,6 +378,7 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... primary_node"
+	@echo "... rocksdb_load_test"
 	@echo "... rocksdb_server"
 	@echo "... secondary_node"
 	@echo "... sync_kvstore_client"
@@ -345,6 +386,9 @@ help:
 	@echo "... primary_node.o"
 	@echo "... primary_node.i"
 	@echo "... primary_node.s"
+	@echo "... rocksdb_load_test.o"
+	@echo "... rocksdb_load_test.i"
+	@echo "... rocksdb_load_test.s"
 	@echo "... rocksdb_server.o"
 	@echo "... rocksdb_server.i"
 	@echo "... rocksdb_server.s"

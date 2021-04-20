@@ -9,6 +9,8 @@
 #include <chrono>
 #include <vector>
 #include <random>
+#include <thread>
+#include <unordered_map>
 #include <bitset>
 #include "rocksdb/db.h"
 #include "rocksdb/slice.h"
@@ -23,6 +25,56 @@ std::string kDBPath = "C:\\Windows\\TEMP\\rocksdb_simple_example";
 #else
 std::string kDBPath = "/tmp/rocksdb_load";
 #endif
+
+class InsertClient{
+  public:
+    InsertClient(DB* db, vector<pair<string, string>>& kvs)
+      :db_(db),kvs_(kvs){
+      thread_num_ = std::thread::hardware_concurrency();
+      std::cout << "InsertClient initialized, thread num : " << thread_num_ << std::endl;
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    ~InsertClient(){}
+
+  void DoOp(int index, int target){
+    auto start_time = std::chrono::high_resolution_clock::now();
+    for(int i = 0; i < target; ++i){
+      auto kv = kvs_[index + i];
+      db_->Put(WriteOptions(), kv.first, kv.second);
+    }
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::cout << "Thread " << map_[std::this_thread::get_id()] << " process time (micros): " 
+              << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << std::endl;
+  }
+
+  void StartDoOp(){
+    std::cout << "Start Processing Op \n";
+    assert(kvs_.size() > thread_num_);
+    int target = kvs_.size()/ thread_num_;
+    std::cout << "requests size : " << kvs_.size() << ", target : " << target << std::endl;
+
+    for(unsigned int i = 0; i < thread_num_; ++i){
+      auto new_thread = new std::thread(&InsertClient::DoOp, this, i*target, target);
+      threads_.emplace_back(new_thread);
+      map_.emplace(new_thread->get_id(), i);
+    }
+
+    for(const auto& t: threads_){
+      t->join();
+    }
+  }
+
+  private:
+   int target;
+   std::vector<std::thread*> threads_;
+   int thread_num_;
+
+   std::unordered_map<std::thread::id, int> map_;
+   vector<pair<string, string>> kvs_;
+   DB* db_;
+
+};
 
 int main() {
   // open DB
@@ -44,7 +96,7 @@ int main() {
     unsigned long n = 1024;
     zipf_table_distribution<unsigned long, double> zipf(n);
     default_random_engine eng;
-    uniform_int_distribution<int> distr(0, 10000); 
+    uniform_int_distribution<int> distr(0, 1000); 
 
     cout << " zif table initialized \n";
     vector<pair<string, string>> kvs;
@@ -57,13 +109,15 @@ int main() {
       kvs.emplace_back(rand_key, rand_val);
     }
 
+    InsertClient client(db, kvs);
     auto start_time = chrono::high_resolution_clock::now();
-    for(const auto& kv : kvs){
-      s = db->Put(WriteOptions() , kv.first, kv.second);
-    }
+    client.StartDoOp();
+    // for(const auto& kv : kvs){
+    //   s = db->Put(WriteOptions() , kv.first, kv.second);
+    // }
     auto end_time = chrono::high_resolution_clock::now();
     auto process_time = chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count();
-    cout << " process " << num_of_kvs << " in " << process_time << " millisecs \n";
+    cout << "process " << num_of_kvs << " in " << process_time << " millisecs \n";
   }
 
   // Put key-value
