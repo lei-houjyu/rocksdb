@@ -6,12 +6,18 @@
 #include <bitset>
 #include "util.h"
 using namespace std;
+using rubble::Op;
+using rubble::OpReply;
+using rubble::SingleOp;
+using rubble::SingleOpReply;
+
 using std::chrono::high_resolution_clock;
 
 class KvStoreClient{
     public:
       KvStoreClient(std::shared_ptr<SyncKvStoreClient> client, size_t kv_size)
         :client_(client), kv_size_(kv_size){
+          batch_size_ = client->GetBatchSize();
         }
 
       ~KvStoreClient(){
@@ -36,16 +42,32 @@ class KvStoreClient{
 
         cout << " zif table initialized \n";
         vector<pair<string, string>> kvs;
+
+        // Op request;
         for(int i = 0; i < num_of_kvs; i++){
-          string rand_key = bitset<64>(zipf(gen)).to_string();
+          op_counter_++;
+
+          string rand_key = bitset<24>(zipf(gen)).to_string();
           string rand_val = bitset<32>(distr(eng)).to_string();
-          rand_key.append(bitset<32>(distr(eng)).to_string());
+          // rand_key.append(bitset<32>(distr(eng)).to_string());
           // cout << " rand key "  << rand_key << " size : " << rand_key.size() << endl;
 
-          rand_key.append(kv_size_ - rand_key.size(), '0');
+          // rand_key.append(kv_size_ - rand_key.size(), '0');
           rand_val.append(kv_size_ - rand_val.size(), '0');
+
+          // SingleOp* op = request.add_ops();
+          // op->set_key(rand_key);
+          // op->set_value(rand_val);
+          // op->set_type(SingleOp::PUT);
+          // op->set_id(op_counter_.load());
+          // if(request.ops_size() == batch_size_){
+          //   client_->AddRequest(request);
+          //   request.clear_ops();
+          // }
           kvs.emplace_back(rand_key, rand_val);
         }
+        std::cout << "Start Processing OP...\n";
+        // client_->StartDoOp();
         client_->Put(kvs);
       }
     }
@@ -75,6 +97,8 @@ class KvStoreClient{
       //size of a key and value
       size_t kv_size_;
 
+      std::atomic<uint64_t> op_counter_{0};
+      int batch_size_;
       // std::default_random_engine gen_;
       // std::random_device rd;   
       // std::mt19937_64 gen_(rd());

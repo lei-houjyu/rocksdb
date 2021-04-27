@@ -1512,13 +1512,20 @@ Status CompactionJob::InstallCompactionResults(
   // Add compaction inputs
   compaction->AddInputDeletions(compact_->compaction->edit());
 
+  std::cout << " -------- Compaction Job : ["  << job_id_ << "] ----------" << std::endl;
   for (const auto& sub_compact : compact_->sub_compact_states) {
     for (const auto& out : sub_compact.outputs) {
       edit->AddFile(compaction->output_level(), out.meta);
+      std::cout << "[File Added] : " << out.meta.fd.GetNumber() << std::endl;
+    }
+  }
+ 
+  for (unsigned int i=0; i < compact_->compaction->num_input_levels(); i++){
+    for (auto f : *(compact_->compaction->inputs(i))){
+      std::cout << "[File Deleted] : " << f->fd.GetNumber() << std::endl;
     }
   }
 
-  std::cout << " -------- Compaction Job : ["  << job_id_ << "] ----------" << std::endl;
   // RUBBLE: ship new sst file to the remote dir and delete the input sst file at the remote sst dir
   // Only the primary node will get here, non-primary nodes' flush and compaction are disabled
   if(db_options_.is_rubble && db_options_.is_primary){

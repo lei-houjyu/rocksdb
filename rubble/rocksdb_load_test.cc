@@ -30,7 +30,7 @@ class InsertClient{
   public:
     InsertClient(DB* db, vector<pair<string, string>>& kvs)
       :db_(db),kvs_(kvs){
-      thread_num_ = std::thread::hardware_concurrency();
+      thread_num_ = 12;
       std::cout << "InsertClient initialized, thread num : " << thread_num_ << std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -39,13 +39,23 @@ class InsertClient{
 
   void DoOp(int index, int target){
     auto start_time = std::chrono::high_resolution_clock::now();
+    // std::vector<int> insert_latencies;
     for(int i = 0; i < target; ++i){
       auto kv = kvs_[index + i];
+      // auto op_start_time = std::chrono::high_resolution_clock::now();
       db_->Put(WriteOptions(), kv.first, kv.second);
+      // auto op_end_time = std::chrono::high_resolution_clock::now();
+      // insert_latencies.push_back(std::chrono::duration_cast<std::chrono::microseconds>(op_end_time - op_start_time).count());
     }
+
     auto end_time = std::chrono::high_resolution_clock::now();
     std::cout << "Thread " << map_[std::this_thread::get_id()] << " process time (micros): " 
               << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << std::endl;
+    // int latency = 0;
+    // for(auto const& t : insert_latencies){
+    //   latency += t;
+    // }
+    // std::cout << "Average put latency : " << latency/target << " micros \n";
   }
 
   void StartDoOp(){
@@ -101,10 +111,11 @@ int main() {
     cout << " zif table initialized \n";
     vector<pair<string, string>> kvs;
     for(int i = 0; i < num_of_kvs; i++){
-      string rand_key = bitset<64>(zipf(gen)).to_string();
+      string rand_key = bitset<24>(zipf(gen)).to_string();
       string rand_val = bitset<32>(distr(eng)).to_string();
-      rand_key.append(bitset<32>(distr(eng)).to_string());
-      rand_key.append(kv_size - rand_key.size(), '0');
+      // std::cout << "key size : " << rand_key.size() << std::endl;
+      // rand_key.append(bitset<32>(distr(eng)).to_string());
+      // rand_key.append(static_cast<size_t>(24) - rand_key.size(), '0');
       rand_val.append(kv_size - rand_val.size(), '0');
       kvs.emplace_back(rand_key, rand_val);
     }

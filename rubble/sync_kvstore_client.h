@@ -6,6 +6,7 @@
 #include <string>
 #include <chrono>
 #include <limits>
+#include <thread>
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -30,6 +31,15 @@ class SyncKvStoreClient{
     SyncKvStoreClient(std::shared_ptr<Channel> channel, int batch_size)
         : stub_(RubbleKvStoreService::NewStub(channel)), batch_size_(batch_size){    
         stream_ = stub_->DoOp(&context_);
+    //     thread_num_ = std::thread::hardware_concurrency();
+    //     std::cout << thread_num_ << " Threads are supported\n";
+    //     for(int i = 0 ; i < thread_num_; ++i){
+    //       ClientContext ctx;
+    //       ctxs_.push_back(std::move(&ctx));
+    //       auto stub = RubbleKvStoreService::NewStub(channel);
+    //       streams_.push_back(std::move(stub->DoOp(ctxs_[i])));
+    //       stubs_.push_back(std::move(stub));
+    //     }
     };
 
     ~SyncKvStoreClient(){
@@ -130,24 +140,71 @@ class SyncKvStoreClient{
     std::cout << "send " << kvs.size()<< " put ops in " << millisecs.count() << " millisecs \n";
   }
 
+  /**
+   * @param index the start index of the requests vector to process
+   * @param target the target count of requests to send
+   */
+  void DoOp(int index, int target){
+    auto start_time = std::chrono::high_resolution_clock::now();
+    int stream_idx = index/target;
+    for(int i = 0; i < target; ++i){
+      auto op = requests_[index + i];
+      std::cout << " Get an op " << index + i << "\n";
+      streams_[stream_idx]->Write(op);
+    }
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::cout << "Thread " << std::this_thread::get_id() << " process time : " 
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << std::endl;
+  }
+
+  void StartDoOp(){
+    assert(requests_.size() > thread_num_);
+    int target = requests_.size()/thread_num_;
+    std::cout << "requests size : " << requests_.size() << " target : " << target << std::endl;
+
+    for(unsigned int i = 0; i < thread_num_; ++i){
+      auto new_thread = new std::thread(&SyncKvStoreClient::DoOp, this, i*target, target);
+      threads_.emplace_back(new_thread);
+    }
+
+    for(const auto& t: threads_){
+      t->join();
+    }
+  }
+
+  void AddRequest(Op request){
+    requests_.push_back(request);
+  }
+
+  int GetBatchSize(){
+    return batch_size_;
+  }
 
   private:
     Op request_;
+    std::vector<Op> requests_;
     OpReply reply_;
+
+    unsigned int thread_num_;
+    std::vector<std::thread*> threads_;
     int batch_size_;
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
     ClientContext context_;
-
+    std::vector<ClientContext*> ctxs_;
     // Storage for the status of the RPC upon completion.
     Status status_;
 
     // The bidirectional,synchronous stream for sending/receiving messages.
     std::unique_ptr<ClientReaderWriter<Op, OpReply>> stream_;
+    std::vector<std::unique_ptr<ClientReaderWriter<Op, OpReply>>> streams_; 
+
     // Out of the passed in Channel comes the stub, stored here, our view of the
     // server's exposed services.
     std::unique_ptr<RubbleKvStoreService::Stub> stub_ = nullptr;
+    std::vector<std::unique_ptr<RubbleKvStoreService::Stub>> stubs_;
 
     std::atomic<uint64_t> op_counter_{0};
 
