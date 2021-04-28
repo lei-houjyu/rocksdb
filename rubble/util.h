@@ -114,15 +114,10 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   assert(s.ok());
 
   std::cout << "number of cf: " << loaded_cf_descs.size() << '\n';
-  // for (auto &desc : loaded_cf_descs) {
-  //   std::cout << "cf name: " << desc.name << '\n';
-  //   std::cout << "write_buffer_size: " << desc.options.write_buffer_size << '\n';
-  //   std::cout << "target_file_size_base: " << desc.options.target_file_size_base << '\n';
-  // }
   assert(loaded_cf_descs.size() == 1); // We currently only support one ColumnFamily
  
   // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
-  db_options.IncreaseParallelism();
+  // db_options.IncreaseParallelism();
   db_options.is_rubble=is_rubble;
   db_options.is_primary=is_primary;
   db_options.is_tail=is_tail;

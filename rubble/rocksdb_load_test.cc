@@ -28,9 +28,9 @@ std::string kDBPath = "/tmp/rocksdb_load";
 
 class InsertClient{
   public:
-    InsertClient(DB* db, vector<pair<string, string>>& kvs)
-      :db_(db),kvs_(kvs){
-      thread_num_ = 12;
+    InsertClient(DB* db, vector<pair<string, string>>& kvs, int thread_num)
+      :db_(db),kvs_(kvs), thread_num_(thread_num){
+      // thread_num_ = 12;
       std::cout << "InsertClient initialized, thread num : " << thread_num_ << std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -86,20 +86,25 @@ class InsertClient{
 
 };
 
-int main() {
+int main(int argc, char** argv) {
+
+  string rocksdb_dir = ParseCmdPara(argv[1], "--rocksdb_dir=");
+  string sst_dir = ParseCmdPara(argv[2], "--sst_dir=");
+  string input = ParseCmdPara(argv[3], "--num_kv=");
+  int thread_num = stoi(ParseCmdPara(argv[4], "--thread_num="));
   // open DB
-  rocksdb::DB* db = GetDBInstance("/tmp/rocksdb_vanila_test","/tmp/rocksdb_sst_dir", "" , "", false, false, false);
+  rocksdb::DB* db = GetDBInstance(rocksdb_dir, sst_dir, "" , "", false, false, false);
   Status s;
 
-  string input;
+  // string input;
   int num_of_kvs;
   int kv_size = 1024;
-  while(true){
-    cout << "Enter the number of kv pairs to put or Enter \"quit\" to go back to options\n:";
-    cin >> input;
-    if(input == "quit"){
-      break;
-    }
+  // while(true){
+  //   cout << "Enter the number of kv pairs to put or Enter \"quit\" to go back to options\n:";
+  //   cin >> input;
+  //   if(input == "quit"){
+  //     break;
+  //   }
     num_of_kvs = stoi(input);
     random_device rd;   
     mt19937_64 gen(rd());
@@ -120,7 +125,7 @@ int main() {
       kvs.emplace_back(rand_key, rand_val);
     }
 
-    InsertClient client(db, kvs);
+    InsertClient client(db, kvs, thread_num);
     auto start_time = chrono::high_resolution_clock::now();
     client.StartDoOp();
     // for(const auto& kv : kvs){
@@ -128,8 +133,9 @@ int main() {
     // }
     auto end_time = chrono::high_resolution_clock::now();
     auto process_time = chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count();
-    cout << "process " << num_of_kvs << " in " << process_time << " millisecs \n";
-  }
+    cout << "process " << num_of_kvs << " in " << process_time << " millisecs, throughput : " 
+         << (num_of_kvs * 1.0) /((process_time *(1.0))/1000.0) << " op/s" << endl;
+  // }
 
   // Put key-value
   s = db->Put(WriteOptions(), "key1", "value");

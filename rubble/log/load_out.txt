@@ -1,0 +1,130 @@
+number of cf: 1
+is_rubble: 0
+is_primary: 0
+is_tail: 0
+write_buffer_size: 134217728
+target_file_size_base: 134217728
+ -------- db_name : /tmp/rocksdb_vanila_test--------
+ -------- sst directory : /mnt/sdb/archive_dbs/vanilla/sst_dir--------
+------ db_absolute_path : /tmp/rocksdb_vanila_test ------- 
+ zif table initialized 
+InsertClient initialized, thread num : 8
+Start Processing Op 
+requests size : 3000000, target : 375000
+-------- Flush Job [2] : WriteLevel0Table [7] -------------- 
+Flush Job [2], New L0 file : 7
+-------- Flush Job [3] : WriteLevel0Table [10] -------------- 
+Flush Job [3], New L0 file : 10
+ -------- Compaction Job : [4] ----------
+[File Added] : 11
+[File Deleted] : 10
+[File Deleted] : 7
+-------- Flush Job [5] : WriteLevel0Table [13] -------------- 
+Flush Job [5], New L0 file : 13
+-------- Flush Job [6] : WriteLevel0Table [15] -------------- 
+Flush Job [6], New L0 file : 15
+ -------- Compaction Job : [7] ----------
+[File Added] : 16
+[File Deleted] : 15
+[File Deleted] : 13
+[File Deleted] : 11
+-------- Flush Job [8] : WriteLevel0Table [18] -------------- 
+Flush Job [8], New L0 file : 18
+-------- Flush Job [9] : WriteLevel0Table [20] -------------- 
+Flush Job [9], New L0 file : 20
+ -------- Compaction Job : [10] ----------
+[File Added] : 21
+[File Deleted] : 20
+[File Deleted] : 18
+[File Deleted] : 16
+-------- Flush Job [11] : WriteLevel0Table [23] -------------- 
+Flush Job [11], New L0 file : 23
+-------- Flush Job [12] : WriteLevel0Table [25] -------------- 
+Flush Job [12], New L0 file : 25
+ -------- Compaction Job : [13] ----------
+[File Added] : 26
+[File Deleted] : 25
+[File Deleted] : 23
+[File Deleted] : 21
+-------- Flush Job [14] : WriteLevel0Table [28] -------------- 
+Flush Job [14], New L0 file : 28
+-------- Flush Job [15] : WriteLevel0Table [30] -------------- 
+Flush Job [15], New L0 file : 30
+ -------- Compaction Job : [16] ----------
+[File Added] : 31
+[File Deleted] : 30
+[File Deleted] : 28
+[File Deleted] : 26
+-------- Flush Job [17] : WriteLevel0Table [33] -------------- 
+Flush Job [17], New L0 file : 33
+-------- Flush Job [18] : WriteLevel0Table [35] -------------- 
+Flush Job [18], New L0 file : 35
+ -------- Compaction Job : [19] ----------
+[File Added] : 36
+[File Deleted] : 35
+[File Deleted] : 33
+[File Deleted] : 31
+-------- Flush Job [20] : WriteLevel0Table [38] -------------- 
+Flush Job [20], New L0 file : 38
+-------- Flush Job [21] : WriteLevel0Table [40] -------------- 
+Flush Job [21], New L0 file : 40
+ -------- Compaction Job : [22] ----------
+[File Added] : 41
+[File Deleted] : 40
+[File Deleted] : 38
+[File Deleted] : 36
+-------- Flush Job [23] : WriteLevel0Table [43] -------------- 
+Flush Job [23], New L0 file : 43
+-------- Flush Job [24] : WriteLevel0Table [45] -------------- 
+Flush Job [24], New L0 file : 45
+ -------- Compaction Job : [25] ----------
+[File Added] : 46
+[File Deleted] : 45
+[File Deleted] : 43
+[File Deleted] : 41
+-------- Flush Job [26] : WriteLevel0Table [48] -------------- 
+Flush Job [26], New L0 file : 48
+-------- Flush Job [27] : WriteLevel0Table [50] -------------- 
+Flush Job [27], New L0 file : 50
+ -------- Compaction Job : [28] ----------
+[File Added] : 51
+[File Deleted] : 50
+[File Deleted] : 48
+[File Deleted] : 46
+-------- Flush Job [29] : WriteLevel0Table [53] -------------- 
+Flush Job [29], New L0 file : 53
+-------- Flush Job [30] : WriteLevel0Table [55] -------------- 
+Flush Job [30], New L0 file : 55
+ -------- Compaction Job : [31] ----------
+[File Added] : 56
+[File Deleted] : 55
+[File Deleted] : 53
+[File Deleted] : 51
+-------- Flush Job [32] : WriteLevel0Table [58] -------------- 
+Flush Job [32], New L0 file : 58
+-------- Flush Job [33] : WriteLevel0Table [60] -------------- 
+Flush Job [33], New L0 file : 60
+ -------- Compaction Job : [34] ----------
+[File Added] : 61
+[File Deleted] : 60
+[File Deleted] : 58
+[File Deleted] : 56
+-------- Flush Job [35] : WriteLevel0Table [63] -------------- 
+Flush Job [35], New L0 file : 63
+-------- Flush Job [36] : WriteLevel0Table [65] -------------- 
+Flush Job [36], New L0 file : 65
+ -------- Compaction Job : [37] ----------
+[File Added] : 66
+[File Deleted] : 65
+[File Deleted] : 63
+[File Deleted] : 61
+Thread 6 process time (micros): 32984832
+Thread 7 process time (micros): 33102761
+Thread 4 process time (micros): 33169045
+Thread 3 process time (micros): 33185930
+Thread 1 process time (micros): 33260863
+Thread 5 process time (micros): 33297402
+Thread 0 process time (micros): 33352874
+Thread 2 process time (micros): 33361920
+process 3000000 in 33362 millisecs, throughput : 89922.7 op/s
+CPU Usage : 623.308
