@@ -4,13 +4,15 @@ NUM_KV="3000000"
 ROCKSDB_DIR="/tmp/rocksdb_vanila_test"
 SST_DIR="/mnt/sdb/archive_dbs/vanilla/sst_dir"
 #---------------------------------------------------------------------------------------
-COMMAND="rocksdb_load_test"
+COMMAND="rocksdb_server"
 #---------------------------------------------------------------------------------------
 LOAD_OUT_FILE="log/load_out.txt"
 TOP_OUT_FILE="log/cpu_usage.txt"
 #---------------------------------------------------------------------------------------
 #chain setting
-TARGET_ADDR=$1
+TARGET_ADDR="128.110.153.158:50050"
+echo "Target Address : ${TARGET_ADDR}"
+echo "$1" 
 
 function remove_or_touch {
     if [ -f $1 ]; then
@@ -42,9 +44,10 @@ sudo -S sync; echo 1 | sudo tee /proc/sys/vm/drop_caches
 --target_addr=${TARGET_ADDR} \
 | tee ${LOAD_OUT_FILE}; } &
 
+sleep 10;
+
 # | awk '{printf "%6s %-4s %-4s %-s\n",$1,$2,$9,$NF}' \
-{ top -u root -b -d 0.2 -o +%CPU -w 512 \
-| grep "rocksdb" --line-buffered >> $TOP_OUT_FILE; } &
+{ top -u root -b -d 0.2 -o +%CPU -w 512 | grep "rocksdb" >> $TOP_OUT_FILE; } &
 wait -n
 
 echo -n "CPU Usage : "

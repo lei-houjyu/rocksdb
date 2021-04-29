@@ -265,7 +265,9 @@ class CallDataBidi : CallDataBase {
         batch_counter_++;
         for(const auto& request: request_.ops()) {
           s_ = db_->Put(rocksdb::WriteOptions(), request.key(), request.value());
-          assert(s_.ok());
+         if(!s_.ok()){
+	  std::cout << "Put Failed : " << s_.ToString() << std::endl;
+	  }
           // std::cout << "Put ok\n";
           // return to replicator if tail
           if(db_options_->is_tail){
