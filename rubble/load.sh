@@ -8,6 +8,9 @@ COMMAND="rocksdb_load_test"
 #---------------------------------------------------------------------------------------
 LOAD_OUT_FILE="log/load_out.txt"
 TOP_OUT_FILE="log/cpu_usage.txt"
+#---------------------------------------------------------------------------------------
+#chain setting
+TARGET_ADDR=$1
 
 function remove_or_touch {
     if [ -f $1 ]; then
@@ -36,6 +39,7 @@ sudo -S sync; echo 1 | sudo tee /proc/sys/vm/drop_caches
 --sst_dir=${SST_DIR} \
 --num_kv=${NUM_KV} \
 --thread_num=8 \
+--target_addr=${TARGET_ADDR} \
 | tee ${LOAD_OUT_FILE}; } &
 
 # | awk '{printf "%6s %-4s %-4s %-s\n",$1,$2,$9,$NF}' \
