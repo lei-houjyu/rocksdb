@@ -34,7 +34,8 @@ class ReplyClient{
 
     // send the reply to the replicator
     void SendReply(const OpReply& reply){
-       stream_->Write(reply);
+      // std::cout << "Sent reply, size : "  << reply.reply_size() << std::endl;
+      stream_->Write(reply);
       //  std::cout << "sendReply client on reply: " << reply.ok() << "\n";
     }
   

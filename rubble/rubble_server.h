@@ -188,7 +188,7 @@ class CallDataBidi : CallDataBase {
         break;
 
     case BidiStatus::CONNECT:
-        std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " connected:" << std::endl;
+        std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " tag:" << this << " connected:" << std::endl;
         // Spawn a new CallData instance to serve new clients while we process
         // the one for this CallData. The instance will deallocate itself as
         // part of its FINISH state.
