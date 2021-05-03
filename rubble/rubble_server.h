@@ -121,13 +121,6 @@ class CallDataBidi : CallDataBase {
     // the memory address of this CallData instance.
     service_->RequestDoOp(&ctx_, &rw_, cq_, cq_, (void*)this);
     db_options_ = ((rocksdb::DBImpl*)db_)->TEST_GetVersionSet()->db_options(); 
-    if(db_options_->is_tail){
-        // reply_client_ =std::make_shared<ReplyClient>(channel_);
-    }else{
-      // std::cout << " creating forwarder for thread  " << map[std::this_thread::get_id()] << " \n";
-      forwarder_ = std::make_shared<Forwarder>(channel_);
-      // std::cout << " Forwarder created \n";
-    }
   }
   // async version of DoOp
   void Proceed(bool ok) override {
@@ -139,6 +132,7 @@ class CallDataBidi : CallDataBase {
         // std::cout << "I'm at READ state ! \n";
         //Meaning client said it wants to end the stream either by a 'writedone' or 'finish' call.
         if (!ok) {
+            std::cout << "------server is tail: " << db_options_->is_tail << "\n"; 
             std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " CQ returned false." << std::endl;
             Status _st(StatusCode::OUT_OF_RANGE,"test error msg");
             // rw_.Write(reply_, (void*)this);
@@ -152,25 +146,26 @@ class CallDataBidi : CallDataBase {
         // Handle a db operation
         // std::cout << "entering HandleOp\n";
         HandleOp();
+        assert(request_.ops_size());
         /* chain replication */
         // Forward the request to the downstream node in the chain if it's not a tail node
         if(!db_options_->is_tail){
-          // std::cout << "Forward an op " << request_.key() << "\n";
-          assert(request_.ops_size());
+          if (forwarder_ == nullptr) {
+            std::cout << "init the forwarder" << "\n";
+            forwarder_ = std::make_shared<Forwarder>(channel_);
+          }
           forwarder_->Forward(request_);
+            // request_.clear_ops();
           // std::cout << "Complete forwarding an op " << request_.key() << "\n";
         }else {
           // tail node should be responsible for sending the reply back to replicator
           // use the sync stream to write the reply back
-          if (reply_client_ == nullptr && db_options_->target_address != "") {
+          if (reply_client_ == nullptr) {
             std::cout << "init the reply client" << "\n";
-            reply_client_ = std::make_shared<ReplyClient>(grpc::CreateChannel(
-            db_options_->target_address, grpc::InsecureChannelCredentials()));
+            reply_client_ = std::make_shared<ReplyClient>(channel_);
           }
-          if(reply_client_ != nullptr){
-            reply_client_->SendReply(reply_);
-            reply_.clear_replies();
-          }
+          reply_client_->SendReply(reply_);
+          // reply_.clear_replies();
         }
         rw_.Read(&request_, (void*)this);
         status_ = BidiStatus::READ;
@@ -225,7 +220,8 @@ class CallDataBidi : CallDataBase {
     //   start_time_ = high_resolution_clock::now();
     // }
 
-    // if(op_counter_.load() && op_counter_.load()%100000 == 0){
+    // if(op_counter_.load() && op_counter_.load()%100000 == 0 ){
+    //   std::cout << "opcount: " << op_counter_.load() << "\n";
     //   end_time_ = high_resolution_clock::now();
     //   auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
     //   std::cout << "Throughput : handled 100000 ops in " << std::to_string(millisecs.count()) << " millisecs\n";
