@@ -410,23 +410,21 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       int sst_real = 0;
       // auto& meta = new_file.second;
       uint64_t file_number  = meta.fd.GetNumber();
-      if(!IsL0CompactionOutputSst(level, meta)){
-        for(int i = 1; i <= db_options_->preallocated_sst_pool_size; i++){
-            if(sst_bit_map_.find(i) == sst_bit_map_.end()){
-              // if not found, means slot is not occupied
-              sst_real = i;
-              break;
-            }
-          }
-      }else{
+      int start, end;
+      if(IsL0CompactionOutputSst(level, meta)){
         int times = (meta.fd.GetFileSize() >> 20 )/(cf_options_->target_file_size_base >> 20);
-        int start = db_options_->preallocated_sst_pool_size + 1 + (times == 4 ? 0 : big_sst_num_);
-        for(int i = start; i < start + big_sst_num_; i++){
-          if(sst_bit_map_.find(i) == sst_bit_map_.end()){
-              // if not found, means slot is not occupied
-              sst_real = i;
-              break;
-            }
+        start = db_options_->preallocated_sst_pool_size + 1 + (times == 4 ? 0 : big_sst_num_);
+        end = start + big_sst_num_ - 1;
+      }else{
+        start = 0;
+        end = db_options_->preallocated_sst_pool_size;
+      }
+
+      for(int i = start; i <= end; i++){
+        if(sst_bit_map_.find(i) == sst_bit_map_.end()){
+          // if not found, means slot is not occupied
+          sst_real = i;
+          break;
         }
       }
       assert(sst_real != 0);
@@ -452,8 +450,10 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     // check if the new sst file is Level 0 compaction 
     bool IsL0CompactionOutputSst(int level,const rocksdb::FileMetaData& meta){
       // auto& meta = new_file.second;
-      if( (meta.fd.GetFileSize() >> 20) / (cf_options_->target_file_size_base >> 20) >= 2){
+      int times = (meta.fd.GetFileSize() >> 20)/ (cf_options_->target_file_size_base >> 20);
+      if(times >= 2){
         assert(level == 0);
+        assert(times == 4 || times == 5);
         return true;
       }else{
         return false;
