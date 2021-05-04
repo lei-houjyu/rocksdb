@@ -261,11 +261,13 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     rocksdb::IOStatus CreateSstPool(){
       const std::string sst_dir = db_path_.path;
       uint64_t target_size = db_path_.target_size;
-      size_t write_buffer_size = cf_options_->write_buffer_size;
+      // size_t write_buffer_size = cf_options_->write_buffer_size;
+      uint64_t target_file_size_base = (((cf_options_->target_file_size_base >> 20) + 1) << 20);
       //assume the write buffer size is an integer multiple of 1MB
       // use one more MB because of the footer, and pad to the buffer_size
-      assert((write_buffer_size % (1 << 20)) == 0);
-      uint64_t buffer_size = ( write_buffer_size + ( 1 << 20));
+      // assert((write_buffer_size % (1 << 20)) == 0);
+      // uint64_t buffer_size = ( write_buffer_size + ( 1 << 20));
+      uint64_t buffer_size = target_file_size_base;
     
       std::cout << "sst file size : " << buffer_size << std::endl;
 
@@ -299,6 +301,18 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           }
         }
       }
+
+      // number of big sst file(which is 4 or 5 times as large as the normal sst file) to allocate
+      int big_sst_num = db_options_->preallocated_sst_pool_size / 20;
+      big_sst_num_ = big_sst_num;
+      for(int i = 1 ; i <=  big_sst_num; i++){
+        std::string sst_num = std::to_string(db_options_->preallocated_sst_pool_size + i);
+        rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size * 4, 'c')), sst_dir + "/" + sst_num,true);
+
+        sst_num = std::to_string(db_options_->preallocated_sst_pool_size + i + big_sst_num);
+        rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size * 5, 'c')), sst_dir + "/" + sst_num,true);
+      }
+
       std::cout << "allocated " << db_options_->preallocated_sst_pool_size << " sst slots in " << sst_dir << std::endl;
       return s;
     }
@@ -329,6 +343,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       assert(j_edit.contains("AddedFiles"));
       if(j_edit.contains("IsFlush")){ // means edit corresponds to a flush job
         num_of_added_files_ += j_edit["AddedFiles"].get<std::vector<json>>().size();
+        edit.MarkFlush();
       }
 
       if(j_edit.contains("LogNumber")){
@@ -391,18 +406,32 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
 
 
     // for a new added file, take a sst slot
-    int TakeOneAvailableSstSlot(uint64_t file_number){
+    int TakeOneAvailableSstSlot(int level,const rocksdb::FileMetaData& meta){
       int sst_real = 0;
-      for(int i = 1; i <= db_options_->preallocated_sst_pool_size; i++){
-          if(sst_bit_map_.find(i) == sst_bit_map_.end()){
-            // if not found, means slot is not occupied
-            sst_real = i;
-            break;
+      // auto& meta = new_file.second;
+      uint64_t file_number  = meta.fd.GetNumber();
+      if(!IsL0CompactionOutputSst(level, meta)){
+        for(int i = 1; i <= db_options_->preallocated_sst_pool_size; i++){
+            if(sst_bit_map_.find(i) == sst_bit_map_.end()){
+              // if not found, means slot is not occupied
+              sst_real = i;
+              break;
+            }
           }
+      }else{
+        int times = (meta.fd.GetFileSize() >> 20 )/(cf_options_->target_file_size_base >> 20);
+        int start = db_options_->preallocated_sst_pool_size + 1 + (times == 4 ? 0 : big_sst_num_);
+        for(int i = start; i < start + big_sst_num_; i++){
+          if(sst_bit_map_.find(i) == sst_bit_map_.end()){
+              // if not found, means slot is not occupied
+              sst_real = i;
+              break;
+            }
         }
-        assert(sst_real != 0);
-        sst_bit_map_.emplace(sst_real,file_number);
-        return sst_real;
+      }
+      assert(sst_real != 0);
+      sst_bit_map_.emplace(sst_real,file_number);
+      return sst_real;
     }
 
     // if a file gets deleted, free its slot
@@ -418,6 +447,19 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       assert(it != sst_bit_map_.end());
     }
 
+    // normally new sst file's size will be around target_file_size_base
+    // but a L0 compaction will output file whose size is about 4 or 5 times large as normal sst file
+    // check if the new sst file is Level 0 compaction 
+    bool IsL0CompactionOutputSst(int level,const rocksdb::FileMetaData& meta){
+      // auto& meta = new_file.second;
+      if( (meta.fd.GetFileSize() >> 20) / (cf_options_->target_file_size_base >> 20) >= 2){
+        assert(level == 0);
+        return true;
+      }else{
+        return false;
+      }
+    }
+
     // In a 3-node setting, if it's the second node in the chain it should also ship sst files it received from the primary/first node
     // to the tail/downstream node and also delete the ones that get deleted in the compaction
     // for non-head node, should update sst bit map
@@ -431,7 +473,13 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       rocksdb::IOStatus ios;
       for(const auto& new_file: edit.GetNewFiles()){
         const rocksdb::FileMetaData& meta = new_file.second;
-        int sst_real = TakeOneAvailableSstSlot(meta.fd.GetNumber());
+
+        int sst_real = TakeOneAvailableSstSlot(new_file.first, new_file.second);
+        if(sst_real > db_options_->preallocated_sst_pool_size){
+          // assert(!edit.IsFlush());
+          assert(new_file.first == 0);
+        }
+        
         // rocksdb::DirectReadKBytes(fs_, sst_real, 32, db_path_.path + "/");
         std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
                         meta.fd.GetNumber(), meta.fd.GetPathId());
@@ -513,6 +561,8 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     // sst_bit_map_[i] = j means sst_file with number j occupies the i-th slot
     // secondary node will update it when received a Sync rpc call from the upstream node
     std::unordered_map<int, uint64_t> sst_bit_map_;
+
+    int big_sst_num_;
     
     rocksdb::FileSystem* fs_;
 

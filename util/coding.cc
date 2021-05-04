@@ -106,8 +106,9 @@ const char* GetVarint64Ptr(const char* p, const char* limit, uint64_t* value) {
 static std::unordered_map<int, uint64_t> sst_bit_map;
 
 // get an available sst slot
-int GetAvailableSstSlot(int sst_pool_size, int sst_num){
+int GetAvailableSstSlot(int sst_pool_size, int sst_num, int times){
   int sst_real = 0;
+  if(times == 1){
     for(int i = 1; i <= sst_pool_size; i++){
         if(sst_bit_map.find(i) == sst_bit_map.end()){
           // if not found, means slot is not occupied
@@ -115,6 +116,17 @@ int GetAvailableSstSlot(int sst_pool_size, int sst_num){
           break;
         }
     }
+  }else{ // it's a big sst, times is 4 or 5
+    int big_sst_num = sst_pool_size/20;
+    int start = sst_pool_size + 1 + (times == 4 ? 0 : big_sst_num);
+    for(int i = start; i < sst_pool_size + big_sst_num; i++){
+      if(sst_bit_map.find(i) == sst_bit_map.end()){
+          // if not found, means slot is not occupied
+          sst_real = i;
+          break;
+        }
+    } 
+  }
   assert(sst_real != 0);
   sst_bit_map.emplace(sst_real, sst_num);
   return sst_real;
