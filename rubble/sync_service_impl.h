@@ -59,11 +59,13 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
        cf_options_(default_cf_->GetCurrentMutableCFOptions()),
        fs_(ioptions_->fs){
          if(is_rubble_ && !is_head_){
+           std::cout << "init sync_service --- is_rubble: " << is_rubble_ << "; is_head: " << is_head_ << std::endl;
            ios_ = CreateSstPool();
            if(!ios_.ok()){
              std::cout << "allocate sst pool failed \n";
              assert(false);
            }
+           std::cout << "[secondary] sst pool allocation finished" << std::endl;
          }
     };
 
@@ -416,10 +418,10 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
         start = db_options_->preallocated_sst_pool_size + 1 + (times == 4 ? 0 : big_sst_num_);
         end = start + big_sst_num_ - 1;
       }else{
-        start = 0;
+        start = 1;
         end = db_options_->preallocated_sst_pool_size;
       }
-
+      
       for(int i = start; i <= end; i++){
         if(sst_bit_map_.find(i) == sst_bit_map_.end()){
           // if not found, means slot is not occupied
