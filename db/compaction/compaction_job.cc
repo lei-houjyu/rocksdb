@@ -1541,8 +1541,11 @@ Status CompactionJob::InstallCompactionResults(
         // copy the output sst files to remote sst directory
         std::string fname = TableFileName(sub_compact.compaction->immutable_cf_options()->cf_paths,
                         out.meta.fd.GetNumber(), out.meta.fd.GetPathId());
-                        
+        std::cout << "file size: " << out.meta.fd.GetFileSize() << "\n"; 
         int times = (out.meta.fd.GetFileSize() >> 20) / (mutable_cf_options.target_file_size_base >> 20);
+        if (times == 3) {
+          times += 1;
+        }
         int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, out.meta.fd.GetNumber(), times);
         int ret = copy_sst(fname , remote_sst_dir  + std::to_string(sst_real),static_cast<size_t>(out.meta.fd.GetFileSize()));
         // rocksdb::DirectReadKBytes(fs_.get(), sst_real, 32, remote_sst_dir);

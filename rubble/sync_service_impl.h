@@ -309,10 +309,18 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       big_sst_num_ = big_sst_num;
       for(int i = 1 ; i <=  big_sst_num; i++){
         std::string sst_num = std::to_string(db_options_->preallocated_sst_pool_size + i);
-        rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size * 4, 'c')), sst_dir + "/" + sst_num,true);
+        std::string sst_name = sst_dir + "/" + sst_num;
+        s = fs_->FileExists(sst_name, rocksdb::IOOptions(), nullptr);
+        if(!s.ok()) {
+          rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size * 4, 'c')), sst_dir + "/" + sst_num,true);
+        }
 
         sst_num = std::to_string(db_options_->preallocated_sst_pool_size + i + big_sst_num);
-        rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size * 5, 'c')), sst_dir + "/" + sst_num,true);
+        sst_name = sst_dir + "/" + sst_num;
+        s = fs_->FileExists(sst_name, rocksdb::IOOptions(), nullptr);
+        if(!s.ok()) {
+          rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size * 5, 'c')), sst_dir + "/" + sst_num,true);
+        }
       }
 
       std::cout << "allocated " << db_options_->preallocated_sst_pool_size << " sst slots in " << sst_dir << std::endl;
