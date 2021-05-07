@@ -1620,7 +1620,12 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
   // std::cout << "[WriteFooter] offset: r->get_offset() " << r->get_offset() << "\n";
   // assume writer_buffer_size if an integer multiple of 1024*1024 Bytes
   // pad the sst size to write_buffer_size + 1MB
-  int pad_len = (((r->get_offset() >> 20) + 1 ) << 20) - r->get_offset() - footer_encoding.size();
+  int pad_len = 0;
+  if( r->get_offset() + footer_encoding.size() <= mutable_cf_options.target_file_size_base +  (1 << 20)){
+    pad_len = mutable_cf_options.target_file_size_base +  (1 << 20) - r->get_offset() - footer_encoding.size();
+  }else{
+    pad_len = (((r->get_offset() >> 20) + 1 ) << 20) - r->get_offset() - footer_encoding.size();
+  }
   assert(pad_len >= 0);
   std::string pad_str((size_t)pad_len, '.');
   Slice pad_slice(pad_str);
