@@ -1621,13 +1621,19 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
   // assume writer_buffer_size if an integer multiple of 1024*1024 Bytes
   // pad the sst size to write_buffer_size + 1MB
   int pad_len = 0;
-  if( r->get_offset() + footer_encoding.size() <= mutable_cf_options.target_file_size_base +  (1 << 20)){
-    pad_len = mutable_cf_options.target_file_size_base +  (1 << 20) - r->get_offset() - footer_encoding.size();
-  } else if(r->get_offset() + footer_encoding.size() <= 4* mutable_cf_options.target_file_size_base +  (1 << 20)) {
-    pad_len = 4* mutable_cf_options.target_file_size_base +  (1 << 20) - r->get_offset() - footer_encoding.size();
-  } else {
-    pad_len = 5* mutable_cf_options.target_file_size_base +  (1 << 20) - r->get_offset() - footer_encoding.size();
+  uint64_t target_file_size_base = mutable_cf_options.target_file_size_base;
+  std::cout << "file size: " << r->get_offset() << " footer: " << footer_encoding.size() << std::endl;
+  if( r->get_offset() + footer_encoding.size() <= target_file_size_base +  (1 << 20)){
+    pad_len = target_file_size_base +  (1 << 20) - r->get_offset() - footer_encoding.size();
+  } else if(r->get_offset() + footer_encoding.size() <= 4 * target_file_size_base +  (1 << 20)) {
+    pad_len = 4* target_file_size_base +  (1 << 20) - r->get_offset() - footer_encoding.size();
+  } else if(r->get_offset() + footer_encoding.size() <= 5 * target_file_size_base + (1 << 20)) {
+    pad_len = 5 * target_file_size_base +  (1 << 20) - r->get_offset() - footer_encoding.size();
+  }else{
+    pad_len = 6 * target_file_size_base + (1 << 20) - r->get_offset() - footer_encoding.size();
   }
+
+  std::cout << "[padding] pad_len: " << pad_len << std::endl;
   assert(pad_len >= 0);
   std::string pad_str((size_t)pad_len, '.');
   Slice pad_slice(pad_str);

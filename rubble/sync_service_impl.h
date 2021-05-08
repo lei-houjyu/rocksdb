@@ -310,19 +310,14 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       // number of big sst file(which is 4 or 5 times as large as the normal sst file) to allocate
       int big_sst_num = db_options_->preallocated_sst_pool_size / 20;
       big_sst_num_ = big_sst_num;
-      for(int i = 1 ; i <=  big_sst_num; i++){
-        std::string sst_num = std::to_string(db_options_->preallocated_sst_pool_size + i);
-        std::string sst_name = sst_dir + "/" + sst_num;
-        s = fs_->FileExists(sst_name, rocksdb::IOOptions(), nullptr);
-        if(!s.ok()) {
-          rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size * 4, 'c')), sst_dir + "/" + sst_num,true);
-        }
-
-        sst_num = std::to_string(db_options_->preallocated_sst_pool_size + i + big_sst_num);
-        sst_name = sst_dir + "/" + sst_num;
-        s = fs_->FileExists(sst_name, rocksdb::IOOptions(), nullptr);
-        if(!s.ok()) {
-          rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size * 5, 'c')), sst_dir + "/" + sst_num,true);
+      for(int times = 4; times <= 6; times++){
+        for(int i = 1 ; i <=  big_sst_num; i++){
+          std::string sst_num = std::to_string(db_options_->preallocated_sst_pool_size + (times - 4)*big_sst_num + i);
+          std::string sst_name = sst_dir + "/" + sst_num;
+          s = fs_->FileExists(sst_name, rocksdb::IOOptions(), nullptr);
+          if(!s.ok()) {
+            rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size * times, 'c')), sst_dir + "/" + sst_num,true);
+          }
         }
       }
 
@@ -427,7 +422,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       int start, end;
       if(IsL0CompactionOutputSst(level, meta)){
         int times = (meta.fd.GetFileSize() >> 20 )/(cf_options_->target_file_size_base >> 20);
-        start = db_options_->preallocated_sst_pool_size + 1 + (times == 4 ? 0 : big_sst_num_);
+        start = db_options_->preallocated_sst_pool_size + 1 + ((times - 4) * big_sst_num_);
         end = start + big_sst_num_ - 1;
       }else{
         start = 1;
@@ -463,14 +458,14 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     }
 
     // normally new sst file's size will be around target_file_size_base
-    // but a L0 compaction will output file whose size is about 4 or 5 times large as normal sst file
+    // but a L0 compaction will output file whose size is about larger than normal sst file
     // check if the new sst file is Level 0 compaction 
     bool IsL0CompactionOutputSst(int level,const rocksdb::FileMetaData& meta){
       // auto& meta = new_file.second;
       int times = (meta.fd.GetFileSize() >> 20)/ (cf_options_->target_file_size_base >> 20);
       if(times >= 2){
         assert(level == 0);
-        assert(times == 4 || times == 5);
+        // assert(times == 4 || times == 5);
         return true;
       }else{
         return false;
