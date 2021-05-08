@@ -97,6 +97,8 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     // }
 
     std::string args = request->args();
+    // std::cout << "entire args " << std::endl;
+    // std::cout << args << std::endl;
     const json j_args = json::parse(args);
     // std::cout << j_args.dump(4) << std::endl;
 
@@ -117,11 +119,12 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
 
     next_file_num_ = j_args["NextFileNum"].get<uint64_t>();
     rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
-    rocksdb::VersionEdit edit;
-    for(const auto& edit_string : j_args["EditList"].get<std::vector<string>>()){ 
-      // std::cout << edit_string.dump() <<std::endl;  
+    std::vector<rocksdb::VersionEdit> edits;
+    for(const auto& edit_string : j_args["EditList"].get<std::vector<string>>()){  
       auto j_edit = json::parse(edit_string);
-      edit = ParseJsonStringToVersionEdit(j_edit);
+      edits.push_back(ParseJsonStringToVersionEdit(j_edit));      
+    }
+    for(auto& edit: edits) {
       edit_list.push_back(&edit);
     }
 
@@ -389,6 +392,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           uint64_t largest_seqno = j_added_file["LargestSeqno"].get<uint64_t>();
           int level = j_added_file["Level"].get<int>();
           uint64_t file_num = j_added_file["FileNumber"].get<uint64_t>();
+          std::cout << "file_num: " << file_num << std::endl;
           // max_file_num = std::max(max_file_num, (int)file_num);
           uint64_t file_size = j_added_file["FileSize"].get<uint64_t>();
     
@@ -430,6 +434,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
         end = db_options_->preallocated_sst_pool_size;
       }
       
+      // exit once an empty slot is spoted
       for(int i = start; i <= end; i++){
         if(sst_bit_map_.find(i) == sst_bit_map_.end()){
           // if not found, means slot is not occupied
@@ -439,6 +444,8 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       }
       assert(sst_real != 0);
       sst_bit_map_.emplace(sst_real,file_number);
+      // std::cout << "[sync] sst_real: " << sst_real <<
+      //    " file size： " << meta.fd.GetFileSize() << std::endl;
       return sst_real;
     }
 
@@ -481,6 +488,14 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     rocksdb::IOStatus UpdateSstBitMapAndShipSstFiles(const rocksdb::VersionEdit& edit){
 
       rocksdb::IOStatus ios;
+      // print names of sst files before doing anything
+      // std::cout << "[sync] print out fd names " << std::endl;
+      // for(const auto& new_file: edit.GetNewFiles()){
+      //   const rocksdb::FileMetaData& meta = new_file.second;
+      //   std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
+      //                   meta.fd.GetNumber(), meta.fd.GetPathId());
+      //   std::cout << " fname " << fname << std::endl;
+      // }
       for(const auto& new_file: edit.GetNewFiles()){
         const rocksdb::FileMetaData& meta = new_file.second;
 
@@ -537,6 +552,8 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
         }else {
           if (ios.IsNotFound()){
             std::cerr << "file :" << file_number << "does not exist \n";
+          } else {
+            std::cerr << "unknown error in sync_service_impl" << std::endl;
           }
         }
       }
