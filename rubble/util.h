@@ -129,8 +129,9 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   db_options.target_address=target_addr; //TODO(add target_addr, remote_sst_dir and preallocated_sst_pool_size to option file)
 
   // for non-tail nodes in rubble mode, it's shipping sst file to the remote_sst_dir;
-  if(is_rubble && !is_tail){
+  if(db_options.is_rubble && !is_tail){
       db_options.remote_sst_dir=remote_sst_dir;
+      std::cout << "remote sst dir: " << db_options.remote_sst_dir << std::endl;
   }
   
   uint64_t target_size = 10000000000;
@@ -138,7 +139,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   
   rocksdb::ColumnFamilyOptions cf_options = loaded_cf_descs[0].options;
 
-  if(is_rubble && !is_primary){
+  if(db_options.is_rubble && !is_primary){
     // db_options.use_direct_reads = true;
     // right now, just set sst pool size to 100 if it's sufficient
     // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);
