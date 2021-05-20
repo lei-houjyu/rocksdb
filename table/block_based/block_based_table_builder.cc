@@ -1612,32 +1612,29 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
   footer.EncodeTo(&footer_encoding);
 
   auto mutable_cf_options = r->moptions;
-  // size_t write_buffer_size = mutable_cf_options.write_buffer_size;
-  // uint64_t target_file_size = r->target_file_size;
-  // std::cout << "[WriteFooter] " << r->file->file_name() <<  << "\n";
-  // std::cout << "[WriteFooter] " << footer.ToString() << "\n";
-  // std::cout << "[WriteFooter] footer_encoding.size() " << footer_encoding.size() << "\n";
-  // std::cout << "[WriteFooter] offset: r->get_offset() " << r->get_offset() << "\n";
-  // assume writer_buffer_size if an integer multiple of 1024*1024 Bytes
-  // pad the sst size to write_buffer_size + 1MB
   int pad_len = 0;
   uint64_t target_file_size_base = mutable_cf_options.target_file_size_base;
-  std::cout << "file size: " << r->get_offset() << " footer: " << footer_encoding.size() << std::endl;
-  if( r->get_offset() + footer_encoding.size() <= target_file_size_base +  (1 << 20)){
-    pad_len = target_file_size_base +  (1 << 20) - r->get_offset() - footer_encoding.size();
-  } else if(r->get_offset() + footer_encoding.size() <= 4 * target_file_size_base +  (1 << 20)) {
-    pad_len = 4* target_file_size_base +  (1 << 20) - r->get_offset() - footer_encoding.size();
-  } else if(r->get_offset() + footer_encoding.size() <= 5 * target_file_size_base + (1 << 20)) {
-    pad_len = 5 * target_file_size_base +  (1 << 20) - r->get_offset() - footer_encoding.size();
-  }else{
-    pad_len = 6 * target_file_size_base + (1 << 20) - r->get_offset() - footer_encoding.size();
+  uint64_t offset = r->get_offset();
+  uint64_t footer_size = static_cast<uint64_t>(footer_encoding.size());
+  uint64_t size = offset + footer_size;
+  if(size <= target_file_size_base +  (1 << 20)){
+    pad_len = target_file_size_base +  (1 << 20) - size;
+  } else {
+    std::cout << "file size: " << r->get_offset() << " footer: " << footer_encoding.size();
+    if(size <= 4 * target_file_size_base +  (1 << 20)) {
+      pad_len = 4 * target_file_size_base +  (1 << 20) - size;
+    } else if(size <= 5 * target_file_size_base + (1 << 20)) {
+      pad_len = 5 * target_file_size_base +  (1 << 20) - size;
+    }else{
+      assert(size <= 6 * target_file_size_base + (1 << 20));
+      pad_len = 6 * target_file_size_base + (1 << 20) - size;
+    }
+    std::cout << " [padding] pad_len: " << pad_len << std::endl;
   }
 
-  std::cout << "[padding] pad_len: " << pad_len << std::endl;
   assert(pad_len >= 0);
   std::string pad_str((size_t)pad_len, '.');
   Slice pad_slice(pad_str);
-  // // std::cout << "[WriteFooter] pad_len " << pad_len << "\n";
   assert(pad_slice.size() == (size_t)pad_len);
   IOStatus ios = r->file->Append(pad_slice);
   if (ios.ok()) {
@@ -1655,7 +1652,7 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
     r->SetIOStatus(ios);
     r->SetStatus(ios);
   }
-  std::cout << "[WriteFooter] offset: r->get_offset() " << r->get_offset() << "\n";
+  // std::cout << "[WriteFooter] offset: r->get_offset() " << r->get_offset() << "\n";
 }
 
 void BlockBasedTableBuilder::EnterUnbuffered() {

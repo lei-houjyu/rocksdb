@@ -1197,7 +1197,7 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
     if (r_fd < 0) {
       return IOError("While open a file for appending", r_fname_ , errno);
     }
-    std::cout << "data : " << Slice(data.data(), 32).ToString()  << " , size : " << nbytes << std::endl;
+    // std::cout << "data : " << Slice(data.data(), 32).ToString()  << " , size : " << nbytes << std::endl;
     ssize_t done = write(r_fd, src, nbytes);
     if(done < 0){
       return IOError("while appending to file" , r_fname_, errno);

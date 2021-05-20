@@ -244,7 +244,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           std::cout << "[Secondary] Trivial Move LogAndApply Failed : " << s_.ToString() << std::endl;
         }
       }else{ // it's a full compaction
-        std::cout << " [Secondary] Full compaction LogAndApply status :" << s_.ToString() << std::endl;
+        std::cout << "[Secondary] Full compaction LogAndApply status : " << s_.ToString() << std::endl;
       }
     }
 
@@ -262,72 +262,9 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
   }
 
   private:
-    //called by secondary nodes to create a pool of preallocated ssts in rubble mode
-    rocksdb::IOStatus CreateSstPool(){
-      const std::string sst_dir = db_path_.path;
-      uint64_t target_size = db_path_.target_size;
-      // size_t write_buffer_size = cf_options_->write_buffer_size;
-      uint64_t target_file_size_base = (((cf_options_->target_file_size_base >> 20) + 1) << 20);
-      //assume the write buffer size is an integer multiple of 1MB
-      // use one more MB because of the footer, and pad to the buffer_size
-      // assert((write_buffer_size % (1 << 20)) == 0);
-      // uint64_t buffer_size = ( write_buffer_size + ( 1 << 20));
-      uint64_t buffer_size = target_file_size_base;
-    
-      std::cout << "sst file size : " << buffer_size << std::endl;
-
-      rocksdb::AlignedBuffer buf;
-      rocksdb::IOStatus s;
-      for (int i = 1; i <= db_options_->preallocated_sst_pool_size; i++) {
-        std::string sst_num = std::to_string(i);
-        // rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size, 'c')), sst_dir + "/" + fname, true);
-        std::string sst_name = sst_dir + "/" + sst_num;
-        s = fs_->FileExists(sst_name, rocksdb::IOOptions(), nullptr);
-        if(!s.ok()) {
-          std::unique_ptr<rocksdb::FSWritableFile> file;
-          rocksdb::EnvOptions soptions;
-          soptions.use_direct_writes = true;
-          s = fs_->NewWritableFile(sst_name, soptions, &file, nullptr);
-          if (!s.ok()) {
-            return s;
-          }
-          if(i == 1){
-            buf.Alignment(file->GetRequiredBufferAlignment());
-            buf.AllocateNewBuffer(buffer_size);
-            buf.PadWith(buffer_size, 'c');
-          }
-          s = file->Append(rocksdb::Slice(buf.BufferStart()), rocksdb::IOOptions(), nullptr);
-          if (s.ok()) {
-            s = file->Sync(rocksdb::IOOptions(), nullptr);
-          }
-          if (!s.ok()) {
-            fs_->DeleteFile(sst_name, rocksdb::IOOptions(), nullptr);
-            return s;
-          }
-        }
-      }
-
-      // number of big sst file(which is 4 or 5 times as large as the normal sst file) to allocate
-      int big_sst_num = db_options_->preallocated_sst_pool_size / 20;
-      big_sst_num_ = big_sst_num;
-      for(int times = 4; times <= 6; times++){
-        for(int i = 1 ; i <=  big_sst_num; i++){
-          std::string sst_num = std::to_string(db_options_->preallocated_sst_pool_size + (times - 4)*big_sst_num + i);
-          std::string sst_name = sst_dir + "/" + sst_num;
-          s = fs_->FileExists(sst_name, rocksdb::IOOptions(), nullptr);
-          if(!s.ok()) {
-            rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size * times, 'c')), sst_dir + "/" + sst_num,true);
-          }
-        }
-      }
-
-      std::cout << "allocated " << db_options_->preallocated_sst_pool_size << " sst slots in " << sst_dir << std::endl;
-      return s;
-    }
-
-   // parse the version edit json string to rocksdb::VersionEdit 
-   rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */){
-     rocksdb::VersionEdit edit;
+    // parse the version edit json string to rocksdb::VersionEdit 
+    rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */){
+      rocksdb::VersionEdit edit;
       // std::cout << "Dumped VersionEdit : " << j_edit.dump(4) << std::endl;
       // Dumped VersionEdit : {
       //     "AddedFiles": [
@@ -387,7 +324,6 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           uint64_t largest_seqno = j_added_file["LargestSeqno"].get<uint64_t>();
           int level = j_added_file["Level"].get<int>();
           uint64_t file_num = j_added_file["FileNumber"].get<uint64_t>();
-          std::cout << "file_num: " << file_num << std::endl;
           // max_file_num = std::max(max_file_num, (int)file_num);
           uint64_t file_size = j_added_file["FileSize"].get<uint64_t>();
     
@@ -413,6 +349,67 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       return std::move(edit);
     }
 
+    //called by secondary nodes to create a pool of preallocated ssts in rubble mode
+    rocksdb::IOStatus CreateSstPool(){
+      const std::string sst_dir = db_path_.path;
+      uint64_t target_size = db_path_.target_size;
+      // size_t write_buffer_size = cf_options_->write_buffer_size;
+      uint64_t target_file_size_base = cf_options_->target_file_size_base;
+      assert((target_file_size_base % (1 << 20)) == 0);
+      //assume the target_file_size_base is an integer multiple of 1MB
+      // use one more MB because of the footer, and pad to the buffer_size
+      uint64_t buffer_size = target_file_size_base + (1 << 20);
+    
+      std::cout << "sst file size : " << buffer_size << std::endl;
+
+      rocksdb::AlignedBuffer buf;
+      rocksdb::IOStatus s;
+
+      int preallocated_sst_pool_size = db_options_->preallocated_sst_pool_size;
+      int big_sst_num = preallocated_sst_pool_size / 20;
+      big_sst_num_ = big_sst_num;
+
+      for (int i = 1; i <= preallocated_sst_pool_size + big_sst_num * 3; i++) {
+        std::string sst_num = std::to_string(i);
+        // rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size, 'c')), sst_dir + "/" + fname, true);
+        std::string sst_name = sst_dir + "/" + sst_num;
+        s = fs_->FileExists(sst_name, rocksdb::IOOptions(), nullptr);
+        if(!s.ok()) {
+          std::unique_ptr<rocksdb::FSWritableFile> file;
+          rocksdb::EnvOptions soptions;
+          soptions.use_direct_writes = true;
+          s = fs_->NewWritableFile(sst_name, soptions, &file, nullptr);
+          if (!s.ok()) {
+            return s;
+          }
+          if(i == 1){
+            buf.Alignment(file->GetRequiredBufferAlignment());
+            buf.AllocateNewBuffer(buffer_size);
+            buf.PadWith(buffer_size, 'c');
+          } else if ( i > preallocated_sst_pool_size){
+            if( (i - preallocated_sst_pool_size) % big_sst_num == 1){
+              int times = (i - preallocated_sst_pool_size )/ big_sst_num + 4;
+              buffer_size = target_file_size_base * times + (1 << 20);
+              buf.AllocateNewBuffer(buffer_size);
+              buf.PadWith(buf.Capacity() - buf.CurrentSize(), 'c');
+            }
+          }
+
+          s = file->Append(rocksdb::Slice(buf.BufferStart()), rocksdb::IOOptions(), nullptr);
+          if (s.ok()) {
+            s = file->Sync(rocksdb::IOOptions(), nullptr);
+          }
+          if (!s.ok()) {
+            fs_->DeleteFile(sst_name, rocksdb::IOOptions(), nullptr);
+            return s;
+          }
+        }
+      }
+
+      std::cout << "allocated " << db_options_->preallocated_sst_pool_size << " sst slots in " << sst_dir << std::endl;
+      std::cout << "allocated " << big_sst_num << " big sst slots in " << sst_dir << std::endl;
+      return s;
+    }
 
     // for a new added file, take a sst slot
     int TakeOneAvailableSstSlot(int level,const rocksdb::FileMetaData& meta){
@@ -500,11 +497,11 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           assert(new_file.first == 0);
         }
         
-        // rocksdb::DirectReadKBytes(fs_, sst_real, 32, db_path_.path + "/");
+        rocksdb::DirectReadKBytes(fs_, sst_real, 32, db_path_.path + "/");
         std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
                         meta.fd.GetNumber(), meta.fd.GetPathId());
         // update secondary's view of sst files
-        std::cout << " Link " << sst_real << " to " << fname << std::endl;
+        // std::cout << " Link " << sst_real << " to " << fname << std::endl;
         ios = fs_->LinkFile(db_path_.path + "/" + std::to_string(sst_real), fname, rocksdb::IOOptions(), nullptr);
         if(!ios.ok()){
           std::cout << ios.ToString() << std::endl;
