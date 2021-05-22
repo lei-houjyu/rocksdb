@@ -1516,16 +1516,10 @@ Status CompactionJob::InstallCompactionResults(
   for (const auto& sub_compact : compact_->sub_compact_states) {
     for (const auto& out : sub_compact.outputs) {
       edit->AddFile(compaction->output_level(), out.meta);
-      std::cout << "[File Added] : " << out.meta.fd.GetNumber() << std::endl;
     }
   }
  
-  for (unsigned int i=0; i < compact_->compaction->num_input_levels(); i++){
-    for (auto f : *(compact_->compaction->inputs(i))){
-      std::cout << "[File Deleted] : " << f->fd.GetNumber() << std::endl;
-    }
-  }
-
+ 
   // RUBBLE: ship new sst file to the remote dir and delete the input sst file at the remote sst dir
   // Only the primary node will get here, non-primary nodes' flush and compaction are disabled
   if(db_options_.is_rubble && db_options_.is_primary){
@@ -1535,34 +1529,38 @@ Status CompactionJob::InstallCompactionResults(
     if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
       remote_sst_dir += "/";
     }
+
     // std::unordered_map<int, uint64_t>* map = db_options_.sst_bit_map.get();
     for (const auto& sub_compact : compact_->sub_compact_states) {
       for (const auto& out : sub_compact.outputs) {
         // copy the output sst files to remote sst directory
         std::string fname = TableFileName(sub_compact.compaction->immutable_cf_options()->cf_paths,
                         out.meta.fd.GetNumber(), out.meta.fd.GetPathId());
-        std::cout << "file size: " << out.meta.fd.GetFileSize() << "\n"; 
-        int times = (out.meta.fd.GetFileSize() >> 20) / (mutable_cf_options.target_file_size_base >> 20);
-        if (times == 3) {
-          times += 1;
-        }
+        // std::cout << "file size: " << out.meta.fd.GetFileSize() << "\n"; 
+        uint64_t size = out.meta.fd.GetFileSize();
+        int times = (size >> 20) / (mutable_cf_options.target_file_size_base >> 20);
+        
         int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, out.meta.fd.GetNumber(), times);
-        int ret = copy_sst(fname , remote_sst_dir  + std::to_string(sst_real),static_cast<size_t>(out.meta.fd.GetFileSize()));
+        int ret = copy_sst(fname , remote_sst_dir  + std::to_string(sst_real), static_cast<size_t>(size));
         // rocksdb::DirectReadKBytes(fs_.get(), sst_real, 32, remote_sst_dir);
         // ios = CopySstFile(fs_.get(), fname, remote_sst_dir  + std::to_string(sst_real), 0,  false);
         if (ret){
-          fprintf(stderr, "[ File Ship Failed ] : %lu, status : %s \n", out.meta.fd.GetNumber(), ios.ToString().c_str());
+          fprintf(stderr, "[File Ship Failed] : %lu, status : %s \n", out.meta.fd.GetNumber(), ios.ToString().c_str());
         }else {
-          fprintf(stdout, "[ File Shipped ] : %lu , sst slot : %u\n", out.meta.fd.GetNumber(), sst_real);
+          fprintf(stdout, "[File Shipped] : (l%u, %lu, %lu) , take slot : %u\n", compaction->output_level(), out.meta.fd.GetNumber(), size, sst_real);
         }
       }
     }
-    for (unsigned int i=0; i < compact_->compaction->num_input_levels(); i++){
+
+    for (unsigned int i = 0; i < compact_->compaction->num_input_levels(); i++){
       for (auto f : *(compact_->compaction->inputs(i))){
+        std::cout << "[File Deletion] : (l" << compact_->compaction->level(i) << ", " << f->fd.GetNumber() << " )";
         FreeSstSlot(f->fd.GetNumber());
       }
     }
   }
+
+  std::cout << "\n";
   
   return versions_->LogAndApply(compaction->column_family_data(),
                                 mutable_cf_options, compaction->edit(),
