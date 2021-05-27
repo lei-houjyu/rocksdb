@@ -1192,7 +1192,7 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
     assert(r_fname_ != "");
     int r_fd;
     do {
-      r_fd = open(r_fname_.c_str(), O_WRONLY | O_DIRECT | O_CREAT, 0755);
+      r_fd = open(r_fname_.c_str(), O_WRONLY | O_DIRECT , 0755);
     } while (r_fd < 0 && errno == EINTR);
     if (r_fd < 0) {
       return IOError("While open a file for appending", r_fname_ , errno);
@@ -1206,9 +1206,17 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
     auto end_time = std::chrono::high_resolution_clock::now();
     std::cout << "write " << nbytes << " bytes to "  <<  r_fname_ << ", latency : "  <<  std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count()  << " micros\n";
   }
-
+  std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+  std::chrono::time_point<std::chrono::high_resolution_clock> end_time;
+  if(nbytes == (65 << 20)){
+    start_time = std::chrono::high_resolution_clock::now();
+  }
   if (!PosixWrite(fd_, src, nbytes)) {
     return IOError("While appending to file", filename_, errno);
+  }
+  if(nbytes == (65 << 20)){
+    end_time = std::chrono::high_resolution_clock::now();
+    std::cout << "write " << nbytes << " bytes to "  <<  filename_ << ", latency : "  <<  std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count()  << " micros\n";
   }
 
   filesize_ += nbytes;

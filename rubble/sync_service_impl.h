@@ -366,10 +366,8 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       rocksdb::IOStatus s;
 
       int preallocated_sst_pool_size = db_options_->preallocated_sst_pool_size;
-      int big_sst_num = preallocated_sst_pool_size / 20;
-      big_sst_num_ = big_sst_num;
-
-      for (int i = 1; i <= preallocated_sst_pool_size + big_sst_num * 3; i++) {
+    
+      for (int i = 1; i <= preallocated_sst_pool_size; i++) {
         std::string sst_num = std::to_string(i);
         // rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size, 'c')), sst_dir + "/" + fname, true);
         std::string sst_name = sst_dir + "/" + sst_num;
@@ -386,13 +384,6 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
             buf.Alignment(file->GetRequiredBufferAlignment());
             buf.AllocateNewBuffer(buffer_size);
             buf.PadWith(buffer_size, 'c');
-          } else if ( i > preallocated_sst_pool_size){
-            if( (i - preallocated_sst_pool_size) % big_sst_num == 1){
-              int times = (i - preallocated_sst_pool_size )/ big_sst_num + 4;
-              buffer_size = target_file_size_base * times + (1 << 20);
-              buf.AllocateNewBuffer(buffer_size);
-              buf.PadWith(buf.Capacity() - buf.CurrentSize(), 'c');
-            }
           }
 
           s = file->Append(rocksdb::Slice(buf.BufferStart()), rocksdb::IOOptions(), nullptr);
@@ -407,23 +398,19 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       }
 
       std::cout << "allocated " << db_options_->preallocated_sst_pool_size << " sst slots in " << sst_dir << std::endl;
-      std::cout << "allocated " << big_sst_num << " big sst slots in " << sst_dir << std::endl;
       return s;
     }
 
     // for a new added file, take a sst slot
-    int TakeOneAvailableSstSlot(int level,const rocksdb::FileMetaData& meta){
+    int TakeOneAvailableSstSlot(int level, const rocksdb::FileMetaData& meta){
       int sst_real = 0;
       // auto& meta = new_file.second;
       uint64_t file_number  = meta.fd.GetNumber();
-      int start, end;
-      if(IsL0CompactionOutputSst(level, meta)){
-        int times = (meta.fd.GetFileSize() >> 20 )/(cf_options_->target_file_size_base >> 20);
-        start = db_options_->preallocated_sst_pool_size + 1 + ((times - 4) * big_sst_num_);
-        end = start + big_sst_num_ - 1;
-      }else{
-        start = 1;
-        end = db_options_->preallocated_sst_pool_size;
+      int start = 1;
+      int end = db_options_->preallocated_sst_pool_size;
+
+      if(!is_flush_){
+        assert(level != 0);
       }
       
       // exit once an empty slot is spoted
@@ -437,7 +424,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       assert(sst_real != 0);
       sst_bit_map_.emplace(sst_real,file_number);
       // std::cout << "[sync] sst_real: " << sst_real <<
-      //    " file size： " << meta.fd.GetFileSize() << std::endl;
+      // " file size： " << meta.fd.GetFileSize() << std::endl;
       return sst_real;
     }
 
@@ -452,21 +439,6 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
         }
       }
       assert(it != sst_bit_map_.end());
-    }
-
-    // normally new sst file's size will be around target_file_size_base
-    // but a L0 compaction will output file whose size is about larger than normal sst file
-    // check if the new sst file is Level 0 compaction 
-    bool IsL0CompactionOutputSst(int level,const rocksdb::FileMetaData& meta){
-      // auto& meta = new_file.second;
-      int times = (meta.fd.GetFileSize() >> 20)/ (cf_options_->target_file_size_base >> 20);
-      if(times >= 2){
-        assert(level == 0);
-        // assert(times == 4 || times == 5);
-        return true;
-      }else{
-        return false;
-      }
     }
 
     // In a 3-node setting, if it's the second node in the chain it should also ship sst files it received from the primary/first node
@@ -490,12 +462,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       // }
       for(const auto& new_file: edit.GetNewFiles()){
         const rocksdb::FileMetaData& meta = new_file.second;
-
-        int sst_real = TakeOneAvailableSstSlot(new_file.first, new_file.second);
-        if(sst_real > db_options_->preallocated_sst_pool_size){
-          // assert(!edit.IsFlush());
-          assert(new_file.first == 0);
-        }
+        int sst_real = TakeOneAvailableSstSlot(new_file.first, meta);
         
         rocksdb::DirectReadKBytes(fs_, sst_real, 32, db_path_.path + "/");
         std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
@@ -580,8 +547,6 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     // sst_bit_map_[i] = j means sst_file with number j occupies the i-th slot
     // secondary node will update it when received a Sync rpc call from the upstream node
     std::unordered_map<int, uint64_t> sst_bit_map_;
-
-    int big_sst_num_;
     
     rocksdb::FileSystem* fs_;
 

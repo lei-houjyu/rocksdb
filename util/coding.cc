@@ -106,18 +106,10 @@ const char* GetVarint64Ptr(const char* p, const char* limit, uint64_t* value) {
 static std::unordered_map<int, uint64_t> sst_bit_map;
 
 // get an available sst slot
-int GetAvailableSstSlot(int sst_pool_size, int sst_num, int times){
+int GetAvailableSstSlot(int sst_pool_size, int sst_num){
   int sst_real = 0;
-  int start, end;
-  if(times == 1){
-    start = 1;
-    end = sst_pool_size;
-  }else{
-    assert(times == 4 || times == 5);
-    int big_sst_num = sst_pool_size / 20;
-    start = sst_pool_size + 1 + (times == 4 ? 0 : big_sst_num);
-    end = start + big_sst_num - 1;
-  }
+  int start = 1;
+  int end = sst_pool_size;
 
   for(int i = start; i <= end; i++){
     if(sst_bit_map.find(i) == sst_bit_map.end()){

@@ -1617,22 +1617,13 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
   uint64_t offset = r->get_offset();
   uint64_t footer_size = static_cast<uint64_t>(footer_encoding.size());
   uint64_t size = offset + footer_size;
-  if(size <= target_file_size_base +  (1 << 20)){
-    pad_len = target_file_size_base +  (1 << 20) - size;
-  } else {
-    std::cout << "file size: " << r->get_offset() << " footer: " << footer_encoding.size();
-    if(size <= 4 * target_file_size_base +  (1 << 20)) {
-      pad_len = 4 * target_file_size_base +  (1 << 20) - size;
-    } else if(size <= 5 * target_file_size_base + (1 << 20)) {
-      pad_len = 5 * target_file_size_base +  (1 << 20) - size;
-    }else{
-      assert(size <= 6 * target_file_size_base + (1 << 20));
-      pad_len = 6 * target_file_size_base + (1 << 20) - size;
-    }
-    std::cout << " [padding] pad_len: " << pad_len << std::endl;
-  }
 
+ // pad the file size to target_file_size_base + 1MB
+  assert(size <= target_file_size_base + (1 << 20));
+  pad_len = target_file_size_base +  (1 << 20) - size;
+  // std::cout << " [padding] pad_len: " << pad_len << std::endl;
   assert(pad_len >= 0);
+  
   std::string pad_str((size_t)pad_len, '.');
   Slice pad_slice(pad_str);
   assert(pad_slice.size() == (size_t)pad_len);

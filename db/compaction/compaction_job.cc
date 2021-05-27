@@ -1518,8 +1518,8 @@ Status CompactionJob::InstallCompactionResults(
       edit->AddFile(compaction->output_level(), out.meta);
     }
   }
- 
- 
+  // IntraL0 compaction is diasbled, so shouldn't exist compaction whose output sst file is in Level 0
+  assert(compaction->output_level() != 0);
   // RUBBLE: ship new sst file to the remote dir and delete the input sst file at the remote sst dir
   // Only the primary node will get here, non-primary nodes' flush and compaction are disabled
   if(db_options_.is_rubble && db_options_.is_primary){
@@ -1538,9 +1538,7 @@ Status CompactionJob::InstallCompactionResults(
                         out.meta.fd.GetNumber(), out.meta.fd.GetPathId());
         // std::cout << "file size: " << out.meta.fd.GetFileSize() << "\n"; 
         uint64_t size = out.meta.fd.GetFileSize();
-        int times = (size >> 20) / (mutable_cf_options.target_file_size_base >> 20);
-        
-        int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, out.meta.fd.GetNumber(), times);
+        int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, out.meta.fd.GetNumber());
         int ret = copy_sst(fname , remote_sst_dir  + std::to_string(sst_real), static_cast<size_t>(size));
         // rocksdb::DirectReadKBytes(fs_.get(), sst_real, 32, remote_sst_dir);
         // ios = CopySstFile(fs_.get(), fname, remote_sst_dir  + std::to_string(sst_real), 0,  false);
