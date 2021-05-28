@@ -1,0 +1,1857 @@
+is_rubble: 1
+is_primary: 1
+is_tail: 0
+remote sst dir: /mnt/remote/archive_dbs/tail/sst_dir/
+write_buffer_size: 67108864
+target_file_size_base: 67108864
+ -------- db_name : /tmp/rubble_primary--------
+ -------- sst directory : /mnt/sdb/archive_dbs/primary/sst_dir--------
+ create SyncClient 
+ create SyncClient 
+ create SyncClient 
+------ db_absolute_path : /tmp/rubble_primary ------- 
+Server listening on 0.0.0.0:50051
+target address : 128.110.154.9:50051
+16 working aysnc threads spawned
+thread: 5 tag:0x555f678eea10 connected:
+thread: 6 tag:0x555f678ef9c0 connected:
+thread: 7 tag:0x555f678f0a30 connected:
+thread: 1 tag:0x555f678eb430 connected:
+thread: 2 tag:0x555f678ec020 connected:
+thread: 4 tag:0x555f678eda70 connected:
+thread: 0 tag:0x555f678ea840 connected:
+thread: 3 tag:0x555f678ecc10 connected:
+init the forwarder
+init the forwarder
+init the forwarder
+init the forwarder
+init the forwarder
+init the forwarder
+init the forwarder
+init the forwarder
+-------- Flush Job [2] : WriteLevel0Table [7] -------------- 
+[ flush ] write 65 MB to [local] 000007.sst ( 97ms) ,to [remote]  1 ( 70ms) 
+[Primary] calling Sync [1] times
+[Reply]: Succeeds ,latency : 360 ms, type: flush
+-------- Flush Job [3] : WriteLevel0Table [10] -------------- 
+[ flush ] write 65 MB to [local] 000010.sst (121ms) ,to [remote]  2 ( 84ms) 
+[Primary] calling Sync [2] times
+[Reply]: Succeeds ,latency : 9 ms, type: flush
+-------- Flush Job [4] : WriteLevel0Table [12] -------------- 
+[ flush ] write 65 MB to [local] 000012.sst ( 77ms) ,to [remote]  3 ( 83ms) 
+-------- Flush Job [5] : WriteLevel0Table [14] -------------- 
+[ flush ] write 65 MB to [local] 000014.sst ( 85ms) ,to [remote]  4 ( 71ms) 
+[Primary] calling Sync [3] times
+[Reply]: Succeeds ,latency : 147 ms, type: flush
+-------- Flush Job [6] : WriteLevel0Table [16] -------------- 
+[Primary] calling Sync [4] times
+[Reply]: Succeeds ,latency : 16 ms, type: flush
+[ flush ] write 65 MB to [local] 000016.sst ( 53ms) ,to [remote]  5 ( 86ms) 
+[Primary] calling Sync [5] times
+[Reply]: Succeeds ,latency : 10 ms, type: flush
+-------- Flush Job [8] : WriteLevel0Table [19] -------------- 
+[compact] write 65 MB to [local] 000017.sst ( 81ms) ,to [remote]  6 ( 83ms) 
+[ flush ] write 65 MB to [local] 000019.sst ( 54ms) ,to [remote]  7 ( 71ms) 
+[Primary] calling Sync [6] times
+[Reply]: Succeeds ,latency : 241 ms, type: flush
+[compact] write 65 MB to [local] 000020.sst ( 57ms) ,to [remote]  8 (155ms) 
+-------- Flush Job [9] : WriteLevel0Table [22] -------------- 
+[ flush ] write 65 MB to [local] 000022.sst ( 79ms) ,to [remote]  9 ( 81ms) 
+[Primary] calling Sync [7] times
+[Reply]: Succeeds ,latency : 56 ms, type: flush
+-------- Flush Job [10] : WriteLevel0Table [25] -------------- 
+[ flush ] write 65 MB to [local] 000025.sst ( 74ms) ,to [remote] 11 (125ms) 
+[compact] write 65 MB to [local] 000023.sst ( 94ms) ,to [remote] 10 (125ms) 
+-------- Flush Job [11] : WriteLevel0Table [27] -------------- 
+[Primary] calling Sync [8] times
+[Reply]: Succeeds ,latency : 32 ms, type: flush
+[ flush ] write 65 MB to [local] 000027.sst ( 80ms) ,to [remote] 12 ( 87ms) 
+-------- Flush Job [14] : WriteLevel0Table [30] -------------- 
+[compact] write 65 MB to [local] 000028.sst ( 77ms) ,to [remote] 13 ( 79ms) 
+ -------- Compaction Job : [7] ----------
+[File Shipped] : (l1, 17, 68157440) , take slot : 6
+[File Shipped] : (l1, 20, 68157440) , take slot : 8
+[File Shipped] : (l1, 23, 68157440) , take slot : 10
+[File Shipped] : (l1, 28, 68157440) , take slot : 13
+[File Deletion] : (l0, 14 ) , free slot : 4
+[File Deletion] : (l0, 12 ) , free slot : 3
+[File Deletion] : (l0, 10 ) , free slot : 2
+[File Deletion] : (l0, 7 ) , free slot : 1
+
+[Primary] calling Sync [9] times
+[ flush ] write 65 MB to [local] 000030.sst (120ms) ,to [remote] 14 ( 68ms) 
+[Reply]: Succeeds ,latency : 151 ms, type: compact
+[Primary] calling Sync [10] times
+[Reply]: Succeeds ,latency : 133 ms, type: flush
+-------- Flush Job [17] : WriteLevel0Table [32] -------------- 
+[Primary] calling Sync [11] times
+[Reply]: Succeeds ,latency : 9 ms, type: flush
+[ flush ] write 65 MB to [local] 000032.sst ( 63ms) ,to [remote]  1 ( 81ms) 
+[Primary] calling Sync [12] times
+[Reply]: Succeeds ,latency : 92 ms, type: flush
+[compact] write 65 MB to [local] 000033.sst ( 64ms) ,to [remote]  2 ( 82ms) 
+-------- Flush Job [19] : WriteLevel0Table [36] -------------- 
+[ flush ] write 65 MB to [local] 000036.sst ( 80ms) ,to [remote]  4 ( 72ms) 
+[compact] write 65 MB to [local] 000034.sst ( 66ms) ,to [remote]  3 ( 60ms) 
+-------- Flush Job [20] : WriteLevel0Table [38] -------------- 
+[Primary] calling Sync [13] times
+[Reply]: Succeeds ,latency : 119 ms, type: flush
+[ flush ] write 65 MB to [local] 000038.sst ( 91ms) ,to [remote] 15 (168ms) 
+-------- Flush Job [21] : WriteLevel0Table [41] -------------- 
+[compact] write 65 MB to [local] 000039.sst ( 77ms) ,to [remote] 16 ( 97ms) 
+[ flush ] write 65 MB to [local] 000041.sst (365ms) ,to [remote] 17 ( 60ms) 
+[Primary] calling Sync [14] times
+[Reply]: Succeeds ,latency : 128 ms, type: flush
+-------- Flush Job [25] : WriteLevel0Table [44] -------------- 
+[Primary] calling Sync [15] times
+[Reply]: Succeeds ,latency : 60 ms, type: flush
+[compact] write 65 MB to [local] 000042.sst ( 49ms) ,to [remote] 18 ( 83ms) 
+[ flush ] write 65 MB to [local] 000044.sst (101ms) ,to [remote] 19 ( 81ms) 
+[Primary] calling Sync [16] times
+[Reply]: Succeeds ,latency : 89 ms, type: flush
+-------- Flush Job [29] : WriteLevel0Table [47] -------------- 
+[compact] write 65 MB to [local] 000045.sst ( 75ms) ,to [remote] 20 ( 72ms) 
+[ flush ] write 65 MB to [local] 000047.sst ( 53ms) ,to [remote] 21 ( 60ms) 
+-------- Flush Job [31] : WriteLevel0Table [49] -------------- 
+[Primary] calling Sync [17] times
+[Reply]: Succeeds ,latency : 49 ms, type: flush
+[ flush ] write 65 MB to [local] 000049.sst (102ms) ,to [remote] 22 (136ms) 
+[compact] write 65 MB to [local] 000050.sst ( 51ms) ,to [remote] 23 (242ms) 
+-------- Flush Job [33] : WriteLevel0Table [52] -------------- 
+[Primary] calling Sync [18] times
+[ flush ] write 65 MB to [local] 000052.sst (111ms) ,to [remote] 24 (601ms) 
+[Reply]: Succeeds ,latency : 767 ms, type: flush
+[compact] write 65 MB to [local] 000053.sst ( 73ms) ,to [remote] 25 (188ms) 
+[Primary] calling Sync [19] times
+[Reply]: Succeeds ,latency : 32 ms, type: flush
+-------- Flush Job [38] : WriteLevel0Table [56] -------------- 
+[compact] write 65 MB to [local] 000054.sst ( 73ms) ,to [remote] 26 ( 74ms) 
+ -------- Compaction Job : [18] ----------
+[File Shipped] : (l1, 33, 68157440) , take slot : 2
+[File Shipped] : (l1, 34, 68157440) , take slot : 3
+[File Shipped] : (l1, 39, 68157440) , take slot : 16
+[File Shipped] : (l1, 42, 68157440) , take slot : 18
+[File Shipped] : (l1, 45, 68157440) , take slot : 20
+[File Shipped] : (l1, 50, 68157440) , take slot : 23
+[File Shipped] : (l1, 53, 68157440) , take slot : 25
+[File Shipped] : (l1, 54, 68157440) , take slot : 26
+[File Deletion] : (l0, 25 ) , free slot : 11
+[File Deletion] : (l0, 22 ) , free slot : 9
+[File Deletion] : (l0, 19 ) , free slot : 7
+[File Deletion] : (l0, 16 ) , free slot : 5
+[File Deletion] : (l1, 17 ) , free slot : 6
+[File Deletion] : (l1, 20 ) , free slot : 8
+[File Deletion] : (l1, 23 ) , free slot : 10
+[File Deletion] : (l1, 28 ) , free slot : 13
+
+[Primary] calling Sync [20] times
+[Reply]: Succeeds ,latency : 94 ms, type: compact
+[ flush ] write 65 MB to [local] 000056.sst ( 88ms) ,to [remote] 27 (164ms) 
+-------- Flush Job [40] : WriteLevel0Table [59] -------------- 
+[Primary] calling Sync [21] times
+[Reply]: Succeeds ,latency : 87 ms, type: flush
+[compact] write 65 MB to [local] 000057.sst ( 77ms) ,to [remote]  5 ( 83ms) 
+[ flush ] write 65 MB to [local] 000059.sst ( 68ms) ,to [remote]  6 ( 77ms) 
+-------- Flush Job [41] : WriteLevel0Table [62] -------------- 
+[compact] write 65 MB to [local] 000060.sst ( 66ms) ,to [remote]  7 ( 60ms) 
+[ flush ] write 65 MB to [local] 000062.sst ( 84ms) ,to [remote]  8 ( 60ms) 
+[Primary] calling Sync [22] times
+[Reply]: Succeeds ,latency : 290 ms, type: flush
+-------- Flush Job [42] : WriteLevel0Table [65] -------------- 
+[ flush ] write 65 MB to [local] 000065.sst ( 55ms) ,to [remote] 10 ( 60ms) 
+[compact] write 65 MB to [local] 000063.sst ( 58ms) ,to [remote]  9 ( 60ms) 
+[Primary] calling Sync [23] times
+[Reply]: Succeeds ,latency : 111 ms, type: flush
+[Primary] calling Sync [24] times
+[Reply]: Succeeds ,latency : 8 ms, type: flush
+-------- Flush Job [45] : WriteLevel0Table [68] -------------- 
+[compact] write 65 MB to [local] 000066.sst ( 72ms) ,to [remote] 11 ( 82ms) 
+[ flush ] write 65 MB to [local] 000068.sst ( 68ms) ,to [remote] 13 ( 73ms) 
+[Primary] calling Sync [25] times
+[Reply]: Succeeds ,latency : 127 ms, type: flush
+-------- Flush Job [48] : WriteLevel0Table [71] -------------- 
+[compact] write 65 MB to [local] 000069.sst ( 55ms) ,to [remote] 28 (200ms) 
+[ flush ] write 65 MB to [local] 000071.sst ( 77ms) ,to [remote] 29 ( 82ms) 
+-------- Flush Job [50] : WriteLevel0Table [74] -------------- 
+[Primary] calling Sync [26] times
+[Reply]: Succeeds ,latency : 186 ms, type: flush
+[ flush ] write 65 MB to [local] 000074.sst ( 74ms) ,to [remote] 31 (190ms) 
+[compact] write 65 MB to [local] 000072.sst ( 59ms) ,to [remote] 30 ( 82ms) 
+-------- Flush Job [53] : WriteLevel0Table [76] -------------- 
+[Primary] calling Sync [27] times
+[Reply]: Succeeds ,latency : 55 ms, type: flush
+-------- Flush Job [55] : WriteLevel0Table [79] -------------- 
+[ flush ] write 65 MB to [local] 000076.sst ( 54ms) ,to [remote] 32 ( 74ms) 
+[ flush ] write 65 MB to [local] 000079.sst ( 54ms) ,to [remote] 34 ( 87ms) 
+[compact] write 65 MB to [local] 000077.sst ( 56ms) ,to [remote] 33 ( 87ms) 
+ edit_list size : 2
+ Batch count : 2
+[Primary] calling Sync [28] times
+[Reply]: Succeeds ,latency : 193 ms, type: flush
+[compact] write 65 MB to [local] 000080.sst ( 50ms) ,to [remote] 35 (198ms) 
+-------- Flush Job [60] : WriteLevel0Table [82] -------------- 
+[ flush ] write 65 MB to [local] 000082.sst ( 51ms) ,to [remote] 36 ( 83ms) 
+[Primary] calling Sync [29] times
+[Reply]: Succeeds ,latency : 95 ms, type: flush
+[compact] write 65 MB to [local] 000083.sst ( 74ms) ,to [remote] 37 (129ms) 
+[compact] write 65 MB to [local] 000084.sst ( 51ms) ,to [remote] 38 ( 83ms) 
+-------- Flush Job [62] : WriteLevel0Table [86] -------------- 
+[ flush ] write 65 MB to [local] 000086.sst ( 76ms) ,to [remote] 39 ( 75ms) 
+[Primary] calling Sync [30] times
+[Reply]: Succeeds ,latency : 89 ms, type: flush
+[compact] write 65 MB to [local] 000087.sst ( 85ms) ,to [remote] 40 (129ms) 
+[compact] write 65 MB to [local] 000088.sst (101ms) ,to [remote] 41 ( 82ms) 
+[compact] write 65 MB to [local] 000089.sst ( 51ms) ,to [remote] 42 (984ms) 
+[compact] write 65 MB to [local] 000090.sst ( 92ms) ,to [remote] 43 ( 60ms) 
+-------- Flush Job [66] : WriteLevel0Table [92] -------------- 
+[ flush ] write 65 MB to [local] 000092.sst ( 74ms) ,to [remote] 44 ( 82ms) 
+[Primary] calling Sync [31] times
+[Reply]: Succeeds ,latency : 20 ms, type: flush
+[compact] write 65 MB to [local] 000093.sst ( 51ms) ,to [remote] 45 ( 86ms) 
+[compact] write 65 MB to [local] 000094.sst ( 56ms) ,to [remote] 46 ( 92ms) 
+[compact] write 65 MB to [local] 000095.sst ( 52ms) ,to [remote] 47 ( 67ms) 
+[compact] write 65 MB to [local] 000096.sst (104ms) ,to [remote] 48 ( 60ms) 
+ -------- Compaction Job : [39] ----------
+[File Shipped] : (l1, 57, 68157440) , take slot : 5
+[File Shipped] : (l1, 60, 68157440) , take slot : 7
+[File Shipped] : (l1, 63, 68157440) , take slot : 9
+[File Shipped] : (l1, 66, 68157440) , take slot : 11
+[File Shipped] : (l1, 69, 68157440) , take slot : 28
+[File Shipped] : (l1, 72, 68157440) , take slot : 30
+[File Shipped] : (l1, 77, 68157440) , take slot : 33
+[File Shipped] : (l1, 80, 68157440) , take slot : 35
+[File Shipped] : (l1, 83, 68157440) , take slot : 37
+[File Shipped] : (l1, 84, 68157440) , take slot : 38
+[File Shipped] : (l1, 87, 68157440) , take slot : 40
+[File Shipped] : (l1, 88, 68157440) , take slot : 41
+[File Shipped] : (l1, 89, 68157440) , take slot : 42
+[File Shipped] : (l1, 90, 68157440) , take slot : 43
+[File Shipped] : (l1, 93, 68157440) , take slot : 45
+[File Shipped] : (l1, 94, 68157440) , take slot : 46
+[File Shipped] : (l1, 95, 68157440) , take slot : 47
+[File Shipped] : (l1, 96, 68157440) , take slot : 48
+[File Deletion] : (l0, 52 ) , free slot : 24
+[File Deletion] : (l0, 49 ) , free slot : 22
+[File Deletion] : (l0, 47 ) , free slot : 21
+[File Deletion] : (l0, 44 ) , free slot : 19
+[File Deletion] : (l0, 41 ) , free slot : 17
+[File Deletion] : (l0, 38 ) , free slot : 15
+[File Deletion] : (l0, 36 ) , free slot : 4
+[File Deletion] : (l0, 32 ) , free slot : 1
+[File Deletion] : (l0, 30 ) , free slot : 14
+[File Deletion] : (l0, 27 ) , free slot : 12
+[File Deletion] : (l1, 33 ) , free slot : 2
+[File Deletion] : (l1, 34 ) , free slot : 3
+[File Deletion] : (l1, 39 ) , free slot : 16
+[File Deletion] : (l1, 42 ) , free slot : 18
+[File Deletion] : (l1, 45 ) , free slot : 20
+[File Deletion] : (l1, 50 ) , free slot : 23
+[File Deletion] : (l1, 53 ) , free slot : 25
+[File Deletion] : (l1, 54 ) , free slot : 26
+
+[Primary] calling Sync [32] times
+[Reply]: Succeeds ,latency : 132 ms, type: compact
+[Primary] calling Sync [33] times
+[Reply]: Succeeds ,latency : 93 ms, type: trivial
+[Primary] calling Sync [34] times
+[Reply]: Succeeds ,latency : 139 ms, type: trivial
+[Primary] calling Sync [35] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [36] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [37] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [38] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+-------- Flush Job [77] : WriteLevel0Table [99] -------------- 
+[compact] write 65 MB to [local] 000097.sst ( 67ms) ,to [remote]  1 ( 83ms) 
+[ flush ] write 65 MB to [local] 000099.sst ( 59ms) ,to [remote]  2 ( 75ms) 
+[Primary] calling Sync [39] times
+[Reply]: Succeeds ,latency : 498 ms, type: flush
+[compact] write 65 MB to [local] 000100.sst ( 78ms) ,to [remote]  3 ( 82ms) 
+-------- Flush Job [78] : WriteLevel0Table [102] -------------- 
+[ flush ] write 65 MB to [local] 000102.sst ( 52ms) ,to [remote]  4 ( 80ms) 
+[Primary] calling Sync [40] times
+[Reply]: Succeeds ,latency : 68 ms, type: flush
+-------- Flush Job [79] : WriteLevel0Table [105] -------------- 
+[compact] write 65 MB to [local] 000103.sst ( 55ms) ,to [remote] 12 (161ms) 
+[ flush ] write 65 MB to [local] 000105.sst (102ms) ,to [remote] 14 ( 75ms) 
+[Primary] calling Sync [41] times
+[Reply]: Succeeds ,latency : 164 ms, type: flush
+-------- Flush Job [80] : WriteLevel0Table [108] -------------- 
+[compact] write 65 MB to [local] 000106.sst ( 79ms) ,to [remote] 15 (132ms) 
+[ flush ] write 65 MB to [local] 000108.sst ( 55ms) ,to [remote] 16 (123ms) 
+-------- Flush Job [81] : WriteLevel0Table [111] -------------- 
+[Primary] calling Sync [42] times
+[compact] write 65 MB to [local] 000109.sst ( 56ms) ,to [remote] 17 ( 78ms) 
+[Reply]: Succeeds ,latency : 173 ms, type: flush
+[ flush ] write 65 MB to [local] 000111.sst ( 54ms) ,to [remote] 18 (197ms) 
+[compact] write 65 MB to [local] 000112.sst ( 77ms) ,to [remote] 19 ( 86ms) 
+-------- Flush Job [82] : WriteLevel0Table [114] -------------- 
+[Primary] calling Sync [43] times
+[ flush ] write 65 MB to [local] 000114.sst (279ms) ,to [remote] 20 ( 80ms) 
+[Reply]: Succeeds ,latency : 76 ms, type: flush
+-------- Flush Job [85] : WriteLevel0Table [117] -------------- 
+[compact] write 65 MB to [local] 000115.sst ( 73ms) ,to [remote] 21 ( 81ms) 
+[Primary] calling Sync [44] times
+[Reply]: Succeeds ,latency : 198 ms, type: flush
+[ flush ] write 65 MB to [local] 000117.sst ( 56ms) ,to [remote] 22 (133ms) 
+[compact] write 65 MB to [local] 000118.sst ( 52ms) ,to [remote] 23 ( 82ms) 
+[Primary] calling Sync [45] times
+[Reply]: Succeeds ,latency : 138 ms, type: flush
+-------- Flush Job [89] : WriteLevel0Table [120] -------------- 
+[ flush ] write 65 MB to [local] 000120.sst ( 53ms) ,to [remote] 24 ( 86ms) 
+[Primary] calling Sync [46] times
+[Reply]: Succeeds ,latency : 138 ms, type: flush
+[compact] write 65 MB to [local] 000121.sst ( 75ms) ,to [remote] 25 ( 93ms) 
+-------- Flush Job [92] : WriteLevel0Table [123] -------------- 
+[ flush ] write 65 MB to [local] 000123.sst ( 66ms) ,to [remote] 26 (138ms) 
+[Primary] calling Sync [47] times
+[Reply]: Succeeds ,latency : 266 ms, type: flush
+[compact] write 65 MB to [local] 000124.sst ( 49ms) ,to [remote] 49 ( 82ms) 
+[compact] write 65 MB to [local] 000125.sst (107ms) ,to [remote] 50 (637ms) 
+-------- Flush Job [96] : WriteLevel0Table [128] -------------- 
+[compact] write 65 MB to [local] 000126.sst ( 53ms) ,to [remote] 51 ( 60ms) 
+[ flush ] write 65 MB to [local] 000128.sst ( 57ms) ,to [remote] 52 ( 60ms) 
+[Primary] calling Sync [48] times
+[Reply]: Succeeds ,latency : 218 ms, type: flush
+[compact] write 65 MB to [local] 000129.sst ( 58ms) ,to [remote] 53 (157ms) 
+[compact] write 65 MB to [local] 000130.sst ( 54ms) ,to [remote] 54 (132ms) 
+[compact] write 65 MB to [local] 000131.sst ( 79ms) ,to [remote] 55 ( 83ms) 
+[compact] write 65 MB to [local] 000132.sst ( 57ms) ,to [remote] 56 ( 60ms) 
+[compact] write 65 MB to [local] 000133.sst ( 78ms) ,to [remote] 57 ( 60ms) 
+[compact] write 65 MB to [local] 000134.sst ( 57ms) ,to [remote] 58 ( 77ms) 
+-------- Flush Job [99] : WriteLevel0Table [136] -------------- 
+[ flush ] write 65 MB to [local] 000136.sst ( 51ms) ,to [remote] 59 (194ms) 
+[Primary] calling Sync [49] times
+[Reply]: Succeeds ,latency : 86 ms, type: flush
+[compact] write 65 MB to [local] 000137.sst ( 64ms) ,to [remote] 60 ( 82ms) 
+[compact] write 65 MB to [local] 000138.sst ( 59ms) ,to [remote] 61 ( 68ms) 
+[compact] write 65 MB to [local] 000139.sst (111ms) ,to [remote] 62 ( 83ms) 
+[compact] write 65 MB to [local] 000140.sst ( 54ms) ,to [remote] 63 ( 81ms) 
+[compact] write 65 MB to [local] 000141.sst ( 80ms) ,to [remote] 64 ( 98ms) 
+[compact] write 65 MB to [local] 000142.sst ( 55ms) ,to [remote] 65 ( 83ms) 
+ -------- Compaction Job : [76] ----------
+[File Shipped] : (l1, 97, 68157440) , take slot : 1
+[File Shipped] : (l1, 100, 68157440) , take slot : 3
+[File Shipped] : (l1, 103, 68157440) , take slot : 12
+[File Shipped] : (l1, 106, 68157440) , take slot : 15
+[File Shipped] : (l1, 109, 68157440) , take slot : 17
+[File Shipped] : (l1, 112, 68157440) , take slot : 19
+[File Shipped] : (l1, 115, 68157440) , take slot : 21
+[File Shipped] : (l1, 118, 68157440) , take slot : 23
+[File Shipped] : (l1, 121, 68157440) , take slot : 25
+[File Shipped] : (l1, 124, 68157440) , take slot : 49
+[File Shipped] : (l1, 125, 68157440) , take slot : 50
+[File Shipped] : (l1, 126, 68157440) , take slot : 51
+[File Shipped] : (l1, 129, 68157440) , take slot : 53
+[File Shipped] : (l1, 130, 68157440) , take slot : 54
+[File Shipped] : (l1, 131, 68157440) , take slot : 55
+[File Shipped] : (l1, 132, 68157440) , take slot : 56
+[File Shipped] : (l1, 133, 68157440) , take slot : 57
+[File Shipped] : (l1, 134, 68157440) , take slot : 58
+[File Shipped] : (l1, 137, 68157440) , take slot : 60
+[File Shipped] : (l1, 138, 68157440) , take slot : 61
+[File Shipped] : (l1, 139, 68157440) , take slot : 62
+[File Shipped] : (l1, 140, 68157440) , take slot : 63
+[File Shipped] : (l1, 141, 68157440) , take slot : 64
+[File Shipped] : (l1, 142, 68157440) , take slot : 65
+[File Deletion] : (l0, 92 ) , free slot : 44
+[File Deletion] : (l0, 86 ) , free slot : 39
+[File Deletion] : (l0, 82 ) , free slot : 36
+[File Deletion] : (l0, 79 ) , free slot : 34
+[File Deletion] : (l0, 76 ) , free slot : 32
+[File Deletion] : (l0, 74 ) , free slot : 31
+[File Deletion] : (l0, 71 ) , free slot : 29
+[File Deletion] : (l0, 68 ) , free slot : 13
+[File Deletion] : (l0, 65 ) , free slot : 10
+[File Deletion] : (l0, 62 ) , free slot : 8
+[File Deletion] : (l0, 59 ) , free slot : 6
+[File Deletion] : (l0, 56 ) , free slot : 27
+[File Deletion] : (l1, 57 ) , free slot : 5
+[File Deletion] : (l1, 60 ) , free slot : 7
+[File Deletion] : (l1, 63 ) , free slot : 9
+[File Deletion] : (l1, 66 ) , free slot : 11
+[File Deletion] : (l1, 69 ) , free slot : 28
+[File Deletion] : (l1, 72 ) , free slot : 30
+[File Deletion] : (l1, 77 ) , free slot : 33
+[File Deletion] : (l1, 80 ) , free slot : 35
+[File Deletion] : (l1, 87 ) , free slot : 40
+[File Deletion] : (l1, 88 ) , free slot : 41
+[File Deletion] : (l1, 89 ) , free slot : 42
+[File Deletion] : (l1, 90 ) , free slot : 43
+
+[Primary] calling Sync [50] times
+[Reply]: Succeeds ,latency : 187 ms, type: compact
+[Primary] calling Sync [51] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [52] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[Primary] calling Sync [53] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[Primary] calling Sync [54] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [55] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[Primary] calling Sync [56] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [57] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [58] times
+[Reply]: Succeeds ,latency : 7 ms, type: trivial
+[Primary] calling Sync [59] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [60] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [61] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[Primary] calling Sync [62] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[Primary] calling Sync [63] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+-------- Flush Job [116] : WriteLevel0Table [145] -------------- 
+[compact] write 65 MB to [local] 000143.sst ( 50ms) ,to [remote]  5 ( 82ms) 
+[ flush ] write 65 MB to [local] 000145.sst (104ms) ,to [remote]  6 ( 94ms) 
+[compact] write 65 MB to [local] 000146.sst ( 49ms) ,to [remote]  7 ( 71ms) 
+[Primary] calling Sync [64] times
+[compact] write 65 MB to [local] 000147.sst ( 57ms) ,to [remote]  8 (131ms) 
+[Reply]: Succeeds ,latency : 976 ms, type: flush
+[compact] write 65 MB to [local] 000148.sst ( 67ms) ,to [remote]  9 ( 87ms) 
+[compact] write 65 MB to [local] 000149.sst ( 62ms) ,to [remote] 10 (108ms) 
+-------- Flush Job [117] : WriteLevel0Table [152] -------------- 
+[compact] write 65 MB to [local] 000150.sst ( 69ms) ,to [remote] 11 (137ms) 
+[ flush ] write 65 MB to [local] 000152.sst ( 54ms) ,to [remote] 13 (104ms) 
+[compact] write 65 MB to [local] 000153.sst ( 71ms) ,to [remote] 27 ( 97ms) 
+-------- Flush Job [118] : WriteLevel0Table [155] -------------- 
+[ flush ] write 65 MB to [local] 000155.sst ( 61ms) ,to [remote] 28 ( 71ms) 
+[Primary] calling Sync [65] times
+[Reply]: Succeeds ,latency : 198 ms, type: flush
+-------- Flush Job [119] : WriteLevel0Table [158] -------------- 
+[compact] write 65 MB to [local] 000156.sst ( 57ms) ,to [remote] 29 ( 83ms) 
+[ flush ] write 65 MB to [local] 000158.sst ( 52ms) ,to [remote] 30 ( 84ms) 
+[Primary] calling Sync [66] times
+[Reply]: Succeeds ,latency : 40 ms, type: flush
+[compact] write 65 MB to [local] 000159.sst ( 52ms) ,to [remote] 31 (123ms) 
+[Primary] calling Sync [67] times
+[Reply]: Succeeds ,latency : 118 ms, type: flush
+-------- Flush Job [122] : WriteLevel0Table [162] -------------- 
+[compact] write 65 MB to [local] 000160.sst ( 82ms) ,to [remote] 32 ( 84ms) 
+[ flush ] write 65 MB to [local] 000162.sst ( 57ms) ,to [remote] 33 (119ms) 
+-------- Flush Job [123] : WriteLevel0Table [165] -------------- 
+[compact] write 65 MB to [local] 000163.sst ( 52ms) ,to [remote] 34 ( 95ms) 
+[ flush ] write 65 MB to [local] 000165.sst (478ms) ,to [remote] 35 ( 78ms) 
+-------- Flush Job [126] : WriteLevel0Table [167] -------------- 
+[Primary] calling Sync [68] times
+[ flush ] write 65 MB to [local] 000167.sst ( 57ms) ,to [remote] 36 ( 78ms) 
+[Reply]: Succeeds ,latency : 656 ms, type: flush
+[compact] write 65 MB to [local] 000168.sst ( 94ms) ,to [remote] 39 (132ms) 
+ edit_list size : 2
+ Batch count : 2
+[Primary] calling Sync [69] times
+[compact] write 65 MB to [local] 000169.sst ( 51ms) ,to [remote] 40 (447ms) 
+[Reply]: Succeeds ,latency : 496 ms, type: flush
+[compact] write 65 MB to [local] 000170.sst ( 51ms) ,to [remote] 41 ( 90ms) 
+-------- Flush Job [131] : WriteLevel0Table [173] -------------- 
+[compact] write 65 MB to [local] 000171.sst ( 56ms) ,to [remote] 42 ( 83ms) 
+[ flush ] write 65 MB to [local] 000173.sst ( 99ms) ,to [remote] 43 ( 75ms) 
+[Primary] calling Sync [70] times
+[Reply]: Succeeds ,latency : 200 ms, type: flush
+[compact] write 65 MB to [local] 000174.sst ( 51ms) ,to [remote] 44 (194ms) 
+-------- Flush Job [134] : WriteLevel0Table [176] -------------- 
+[ flush ] write 65 MB to [local] 000176.sst ( 80ms) ,to [remote] 66 ( 93ms) 
+[Primary] calling Sync [71] times
+[Reply]: Succeeds ,latency : 215 ms, type: flush
+[compact] write 65 MB to [local] 000177.sst ( 84ms) ,to [remote] 67 ( 67ms) 
+-------- Flush Job [136] : WriteLevel0Table [179] -------------- 
+[ flush ] write 65 MB to [local] 000179.sst ( 51ms) ,to [remote] 68 ( 82ms) 
+[Primary] calling Sync [72] times
+[Reply]: Succeeds ,latency : 9 ms, type: flush
+[compact] write 65 MB to [local] 000180.sst ( 83ms) ,to [remote] 69 ( 82ms) 
+[compact] write 65 MB to [local] 000181.sst ( 88ms) ,to [remote] 70 ( 71ms) 
+[compact] write 65 MB to [local] 000182.sst ( 69ms) ,to [remote] 71 ( 60ms) 
+[compact] write 65 MB to [local] 000183.sst ( 49ms) ,to [remote] 72 ( 60ms) 
+ -------- Compaction Job : [115] ----------
+[File Shipped] : (l1, 143, 68157440) , take slot : 5
+[File Shipped] : (l1, 146, 68157440) , take slot : 7
+[File Shipped] : (l1, 147, 68157440) , take slot : 8
+[File Shipped] : (l1, 148, 68157440) , take slot : 9
+[File Shipped] : (l1, 149, 68157440) , take slot : 10
+[File Shipped] : (l1, 150, 68157440) , take slot : 11
+[File Shipped] : (l1, 153, 68157440) , take slot : 27
+[File Shipped] : (l1, 156, 68157440) , take slot : 29
+[File Shipped] : (l1, 159, 68157440) , take slot : 31
+[File Shipped] : (l1, 160, 68157440) , take slot : 32
+[File Shipped] : (l1, 163, 68157440) , take slot : 34
+[File Shipped] : (l1, 168, 68157440) , take slot : 39
+[File Shipped] : (l1, 169, 68157440) , take slot : 40
+[File Shipped] : (l1, 170, 68157440) , take slot : 41
+[File Shipped] : (l1, 171, 68157440) , take slot : 42
+[File Shipped] : (l1, 174, 68157440) , take slot : 44
+[File Shipped] : (l1, 177, 68157440) , take slot : 67
+[File Shipped] : (l1, 180, 68157440) , take slot : 69
+[File Shipped] : (l1, 181, 68157440) , take slot : 70
+[File Shipped] : (l1, 182, 68157440) , take slot : 71
+[File Shipped] : (l1, 183, 68157440) , take slot : 72
+[File Deletion] : (l0, 136 ) , free slot : 59
+[File Deletion] : (l0, 128 ) , free slot : 52
+[File Deletion] : (l0, 123 ) , free slot : 26
+[File Deletion] : (l0, 120 ) , free slot : 24
+[File Deletion] : (l0, 117 ) , free slot : 22
+[File Deletion] : (l0, 114 ) , free slot : 20
+[File Deletion] : (l0, 111 ) , free slot : 18
+[File Deletion] : (l0, 108 ) , free slot : 16
+[File Deletion] : (l0, 105 ) , free slot : 14
+[File Deletion] : (l0, 102 ) , free slot : 4
+[File Deletion] : (l0, 99 ) , free slot : 2
+[File Deletion] : (l1, 112 ) , free slot : 19
+[File Deletion] : (l1, 115 ) , free slot : 21
+[File Deletion] : (l1, 118 ) , free slot : 23
+[File Deletion] : (l1, 121 ) , free slot : 25
+[File Deletion] : (l1, 124 ) , free slot : 49
+[File Deletion] : (l1, 125 ) , free slot : 50
+[File Deletion] : (l1, 130 ) , free slot : 54
+[File Deletion] : (l1, 131 ) , free slot : 55
+[File Deletion] : (l1, 140 ) , free slot : 63
+[File Deletion] : (l1, 141 ) , free slot : 64
+[File Deletion] : (l1, 142 ) , free slot : 65
+
+[Primary] calling Sync [73] times
+[Reply]: Succeeds ,latency : 152 ms, type: compact
+-------- Flush Job [140] : WriteLevel0Table [185] -------------- 
+[Primary] calling Sync [74] times
+[Reply]: Succeeds ,latency : 189 ms, type: trivial
+[Primary] calling Sync [75] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [76] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[Primary] calling Sync [77] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [78] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [79] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [80] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[Primary] calling Sync [81] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[ flush ] write 65 MB to [local] 000185.sst ( 56ms) ,to [remote]  2 ( 79ms) 
+[compact] write 65 MB to [local] 000188.sst ( 49ms) ,to [remote] 16 (132ms) 
+[compact] write 65 MB to [local] 000187.sst ( 80ms) ,to [remote] 14 (241ms) 
+[compact] write 65 MB to [local] 000186.sst ( 81ms) ,to [remote]  4 (238ms) 
+[Primary] calling Sync [82] times
+[compact] write 65 MB to [local] 000189.sst ( 57ms) ,to [remote] 18 (151ms) 
+[Reply]: Succeeds ,latency : 834 ms, type: flush
+ -------- Compaction Job : [151] ----------
+[File Shipped] : (l2, 188, 68157440) , take slot : 16
+[File Shipped] : (l2, 189, 68157440) , take slot : 18
+[File Deletion] : (l1, 180 ) , free slot : 69
+[File Deletion] : (l2, 93 ) , free slot : 45
+
+[Primary] calling Sync [83] times
+[compact] write 65 MB to [local] 000191.sst ( 82ms) ,to [remote] 20 (164ms) 
+[compact] write 65 MB to [local] 000190.sst ( 84ms) ,to [remote] 19 (165ms) 
+[Reply]: Succeeds ,latency : 326 ms, type: compact
+ -------- Compaction Job : [150] ----------
+[File Shipped] : (l2, 187, 68157440) , take slot : 14
+[File Shipped] : (l2, 191, 68157440) , take slot : 20
+[File Deletion] : (l1, 170 ) , free slot : 41
+[File Deletion] : (l2, 84 ) , free slot : 38
+
+[Primary] calling Sync [84] times
+[Reply]: Succeeds ,latency : 298 ms, type: compact
+ -------- Compaction Job : [149] ----------
+[File Shipped] : (l2, 186, 68157440) , take slot : 4
+[File Shipped] : (l2, 190, 68157440) , take slot : 19
+[File Deletion] : (l1, 168 ) , free slot : 39
+[File Deletion] : (l2, 83 ) , free slot : 37
+
+[Primary] calling Sync [85] times
+[Reply]: Succeeds ,latency : 135 ms, type: compact
+-------- Flush Job [158] : WriteLevel0Table [194] -------------- 
+[ flush ] write 65 MB to [local] 000194.sst ( 75ms) ,to [remote] 22 ( 82ms) 
+[Primary] calling Sync [86] times
+[Reply]: Succeeds ,latency : 168 ms, type: flush
+[compact] write 65 MB to [local] 000192.sst ( 75ms) ,to [remote] 21 ( 82ms) 
+-------- Flush Job [159] : WriteLevel0Table [196] -------------- 
+[ flush ] write 65 MB to [local] 000196.sst ( 56ms) ,to [remote] 23 ( 97ms) 
+-------- Flush Job [160] : WriteLevel0Table [199] -------------- 
+[compact] write 65 MB to [local] 000197.sst ( 57ms) ,to [remote] 24 ( 60ms) 
+[Primary] calling Sync [87] times
+[Reply]: Succeeds ,latency : 170 ms, type: flush
+[ flush ] write 65 MB to [local] 000199.sst ( 94ms) ,to [remote] 25 (202ms) 
+[compact] write 65 MB to [local] 000200.sst ( 69ms) ,to [remote] 26 ( 78ms) 
+-------- Flush Job [161] : WriteLevel0Table [202] -------------- 
+[Primary] calling Sync [88] times
+[Reply]: Succeeds ,latency : 175 ms, type: flush
+[ flush ] write 65 MB to [local] 000202.sst ( 51ms) ,to [remote] 37 (137ms) 
+[compact] write 65 MB to [local] 000203.sst ( 49ms) ,to [remote] 38 ( 82ms) 
+[Primary] calling Sync [89] times
+[Reply]: Succeeds ,latency : 210 ms, type: flush
+-------- Flush Job [162] : WriteLevel0Table [206] -------------- 
+[ flush ] write 65 MB to [local] 000206.sst ( 78ms) ,to [remote] 41 ( 72ms) 
+[compact] write 65 MB to [local] 000204.sst ( 56ms) ,to [remote] 39 ( 60ms) 
+-------- Flush Job [165] : WriteLevel0Table [209] -------------- 
+[Primary] calling Sync [90] times
+[Reply]: Succeeds ,latency : 89 ms, type: flush
+[ flush ] write 65 MB to [local] 000209.sst ( 81ms) ,to [remote] 49 ( 81ms) 
+[compact] write 65 MB to [local] 000207.sst ( 50ms) ,to [remote] 45 (333ms) 
+-------- Flush Job [167] : WriteLevel0Table [211] -------------- 
+[ flush ] write 65 MB to [local] 000211.sst ( 70ms) ,to [remote] 50 ( 60ms) 
+[Primary] calling Sync [91] times
+[Reply]: Succeeds ,latency : 198 ms, type: flush
+-------- Flush Job [171] : WriteLevel0Table [214] -------------- 
+[compact] write 65 MB to [local] 000212.sst ( 55ms) ,to [remote] 52 ( 82ms) 
+[ flush ] write 65 MB to [local] 000214.sst ( 59ms) ,to [remote] 54 ( 80ms) 
+[Primary] calling Sync [92] times
+[Reply]: Succeeds ,latency : 10 ms, type: flush
+[compact] write 65 MB to [local] 000215.sst ( 58ms) ,to [remote] 55 ( 97ms) 
+[Primary] calling Sync [93] times
+[Reply]: Succeeds ,latency : 8 ms, type: flush
+-------- Flush Job [175] : WriteLevel0Table [218] -------------- 
+[compact] write 65 MB to [local] 000216.sst ( 74ms) ,to [remote] 59 ( 76ms) 
+[ flush ] write 65 MB to [local] 000218.sst ( 82ms) ,to [remote] 63 ( 60ms) 
+[Primary] calling Sync [94] times
+[Reply]: Succeeds ,latency : 152 ms, type: flush
+[compact] write 65 MB to [local] 000219.sst ( 49ms) ,to [remote] 64 ( 85ms) 
+-------- Flush Job [177] : WriteLevel0Table [221] -------------- 
+[ flush ] write 65 MB to [local] 000221.sst (197ms) ,to [remote] 65 ( 60ms) 
+[Primary] calling Sync [95] times
+[Reply]: Succeeds ,latency : 197 ms, type: flush
+[compact] write 65 MB to [local] 000222.sst ( 50ms) ,to [remote] 69 ( 83ms) 
+[compact] write 65 MB to [local] 000223.sst ( 86ms) ,to [remote] 73 ( 80ms) 
+[compact] write 65 MB to [local] 000224.sst ( 51ms) ,to [remote] 74 (623ms) 
+-------- Flush Job [181] : WriteLevel0Table [227] -------------- 
+[compact] write 65 MB to [local] 000225.sst ( 57ms) ,to [remote] 75 (283ms) 
+[ flush ] write 65 MB to [local] 000227.sst ( 72ms) ,to [remote] 76 (198ms) 
+[Primary] calling Sync [96] times
+[Reply]: Succeeds ,latency : 9 ms, type: flush
+[compact] write 65 MB to [local] 000228.sst ( 74ms) ,to [remote] 77 ( 82ms) 
+[compact] write 65 MB to [local] 000229.sst ( 53ms) ,to [remote] 78 ( 73ms) 
+[compact] write 65 MB to [local] 000230.sst ( 61ms) ,to [remote] 79 ( 60ms) 
+[compact] write 65 MB to [local] 000231.sst ( 84ms) ,to [remote] 80 (173ms) 
+[compact] write 65 MB to [local] 000232.sst ( 54ms) ,to [remote] 81 (133ms) 
+[compact] write 65 MB to [local] 000233.sst ( 91ms) ,to [remote] 82 ( 83ms) 
+[compact] write 65 MB to [local] 000234.sst ( 68ms) ,to [remote] 83 ( 81ms) 
+ -------- Compaction Job : [157] ----------
+[File Shipped] : (l1, 192, 68157440) , take slot : 21
+[File Shipped] : (l1, 197, 68157440) , take slot : 24
+[File Shipped] : (l1, 200, 68157440) , take slot : 26
+[File Shipped] : (l1, 203, 68157440) , take slot : 38
+[File Shipped] : (l1, 204, 68157440) , take slot : 39
+[File Shipped] : (l1, 207, 68157440) , take slot : 45
+[File Shipped] : (l1, 212, 68157440) , take slot : 52
+[File Shipped] : (l1, 215, 68157440) , take slot : 55
+[File Shipped] : (l1, 216, 68157440) , take slot : 59
+[File Shipped] : (l1, 219, 68157440) , take slot : 64
+[File Shipped] : (l1, 222, 68157440) , take slot : 69
+[File Shipped] : (l1, 223, 68157440) , take slot : 73
+[File Shipped] : (l1, 224, 68157440) , take slot : 74
+[File Shipped] : (l1, 225, 68157440) , take slot : 75
+[File Shipped] : (l1, 228, 68157440) , take slot : 77
+[File Shipped] : (l1, 229, 68157440) , take slot : 78
+[File Shipped] : (l1, 230, 68157440) , take slot : 79
+[File Shipped] : (l1, 231, 68157440) , take slot : 80
+[File Shipped] : (l1, 232, 68157440) , take slot : 81
+[File Shipped] : (l1, 233, 68157440) , take slot : 82
+[File Shipped] : (l1, 234, 68157440) , take slot : 83
+[File Deletion] : (l0, 185 ) , free slot : 2
+[File Deletion] : (l0, 179 ) , free slot : 68
+[File Deletion] : (l0, 176 ) , free slot : 66
+[File Deletion] : (l0, 173 ) , free slot : 43
+[File Deletion] : (l0, 167 ) , free slot : 36
+[File Deletion] : (l0, 165 ) , free slot : 35
+[File Deletion] : (l0, 162 ) , free slot : 33
+[File Deletion] : (l0, 158 ) , free slot : 30
+[File Deletion] : (l0, 155 ) , free slot : 28
+[File Deletion] : (l0, 152 ) , free slot : 13
+[File Deletion] : (l0, 145 ) , free slot : 6
+[File Deletion] : (l1, 143 ) , free slot : 5
+[File Deletion] : (l1, 146 ) , free slot : 7
+[File Deletion] : (l1, 163 ) , free slot : 34
+[File Deletion] : (l1, 169 ) , free slot : 40
+[File Deletion] : (l1, 171 ) , free slot : 42
+[File Deletion] : (l1, 174 ) , free slot : 44
+[File Deletion] : (l1, 177 ) , free slot : 67
+[File Deletion] : (l1, 181 ) , free slot : 70
+[File Deletion] : (l1, 182 ) , free slot : 71
+[File Deletion] : (l1, 183 ) , free slot : 72
+
+[Primary] calling Sync [97] times
+[Reply]: Succeeds ,latency : 47 ms, type: compact
+-------- Flush Job [194] : WriteLevel0Table [245] -------------- 
+[ flush ] write 65 MB to [local] 000245.sst ( 65ms) ,to [remote] 35 ( 94ms) 
+[Primary] calling Sync [98] times
+[compact] write 65 MB to [local] 000242.sst ( 71ms) ,to [remote] 33 (228ms) 
+[compact] write 65 MB to [local] 000241.sst ( 51ms) ,to [remote] 30 (604ms) 
+[compact] write 65 MB to [local] 000240.sst ( 69ms) ,to [remote] 28 (576ms) 
+[compact] write 65 MB to [local] 000235.sst ( 75ms) ,to [remote]  2 (567ms) 
+[compact] write 65 MB to [local] 000237.sst ( 78ms) ,to [remote]  6 (644ms) 
+[compact] write 65 MB to [local] 000239.sst ( 55ms) ,to [remote] 13 (594ms) 
+[compact] write 65 MB to [local] 000238.sst ( 63ms) ,to [remote]  7 (711ms) 
+[compact] write 65 MB to [local] 000236.sst ( 86ms) ,to [remote]  5 (703ms) 
+[compact] write 65 MB to [local] 000243.sst (111ms) ,to [remote] 34 (714ms) 
+[Reply]: Succeeds ,latency : 1106 ms, type: flush
+[compact] write 65 MB to [local] 000246.sst (172ms) ,to [remote] 36 ( 84ms) 
+-------- Flush Job [195] : WriteLevel0Table [249] -------------- 
+[ flush ] write 65 MB to [local] 000249.sst ( 83ms) ,to [remote] 42 ( 87ms) 
+[Primary] calling Sync [99] times
+[compact] write 65 MB to [local] 000247.sst ( 78ms) ,to [remote] 40 ( 80ms) 
+[compact] write 65 MB to [local] 000250.sst ( 78ms) ,to [remote] 43 (127ms) 
+[compact] write 65 MB to [local] 000255.sst ( 75ms) ,to [remote] 70 (207ms) 
+[compact] write 65 MB to [local] 000251.sst ( 54ms) ,to [remote] 44 (272ms) 
+[compact] write 65 MB to [local] 000252.sst (121ms) ,to [remote] 66 (267ms) 
+[compact] write 65 MB to [local] 000256.sst ( 55ms) ,to [remote] 71 (279ms) 
+[compact] write 65 MB to [local] 000253.sst ( 57ms) ,to [remote] 67 (271ms) 
+[compact] write 65 MB to [local] 000257.sst ( 51ms) ,to [remote] 72 (259ms) 
+[compact] write 65 MB to [local] 000254.sst ( 45ms) ,to [remote] 68 (161ms) 
+[compact] write 65 MB to [local] 000258.sst ( 41ms) ,to [remote] 84 ( 72ms) 
+[Reply]: Succeeds ,latency : 1276 ms, type: flush
+-------- Flush Job [199] : WriteLevel0Table [261] -------------- 
+[ flush ] write 65 MB to [local] 000261.sst ( 57ms) ,to [remote] 86 (254ms) 
+[compact] write 65 MB to [local] 000259.sst ( 74ms) ,to [remote] 85 (577ms) 
+-------- Flush Job [200] : WriteLevel0Table [265] -------------- 
+ -------- Compaction Job : [190] ----------
+[File Shipped] : (l2, 242, 68157440) , take slot : 33
+[File Shipped] : (l2, 246, 68157440) , take slot : 36
+[File Shipped] : (l2, 255, 68157440) , take slot : 70
+[File Deletion] : (l1, 203 ) , free slot : 38
+[File Deletion] : (l2, 109 ) , free slot : 17
+[File Deletion] : (l2, 147 ) , free slot : 8
+
+[Primary] calling Sync [100] times
+[Reply]: Succeeds ,latency : 475 ms, type: compact
+[ flush ] write 65 MB to [local] 000265.sst ( 51ms) ,to [remote] 89 (405ms) 
+[compact] write 65 MB to [local] 000263.sst ( 85ms) ,to [remote] 88 (286ms) 
+ -------- Compaction Job : [188] ----------
+[File Shipped] : (l2, 241, 68157440) , take slot : 30
+[File Shipped] : (l2, 247, 68157440) , take slot : 40
+[File Shipped] : (l2, 258, 68157440) , take slot : 84
+[File Deletion] : (l1, 192 ) , free slot : 21
+[File Deletion] : (l2, 97 ) , free slot : 1
+[File Deletion] : (l2, 100 ) , free slot : 3
+
+[Primary] calling Sync [101] times
+[compact] write 65 MB to [local] 000262.sst ( 92ms) ,to [remote] 87 (249ms) 
+[Reply]: Succeeds ,latency : 134 ms, type: compact
+ -------- Compaction Job : [183] ----------
+[File Shipped] : (l2, 236, 68157440) , take slot : 5
+[File Shipped] : (l2, 256, 68157440) , take slot : 71
+[File Deletion] : (l1, 233 ) , free slot : 82
+[File Deletion] : (l2, 95 ) , free slot : 47
+
+[Primary] calling Sync [102] times
+[Reply]: Succeeds ,latency : 115 ms, type: compact
+ -------- Compaction Job : [184] ----------
+[File Shipped] : (l2, 235, 68157440) , take slot : 2
+[File Shipped] : (l2, 257, 68157440) , take slot : 72
+[File Deletion] : (l1, 231 ) , free slot : 80
+[File Deletion] : (l2, 94 ) , free slot : 46
+
+[Primary] calling Sync [103] times
+[Reply]: Succeeds ,latency : 123 ms, type: compact
+[Primary] calling Sync [104] times
+[Reply]: Succeeds ,latency : 10 ms, type: flush
+ -------- Compaction Job : [189] ----------
+[File Shipped] : (l2, 240, 68157440) , take slot : 28
+[File Shipped] : (l2, 250, 68157440) , take slot : 43
+[File Shipped] : (l2, 259, 68157440) , take slot : 85
+[File Deletion] : (l1, 215 ) , free slot : 55
+[File Deletion] : (l2, 129 ) , free slot : 53
+[File Deletion] : (l2, 186 ) , free slot : 4
+
+[Primary] calling Sync [105] times
+[compact] write 65 MB to [local] 000267.sst ( 78ms) ,to [remote] 17 (143ms) 
+[Reply]: Succeeds ,latency : 280 ms, type: compact
+ -------- Compaction Job : [187] ----------
+[File Shipped] : (l2, 239, 68157440) , take slot : 13
+[File Shipped] : (l2, 251, 68157440) , take slot : 44
+[File Shipped] : (l2, 262, 68157440) , take slot : 87
+[File Deletion] : (l1, 225 ) , free slot : 75
+[File Deletion] : (l2, 137 ) , free slot : 60
+[File Deletion] : (l2, 138 ) , free slot : 61
+
+[Primary] calling Sync [106] times
+[compact] write 65 MB to [local] 000266.sst ( 86ms) ,to [remote]  8 (141ms) 
+[Reply]: Succeeds ,latency : 133 ms, type: compact
+ -------- Compaction Job : [185] ----------
+[File Shipped] : (l2, 237, 68157440) , take slot : 6
+[File Shipped] : (l2, 254, 68157440) , take slot : 68
+[File Shipped] : (l2, 263, 68157440) , take slot : 88
+[File Deletion] : (l1, 222 ) , free slot : 69
+[File Deletion] : (l2, 191 ) , free slot : 20
+[File Deletion] : (l2, 132 ) , free slot : 56
+
+[Primary] calling Sync [107] times
+[Reply]: Succeeds ,latency : 132 ms, type: compact
+-------- Flush Job [205] : WriteLevel0Table [269] -------------- 
+[ flush ] write 65 MB to [local] 000269.sst ( 51ms) ,to [remote]  1 ( 82ms) 
+[Primary] calling Sync [108] times
+[Reply]: Succeeds ,latency : 10 ms, type: flush
+ -------- Compaction Job : [186] ----------
+[File Shipped] : (l2, 238, 68157440) , take slot : 7
+[File Shipped] : (l2, 252, 68157440) , take slot : 66
+[File Shipped] : (l2, 266, 68157440) , take slot : 8
+[File Deletion] : (l1, 229 ) , free slot : 78
+[File Deletion] : (l2, 139 ) , free slot : 62
+[File Deletion] : (l2, 188 ) , free slot : 16
+
+[Primary] calling Sync [109] times
+[Reply]: Succeeds ,latency : 12 ms, type: compact
+[compact] write 65 MB to [local] 000270.sst ( 74ms) ,to [remote]  3 ( 81ms) 
+[Primary] calling Sync [110] times
+[Reply]: Succeeds ,latency : 91 ms, type: flush
+-------- Flush Job [209] : WriteLevel0Table [273] -------------- 
+[ flush ] write 65 MB to [local] 000273.sst ( 59ms) ,to [remote] 16 ( 82ms) 
+[Primary] calling Sync [111] times
+[Reply]: Succeeds ,latency : 83 ms, type: flush
+[compact] write 65 MB to [local] 000271.sst ( 95ms) ,to [remote]  4 (131ms) 
+-------- Flush Job [213] : WriteLevel0Table [275] -------------- 
+[ flush ] write 65 MB to [local] 000275.sst ( 78ms) ,to [remote] 20 ( 83ms) 
+[Primary] calling Sync [112] times
+[Reply]: Succeeds ,latency : 8 ms, type: flush
+ -------- Compaction Job : [191] ----------
+[File Shipped] : (l2, 243, 68157440) , take slot : 34
+[File Shipped] : (l2, 253, 68157440) , take slot : 67
+[File Shipped] : (l2, 267, 68157440) , take slot : 17
+[File Shipped] : (l2, 270, 68157440) , take slot : 3
+[File Shipped] : (l2, 271, 68157440) , take slot : 4
+[File Deletion] : (l1, 207 ) , free slot : 45
+[File Deletion] : (l2, 153 ) , free slot : 27
+[File Deletion] : (l2, 156 ) , free slot : 29
+[File Deletion] : (l2, 159 ) , free slot : 31
+[File Deletion] : (l2, 160 ) , free slot : 32
+
+[Primary] calling Sync [113] times
+[Reply]: Succeeds ,latency : 14 ms, type: compact
+-------- Flush Job [214] : WriteLevel0Table [277] -------------- 
+[ flush ] write 65 MB to [local] 000277.sst ( 43ms) ,to [remote] 21 ( 83ms) 
+-------- Flush Job [218] : WriteLevel0Table [279] -------------- 
+[Primary] calling Sync [114] times
+[ flush ] write 65 MB to [local] 000279.sst ( 61ms) ,to [remote] 27 ( 94ms) 
+[Reply]: Succeeds ,latency : 161 ms, type: flush
+[Primary] calling Sync [115] times
+[Reply]: Succeeds ,latency : 88 ms, type: flush
+[compact] write 65 MB to [local] 000280.sst ( 59ms) ,to [remote] 29 ( 88ms) 
+[compact] write 65 MB to [local] 000281.sst ( 51ms) ,to [remote] 31 (120ms) 
+-------- Flush Job [220] : WriteLevel0Table [284] -------------- 
+[compact] write 65 MB to [local] 000282.sst ( 56ms) ,to [remote] 32 (161ms) 
+[ flush ] write 65 MB to [local] 000284.sst ( 63ms) ,to [remote] 38 (162ms) 
+[Primary] calling Sync [116] times
+[Reply]: Succeeds ,latency : 9 ms, type: flush
+[compact] write 65 MB to [local] 000285.sst ( 53ms) ,to [remote] 45 ( 75ms) 
+[compact] write 65 MB to [local] 000286.sst ( 53ms) ,to [remote] 46 ( 60ms) 
+[compact] write 65 MB to [local] 000287.sst ( 76ms) ,to [remote] 47 ( 81ms) 
+[compact] write 65 MB to [local] 000288.sst ( 81ms) ,to [remote] 53 (104ms) 
+-------- Flush Job [221] : WriteLevel0Table [291] -------------- 
+[compact] write 65 MB to [local] 000289.sst ( 50ms) ,to [remote] 55 ( 96ms) 
+[ flush ] write 65 MB to [local] 000291.sst ( 50ms) ,to [remote] 56 ( 84ms) 
+[compact] write 65 MB to [local] 000292.sst ( 55ms) ,to [remote] 60 ( 71ms) 
+[Primary] calling Sync [117] times
+[Reply]: Succeeds ,latency : 91 ms, type: flush
+[compact] write 65 MB to [local] 000293.sst ( 71ms) ,to [remote] 61 ( 82ms) 
+[compact] write 65 MB to [local] 000294.sst ( 55ms) ,to [remote] 62 ( 75ms) 
+[compact] write 65 MB to [local] 000295.sst ( 53ms) ,to [remote] 69 ( 82ms) 
+[compact] write 65 MB to [local] 000296.sst ( 53ms) ,to [remote] 75 ( 79ms) 
+[compact] write 65 MB to [local] 000297.sst ( 51ms) ,to [remote] 78 (570ms) 
+[compact] write 65 MB to [local] 000298.sst ( 52ms) ,to [remote] 80 ( 89ms) 
+[compact] write 65 MB to [local] 000299.sst ( 47ms) ,to [remote] 82 ( 80ms) 
+[compact] write 65 MB to [local] 000300.sst ( 92ms) ,to [remote] 90 ( 88ms) 
+-------- Flush Job [224] : WriteLevel0Table [302] -------------- 
+[ flush ] write 65 MB to [local] 000302.sst ( 51ms) ,to [remote] 91 (293ms) 
+[Primary] calling Sync [118] times
+[compact] write 65 MB to [local] 000303.sst ( 55ms) ,to [remote] 92 ( 74ms) 
+[Reply]: Succeeds ,latency : 137 ms, type: flush
+[compact] write 65 MB to [local] 000304.sst (107ms) ,to [remote] 93 ( 83ms) 
+[compact] write 65 MB to [local] 000305.sst ( 51ms) ,to [remote] 94 ( 80ms) 
+[compact] write 65 MB to [local] 000306.sst ( 53ms) ,to [remote] 95 ( 89ms) 
+[compact] write 65 MB to [local] 000307.sst ( 97ms) ,to [remote] 96 (138ms) 
+[compact] write 65 MB to [local] 000308.sst ( 51ms) ,to [remote] 97 ( 82ms) 
+[compact] write 65 MB to [local] 000309.sst ( 64ms) ,to [remote] 98 ( 80ms) 
+[compact] write 65 MB to [local] 000310.sst ( 78ms) ,to [remote] 99 (100ms) 
+[compact] write 65 MB to [local] 000311.sst ( 53ms) ,to [remote]100 ( 76ms) 
+[compact] write 65 MB to [local] 000312.sst ( 53ms) ,to [remote]101 ( 99ms) 
+[compact] write 65 MB to [local] 000313.sst ( 51ms) ,to [remote]102 ( 60ms) 
+[compact] write 65 MB to [local] 000314.sst ( 58ms) ,to [remote]103 ( 60ms) 
+ -------- Compaction Job : [219] ----------
+[File Shipped] : (l1, 280, 68157440) , take slot : 29
+[File Shipped] : (l1, 281, 68157440) , take slot : 31
+[File Shipped] : (l1, 282, 68157440) , take slot : 32
+[File Shipped] : (l1, 285, 68157440) , take slot : 45
+[File Shipped] : (l1, 286, 68157440) , take slot : 46
+[File Shipped] : (l1, 287, 68157440) , take slot : 47
+[File Shipped] : (l1, 288, 68157440) , take slot : 53
+[File Shipped] : (l1, 289, 68157440) , take slot : 55
+[File Shipped] : (l1, 292, 68157440) , take slot : 60
+[File Shipped] : (l1, 293, 68157440) , take slot : 61
+[File Shipped] : (l1, 294, 68157440) , take slot : 62
+[File Shipped] : (l1, 295, 68157440) , take slot : 69
+[File Shipped] : (l1, 296, 68157440) , take slot : 75
+[File Shipped] : (l1, 297, 68157440) , take slot : 78
+[File Shipped] : (l1, 298, 68157440) , take slot : 80
+[File Shipped] : (l1, 299, 68157440) , take slot : 82
+[File Shipped] : (l1, 300, 68157440) , take slot : 90
+[File Shipped] : (l1, 303, 68157440) , take slot : 92
+[File Shipped] : (l1, 304, 68157440) , take slot : 93
+[File Shipped] : (l1, 305, 68157440) , take slot : 94
+[File Shipped] : (l1, 306, 68157440) , take slot : 95
+[File Shipped] : (l1, 307, 68157440) , take slot : 96
+[File Shipped] : (l1, 308, 68157440) , take slot : 97
+[File Shipped] : (l1, 309, 68157440) , take slot : 98
+[File Shipped] : (l1, 310, 68157440) , take slot : 99
+[File Shipped] : (l1, 311, 68157440) , take slot : 100
+[File Shipped] : (l1, 312, 68157440) , take slot : 101
+[File Shipped] : (l1, 313, 68157440) , take slot : 102
+[File Shipped] : (l1, 314, 68157440) , take slot : 103
+[File Deletion] : (l0, 275 ) , free slot : 20
+[File Deletion] : (l0, 273 ) , free slot : 16
+[File Deletion] : (l0, 269 ) , free slot : 1
+[File Deletion] : (l0, 265 ) , free slot : 89
+[File Deletion] : (l0, 261 ) , free slot : 86
+[File Deletion] : (l0, 249 ) , free slot : 42
+[File Deletion] : (l0, 245 ) , free slot : 35
+[File Deletion] : (l0, 227 ) , free slot : 76
+[File Deletion] : (l0, 221 ) , free slot : 65
+[File Deletion] : (l0, 218 ) , free slot : 63
+[File Deletion] : (l0, 214 ) , free slot : 54
+[File Deletion] : (l0, 211 ) , free slot : 50
+[File Deletion] : (l0, 209 ) , free slot : 49
+[File Deletion] : (l0, 206 ) , free slot : 41
+[File Deletion] : (l0, 202 ) , free slot : 37
+[File Deletion] : (l0, 199 ) , free slot : 25
+[File Deletion] : (l0, 196 ) , free slot : 23
+[File Deletion] : (l0, 194 ) , free slot : 22
+[File Deletion] : (l1, 197 ) , free slot : 24
+[File Deletion] : (l1, 200 ) , free slot : 26
+[File Deletion] : (l1, 204 ) , free slot : 39
+[File Deletion] : (l1, 212 ) , free slot : 52
+[File Deletion] : (l1, 216 ) , free slot : 59
+[File Deletion] : (l1, 219 ) , free slot : 64
+[File Deletion] : (l1, 223 ) , free slot : 73
+[File Deletion] : (l1, 224 ) , free slot : 74
+[File Deletion] : (l1, 228 ) , free slot : 77
+[File Deletion] : (l1, 230 ) , free slot : 79
+[File Deletion] : (l1, 232 ) , free slot : 81
+[File Deletion] : (l1, 234 ) , free slot : 83
+
+[Primary] calling Sync [119] times
+[Reply]: Succeeds ,latency : 156 ms, type: compact
+-------- Flush Job [226] : WriteLevel0Table [316] -------------- 
+[ flush ] write 65 MB to [local] 000316.sst ( 76ms) ,to [remote]  1 ( 83ms) 
+[Primary] calling Sync [120] times
+[Reply]: Succeeds ,latency : 9 ms, type: flush
+[compact] write 65 MB to [local] 000317.sst ( 59ms) ,to [remote] 16 ( 81ms) 
+-------- Flush Job [228] : WriteLevel0Table [319] -------------- 
+[ flush ] write 65 MB to [local] 000319.sst ( 55ms) ,to [remote] 20 ( 94ms) 
+[Primary] calling Sync [121] times
+[compact] write 65 MB to [local] 000320.sst ( 71ms) ,to [remote] 22 (160ms) 
+[Reply]: Succeeds ,latency : 165 ms, type: flush
+ -------- Compaction Job : [227] ----------
+[File Shipped] : (l2, 317, 68157440) , take slot : 16
+[File Shipped] : (l2, 320, 68157440) , take slot : 22
+[File Deletion] : (l1, 282 ) , free slot : 32
+[File Deletion] : (l2, 103 ) , free slot : 12
+
+[Primary] calling Sync [122] times
+[Reply]: Succeeds ,latency : 11 ms, type: compact
+[compact] write 65 MB to [local] 000321.sst ( 52ms) ,to [remote] 12 ( 83ms) 
+-------- Flush Job [230] : WriteLevel0Table [324] -------------- 
+[compact] write 65 MB to [local] 000322.sst ( 51ms) ,to [remote] 23 ( 84ms) 
+ -------- Compaction Job : [229] ----------
+[File Shipped] : (l2, 321, 68157440) , take slot : 12
+[File Shipped] : (l2, 322, 68157440) , take slot : 23
+[File Deletion] : (l1, 305 ) , free slot : 94
+[File Deletion] : (l2, 134 ) , free slot : 58
+
+[Primary] calling Sync [123] times
+[Reply]: Succeeds ,latency : 12 ms, type: compact
+[ flush ] write 65 MB to [local] 000324.sst ( 50ms) ,to [remote] 24 ( 72ms) 
+[compact] write 65 MB to [local] 000325.sst ( 83ms) ,to [remote] 25 ( 60ms) 
+[Primary] calling Sync [124] times
+[Reply]: Succeeds ,latency : 90 ms, type: flush
+[compact] write 65 MB to [local] 000326.sst ( 53ms) ,to [remote] 26 ( 84ms) 
+[compact] write 65 MB to [local] 000330.sst ( 56ms) ,to [remote] 39 ( 79ms) 
+[compact] write 65 MB to [local] 000335.sst ( 54ms) ,to [remote] 52 ( 87ms) 
+[compact] write 65 MB to [local] 000337.sst ( 67ms) ,to [remote] 58 (375ms) 
+[compact] write 65 MB to [local] 000336.sst ( 47ms) ,to [remote] 54 (361ms) 
+[compact] write 65 MB to [local] 000328.sst (166ms) ,to [remote] 35 (383ms) 
+[compact] write 65 MB to [local] 000333.sst (165ms) ,to [remote] 49 (385ms) 
+[compact] write 65 MB to [local] 000327.sst (617ms) ,to [remote] 32 (112ms) 
+[compact] write 65 MB to [local] 000334.sst (198ms) ,to [remote] 50 (354ms) 
+[compact] write 65 MB to [local] 000332.sst (363ms) ,to [remote] 42 (280ms) 
+[compact] write 65 MB to [local] 000329.sst (190ms) ,to [remote] 37 (384ms) 
+[compact] write 65 MB to [local] 000331.sst (234ms) ,to [remote] 41 (447ms) 
+-------- Flush Job [243] : WriteLevel0Table [340] -------------- 
+[ flush ] write 65 MB to [local] 000340.sst ( 53ms) ,to [remote] 63 ( 60ms) 
+[compact] write 65 MB to [local] 000338.sst ( 49ms) ,to [remote] 59 (711ms) 
+ -------- Compaction Job : [231] ----------
+[File Shipped] : (l2, 325, 68157440) , take slot : 25
+[File Shipped] : (l2, 326, 68157440) , take slot : 26
+[File Deletion] : (l1, 298 ) , free slot : 80
+[File Deletion] : (l2, 187 ) , free slot : 14
+
+[Primary] calling Sync [125] times
+[Reply]: Succeeds ,latency : 103 ms, type: compact
+[Primary] calling Sync [126] times
+[Reply]: Succeeds ,latency : 140 ms, type: flush
+[compact] write 65 MB to [local] 000346.sst ( 77ms) ,to [remote] 76 (310ms) 
+[compact] write 65 MB to [local] 000345.sst ( 48ms) ,to [remote] 74 (341ms) 
+[compact] write 65 MB to [local] 000342.sst ( 51ms) ,to [remote] 14 (356ms) 
+-------- Flush Job [245] : WriteLevel0Table [354] -------------- 
+[compact] write 65 MB to [local] 000349.sst ( 54ms) ,to [remote] 80 (486ms) 
+[compact] write 65 MB to [local] 000341.sst ( 91ms) ,to [remote] 64 (493ms) 
+[compact] write 65 MB to [local] 000351.sst ( 82ms) ,to [remote] 83 (493ms) 
+[compact] write 65 MB to [local] 000344.sst ( 57ms) ,to [remote] 73 (451ms) 
+[compact] write 65 MB to [local] 000352.sst ( 65ms) ,to [remote] 86 (386ms) 
+[compact] write 65 MB to [local] 000350.sst (118ms) ,to [remote] 81 (487ms) 
+[compact] write 65 MB to [local] 000343.sst (104ms) ,to [remote] 65 (457ms) 
+[compact] write 65 MB to [local] 000348.sst (114ms) ,to [remote] 79 (467ms) 
+[compact] write 65 MB to [local] 000347.sst (120ms) ,to [remote] 77 (654ms) 
+[ flush ] write 65 MB to [local] 000354.sst ( 42ms) ,to [remote] 89 ( 69ms) 
+-------- Flush Job [246] : WriteLevel0Table [356] -------------- 
+[ flush ] write 65 MB to [local] 000356.sst ( 41ms) ,to [remote] 94 ( 90ms) 
+-------- Flush Job [247] : WriteLevel0Table [358] -------------- 
+[ flush ] write 65 MB to [local] 000358.sst ( 52ms) ,to [remote]104 ( 87ms) 
+ -------- Compaction Job : [235] ----------
+[File Shipped] : (l2, 330, 68157440) , take slot : 39
+[File Shipped] : (l2, 338, 68157440) , take slot : 59
+[File Shipped] : (l2, 350, 68157440) , take slot : 81
+[File Deletion] : (l1, 308 ) , free slot : 97
+[File Deletion] : (l2, 238 ) , free slot : 7
+[File Deletion] : (l2, 252 ) , free slot : 66
+
+[Primary] calling Sync [127] times
+[compact] write 65 MB to [local] 000362.sst ( 74ms) ,to [remote]108 (198ms) 
+[Reply]: Succeeds ,latency : 177 ms, type: compact
+[compact] write 65 MB to [local] 000359.sst ( 70ms) ,to [remote]105 (225ms) 
+[compact] write 65 MB to [local] 000369.sst ( 53ms) ,to [remote]115 (142ms) 
+[Primary] calling Sync [128] times
+[compact] write 65 MB to [local] 000367.sst ( 51ms) ,to [remote]113 (325ms) 
+[compact] write 65 MB to [local] 000366.sst ( 51ms) ,to [remote]112 (355ms) 
+[compact] write 65 MB to [local] 000365.sst ( 46ms) ,to [remote]111 (375ms) 
+[compact] write 65 MB to [local] 000368.sst ( 46ms) ,to [remote]114 (457ms) 
+[compact] write 65 MB to [local] 000363.sst ( 69ms) ,to [remote]109 (394ms) 
+[Reply]: Succeeds ,latency : 357 ms, type: flush
+[compact] write 65 MB to [local] 000364.sst ( 50ms) ,to [remote]110 (339ms) 
+[compact] write 65 MB to [local] 000360.sst ( 50ms) ,to [remote]106 (311ms) 
+[compact] write 65 MB to [local] 000361.sst ( 59ms) ,to [remote]107 (340ms) 
+ edit_list size : 2
+ Batch count : 2
+[Primary] calling Sync [129] times
+[Reply]: Succeeds ,latency : 11 ms, type: flush
+ -------- Compaction Job : [233] ----------
+[File Shipped] : (l2, 328, 68157440) , take slot : 35
+[File Shipped] : (l2, 345, 68157440) , take slot : 74
+[File Shipped] : (l2, 359, 68157440) , take slot : 105
+[File Deletion] : (l1, 312 ) , free slot : 101
+[File Deletion] : (l2, 257 ) , free slot : 72
+[File Deletion] : (l2, 236 ) , free slot : 5
+
+[Primary] calling Sync [130] times
+[Reply]: Succeeds ,latency : 12 ms, type: compact
+ -------- Compaction Job : [239] ----------
+[File Shipped] : (l2, 334, 68157440) , take slot : 50
+[File Shipped] : (l2, 351, 68157440) , take slot : 83
+[File Shipped] : (l2, 369, 68157440) , take slot : 115
+[File Deletion] : (l1, 288 ) , free slot : 53
+[File Deletion] : (l2, 148 ) , free slot : 9
+[File Deletion] : (l2, 149 ) , free slot : 10
+
+[Primary] calling Sync [131] times
+[Reply]: Succeeds ,latency : 11 ms, type: compact
+ -------- Compaction Job : [237] ----------
+[File Shipped] : (l2, 332, 68157440) , take slot : 42
+[File Shipped] : (l2, 349, 68157440) , take slot : 80
+[File Shipped] : (l2, 364, 68157440) , take slot : 110
+[File Deletion] : (l1, 296 ) , free slot : 75
+[File Deletion] : (l2, 259 ) , free slot : 85
+[File Deletion] : (l2, 190 ) , free slot : 19
+
+[Primary] calling Sync [132] times
+[Reply]: Succeeds ,latency : 11 ms, type: compact
+ -------- Compaction Job : [234] ----------
+[File Shipped] : (l2, 329, 68157440) , take slot : 37
+[File Shipped] : (l2, 348, 68157440) , take slot : 79
+[File Shipped] : (l2, 361, 68157440) , take slot : 107
+[File Deletion] : (l1, 310 ) , free slot : 99
+[File Deletion] : (l2, 189 ) , free slot : 18
+[File Deletion] : (l2, 235 ) , free slot : 2
+
+[Primary] calling Sync [133] times
+[Reply]: Succeeds ,latency : 10 ms, type: compact
+ -------- Compaction Job : [240] ----------
+[File Shipped] : (l2, 336, 68157440) , take slot : 54
+[File Shipped] : (l2, 347, 68157440) , take slot : 77
+[File Shipped] : (l2, 368, 68157440) , take slot : 114
+[File Deletion] : (l1, 285 ) , free slot : 45
+[File Deletion] : (l2, 320 ) , free slot : 22
+[File Deletion] : (l2, 106 ) , free slot : 15
+
+[Primary] calling Sync [134] times
+[Reply]: Succeeds ,latency : 11 ms, type: compact
+ -------- Compaction Job : [238] ----------
+[File Shipped] : (l2, 333, 68157440) , take slot : 49
+[File Shipped] : (l2, 343, 68157440) , take slot : 65
+[File Shipped] : (l2, 363, 68157440) , take slot : 109
+[File Deletion] : (l1, 294 ) , free slot : 62
+[File Deletion] : (l2, 126 ) , free slot : 51
+[File Deletion] : (l2, 240 ) , free slot : 28
+
+[Primary] calling Sync [135] times
+[Reply]: Succeeds ,latency : 10 ms, type: compact
+ -------- Compaction Job : [241] ----------
+[File Shipped] : (l2, 335, 68157440) , take slot : 52
+[File Shipped] : (l2, 341, 68157440) , take slot : 64
+[File Shipped] : (l2, 365, 68157440) , take slot : 111
+[File Deletion] : (l1, 281 ) , free slot : 31
+[File Deletion] : (l2, 258 ) , free slot : 84
+[File Deletion] : (l2, 317 ) , free slot : 16
+
+[Primary] calling Sync [136] times
+[Reply]: Succeeds ,latency : 11 ms, type: compact
+ -------- Compaction Job : [236] ----------
+[File Shipped] : (l2, 331, 68157440) , take slot : 41
+[File Shipped] : (l2, 346, 68157440) , take slot : 76
+[File Shipped] : (l2, 366, 68157440) , take slot : 112
+[File Deletion] : (l1, 304 ) , free slot : 93
+[File Deletion] : (l2, 133 ) , free slot : 57
+[File Deletion] : (l2, 321 ) , free slot : 12
+
+[Primary] calling Sync [137] times
+[Reply]: Succeeds ,latency : 12 ms, type: compact
+ -------- Compaction Job : [232] ----------
+[File Shipped] : (l2, 327, 68157440) , take slot : 32
+[File Shipped] : (l2, 342, 68157440) , take slot : 14
+[File Shipped] : (l2, 362, 68157440) , take slot : 108
+[File Deletion] : (l1, 314 ) , free slot : 103
+[File Deletion] : (l2, 256 ) , free slot : 71
+[File Deletion] : (l2, 96 ) , free slot : 48
+
+[Primary] calling Sync [138] times
+[Reply]: Succeeds ,latency : 12 ms, type: compact
+[Primary] calling Sync [139] times
+[Reply]: Succeeds ,latency : 7 ms, type: trivial
+[compact] write 65 MB to [local] 000372.sst ( 55ms) ,to [remote]  9 ( 93ms) 
+[compact] write 65 MB to [local] 000370.sst ( 49ms) ,to [remote]  7 ( 89ms) 
+[compact] write 65 MB to [local] 000371.sst ( 56ms) ,to [remote]  5 ( 93ms) 
+-------- Flush Job [255] : WriteLevel0Table [375] -------------- 
+[compact] write 65 MB to [local] 000373.sst (315ms) ,to [remote]  2 (324ms) 
+ -------- Compaction Job : [242] ----------
+[File Shipped] : (l2, 337, 68157440) , take slot : 58
+[File Shipped] : (l2, 344, 68157440) , take slot : 73
+[File Shipped] : (l2, 367, 68157440) , take slot : 113
+[File Shipped] : (l2, 372, 68157440) , take slot : 9
+[File Deletion] : (l1, 300 ) , free slot : 90
+[File Deletion] : (l2, 237 ) , free slot : 6
+[File Deletion] : (l2, 254 ) , free slot : 68
+[File Deletion] : (l2, 263 ) , free slot : 88
+
+[Primary] calling Sync [140] times
+[ flush ] write 65 MB to [local] 000375.sst ( 50ms) ,to [remote] 10 (459ms) 
+[Reply]: Succeeds ,latency : 599 ms, type: compact
+[compact] write 65 MB to [local] 000377.sst ( 88ms) ,to [remote]  6 (233ms) 
+[compact] write 65 MB to [local] 000376.sst ( 58ms) ,to [remote] 12 (274ms) 
+[compact] write 65 MB to [local] 000378.sst (318ms) ,to [remote] 15 (237ms) 
+[Primary] calling Sync [141] times
+[Reply]: Succeeds ,latency : 126 ms, type: flush
+ -------- Compaction Job : [244] ----------
+[File Shipped] : (l2, 352, 68157440) , take slot : 86
+[File Shipped] : (l2, 360, 68157440) , take slot : 106
+[File Shipped] : (l2, 371, 68157440) , take slot : 5
+[File Shipped] : (l2, 377, 68157440) , take slot : 6
+[File Deletion] : (l1, 306 ) , free slot : 95
+[File Deletion] : (l2, 322 ) , free slot : 23
+[File Deletion] : (l2, 239 ) , free slot : 13
+[File Deletion] : (l2, 251 ) , free slot : 44
+
+[Primary] calling Sync [142] times
+[Reply]: Succeeds ,latency : 135 ms, type: compact
+[Primary] calling Sync [143] times
+[Reply]: Succeeds ,latency : 35 ms, type: trivial
+[Primary] calling Sync [144] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[Primary] calling Sync [145] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [146] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[compact] write 65 MB to [local] 000379.sst ( 49ms) ,to [remote] 16 (159ms) 
+[Primary] calling Sync [147] times
+[Reply]: Succeeds ,latency : 8 ms, type: trivial
+[Primary] calling Sync [148] times
+[Reply]: Succeeds ,latency : 7 ms, type: trivial
+[Primary] calling Sync [149] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [150] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[compact] write 65 MB to [local] 000380.sst ( 61ms) ,to [remote] 13 ( 60ms) 
+-------- Flush Job [270] : WriteLevel0Table [383] -------------- 
+[compact] write 65 MB to [local] 000381.sst ( 57ms) ,to [remote] 18 ( 60ms) 
+[ flush ] write 65 MB to [local] 000383.sst ( 47ms) ,to [remote] 19 ( 60ms) 
+-------- Flush Job [272] : WriteLevel0Table [385] -------------- 
+[ flush ] write 65 MB to [local] 000385.sst ( 54ms) ,to [remote] 22 ( 79ms) 
+-------- Flush Job [274] : WriteLevel0Table [388] -------------- 
+ -------- Compaction Job : [249] ----------
+[File Shipped] : (l2, 373, 68157440) , take slot : 2
+[File Shipped] : (l2, 378, 68157440) , take slot : 15
+[File Shipped] : (l2, 380, 68157440) , take slot : 13
+[File Deletion] : (l1, 311 ) , free slot : 100
+[File Deletion] : (l2, 361 ) , free slot : 107
+[File Deletion] : (l2, 328 ) , free slot : 35
+
+[Primary] calling Sync [151] times
+[Reply]: Succeeds ,latency : 125 ms, type: compact
+[Primary] calling Sync [152] times
+[ flush ] write 65 MB to [local] 000388.sst ( 71ms) ,to [remote] 28 (173ms) 
+[Reply]: Succeeds ,latency : 191 ms, type: flush
+[compact] write 65 MB to [local] 000386.sst ( 54ms) ,to [remote] 23 (177ms) 
+ -------- Compaction Job : [248] ----------
+[File Shipped] : (l2, 370, 68157440) , take slot : 7
+[File Shipped] : (l2, 376, 68157440) , take slot : 12
+[File Shipped] : (l2, 379, 68157440) , take slot : 16
+[File Shipped] : (l2, 381, 68157440) , take slot : 18
+[File Shipped] : (l2, 386, 68157440) , take slot : 23
+[File Deletion] : (l1, 292 ) , free slot : 60
+[File Deletion] : (l2, 243 ) , free slot : 34
+[File Deletion] : (l2, 253 ) , free slot : 67
+[File Deletion] : (l2, 267 ) , free slot : 17
+[File Deletion] : (l2, 270 ) , free slot : 3
+
+[Primary] calling Sync [153] times
+[Reply]: Succeeds ,latency : 16 ms, type: compact
+[Primary] calling Sync [154] times
+[Reply]: Succeeds ,latency : 7 ms, type: trivial
+[Primary] calling Sync [155] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [156] times
+[Reply]: Succeeds ,latency : 7 ms, type: trivial
+ edit_list size : 2
+ Batch count : 2
+[Primary] calling Sync [157] times
+[Reply]: Succeeds ,latency : 9 ms, type: flush
+[Primary] calling Sync [158] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [159] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [160] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[Primary] calling Sync [161] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [162] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[compact] write 65 MB to [local] 000389.sst (113ms) ,to [remote]  3 ( 78ms) 
+[compact] write 65 MB to [local] 000390.sst ( 55ms) ,to [remote] 17 (129ms) 
+[compact] write 65 MB to [local] 000391.sst ( 49ms) ,to [remote] 31 ( 83ms) 
+-------- Flush Job [287] : WriteLevel0Table [394] -------------- 
+[ flush ] write 65 MB to [local] 000394.sst ( 55ms) ,to [remote] 35 (125ms) 
+[compact] write 65 MB to [local] 000392.sst ( 56ms) ,to [remote] 34 (123ms) 
+[Primary] calling Sync [163] times
+[Reply]: Succeeds ,latency : 8 ms, type: flush
+-------- Flush Job [288] : WriteLevel0Table [397] -------------- 
+[compact] write 65 MB to [local] 000395.sst ( 50ms) ,to [remote] 44 ( 82ms) 
+[ flush ] write 65 MB to [local] 000397.sst ( 44ms) ,to [remote] 45 ( 80ms) 
+[compact] write 65 MB to [local] 000398.sst ( 42ms) ,to [remote] 48 ( 97ms) 
+-------- Flush Job [289] : WriteLevel0Table [400] -------------- 
+[Primary] calling Sync [164] times
+[Reply]: Succeeds ,latency : 113 ms, type: flush
+[ flush ] write 65 MB to [local] 000400.sst (102ms) ,to [remote] 51 (152ms) 
+[compact] write 65 MB to [local] 000401.sst ( 71ms) ,to [remote] 53 ( 81ms) 
+[Primary] calling Sync [165] times
+[Reply]: Succeeds ,latency : 9 ms, type: flush
+-------- Flush Job [293] : WriteLevel0Table [404] -------------- 
+[ flush ] write 65 MB to [local] 000404.sst ( 42ms) ,to [remote] 60 (130ms) 
+[compact] write 65 MB to [local] 000402.sst ( 66ms) ,to [remote] 57 ( 60ms) 
+[Primary] calling Sync [166] times
+[Reply]: Succeeds ,latency : 9 ms, type: flush
+[compact] write 65 MB to [local] 000405.sst ( 51ms) ,to [remote] 62 ( 78ms) 
+[compact] write 65 MB to [local] 000406.sst ( 50ms) ,to [remote] 66 ( 83ms) 
+[compact] write 65 MB to [local] 000407.sst (102ms) ,to [remote] 67 ( 80ms) 
+[compact] write 65 MB to [local] 000408.sst ( 52ms) ,to [remote] 68 (188ms) 
+[compact] write 65 MB to [local] 000409.sst (105ms) ,to [remote] 71 ( 83ms) 
+[compact] write 65 MB to [local] 000410.sst ( 51ms) ,to [remote] 72 ( 81ms) 
+[compact] write 65 MB to [local] 000411.sst ( 54ms) ,to [remote] 75 (579ms) 
+-------- Flush Job [296] : WriteLevel0Table [414] -------------- 
+[compact] write 65 MB to [local] 000412.sst ( 57ms) ,to [remote] 84 ( 72ms) 
+[ flush ] write 65 MB to [local] 000414.sst ( 51ms) ,to [remote] 85 ( 72ms) 
+[Primary] calling Sync [167] times
+[Reply]: Succeeds ,latency : 9 ms, type: flush
+[compact] write 65 MB to [local] 000415.sst ( 92ms) ,to [remote] 88 ( 82ms) 
+[compact] write 65 MB to [local] 000416.sst ( 94ms) ,to [remote] 90 (195ms) 
+[compact] write 65 MB to [local] 000417.sst ( 52ms) ,to [remote] 93 ( 83ms) 
+[compact] write 65 MB to [local] 000418.sst ( 72ms) ,to [remote] 95 ( 60ms) 
+[compact] write 65 MB to [local] 000419.sst (105ms) ,to [remote] 97 ( 78ms) 
+[compact] write 65 MB to [local] 000420.sst ( 47ms) ,to [remote] 99 ( 83ms) 
+[compact] write 65 MB to [local] 000421.sst ( 51ms) ,to [remote]100 ( 79ms) 
+[compact] write 65 MB to [local] 000422.sst ( 51ms) ,to [remote]101 (141ms) 
+[compact] write 65 MB to [local] 000423.sst ( 48ms) ,to [remote]103 ( 60ms) 
+[compact] write 65 MB to [local] 000424.sst ( 42ms) ,to [remote]107 ( 83ms) 
+ -------- Compaction Job : [281] ----------
+[File Shipped] : (l1, 389, 68157440) , take slot : 3
+[File Shipped] : (l1, 390, 68157440) , take slot : 17
+[File Shipped] : (l1, 391, 68157440) , take slot : 31
+[File Shipped] : (l1, 392, 68157440) , take slot : 34
+[File Shipped] : (l1, 395, 68157440) , take slot : 44
+[File Shipped] : (l1, 398, 68157440) , take slot : 48
+[File Shipped] : (l1, 401, 68157440) , take slot : 53
+[File Shipped] : (l1, 402, 68157440) , take slot : 57
+[File Shipped] : (l1, 405, 68157440) , take slot : 62
+[File Shipped] : (l1, 406, 68157440) , take slot : 66
+[File Shipped] : (l1, 407, 68157440) , take slot : 67
+[File Shipped] : (l1, 408, 68157440) , take slot : 68
+[File Shipped] : (l1, 409, 68157440) , take slot : 71
+[File Shipped] : (l1, 410, 68157440) , take slot : 72
+[File Shipped] : (l1, 411, 68157440) , take slot : 75
+[File Shipped] : (l1, 412, 68157440) , take slot : 84
+[File Shipped] : (l1, 415, 68157440) , take slot : 88
+[File Shipped] : (l1, 416, 68157440) , take slot : 90
+[File Shipped] : (l1, 417, 68157440) , take slot : 93
+[File Shipped] : (l1, 418, 68157440) , take slot : 95
+[File Shipped] : (l1, 419, 68157440) , take slot : 97
+[File Shipped] : (l1, 420, 68157440) , take slot : 99
+[File Shipped] : (l1, 421, 68157440) , take slot : 100
+[File Shipped] : (l1, 422, 68157440) , take slot : 101
+[File Shipped] : (l1, 423, 68157440) , take slot : 103
+[File Shipped] : (l1, 424, 68157440) , take slot : 107
+[File Deletion] : (l0, 383 ) , free slot : 19
+[File Deletion] : (l0, 375 ) , free slot : 10
+[File Deletion] : (l0, 358 ) , free slot : 104
+[File Deletion] : (l0, 356 ) , free slot : 94
+[File Deletion] : (l0, 354 ) , free slot : 89
+[File Deletion] : (l0, 340 ) , free slot : 63
+[File Deletion] : (l0, 324 ) , free slot : 24
+[File Deletion] : (l0, 319 ) , free slot : 20
+[File Deletion] : (l0, 316 ) , free slot : 1
+[File Deletion] : (l0, 302 ) , free slot : 91
+[File Deletion] : (l0, 291 ) , free slot : 56
+[File Deletion] : (l0, 284 ) , free slot : 38
+[File Deletion] : (l0, 279 ) , free slot : 27
+[File Deletion] : (l0, 277 ) , free slot : 21
+[File Deletion] : (l1, 280 ) , free slot : 29
+[File Deletion] : (l1, 286 ) , free slot : 46
+[File Deletion] : (l1, 287 ) , free slot : 47
+[File Deletion] : (l1, 289 ) , free slot : 55
+[File Deletion] : (l1, 293 ) , free slot : 61
+[File Deletion] : (l1, 295 ) , free slot : 69
+[File Deletion] : (l1, 297 ) , free slot : 78
+[File Deletion] : (l1, 299 ) , free slot : 82
+[File Deletion] : (l1, 303 ) , free slot : 92
+[File Deletion] : (l1, 307 ) , free slot : 96
+[File Deletion] : (l1, 309 ) , free slot : 98
+[File Deletion] : (l1, 313 ) , free slot : 102
+
+[Primary] calling Sync [168] times
+[Reply]: Succeeds ,latency : 76 ms, type: compact
+[Primary] calling Sync [169] times
+[Reply]: Succeeds ,latency : 8 ms, type: trivial
+[Primary] calling Sync [170] times
+[Reply]: Succeeds ,latency : 7 ms, type: trivial
+[Primary] calling Sync [171] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [172] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[Primary] calling Sync [173] times
+[Reply]: Succeeds ,latency : 7 ms, type: trivial
+[Primary] calling Sync [174] times
+[Reply]: Succeeds ,latency : 7 ms, type: trivial
+[Primary] calling Sync [175] times
+[Reply]: Succeeds ,latency : 5 ms, type: trivial
+[Primary] calling Sync [176] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [177] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[compact] write 65 MB to [local] 000425.sst ( 50ms) ,to [remote]  1 ( 83ms) 
+[compact] write 65 MB to [local] 000426.sst (103ms) ,to [remote] 10 (531ms) 
+[compact] write 65 MB to [local] 000427.sst ( 52ms) ,to [remote] 19 ( 72ms) 
+ -------- Compaction Job : [307] ----------
+[File Shipped] : (l2, 425, 68157440) , take slot : 1
+[File Shipped] : (l2, 426, 68157440) , take slot : 10
+[File Shipped] : (l2, 427, 68157440) , take slot : 19
+[File Deletion] : (l1, 423 ) , free slot : 103
+[File Deletion] : (l2, 359 ) , free slot : 105
+[File Deletion] : (l2, 327 ) , free slot : 32
+
+[Primary] calling Sync [178] times
+[Reply]: Succeeds ,latency : 106 ms, type: compact
+[compact] write 65 MB to [local] 000428.sst ( 51ms) ,to [remote] 20 ( 82ms) 
+[compact] write 65 MB to [local] 000429.sst ( 51ms) ,to [remote] 21 ( 80ms) 
+[compact] write 65 MB to [local] 000430.sst ( 51ms) ,to [remote] 24 ( 96ms) 
+ -------- Compaction Job : [308] ----------
+[File Shipped] : (l2, 428, 68157440) , take slot : 20
+[File Shipped] : (l2, 429, 68157440) , take slot : 21
+[File Shipped] : (l2, 430, 68157440) , take slot : 24
+[File Deletion] : (l1, 389 ) , free slot : 3
+[File Deletion] : (l2, 241 ) , free slot : 30
+[File Deletion] : (l2, 247 ) , free slot : 40
+
+[Primary] calling Sync [179] times
+[Reply]: Succeeds ,latency : 13 ms, type: compact
+[compact] write 65 MB to [local] 000431.sst ( 51ms) ,to [remote]  3 ( 87ms) 
+[compact] write 65 MB to [local] 000432.sst ( 49ms) ,to [remote] 27 ( 80ms) 
+[compact] write 65 MB to [local] 000433.sst ( 49ms) ,to [remote] 29 ( 68ms) 
+ -------- Compaction Job : [309] ----------
+[File Shipped] : (l2, 431, 68157440) , take slot : 3
+[File Shipped] : (l2, 432, 68157440) , take slot : 27
+[File Shipped] : (l2, 433, 68157440) , take slot : 29
+[File Deletion] : (l1, 395 ) , free slot : 44
+[File Deletion] : (l2, 246 ) , free slot : 36
+[File Deletion] : (l2, 255 ) , free slot : 70
+
+[Primary] calling Sync [180] times
+[Reply]: Succeeds ,latency : 105 ms, type: compact
+[compact] write 65 MB to [local] 000434.sst ( 50ms) ,to [remote] 30 ( 82ms) 
+[compact] write 65 MB to [local] 000435.sst ( 48ms) ,to [remote] 32 ( 80ms) 
+[compact] write 65 MB to [local] 000436.sst ( 51ms) ,to [remote] 36 (204ms) 
+ -------- Compaction Job : [310] ----------
+[File Shipped] : (l2, 434, 68157440) , take slot : 30
+[File Shipped] : (l2, 435, 68157440) , take slot : 32
+[File Shipped] : (l2, 436, 68157440) , take slot : 36
+[File Deletion] : (l1, 407 ) , free slot : 67
+[File Deletion] : (l2, 333 ) , free slot : 49
+[File Deletion] : (l2, 343 ) , free slot : 65
+
+[Primary] calling Sync [181] times
+[Reply]: Succeeds ,latency : 13 ms, type: compact
+[compact] write 65 MB to [local] 000437.sst ( 50ms) ,to [remote] 38 ( 83ms) 
+[compact] write 65 MB to [local] 000438.sst ( 49ms) ,to [remote] 40 ( 80ms) 
+[compact] write 65 MB to [local] 000439.sst ( 51ms) ,to [remote] 44 (560ms) 
+ -------- Compaction Job : [311] ----------
+[File Shipped] : (l2, 437, 68157440) , take slot : 38
+[File Shipped] : (l2, 438, 68157440) , take slot : 40
+[File Shipped] : (l2, 439, 68157440) , take slot : 44
+[File Deletion] : (l1, 418 ) , free slot : 95
+[File Deletion] : (l2, 371 ) , free slot : 5
+[File Deletion] : (l2, 377 ) , free slot : 6
+
+[Primary] calling Sync [182] times
+[Reply]: Succeeds ,latency : 13 ms, type: compact
+[compact] write 65 MB to [local] 000440.sst ( 69ms) ,to [remote]  5 ( 92ms) 
+[compact] write 65 MB to [local] 000441.sst ( 41ms) ,to [remote]  6 ( 77ms) 
+[compact] write 65 MB to [local] 000442.sst ( 46ms) ,to [remote] 46 ( 60ms) 
+ -------- Compaction Job : [312] ----------
+[File Shipped] : (l2, 440, 68157440) , take slot : 5
+[File Shipped] : (l2, 441, 68157440) , take slot : 6
+[File Shipped] : (l2, 442, 68157440) , take slot : 46
+[File Deletion] : (l1, 421 ) , free slot : 100
+[File Deletion] : (l2, 329 ) , free slot : 37
+[File Deletion] : (l2, 348 ) , free slot : 79
+
+[Primary] calling Sync [183] times
+[Reply]: Succeeds ,latency : 113 ms, type: compact
+[compact] write 65 MB to [local] 000443.sst ( 50ms) ,to [remote] 37 ( 79ms) 
+[compact] write 65 MB to [local] 000444.sst ( 55ms) ,to [remote] 47 ( 60ms) 
+[compact] write 65 MB to [local] 000445.sst ( 53ms) ,to [remote] 49 (198ms) 
+[compact] write 65 MB to [local] 000446.sst ( 50ms) ,to [remote] 55 ( 88ms) 
+ -------- Compaction Job : [313] ----------
+[File Shipped] : (l2, 443, 68157440) , take slot : 37
+[File Shipped] : (l2, 444, 68157440) , take slot : 47
+[File Shipped] : (l2, 445, 68157440) , take slot : 49
+[File Shipped] : (l2, 446, 68157440) , take slot : 55
+[File Deletion] : (l1, 392 ) , free slot : 34
+[File Deletion] : (l2, 368 ) , free slot : 114
+[File Deletion] : (l2, 242 ) , free slot : 33
+[File Deletion] : (l2, 431 ) , free slot : 3
+
+[Primary] calling Sync [184] times
+[Reply]: Succeeds ,latency : 14 ms, type: compact
+[compact] write 65 MB to [local] 000447.sst (104ms) ,to [remote]  3 (384ms) 
+[compact] write 65 MB to [local] 000448.sst ( 97ms) ,to [remote] 33 (184ms) 
+[compact] write 65 MB to [local] 000449.sst ( 50ms) ,to [remote] 34 ( 87ms) 
+[compact] write 65 MB to [local] 000450.sst ( 50ms) ,to [remote] 56 ( 79ms) 
+ -------- Compaction Job : [314] ----------
+[File Shipped] : (l2, 447, 68157440) , take slot : 3
+[File Shipped] : (l2, 448, 68157440) , take slot : 33
+[File Shipped] : (l2, 449, 68157440) , take slot : 34
+[File Shipped] : (l2, 450, 68157440) , take slot : 56
+[File Deletion] : (l1, 398 ) , free slot : 48
+[File Deletion] : (l2, 433 ) , free slot : 29
+[File Deletion] : (l2, 334 ) , free slot : 50
+[File Deletion] : (l2, 351 ) , free slot : 83
+
+[Primary] calling Sync [185] times
+[Reply]: Succeeds ,latency : 16 ms, type: compact
+[compact] write 65 MB to [local] 000451.sst ( 49ms) ,to [remote] 29 ( 72ms) 
+[compact] write 65 MB to [local] 000452.sst ( 62ms) ,to [remote] 48 ( 60ms) 
+[compact] write 65 MB to [local] 000453.sst ( 73ms) ,to [remote] 50 ( 79ms) 
+[compact] write 65 MB to [local] 000454.sst ( 57ms) ,to [remote] 61 ( 86ms) 
+ -------- Compaction Job : [315] ----------
+[File Shipped] : (l2, 451, 68157440) , take slot : 29
+[File Shipped] : (l2, 452, 68157440) , take slot : 48
+[File Shipped] : (l2, 453, 68157440) , take slot : 50
+[File Shipped] : (l2, 454, 68157440) , take slot : 61
+[File Deletion] : (l1, 401 ) , free slot : 53
+[File Deletion] : (l2, 450 ) , free slot : 56
+[File Deletion] : (l2, 369 ) , free slot : 115
+[File Deletion] : (l2, 150 ) , free slot : 11
+
+[Primary] calling Sync [186] times
+[Reply]: Succeeds ,latency : 15 ms, type: compact
+[compact] write 65 MB to [local] 000455.sst ( 53ms) ,to [remote] 11 ( 82ms) 
+[compact] write 65 MB to [local] 000456.sst ( 52ms) ,to [remote] 53 ( 91ms) 
+[compact] write 65 MB to [local] 000457.sst ( 49ms) ,to [remote] 56 ( 60ms) 
+[compact] write 65 MB to [local] 000458.sst ( 49ms) ,to [remote] 63 ( 60ms) 
+ -------- Compaction Job : [316] ----------
+[File Shipped] : (l2, 455, 68157440) , take slot : 11
+[File Shipped] : (l2, 456, 68157440) , take slot : 53
+[File Shipped] : (l2, 457, 68157440) , take slot : 56
+[File Shipped] : (l2, 458, 68157440) , take slot : 63
+[File Deletion] : (l1, 402 ) , free slot : 57
+[File Deletion] : (l2, 454 ) , free slot : 61
+[File Deletion] : (l2, 370 ) , free slot : 7
+[File Deletion] : (l2, 376 ) , free slot : 12
+
+[Primary] calling Sync [187] times
+[Reply]: Succeeds ,latency : 99 ms, type: compact
+[compact] write 65 MB to [local] 000459.sst ( 43ms) ,to [remote]  7 ( 84ms) 
+[compact] write 65 MB to [local] 000460.sst ( 50ms) ,to [remote] 12 (432ms) 
+[compact] write 65 MB to [local] 000461.sst ( 55ms) ,to [remote] 57 (237ms) 
+[compact] write 65 MB to [local] 000462.sst ( 69ms) ,to [remote] 61 ( 72ms) 
+[compact] write 65 MB to [local] 000463.sst ( 64ms) ,to [remote] 65 (186ms) 
+[compact] write 65 MB to [local] 000464.sst ( 50ms) ,to [remote] 67 ( 78ms) 
+[compact] write 65 MB to [local] 000465.sst ( 54ms) ,to [remote] 69 ( 60ms) 
+[compact] write 65 MB to [local] 000466.sst (113ms) ,to [remote] 70 (134ms) 
+[compact] write 65 MB to [local] 000467.sst ( 49ms) ,to [remote] 78 ( 83ms) 
+[compact] write 65 MB to [local] 000468.sst (107ms) ,to [remote] 79 ( 81ms) 
+[compact] write 65 MB to [local] 000469.sst ( 51ms) ,to [remote] 82 ( 75ms) 
+[compact] write 65 MB to [local] 000470.sst ( 50ms) ,to [remote] 83 ( 82ms) 
+[compact] write 65 MB to [local] 000471.sst ( 48ms) ,to [remote] 89 ( 85ms) 
+[compact] write 65 MB to [local] 000472.sst (102ms) ,to [remote] 91 ( 91ms) 
+[compact] write 65 MB to [local] 000473.sst ( 48ms) ,to [remote] 92 ( 72ms) 
+ -------- Compaction Job : [317] ----------
+[File Shipped] : (l1, 459, 68157440) , take slot : 7
+[File Shipped] : (l1, 460, 68157440) , take slot : 12
+[File Shipped] : (l1, 461, 68157440) , take slot : 57
+[File Shipped] : (l1, 462, 68157440) , take slot : 61
+[File Shipped] : (l1, 463, 68157440) , take slot : 65
+[File Shipped] : (l1, 464, 68157440) , take slot : 67
+[File Shipped] : (l1, 465, 68157440) , take slot : 69
+[File Shipped] : (l1, 466, 68157440) , take slot : 70
+[File Shipped] : (l1, 467, 68157440) , take slot : 78
+[File Shipped] : (l1, 468, 68157440) , take slot : 79
+[File Shipped] : (l1, 469, 68157440) , take slot : 82
+[File Shipped] : (l1, 470, 68157440) , take slot : 83
+[File Shipped] : (l1, 471, 68157440) , take slot : 89
+[File Shipped] : (l1, 472, 68157440) , take slot : 91
+[File Shipped] : (l1, 473, 68157440) , take slot : 92
+[File Deletion] : (l0, 414 ) , free slot : 85
+[File Deletion] : (l0, 404 ) , free slot : 60
+[File Deletion] : (l0, 400 ) , free slot : 51
+[File Deletion] : (l0, 397 ) , free slot : 45
+[File Deletion] : (l0, 394 ) , free slot : 35
+[File Deletion] : (l0, 388 ) , free slot : 28
+[File Deletion] : (l0, 385 ) , free slot : 22
+[File Deletion] : (l1, 390 ) , free slot : 17
+[File Deletion] : (l1, 391 ) , free slot : 31
+[File Deletion] : (l1, 405 ) , free slot : 62
+[File Deletion] : (l1, 406 ) , free slot : 66
+[File Deletion] : (l1, 417 ) , free slot : 93
+[File Deletion] : (l1, 422 ) , free slot : 101
+[File Deletion] : (l1, 424 ) , free slot : 107
+
+[Primary] calling Sync [188] times
+[Reply]: Succeeds ,latency : 117 ms, type: compact
+[compact] write 65 MB to [local] 000474.sst ( 52ms) ,to [remote] 17 ( 92ms) 
+[compact] write 65 MB to [local] 000475.sst ( 62ms) ,to [remote] 22 ( 87ms) 
+[compact] write 65 MB to [local] 000476.sst ( 51ms) ,to [remote] 28 ( 90ms) 
+ -------- Compaction Job : [318] ----------
+[File Shipped] : (l2, 474, 68157440) , take slot : 17
+[File Shipped] : (l2, 475, 68157440) , take slot : 22
+[File Shipped] : (l2, 476, 68157440) , take slot : 28
+[File Deletion] : (l1, 465 ) , free slot : 69
+[File Deletion] : (l2, 271 ) , free slot : 4
+[File Deletion] : (l2, 434 ) , free slot : 30
+
+[Primary] calling Sync [189] times
+[Reply]: Succeeds ,latency : 96 ms, type: compact
+[compact] write 65 MB to [local] 000477.sst ( 50ms) ,to [remote]  4 ( 90ms) 
+[compact] write 65 MB to [local] 000478.sst (111ms) ,to [remote] 30 ( 89ms) 
+[compact] write 65 MB to [local] 000479.sst ( 54ms) ,to [remote] 31 ( 94ms) 
+[compact] write 65 MB to [local] 000480.sst ( 50ms) ,to [remote] 35 ( 82ms) 
+ -------- Compaction Job : [319] ----------
+[File Shipped] : (l2, 477, 68157440) , take slot : 4
+[File Shipped] : (l2, 478, 68157440) , take slot : 30
+[File Shipped] : (l2, 479, 68157440) , take slot : 31
+[File Shipped] : (l2, 480, 68157440) , take slot : 35
+[File Deletion] : (l1, 464 ) , free slot : 67
+[File Deletion] : (l2, 381 ) , free slot : 18
+[File Deletion] : (l2, 386 ) , free slot : 23
+[File Deletion] : (l2, 474 ) , free slot : 17
+
+[Primary] calling Sync [190] times
+[Reply]: Succeeds ,latency : 14 ms, type: compact
+[compact] write 65 MB to [local] 000481.sst ( 85ms) ,to [remote] 17 ( 82ms) 
+[compact] write 65 MB to [local] 000482.sst ( 82ms) ,to [remote] 18 (101ms) 
+[compact] write 65 MB to [local] 000483.sst ( 50ms) ,to [remote] 23 ( 71ms) 
+[compact] write 65 MB to [local] 000484.sst ( 94ms) ,to [remote] 45 (200ms) 
+ -------- Compaction Job : [320] ----------
+[File Shipped] : (l2, 481, 68157440) , take slot : 17
+[File Shipped] : (l2, 482, 68157440) , take slot : 18
+[File Shipped] : (l2, 483, 68157440) , take slot : 23
+[File Shipped] : (l2, 484, 68157440) , take slot : 45
+[File Deletion] : (l1, 470 ) , free slot : 83
+[File Deletion] : (l2, 440 ) , free slot : 5
+[File Deletion] : (l2, 441 ) , free slot : 6
+[File Deletion] : (l2, 442 ) , free slot : 46
+
+[Primary] calling Sync [191] times
+[Reply]: Succeeds ,latency : 32 ms, type: compact
+[compact] write 65 MB to [local] 000485.sst ( 65ms) ,to [remote]  5 ( 82ms) 
+[compact] write 65 MB to [local] 000486.sst ( 51ms) ,to [remote]  6 ( 80ms) 
+[compact] write 65 MB to [local] 000487.sst ( 64ms) ,to [remote] 46 ( 72ms) 
+ -------- Compaction Job : [321] ----------
+[File Shipped] : (l2, 485, 68157440) , take slot : 5
+[File Shipped] : (l2, 486, 68157440) , take slot : 6
+[File Shipped] : (l2, 487, 68157440) , take slot : 46
+[File Deletion] : (l1, 473 ) , free slot : 92
+[File Deletion] : (l2, 427 ) , free slot : 19
+[File Deletion] : (l2, 342 ) , free slot : 14
+[File Deletion] : (l2, 362 ) , free slot : 108
+
+[Primary] calling Sync [192] times
+[Reply]: Succeeds ,latency : 87 ms, type: compact
+[compact] write 65 MB to [local] 000488.sst ( 54ms) ,to [remote] 14 ( 83ms) 
+[compact] write 65 MB to [local] 000489.sst ( 72ms) ,to [remote] 19 ( 80ms) 
+[compact] write 65 MB to [local] 000490.sst ( 51ms) ,to [remote] 51 (171ms) 
+[compact] write 65 MB to [local] 000491.sst ( 85ms) ,to [remote] 60 (541ms) 
+[compact] write 65 MB to [local] 000492.sst ( 49ms) ,to [remote] 62 ( 73ms) 
+ -------- Compaction Job : [322] ----------
+[File Shipped] : (l2, 488, 68157440) , take slot : 14
+[File Shipped] : (l2, 489, 68157440) , take slot : 19
+[File Shipped] : (l2, 490, 68157440) , take slot : 51
+[File Shipped] : (l2, 491, 68157440) , take slot : 60
+[File Shipped] : (l2, 492, 68157440) , take slot : 62
+[File Deletion] : (l1, 459 ) , free slot : 7
+[File Deletion] : (l2, 428 ) , free slot : 20
+[File Deletion] : (l2, 429 ) , free slot : 21
+[File Deletion] : (l2, 430 ) , free slot : 24
+[File Deletion] : (l2, 335 ) , free slot : 52
+
+[Primary] calling Sync [193] times
+[Reply]: Succeeds ,latency : 113 ms, type: compact
+[compact] write 65 MB to [local] 000493.sst ( 83ms) ,to [remote]  7 ( 86ms) 
+[compact] write 65 MB to [local] 000494.sst ( 51ms) ,to [remote] 20 ( 73ms) 
+[compact] write 65 MB to [local] 000495.sst ( 47ms) ,to [remote] 21 ( 60ms) 
+[compact] write 65 MB to [local] 000496.sst ( 62ms) ,to [remote] 24 ( 82ms) 
+[compact] write 65 MB to [local] 000497.sst ( 48ms) ,to [remote] 52 ( 73ms) 
+ -------- Compaction Job : [323] ----------
+[File Shipped] : (l2, 493, 68157440) , take slot : 7
+[File Shipped] : (l2, 494, 68157440) , take slot : 20
+[File Shipped] : (l2, 495, 68157440) , take slot : 21
+[File Shipped] : (l2, 496, 68157440) , take slot : 24
+[File Shipped] : (l2, 497, 68157440) , take slot : 52
+[File Deletion] : (l1, 460 ) , free slot : 12
+[File Deletion] : (l2, 492 ) , free slot : 62
+[File Deletion] : (l2, 341 ) , free slot : 64
+[File Deletion] : (l2, 365 ) , free slot : 111
+[File Deletion] : (l2, 336 ) , free slot : 54
+
+[Primary] calling Sync [194] times
+[Reply]: Succeeds ,latency : 99 ms, type: compact
+[compact] write 65 MB to [local] 000498.sst ( 43ms) ,to [remote] 12 ( 82ms) 
+[compact] write 65 MB to [local] 000499.sst ( 49ms) ,to [remote] 54 ( 80ms) 
+[compact] write 65 MB to [local] 000500.sst ( 60ms) ,to [remote] 62 ( 95ms) 
+[compact] write 65 MB to [local] 000501.sst ( 50ms) ,to [remote] 64 ( 82ms) 
+[compact] write 65 MB to [local] 000502.sst ( 56ms) ,to [remote] 66 ( 80ms) 
+ -------- Compaction Job : [324] ----------
+[File Shipped] : (l2, 498, 68157440) , take slot : 12
+[File Shipped] : (l2, 499, 68157440) , take slot : 54
+[File Shipped] : (l2, 500, 68157440) , take slot : 62
+[File Shipped] : (l2, 501, 68157440) , take slot : 64
+[File Shipped] : (l2, 502, 68157440) , take slot : 66
+[File Deletion] : (l1, 461 ) , free slot : 57
+[File Deletion] : (l2, 497 ) , free slot : 52
+[File Deletion] : (l2, 347 ) , free slot : 77
+[File Deletion] : (l2, 443 ) , free slot : 37
+[File Deletion] : (l2, 444 ) , free slot : 47
+
+[Primary] calling Sync [195] times
+[Reply]: Succeeds ,latency : 19 ms, type: compact
+[compact] write 65 MB to [local] 000503.sst ( 51ms) ,to [remote] 37 ( 94ms) 
+[compact] write 65 MB to [local] 000504.sst ( 50ms) ,to [remote] 47 ( 60ms) 
+[compact] write 65 MB to [local] 000505.sst ( 55ms) ,to [remote] 52 (200ms) 
+[compact] write 65 MB to [local] 000506.sst ( 51ms) ,to [remote] 57 ( 84ms) 
+[compact] write 65 MB to [local] 000507.sst (117ms) ,to [remote] 67 ( 80ms) 
+ -------- Compaction Job : [325] ----------
+[File Shipped] : (l2, 503, 68157440) , take slot : 37
+[File Shipped] : (l2, 504, 68157440) , take slot : 47
+[File Shipped] : (l2, 505, 68157440) , take slot : 52
+[File Shipped] : (l2, 506, 68157440) , take slot : 57
+[File Shipped] : (l2, 507, 68157440) , take slot : 67
+[File Deletion] : (l1, 463 ) , free slot : 65
+[File Deletion] : (l2, 457 ) , free slot : 56
+[File Deletion] : (l2, 458 ) , free slot : 63
+[File Deletion] : (l2, 379 ) , free slot : 16
+[File Deletion] : (l2, 477 ) , free slot : 4
+
+[Primary] calling Sync [196] times
+[Reply]: Succeeds ,latency : 19 ms, type: compact
+[compact] write 65 MB to [local] 000508.sst ( 69ms) ,to [remote]  4 ( 72ms) 
+[compact] write 65 MB to [local] 000509.sst ( 51ms) ,to [remote] 16 ( 60ms) 
+[compact] write 65 MB to [local] 000510.sst ( 49ms) ,to [remote] 56 ( 60ms) 
+[compact] write 65 MB to [local] 000511.sst ( 50ms) ,to [remote] 63 ( 78ms) 
+[compact] write 65 MB to [local] 000512.sst ( 79ms) ,to [remote] 65 ( 60ms) 
+ -------- Compaction Job : [326] ----------
+[File Shipped] : (l2, 508, 68157440) , take slot : 4
+[File Shipped] : (l2, 509, 68157440) , take slot : 16
+[File Shipped] : (l2, 510, 68157440) , take slot : 56
+[File Shipped] : (l2, 511, 68157440) , take slot : 63
+[File Shipped] : (l2, 512, 68157440) , take slot : 65
+[File Deletion] : (l1, 468 ) , free slot : 79
+[File Deletion] : (l2, 346 ) , free slot : 76
+[File Deletion] : (l2, 366 ) , free slot : 112
+[File Deletion] : (l2, 352 ) , free slot : 86
+[File Deletion] : (l2, 360 ) , free slot : 106
+
+[Primary] calling Sync [197] times
+[Reply]: Succeeds ,latency : 101 ms, type: compact
+[Primary] calling Sync [198] times
+[Reply]: Succeeds ,latency : 166 ms, type: trivial
+[Primary] calling Sync [199] times
+[Reply]: Succeeds ,latency : 8 ms, type: trivial
+[Primary] calling Sync [200] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [201] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [202] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [203] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[compact] write 65 MB to [local] 000513.sst (113ms) ,to [remote] 69 ( 83ms) 
+[compact] write 65 MB to [local] 000514.sst ( 51ms) ,to [remote] 76 ( 74ms) 
+[compact] write 65 MB to [local] 000515.sst ( 47ms) ,to [remote] 77 ( 60ms) 
+[compact] write 65 MB to [local] 000516.sst ( 56ms) ,to [remote] 79 (198ms) 
+[compact] write 65 MB to [local] 000517.sst ( 48ms) ,to [remote] 83 ( 78ms) 
+ -------- Compaction Job : [333] ----------
+[File Shipped] : (l2, 513, 68157440) , take slot : 69
+[File Shipped] : (l2, 514, 68157440) , take slot : 76
+[File Shipped] : (l2, 515, 68157440) , take slot : 77
+[File Shipped] : (l2, 516, 68157440) , take slot : 79
+[File Shipped] : (l2, 517, 68157440) , take slot : 83
+[File Deletion] : (l1, 469 ) , free slot : 82
+[File Deletion] : (l2, 439 ) , free slot : 44
+[File Deletion] : (l2, 419 ) , free slot : 97
+[File Deletion] : (l2, 420 ) , free slot : 99
+[File Deletion] : (l2, 481 ) , free slot : 17
+
+[Primary] calling Sync [204] times
+[Reply]: Succeeds ,latency : 113 ms, type: compact
+[Primary] calling Sync [205] times
+[Reply]: Succeeds ,latency : 8 ms, type: trivial
+[Primary] calling Sync [206] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [207] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [208] times
+[Reply]: Succeeds ,latency : 8 ms, type: trivial
+[Primary] calling Sync [209] times
+[Reply]: Succeeds ,latency : 7 ms, type: trivial
+[Primary] calling Sync [210] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [211] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [212] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [213] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [214] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [215] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[compact] write 65 MB to [local] 000518.sst ( 48ms) ,to [remote] 17 ( 83ms) 
+[compact] write 65 MB to [local] 000519.sst ( 50ms) ,to [remote] 44 ( 80ms) 
+[compact] write 65 MB to [local] 000520.sst ( 50ms) ,to [remote] 82 ( 90ms) 
+[compact] write 65 MB to [local] 000521.sst ( 49ms) ,to [remote] 85 ( 79ms) 
+ -------- Compaction Job : [345] ----------
+[File Shipped] : (l2, 518, 68157440) , take slot : 17
+[File Shipped] : (l2, 519, 68157440) , take slot : 44
+[File Shipped] : (l2, 520, 68157440) , take slot : 82
+[File Shipped] : (l2, 521, 68157440) , take slot : 85
+[File Deletion] : (l1, 471 ) , free slot : 89
+[File Deletion] : (l2, 378 ) , free slot : 15
+[File Deletion] : (l2, 380 ) , free slot : 13
+[File Deletion] : (l2, 345 ) , free slot : 74
+
+[Primary] calling Sync [216] times
+[Reply]: Succeeds ,latency : 87 ms, type: compact
+[Primary] calling Sync [217] times
+[Reply]: Succeeds ,latency : 89 ms, type: trivial
+[Primary] calling Sync [218] times
+[Reply]: Succeeds ,latency : 126 ms, type: trivial
+[Primary] calling Sync [219] times
+[Reply]: Succeeds ,latency : 74 ms, type: trivial
+[Primary] calling Sync [220] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [221] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [222] times
+[Reply]: Succeeds ,latency : 8 ms, type: trivial
+[Primary] calling Sync [223] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [224] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [225] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [226] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [227] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[compact] write 65 MB to [local] 000522.sst ( 51ms) ,to [remote] 13 ( 82ms) 
+[compact] write 65 MB to [local] 000523.sst ( 71ms) ,to [remote] 15 ( 79ms) 
+[compact] write 65 MB to [local] 000524.sst (115ms) ,to [remote] 74 (565ms) 
+[compact] write 65 MB to [local] 000525.sst ( 56ms) ,to [remote] 86 (254ms) 
+[compact] write 65 MB to [local] 000526.sst ( 52ms) ,to [remote] 89 ( 85ms) 
+ -------- Compaction Job : [357] ----------
+[File Shipped] : (l2, 522, 68157440) , take slot : 13
+[File Shipped] : (l2, 523, 68157440) , take slot : 15
+[File Shipped] : (l2, 524, 68157440) , take slot : 74
+[File Shipped] : (l2, 525, 68157440) , take slot : 86
+[File Shipped] : (l2, 526, 68157440) , take slot : 89
+[File Deletion] : (l1, 467 ) , free slot : 78
+[File Deletion] : (l2, 411 ) , free slot : 75
+[File Deletion] : (l2, 412 ) , free slot : 84
+[File Deletion] : (l2, 415 ) , free slot : 88
+[File Deletion] : (l2, 416 ) , free slot : 90
+
+[Primary] calling Sync [228] times
+[Reply]: Succeeds ,latency : 17 ms, type: compact
+[Primary] calling Sync [229] times
+[Reply]: Succeeds ,latency : 6 ms, type: trivial
+[Primary] calling Sync [230] times
+[Reply]: Succeeds ,latency : 29 ms, type: trivial
+------server is tail: 0
+thread:0 tag:0x555f678ea840 CQ returned false.
+------server is tail: ------server is tail: 0
+thread:thread:2 tag:00x555f678ec020 tag:0x555f678ea840 CQ returned false.0 after call Finish(), cancelled:
+
+thread:0
+5thread:140544978167552 tag:0x555f678ea840 Server done, cancelled:1
+thread:0tag:0x555f678ea840 Server finish, cancelled:1
+ tag:0x555f678eea10 CQ returned false.
+thread:2 tag:0x555f678ec020 after call Finish(), cancelled:0
+------server is tail: 0
+thread:thread:6 tag:0x555f678ef9c0 CQ returned false.
+140545271781120 tag:0x555f678ec020 Server done, cancelled:thread:1
+5 tag:0x555f678eea10 after call Finish(), cancelled:thread:02tag:0x555f678ec020 Server finish, cancelled:
+------server is tail: thread:0140545246603008 tag:0x555f678eea10 Server done, cancelled:1
+thread:
+thread:63 tag:0x555f678ecc10 CQ returned false.
+1
+ tag:0x555f678ef9c0thread: after call Finish(), cancelled:5tag:0x555f678eea10 Server finish, cancelled:1
+------server is tail: 0thread:3 tag:0x555f678ecc10 after call Finish(), cancelled:0
+thread:140545263388416 tag:0x555f678ecc10 Server done, cancelled:1
+thread:3tag:0x555f678ecc10 Server finish, cancelled:1
+------server is tail: 0
+thread:1 tag:0x555f678eb430 CQ returned false.
+thread:1 tag:0x555f678eb430 after call Finish(), cancelled:0
+thread:140545280173824 tag:0x555f678eb430 Server done, cancelled:1
+thread:1tag:0x555f678eb430 Server finish, cancelled:1
+
+thread:4 tag:0x555f678eda70 CQ returned false.
+0
+thread:140545238210304 tag:0x555f678ef9c0 Server done, cancelled:1
+thread:thread:64 tag:0x555f678eda70 after call Finish(), cancelled:tag:0x555f678ef9c0 Server finish, cancelled:0
+1
+thread:140545254995712 tag:0x555f678eda70 Server done, cancelled:1
+thread:4tag:0x555f678eda70 Server finish, cancelled:1
+------server is tail: 0
+thread:7 tag:0x555f678f0a30 CQ returned false.
+thread:7 tag:0x555f678f0a30 after call Finish(), cancelled:0
+thread:140545020131072 tag:0x555f678f0a30 Server done, cancelled:1
+thread:7tag:0x555f678f0a30 Server finish, cancelled:1
