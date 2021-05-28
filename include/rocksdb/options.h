@@ -1219,7 +1219,7 @@ struct DBOptions {
   //secondary node's number of preallocated sst files 
   //right now just set to a static number, should change to 
   //be set dynamically to DbPath.target_size/write_buffer_size
-  int preallocated_sst_pool_size = 100;
+  int preallocated_sst_pool_size;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)

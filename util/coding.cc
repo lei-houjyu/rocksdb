@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <chrono>
+#include <mutex>
 
 #include <stdio.h> 
 #include <unistd.h> 
@@ -104,9 +105,11 @@ const char* GetVarint64Ptr(const char* p, const char* limit, uint64_t* value) {
 // priamry node should update it when finish a flush/compaction
 // secondary node will update it when received a Sync rpc call from the upstream node
 static std::unordered_map<int, uint64_t> sst_bit_map;
+static std::mutex mu;
 
 // get an available sst slot
-int GetAvailableSstSlot(int sst_pool_size, int sst_num){
+int GetAvailableSstSlot(int sst_pool_size, uint64_t sst_num){
+  std::unique_lock<std::mutex> lk(mu);
   int sst_real = 0;
   int start = 1;
   int end = sst_pool_size;
@@ -119,13 +122,17 @@ int GetAvailableSstSlot(int sst_pool_size, int sst_num){
     }
   } 
 
-  assert(sst_real != 0);
+  if(sst_real == 0){
+    std::cerr << "run out of sst slot, slots taken : " << sst_bit_map.size() << std::endl;
+    assert(sst_real != 0);
+  }
   sst_bit_map.emplace(sst_real, sst_num);
   return sst_real;
 }
 
 // called when a file gets deleted in a compaction to free the slot and update the bitmap
 void FreeSstSlot(uint64_t sst_num){
+  std::unique_lock<std::mutex> lk(mu);
   auto it = sst_bit_map.begin();
   for(; it != sst_bit_map.end(); it++){
     if(it->second == sst_num){
@@ -136,6 +143,18 @@ void FreeSstSlot(uint64_t sst_num){
     }
   }
   assert(it != sst_bit_map.end());
+}
+
+// get the slot number taken by the sst file whose file number is sst_num
+int GetTakenSlot(uint64_t sst_num){
+  std::unique_lock<std::mutex> lk(mu);
+  auto it = sst_bit_map.begin();
+  for(; it != sst_bit_map.end(); it++){
+    if(it->second == sst_num){
+      return it->first;
+    }
+  }
+  return 0;
 }
 
 int copy_sst(const std::string& from, const std::string& to, size_t size){

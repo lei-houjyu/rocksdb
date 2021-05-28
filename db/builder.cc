@@ -143,7 +143,7 @@ Status BuildTable(
         int sst_real = GetAvailableSstSlot(db_options->preallocated_sst_pool_size, meta->fd.GetNumber());
         std::string r_fname = db_options->remote_sst_dir + std::to_string(sst_real);
         //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
-        ((PosixWritableFile*)(file.get()))->SetRemoteFileInfo(r_fname, db_options);
+        ((PosixWritableFile*)(file.get()))->SetRemoteFileInfo(r_fname, db_options, true);
       }
       assert(s.ok());
       s = io_s;

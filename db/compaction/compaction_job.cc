@@ -65,6 +65,7 @@
 #include "util/random.h"
 #include "util/stop_watch.h"
 #include "util/string_util.h"
+#include "env/io_posix.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -1526,27 +1527,14 @@ Status CompactionJob::InstallCompactionResults(
     assert(db_options_.remote_sst_dir != "");
     IOStatus ios;
     std::string remote_sst_dir = db_options_.remote_sst_dir;
-    if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
-      remote_sst_dir += "/";
-    }
 
-    // std::unordered_map<int, uint64_t>* map = db_options_.sst_bit_map.get();
     for (const auto& sub_compact : compact_->sub_compact_states) {
       for (const auto& out : sub_compact.outputs) {
-        // copy the output sst files to remote sst directory
         std::string fname = TableFileName(sub_compact.compaction->immutable_cf_options()->cf_paths,
                         out.meta.fd.GetNumber(), out.meta.fd.GetPathId());
-        // std::cout << "file size: " << out.meta.fd.GetFileSize() << "\n"; 
         uint64_t size = out.meta.fd.GetFileSize();
-        int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, out.meta.fd.GetNumber());
-        int ret = copy_sst(fname , remote_sst_dir  + std::to_string(sst_real), static_cast<size_t>(size));
-        // rocksdb::DirectReadKBytes(fs_.get(), sst_real, 32, remote_sst_dir);
-        // ios = CopySstFile(fs_.get(), fname, remote_sst_dir  + std::to_string(sst_real), 0,  false);
-        if (ret){
-          fprintf(stderr, "[File Ship Failed] : %lu, status : %s \n", out.meta.fd.GetNumber(), ios.ToString().c_str());
-        }else {
-          fprintf(stdout, "[File Shipped] : (l%u, %lu, %lu) , take slot : %u\n", compaction->output_level(), out.meta.fd.GetNumber(), size, sst_real);
-        }
+        int sst_real = GetTakenSlot(out.meta.fd.GetNumber());
+        fprintf(stdout, "[File Shipped] : (l%u, %lu, %lu) , take slot : %u\n", compaction->output_level(), out.meta.fd.GetNumber(), size, sst_real);
       }
     }
 
@@ -1614,6 +1602,14 @@ Status CompactionJob::OpenCompactionOutputFile(
   Status s;
   IOStatus io_s =
       NewWritableFile(fs_.get(), fname, &writable_file, file_options_);
+  //[RUBBLE]
+  if(db_options_.is_primary && db_options_.is_rubble){
+    int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, file_number);
+    std::string r_fname = db_options_.remote_sst_dir + std::to_string(sst_real);
+    //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
+    ((PosixWritableFile*)(writable_file.get()))->SetRemoteFileInfo(r_fname, &db_options_, false);
+  }
+
   s = io_s;
   if (sub_compact->io_status.ok()) {
     sub_compact->io_status = io_s;
@@ -1678,6 +1674,12 @@ Status CompactionJob::OpenCompactionOutputFile(
       std::move(writable_file), fname, file_options_, env_, io_tracer_,
       db_options_.statistics.get(), listeners,
       db_options_.file_checksum_gen_factory.get()));
+  //[RUBBLE]
+  if(db_options_.is_rubble && db_options_.is_primary){
+    size_t buffer_size = (sub_compact->compaction->mutable_cf_options()->target_file_size_base  + (1 << 20));
+    sub_compact->outfile->SetBufferAlignment(sub_compact->outfile->writable_file()->GetRequiredBufferAlignment());
+    sub_compact->outfile->AllocateNewBuffer(buffer_size);
+  }   
 
   // If the Column family flag is to only optimize filters for hits,
   // we can skip creating filters if this is the bottommost_level where

@@ -20,6 +20,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <iomanip>
+#include <chrono>
 
 #include "compaction/compaction.h"
 #include "db/blob/blob_file_cache.h"
@@ -4337,18 +4339,11 @@ Status VersionSet::LogAndApply(
   // RUBBLE: trigger RPC calls to downstream node to sync RocksDB states.
   if(db_options_->is_rubble && db_options_->is_primary){
       log_and_apply_counter++;
-      if(edit_lists.back().back()->IsTrivialMove()){
-        std::cout << "Trivial Move ";
-      }
-
-      std::cout << "[Primary] calling syncClient->Sync [" << log_and_apply_counter << "] times \n"; 
-      // std::cout << "VersionStorageInfo->LevelSummary : ";
-      // VersionStorageInfo::LevelSummaryStorage tmp;
+    
+      std::cout << "[Primary] calling Sync [" << log_and_apply_counter << "] times" << std::endl;
 
       auto default_cf = GetColumnFamilySet()->GetDefault();
       auto vstorage = default_cf->current()->storage_info();
-      // const char* c = vstorage->LevelSummary(&tmp);
-      // std::cout << std::string(c) << std::endl;
 
       MemTableList* imm = default_cf->imm();
       MemTable* m = default_cf->mem();
@@ -4356,14 +4351,21 @@ Status VersionSet::LogAndApply(
       // right now, only support one cloumn family(the default one)
       assert(edit_lists.size() == 1);
 
+      std::string type;
       json j_args;
       if(edit_lists.back().back()->IsFlush()){
+        type = "flush";
         j_args["IsFlush"] = true;
         j_args["BatchCount"] = edit_lists.back().back()->GetBactchCount();
       }
       if(edit_lists.back().back()->IsTrivialMove()){
+        type = "trivial";
         j_args["IsTrivial"] = true;
       }
+      if(type.empty()){
+        type = "compact";
+      }
+
       j_args["NextFileNum"] = next_file_number_.load();
       std::vector<std::string> version_edits;
       SyncRequest request;
@@ -4377,29 +4379,14 @@ Status VersionSet::LogAndApply(
       j_args["EditList"] = j_vec;
       // std::cout << j_args.dump(4) << std::endl;
       request.set_args(j_args.dump());
+
+      auto start_time = std::chrono::high_resolution_clock::now();
+      //TODO: this synchrouous Sync rpc call is taking a few hundreds ms, which maybe too slow
+      // should change it to async
       std::string reply = db_options_->sync_client->Sync(request);
-      std::cerr << "[ Reply Status ]: " << reply << std::endl;
-      
-      // Arena arena;
-      // const ReadOptions read_options = ReadOptions();
-      // ScopedArenaIterator arena_iter_guard;
-      // InternalIterator* iter = m->NewIterator(read_options, &arena);
-      // arena_iter_guard.set(iter);
-  
-      // ParsedInternalKey ikey;
-      // ParseInternalKey(iter->key(), &ikey);
-      // std::cout << "SmallestKey : " << ikey.user_key.ToString() << std::endl;
-      // ikey.clear();
-      // iter->SeekToLast();
-      // ParseInternalKey(iter->key(), &ikey);
-      // std::cout << "LargestKey : " << ikey.user_key.ToString() << std::endl;
-
-      // std::cout  << nlohmann::json::parse(m->DebugJson()).dump(4) << std::endl;
-      // std::cout << " ----------- ImmutableList : " << nlohmann::json::parse(imm->DebugJson()).dump(4) << " ----------------\n";
-      // std::cout << " ----------- ImmutableList : " << imm->DebugJson()<< " ----------------\n";
-
-      // std::cout << " Current Version: \n " << default_cf->current()->DebugString(false) << std::endl;
-      // assert(ve_count == 1);
+      auto end_time = std::chrono::high_resolution_clock::now();
+      auto latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+      std::cout << "[Reply]: " << reply << " ,latency : " << latency << " ms, type: " << type << std::endl;
   
   }else if (db_options_->is_rubble && !db_options_->is_primary){
     std::cout << "[secondary] calling logAndApply " << std::endl;

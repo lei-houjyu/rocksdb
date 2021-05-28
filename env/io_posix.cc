@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <iomanip>
 #if defined(OS_LINUX)
 #include <linux/fs.h>
 #ifndef FALLOC_FL_KEEP_SIZE
@@ -1157,7 +1158,10 @@ PosixWritableFile::PosixWritableFile(const std::string& fname, int fd,
 }
 
 void PosixWritableFile::SetRemoteFileInfo(const std::string& r_fname, 
-                                    const ImmutableDBOptions* db_options){
+                                          const ImmutableDBOptions* db_options, 
+                                          bool is_flush_output_file){
+
+  is_flush_output_file_ = is_flush_output_file;
   r_fname_ = r_fname;
   db_options_ = db_options;
 }
@@ -1178,6 +1182,8 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
   const char* src = data.data();
   size_t nbytes = data.size();
 
+  std::chrono::time_point<std::chrono::high_resolution_clock> r_start_time;
+  std::chrono::time_point<std::chrono::high_resolution_clock> r_end_time;
   // rubble : also write the sst to remote sst dir using the same buffer when we write to the local sst dir
   if(db_options_ != nullptr && db_options_->is_rubble && db_options_->is_primary){
    // basic workflow is as follows : block contents(which are 4KB chunks) are continously copied into the WritableFileWriter.buf_
@@ -1188,7 +1194,7 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
    // so we just write the sst to the remote dir as well to the local dir using the same buf
     assert(IsSectorAligned(data.size(), GetRequiredBufferAlignment()));
     assert(IsSectorAligned(data.data(), GetRequiredBufferAlignment()));
-    auto start_time = std::chrono::high_resolution_clock::now();
+    r_start_time = std::chrono::high_resolution_clock::now();
     assert(r_fname_ != "");
     int r_fd;
     do {
@@ -1203,8 +1209,8 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
       return IOError("while appending to file" , r_fname_, errno);
     }
     close(r_fd);
-    auto end_time = std::chrono::high_resolution_clock::now();
-    std::cout << "write " << nbytes << " bytes to "  <<  r_fname_ << ", latency : "  <<  std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count()  << " micros\n";
+    r_end_time = std::chrono::high_resolution_clock::now();
+    // std::cout << "write " << nbytes << " bytes to "  <<  r_fname_ << ", latency : "  <<  std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count()  << " micros\n";
   }
   std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
   std::chrono::time_point<std::chrono::high_resolution_clock> end_time;
@@ -1216,7 +1222,15 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
   }
   if(nbytes == (65 << 20)){
     end_time = std::chrono::high_resolution_clock::now();
-    std::cout << "write " << nbytes << " bytes to "  <<  filename_ << ", latency : "  <<  std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count()  << " micros\n";
+    if (is_flush_output_file_){
+      std::cout << "[ flush ]"; 
+    }else{
+      std::cout << "[compact]";
+    }
+    std::cout << " write " << (nbytes >> 20) << " MB to [local] "  <<  filename_.substr((filename_.find_last_of("/") + 1)) 
+              << " ("  << std::setw(3) << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count()  << "ms) "
+              << ",to [remote]" << std::setw(3) << r_fname_.substr((r_fname_.find_last_of("/") + 1)) 
+              << " ("  << std::setw(3) << std::chrono::duration_cast<std::chrono::milliseconds>(r_end_time - r_start_time).count() << "ms) " << std::endl;
   }
 
   filesize_ += nbytes;

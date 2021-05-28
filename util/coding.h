@@ -31,8 +31,9 @@
 namespace ROCKSDB_NAMESPACE {
 
 int copy_sst(const std::string& from, const std::string& to, size_t size);
-extern int GetAvailableSstSlot(int sst_pool_size, int sst_num);
+extern int GetAvailableSstSlot(int sst_pool_size, uint64_t sst_num);
 extern void FreeSstSlot(uint64_t sst_num);
+extern int GetTakenSlot(uint64_t sst_num);
 
 // The maximum length of a varint in bytes for 64-bit.
 const unsigned int kMaxVarint64Length = 10;

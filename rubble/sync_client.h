@@ -11,6 +11,9 @@
 
 using grpc::Channel;
 using grpc::ClientContext;
+using grpc::Status;
+using grpc::ClientReaderWriter;
+
 using rubble::RubbleKvStoreService;
 using rubble::SyncRequest;
 using rubble::SyncReply;
@@ -19,9 +22,12 @@ using rubble::SyncReply;
 class SyncClient {
   public:
     SyncClient(std::shared_ptr<Channel> channel)
-        : stub_(RubbleKvStoreService::NewStub(channel)){};    
+        : stub_(RubbleKvStoreService::NewStub(channel)){
+          // stream_ = stub_->Sync(&context_);
+        };    
 
     std::string Sync(const SyncRequest& request){
+      // stream_->Write(request);
       SyncReply reply;
       ClientContext context;
       grpc::Status status = stub_->Sync(&context, request, &reply);
@@ -33,7 +39,17 @@ class SyncClient {
           return "RPC failed";
       }
     }
-
+  
   private:
+
+    // Context for the client. It could be used to convey extra information to
+    // the server and/or tweak certain RPC behaviors.
+    ClientContext context_;
+
+    // Storage for the status of the RPC upon completion.
+    Status status_;
+
+    // The bidirectional,synchronous stream for sending/receiving messages.
+    std::unique_ptr<ClientReaderWriter<SyncRequest, SyncReply>> stream_;
     std::unique_ptr<RubbleKvStoreService::Stub> stub_ = nullptr;
 };
