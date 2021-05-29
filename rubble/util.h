@@ -141,7 +141,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
 
   if(db_options.is_rubble){
      if(!db_options.is_primary){
-      // db_options.use_direct_reads = true;
+      db_options.use_direct_reads = true;
      }
     // right now, just set sst pool size to 200 if it's sufficient
     // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);

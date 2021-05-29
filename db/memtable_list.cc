@@ -479,10 +479,6 @@ Status MemTableList::TryInstallMemtableFlushResults(
     }
 
     //rubble
-    if(edit_list.size() > 1){
-      std::cout << " edit_list size : " << edit_list.size() << std::endl;
-      std::cout << " Batch count : " << batch_count << std::endl;
-    }
     edit_list.back()->SetBatchCount(batch_count);
 
     // std::cout << " ---- batch count ( flush compeleted memtable ): " << batch_count << ",  edit list size : " << edit_list.size() << "------ \n";
