@@ -15,13 +15,12 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  // const std::string remote_sst_dir= "/mnt/nvme1n1p4/archive_dbs/sst_dir/";
-  const std::string remote_sst_dir= "/mnt/remote/archive_dbs/tail/sst_dir/";
+  // const std::string remote_sst_dir= "/mnt/nvme1n1p4/archive_dbs/tail/sst_dir";
+  const std::string remote_sst_dir= "/mnt/sdb/archive_dbs/tail/sst_dir/";
   const std::string secondary_server_address= argv[1];
-  // secondary server is running on localhost:50050
-  rocksdb::DB* primary = GetDBInstance("/tmp/rubble_primary", "/mnt/sdb/archive_dbs/primary/sst_dir", remote_sst_dir, secondary_server_address, false, true, false);
-
-  // primary server is running on localhost:50051
+  const std::string db_path = "/mnt/sdb/archive_dbs/primary/db";
+  const std::string sst_path = "/mnt/sdb/archive_dbs/primary/sst_dir";
+  rocksdb::DB* primary = GetDBInstance(db_path, sst_path, remote_sst_dir, secondary_server_address, false, true, false);
   RunServer(primary, primary_server_address, 16);
   return 0;
 }
