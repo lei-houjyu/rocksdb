@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
   std::cout << "argc : " << argc << std::endl;
   if(argc == 2){
     // std::cout << "Usage : ./program replicator's server address\n";
-    rocksdb_dir = "/tmp/rocksdb_vanila_test";
+    rocksdb_dir = "/mnt/sdb/archive_dbs/vanilla/db";
     sst_dir = "/mnt/sdb/archive_dbs/vanilla/sst_dir";
     target_addr = argv[1];
   }else {
@@ -24,7 +24,6 @@ int main(int argc, char** argv) {
   const std::string server_address = "0.0.0.0:50051";
 
   rocksdb::DB* db = GetDBInstance(rocksdb_dir, sst_dir, "" , target_addr , false, false, true);
-  // rocksdb::DB* db = GetDBInstance("/tmp/rocksdb_vanila_test","/mnt/sdb/archive_dbs/vanila/sst_dir", "" , target_addr, false, false, true);
   RunServer(db, server_address);
   return 0;
 }
