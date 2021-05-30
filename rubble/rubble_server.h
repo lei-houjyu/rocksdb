@@ -156,7 +156,7 @@ class CallDataBidi : CallDataBase {
           }
           forwarder_->Forward(request_);
             // request_.clear_ops();
-          // std::cout << "Complete forwarding an op " << request_.key() << "\n";
+          // std::cout << "thread: " << map[std::this_thread::get_id()] << " Forwarded " << op_counter_ << " ops" << std::endl;
         }else {
           // tail node should be responsible for sending the reply back to replicator
           // use the sync stream to write the reply back
@@ -231,11 +231,11 @@ class CallDataBidi : CallDataBase {
     // std::cout << "handling a " << request_.type() <<" " <<  request_.id() << " op...\n";
     // ASSUME that each batch is with the same type of operation
     assert(request_.ops_size() > 0);
-    // op_counter_ += request_.ops_size();
+    op_counter_ += 1;
 
     SingleOpReply* reply;
     reply_.clear_replies();
-    // std::cout << "thread: " << map[std::this_thread::get_id()] << " counter: " << op_counter_ 
+    // std::cout << "thread: " << map[std::this_thread::get_id()] << " op_counter: " << op_counter_ << std::endl;
     //     <<  " first key in batch: " << request_.ops(0).key() << " size: " << request_.ops_size() << "\n";
     switch (request_.ops(0).type())
     {

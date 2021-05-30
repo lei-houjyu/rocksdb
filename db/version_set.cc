@@ -4384,6 +4384,10 @@ Status VersionSet::LogAndApply(
       //TODO: this synchrouous Sync rpc call is taking a few hundreds ms, which maybe too slow
       // should change it to async
       std::string reply = db_options_->sync_client->Sync(request);
+      if(reply.compare("Succeeds") != 0){
+        std::cout << "[Reply]: " << reply <<  " , type: " << type << std::endl;
+        assert(false);
+      }
       auto end_time = std::chrono::high_resolution_clock::now();
       auto latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
       std::cout << "[Reply]: " << reply << " ,latency : " << latency << " ms, type: " << type << std::endl;

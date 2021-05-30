@@ -1198,7 +1198,7 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
     assert(r_fname_ != "");
     int r_fd;
     do {
-      r_fd = open(r_fname_.c_str(), O_WRONLY | O_DIRECT , 0755);
+      r_fd = open(r_fname_.c_str(), O_WRONLY | O_DIRECT | O_DSYNC, 0755);
     } while (r_fd < 0 && errno == EINTR);
     if (r_fd < 0) {
       return IOError("While open a file for appending", r_fname_ , errno);

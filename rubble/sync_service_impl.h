@@ -326,17 +326,22 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           uint64_t file_num = j_added_file["FileNumber"].get<uint64_t>();
           // max_file_num = std::max(max_file_num, (int)file_num);
           uint64_t file_size = j_added_file["FileSize"].get<uint64_t>();
-    
+
+          std::string file_checksum = j_added_file["FileChecksum"].get<std::string>();
+          std::string file_checksum_func_name = j_added_file["FileChecksumFuncName"].get<std::string>();
+          uint64_t file_creation_time = j_added_file["FileCreationTime"].get<uint64_t>();
+          uint64_t oldest_ancester_time = j_added_file["OldestAncesterTime"].get<uint64_t>();
+
           const rocksdb::FileMetaData meta(file_num, 0/* path_id shoule be 0*/,
                                           file_size, 
                                           smallest, largest, 
                                           smallest_seqno, largest_seqno,
                                           false, 
                                           rocksdb::kInvalidBlobFileNumber,
-                                          rocksdb::kUnknownOldestAncesterTime,
-                                          rocksdb::kUnknownFileCreationTime,
-                                          rocksdb::kUnknownFileChecksum, 
-                                          rocksdb::kUnknownFileChecksumFuncName);
+                                          oldest_ancester_time,
+                                          file_creation_time,
+                                          file_checksum, 
+                                          file_checksum_func_name);
 
           edit.AddFile(level, meta);
       }
