@@ -15,6 +15,7 @@
 #include <grpcpp/alarm.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include "rubble_kv_store.grpc.pb.h"
+#include "sync_client.h"
 
 #include "rocksdb/db.h"
 #include "port/port_posix.h"
@@ -73,9 +74,21 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       delete db_;
     }
   
-    //an Unary RPC call used by the non-tail node to sync Version(view of sst files) states to the downstream node 
-  Status Sync(ServerContext* context, const SyncRequest* request, 
-                          SyncReply* reply) override {
+  // a streaming RPC used by the non-tail node to sync Version(view of sst files) states to the downstream node 
+  Status Sync(ServerContext* context, 
+              ServerReaderWriter<SyncReply, SyncRequest>* stream) override {
+    SyncRequest request;
+    while (stream->Read(&request)) {
+      SyncReply reply;
+      HandleSyncRequest(&request, &reply);
+      stream->Write(reply);
+    }
+    return Status::OK;
+  }
+
+  // actually handle the SyncRequest
+  void HandleSyncRequest(const SyncRequest* request, 
+                          SyncReply* reply) {
     log_apply_counter_++;
     std::cout << " --------[Secondary] Accepting Sync RPC " << log_apply_counter_.load() << " th times --------- \n";
     // example args json :
@@ -138,8 +151,8 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       }
       if(!is_tail_){
         // non-tail node should also issue Sync rpc call to downstream node
-        std::string sync_reply = sync_client_->Sync(*request);
-        std::cout << "[ Reply Status ]: " << sync_reply << std::endl;
+        sync_client_->Sync(args);
+        // std::cout << "[ Reply Status ]: " << sync_reply << std::endl;
       }
     }
 
@@ -258,7 +271,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     // auto vstorage = default_cf_->current()->storage_info();
     // const char* c = vstorage->LevelSummary(&tmp);
     // std::cout << " VersionStorageInfo->LevelSummary : " << std::string(c) << std::endl;
-    return Status::OK;
+    // return Status::OK;
   }
 
   private:

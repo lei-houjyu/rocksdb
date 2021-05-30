@@ -11,7 +11,6 @@
 #include "rocksdb/options.h"
 //RUBBLE 
 #include "rubble/sync_client.h"
-#include "rubble/kvstore_client.h"
 
 namespace ROCKSDB_NAMESPACE {
 

@@ -28,6 +28,8 @@
 #include "rocksdb/universal_compaction.h"
 #include "rocksdb/version.h"
 #include "rocksdb/write_buffer_manager.h"
+//RUBBLE 
+#include "rubble/sync_client.h"
 
 #ifdef max
 #undef max
@@ -1220,6 +1222,9 @@ struct DBOptions {
   //right now just set to a static number, should change to 
   //be set dynamically to DbPath.target_size/write_buffer_size
   int preallocated_sst_pool_size;
+
+  // a client used to do Sync rpc to downstream node by the non-tail node
+  std::shared_ptr<SyncClient> sync_client;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)

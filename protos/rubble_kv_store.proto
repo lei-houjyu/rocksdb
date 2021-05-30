@@ -11,7 +11,7 @@ service RubbleKvStoreService {
 
   // an internal rpc call used by the upstream (except the tail node) 
   // to synchronize states to the downstream nodes in the chain
-  rpc Sync (SyncRequest) returns (SyncReply) {} 
+  rpc Sync (stream SyncRequest) returns (stream SyncReply) {} 
 
   // perform db operations (CRUD)
   rpc DoOp(stream Op) returns (stream OpReply){}

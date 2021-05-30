@@ -597,17 +597,13 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       is_tail(options.is_tail),
       target_address(options.target_address),
       remote_sst_dir(options.remote_sst_dir),
-      preallocated_sst_pool_size(options.preallocated_sst_pool_size)
+      preallocated_sst_pool_size(options.preallocated_sst_pool_size),
+      sync_client(options.sync_client)
        {
          // all nodes except tail needs to do Sync rpc and forward operations to target_address
         //  std::cout << "is_rubble: " << is_rubble << " is_tail : " << is_tail 
         //             << " preallocated sst pool size : " << options.preallocated_sst_pool_size << std::endl;
         if(is_rubble && !is_tail){
-          if(target_address != ""){
-            std::cout << " create SyncClient " << std::endl;
-            sync_client = std::make_shared<SyncClient>(grpc::CreateChannel(
-              target_address, grpc::InsecureChannelCredentials()));
-          }
           if(remote_sst_dir.back() != '/'){
             remote_sst_dir.append("/");
           }

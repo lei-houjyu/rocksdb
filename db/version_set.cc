@@ -4368,7 +4368,7 @@ Status VersionSet::LogAndApply(
 
       j_args["NextFileNum"] = next_file_number_.load();
       std::vector<std::string> version_edits;
-      SyncRequest request;
+
       for (auto edit_list: edit_lists){
         for (auto e: edit_list) {
           version_edits.emplace_back(e->DebugJSON((int) log_and_apply_counter, false));
@@ -4378,19 +4378,12 @@ Status VersionSet::LogAndApply(
       json j_vec(version_edits);
       j_args["EditList"] = j_vec;
       // std::cout << j_args.dump(4) << std::endl;
-      request.set_args(j_args.dump());
-
+   
       auto start_time = std::chrono::high_resolution_clock::now();
-      //TODO: this synchrouous Sync rpc call is taking a few hundreds ms, which maybe too slow
-      // should change it to async
-      std::string reply = db_options_->sync_client->Sync(request);
-      if(reply.compare("Succeeds") != 0){
-        std::cout << "[Reply]: " << reply <<  " , type: " << type << std::endl;
-        assert(false);
-      }
+      db_options_->sync_client->Sync(j_args.dump());
       auto end_time = std::chrono::high_resolution_clock::now();
-      auto latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-      std::cout << "[Reply]: " << reply << " ,latency : " << latency << " ms, type: " << type << std::endl;
+      auto latency = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+      std::cout <<  "latency : " << latency << " us, type: " << type << std::endl;
   
   }else if (db_options_->is_rubble && !db_options_->is_primary){
     std::cout << "[secondary] calling logAndApply " << std::endl;

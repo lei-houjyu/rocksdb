@@ -265,12 +265,12 @@ const char descriptor_table_protodef_rubble_5fkv_5fstore_2eproto[] PROTOBUF_SECT
   "ATE\020\003\"+\n\tOpReplies\022\036\n\005reply\030\001 \003(\0132\017.rubb"
   "le.OpReply\"\023\n\005Reply\022\n\n\002ok\030\001 \001(\010\"\033\n\013SyncR"
   "equest\022\014\n\004args\030\001 \001(\t\"\034\n\tSyncReply\022\017\n\007mes"
-  "sage\030\001 \001(\t2\246\001\n\024RubbleKvStoreService\0220\n\004S"
+  "sage\030\001 \001(\t2\252\001\n\024RubbleKvStoreService\0224\n\004S"
   "ync\022\023.rubble.SyncRequest\032\021.rubble.SyncRe"
-  "ply\"\000\022)\n\004DoOp\022\n.rubble.Op\032\017.rubble.OpRep"
-  "ly\"\000(\0010\001\0221\n\tSendReply\022\017.rubble.OpReply\032\r"
-  ".rubble.Reply\"\000(\0010\001B\034\n\nrubblejavaB\006Rubbl"
-  "eP\001\242\002\003Rubb\006proto3"
+  "ply\"\000(\0010\001\022)\n\004DoOp\022\n.rubble.Op\032\017.rubble.O"
+  "pReply\"\000(\0010\001\0221\n\tSendReply\022\017.rubble.OpRep"
+  "ly\032\r.rubble.Reply\"\000(\0010\001B\034\n\nrubblejavaB\006R"
+  "ubbleP\001\242\002\003Rubb\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_rubble_5fkv_5fstore_2eproto_deps[1] = {
 };
@@ -286,7 +286,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_rub
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_rubble_5fkv_5fstore_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_rubble_5fkv_5fstore_2eproto = {
-  false, false, descriptor_table_protodef_rubble_5fkv_5fstore_2eproto, "rubble_kv_store.proto", 777,
+  false, false, descriptor_table_protodef_rubble_5fkv_5fstore_2eproto, "rubble_kv_store.proto", 781,
   &descriptor_table_rubble_5fkv_5fstore_2eproto_once, descriptor_table_rubble_5fkv_5fstore_2eproto_sccs, descriptor_table_rubble_5fkv_5fstore_2eproto_deps, 8, 0,
   schemas, file_default_instances, TableStruct_rubble_5fkv_5fstore_2eproto::offsets,
   file_level_metadata_rubble_5fkv_5fstore_2eproto, 8, file_level_enum_descriptors_rubble_5fkv_5fstore_2eproto, file_level_service_descriptors_rubble_5fkv_5fstore_2eproto,

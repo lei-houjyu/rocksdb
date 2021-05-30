@@ -3,6 +3,10 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <limits>
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -11,8 +15,9 @@
 
 using grpc::Channel;
 using grpc::ClientContext;
-using grpc::Status;
 using grpc::ClientReaderWriter;
+using grpc::ClientAsyncReaderWriter;
+using grpc::CompletionQueue;
 
 using rubble::RubbleKvStoreService;
 using rubble::SyncRequest;
@@ -20,36 +25,52 @@ using rubble::SyncReply;
 
 // client responsible for making Sync rpc call to the secondary, used by primary instance 
 class SyncClient {
-  public:
-    SyncClient(std::shared_ptr<Channel> channel)
-        : stub_(RubbleKvStoreService::NewStub(channel)){
-          // stream_ = stub_->Sync(&context_);
-        };    
-
-    std::string Sync(const SyncRequest& request){
-      // stream_->Write(request);
-      SyncReply reply;
-      ClientContext context;
-      grpc::Status status = stub_->Sync(&context, request, &reply);
-      if (status.ok()) {
-        return reply.message();
-      } else {
-        std::cout << status.error_code() << ": " << status.error_message()
-                    << std::endl;
-          return "RPC failed";
-      }
-    }
+  enum class Type {
+        READ = 1,
+        WRITE = 2,
+        CONNECT = 3,
+        WRITES_DONE = 4,
+        FINISH = 5
+    };
   
-  private:
+  public:
+    SyncClient(std::shared_ptr<Channel> channel);
 
-    // Context for the client. It could be used to convey extra information to
-    // the server and/or tweak certain RPC behaviors.
+    ~SyncClient();
+
+  void Sync(const std::string& args);
+
+  private:
+    // read a reply back for a sync request
+    void GetSyncReply();
+
+    // Runs a gRPC completion-queue processing thread. Checks for 'Next' tag
+    // and processes them until there are no more (or when the completion queue
+    // is shutdown).
+    void AsyncCompleteRpc();
+
+    SyncRequest request_;
+    SyncReply reply_;
+
+    std::mutex mu_;
+    std::condition_variable cv_;
+    std::atomic<bool> ready_ {false};
+
     ClientContext context_;
 
-    // Storage for the status of the RPC upon completion.
-    Status status_;
+    // The bidirectional, asynchronous stream
+    std::unique_ptr<ClientAsyncReaderWriter<SyncRequest, SyncReply>> stream_;
 
-    // The bidirectional,synchronous stream for sending/receiving messages.
-    std::unique_ptr<ClientReaderWriter<SyncRequest, SyncReply>> stream_;
+    // Out of the passed in Channel comes the stub, stored here, our view of the
+    // server's exposed services.
     std::unique_ptr<RubbleKvStoreService::Stub> stub_ = nullptr;
+
+    // The producer-consumer queue we use to communicate asynchronously with the
+    // gRPC runtime.
+    CompletionQueue cq_;
+
+    // Thread that notifies the gRPC completion queue tags.
+    std::unique_ptr<std::thread> grpc_thread_;
+    // Finish status when the client is done with the stream.
+    grpc::Status finish_status_ = grpc::Status::OK;
 };
