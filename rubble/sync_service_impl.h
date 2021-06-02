@@ -26,6 +26,7 @@
 #include "rocksdb/options.h"
 #include "util/aligned_buffer.h"
 #include "file/read_write_util.h"
+#include "logging/event_logger.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -120,6 +121,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     is_flush_ = false;
     is_trivial_move_compaction_ = false;
     batch_count_ = 0;
+    deleted_files_.clear();
 
     if(j_args.contains("IsFlush")){
       assert(j_args["IsFlush"].get<bool>());
@@ -261,17 +263,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       }
     }
 
-    if(s_.ok()){
-      reply->set_message("Succeeds");
-    }else{
-      std::string failed = "Failed : " + s_.ToString();
-      reply->set_message(failed);
-    }
-    // rocksdb::VersionStorageInfo::LevelSummaryStorage tmp;
-    // auto vstorage = default_cf_->current()->storage_info();
-    // const char* c = vstorage->LevelSummary(&tmp);
-    // std::cout << " VersionStorageInfo->LevelSummary : " << std::string(c) << std::endl;
-    // return Status::OK;
+    SetReplyMessage(reply);
   }
 
   private:
@@ -362,6 +354,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       if(j_edit.contains("DeletedFiles")){
         for(const auto& j_delete_file : j_edit["DeletedFiles"].get<std::vector<json>>()){
           edit.DeleteFile(j_delete_file["Level"].get<int>(), j_delete_file["FileNumber"].get<uint64_t>());
+          deleted_files_.push_back(j_delete_file["FileNumber"].get<uint64_t>());
         }
       }
       return std::move(edit);
@@ -537,6 +530,52 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       return ios;
     }
 
+    // set the reply message according to the status
+    void SetReplyMessage(SyncReply* reply){
+      rocksdb::JSONWriter jw;
+
+      json j_reply;
+      if(s_.ok()){
+        jw << "Status" << "Succeeds";
+        
+        if(!is_flush_ && !is_trivial_move_compaction_){
+          jw << "Type" << "FullCompaction";
+          jw << "DeletedFiles";
+          jw.StartArray();
+
+          assert(!deleted_files_.empty());
+          for (const auto& deleted_file : deleted_files_) {
+            jw.StartArrayedObject();
+            jw << "FileNumber" << deleted_file;
+            jw.EndArrayedObject();
+          }
+
+          jw.EndArray();
+        }else if(is_flush_){
+          jw << "Type" << "Flush";
+        }else{
+          jw << "Type" << "Trivial";
+        }
+        jw.EndObject();
+
+        std::string message = jw.Get();
+        j_reply["Message"] = message;
+        // std::cout << message << std::endl;
+        reply->set_message(j_reply.dump());
+      
+      }else{
+        jw << "Status" << "Failed";
+        jw << "Reason" << s_.ToString();
+        jw.EndObject();
+
+        std::string message = jw.Get();
+        j_reply["Message"] = message;
+
+        // std::cout << "Message : " << j_reply.dump(4) << std::endl;
+        reply->set_message(j_reply.dump());
+      }
+    }
+
     // db instance
     rocksdb::DB* db_ = nullptr;
     rocksdb::DBImpl* impl_ = nullptr;
@@ -589,4 +628,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     int batch_count_ = 0;
     // get the next file num of secondary, which is the maximum file number of the AddedFiles in the shipped vesion edit plus 1
     int next_file_num_ = 0;
+
+    // files that get deleted in a full compaction
+    std::vector<uint64_t> deleted_files_;
 };

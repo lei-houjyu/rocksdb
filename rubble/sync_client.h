@@ -54,7 +54,7 @@ class SyncClient {
 
     std::mutex mu_;
     std::condition_variable cv_;
-    std::atomic<bool> ready_ {false};
+    std::atomic<bool> ready_ {true};
 
     ClientContext context_;
 

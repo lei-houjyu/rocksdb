@@ -1,5 +1,9 @@
 #include "sync_client.h"
+#include "util/coding.h"
 
+#include <set>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 SyncClient::SyncClient(std::shared_ptr<Channel> channel)
     :stub_(RubbleKvStoreService::NewStub(channel)){
@@ -40,6 +44,9 @@ void SyncClient::GetSyncReply() {
 void SyncClient::AsyncCompleteRpc() {
     void* got_tag;
     bool ok = false;
+    json j_reply;
+    json j_message;
+    std::set<uint64_t> deleted_files;
 
     // Block until the next result is available in the completion queue "cq".
     while (cq_.Next(&got_tag, &ok)) {
@@ -49,8 +56,23 @@ void SyncClient::AsyncCompleteRpc() {
 
       switch (static_cast<Type>(reinterpret_cast<long>(got_tag))) {
         case Type::READ:
-            if(reply_.message().compare("Succeeds") != 0){
-                std::cout << "[Reply]: " << reply_.message() << std::endl;
+            // update the sst bit map in the callback function
+            // std::cout << "reply message  : " << reply_.message() << std::endl;
+            deleted_files.clear();
+            j_reply = json::parse(reply_.message());
+            j_message = json::parse(j_reply["Message"].get<std::string>());
+            if(j_message["Status"].get<std::string>().compare("Succeeds") == 0){
+                if(j_message["Type"].get<std::string>().compare("FullCompaction") == 0){
+                    for(const auto& file_num : j_message["DeletedFiles"].get<std::vector<json>>()){
+                        deleted_files.insert(file_num["FileNumber"].get<uint64_t>());
+                    }
+                    rocksdb::FreeSstSlot(deleted_files);
+                }else{
+                    /// it's a trivial move or a flush, neither frees a slot
+                }
+            }else{
+                // Sync rpc Failed for some reason
+                std::cout << "Sync rpc Failed : " << j_message["Reason"].get<std::string>() << std::endl;
                 assert(false); 
             }
             break;

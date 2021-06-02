@@ -1538,15 +1538,14 @@ Status CompactionJob::InstallCompactionResults(
       }
     }
 
+    std::cout << "[File Deletion] : ";
     for (unsigned int i = 0; i < compact_->compaction->num_input_levels(); i++){
       for (auto f : *(compact_->compaction->inputs(i))){
-        std::cout << "[File Deletion] : (l" << compact_->compaction->level(i) << ", " << f->fd.GetNumber() << " )";
-        FreeSstSlot(f->fd.GetNumber());
+        std::cout << "(l" << compact_->compaction->level(i) << ", " << f->fd.GetNumber() << " ) ";
       }
     }
+    std::cout << "\n";
   }
-
-  std::cout << "\n";
   
   return versions_->LogAndApply(compaction->column_family_data(),
                                 mutable_cf_options, compaction->edit(),

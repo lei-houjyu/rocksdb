@@ -18,6 +18,7 @@
 #pragma once
 #include <algorithm>
 #include <string>
+#include <set>
 
 #include "port/port.h"
 #include "rocksdb/slice.h"
@@ -32,7 +33,7 @@ namespace ROCKSDB_NAMESPACE {
 
 int copy_sst(const std::string& from, const std::string& to, size_t size);
 extern int GetAvailableSstSlot(int sst_pool_size, uint64_t sst_num);
-extern void FreeSstSlot(uint64_t sst_num);
+extern void FreeSstSlot(std::set<uint64_t> file_nums);
 extern int GetTakenSlot(uint64_t sst_num);
 
 // The maximum length of a varint in bytes for 64-bit.

@@ -4340,7 +4340,7 @@ Status VersionSet::LogAndApply(
   if(db_options_->is_rubble && db_options_->is_primary){
       log_and_apply_counter++;
     
-      std::cout << "[Primary] calling Sync [" << log_and_apply_counter << "] times" << std::endl;
+      std::cout << "[Primary] calling Sync [" << log_and_apply_counter << "] times, ";
 
       auto default_cf = GetColumnFamilySet()->GetDefault();
       auto vstorage = default_cf->current()->storage_info();
@@ -4380,6 +4380,7 @@ Status VersionSet::LogAndApply(
       // std::cout << j_args.dump(4) << std::endl;
    
       auto start_time = std::chrono::high_resolution_clock::now();
+      assert(db_options_->sync_client != nullptr);
       db_options_->sync_client->Sync(j_args.dump());
       auto end_time = std::chrono::high_resolution_clock::now();
       auto latency = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();

@@ -1224,7 +1224,7 @@ struct DBOptions {
   int preallocated_sst_pool_size;
 
   // a client used to do Sync rpc to downstream node by the non-tail node
-  std::shared_ptr<SyncClient> sync_client;
+  std::shared_ptr<SyncClient> sync_client = nullptr;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)
