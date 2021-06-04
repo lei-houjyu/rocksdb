@@ -2527,6 +2527,8 @@ void DBImpl::BackgroundCallCompaction(PrepickedCompaction* prepicked_compaction,
     assert((bg_thread_pri == Env::Priority::BOTTOM &&
             bg_bottom_compaction_scheduled_) ||
            (bg_thread_pri == Env::Priority::LOW && bg_compaction_scheduled_));
+    
+    // std::cout << "[RUBBLE LOG]Before BackgroundCompaction\n";
     Status s = BackgroundCompaction(&made_progress, &job_context, &log_buffer,
                                     prepicked_compaction, bg_thread_pri);
     TEST_SYNC_POINT("BackgroundCallCompaction:1");
@@ -2581,6 +2583,7 @@ void DBImpl::BackgroundCallCompaction(PrepickedCompaction* prepicked_compaction,
       // It also applies to access other states that DB owns.
       log_buffer.FlushBufferToLog();
       if (job_context.HaveSomethingToDelete()) {
+        // std::cout << "[RUBBLE LOG]BackgroundcallCompaction :: PurgeObsoleteFiles\n";
         PurgeObsoleteFiles(job_context);
         TEST_SYNC_POINT("DBImpl::BackgroundCallCompaction:PurgedObsoleteFiles");
       }

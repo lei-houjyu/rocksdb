@@ -82,7 +82,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     while (stream->Read(&request)) {
       SyncReply reply;
       HandleSyncRequest(&request, &reply);
-      stream->Write(reply);
+      // stream->Write(reply);
     }
     return Status::OK;
   }
@@ -116,12 +116,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     const json j_args = json::parse(args);
     // std::cout << j_args.dump(4) << std::endl;
 
-    // reset those variables every time called Sync
-    num_of_added_files_ = 0;
-    is_flush_ = false;
-    is_trivial_move_compaction_ = false;
-    batch_count_ = 0;
-    deleted_files_.clear();
+    ResetStates();
 
     if(j_args.contains("IsFlush")){
       assert(j_args["IsFlush"].get<bool>());
@@ -132,6 +127,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       is_trivial_move_compaction_ = true;
     }
 
+    request_id_ = j_args["Id"].get<uint64_t>();
     next_file_num_ = j_args["NextFileNum"].get<uint64_t>();
     rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
     std::vector<rocksdb::VersionEdit> edits;
@@ -263,10 +259,21 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       }
     }
 
-    SetReplyMessage(reply);
+    assert(s_.ok());
+    // SetReplyMessage(reply);
   }
 
   private:
+    void ResetStates(){
+      // reset those variables every time called Sync
+      num_of_added_files_ = 0;
+      is_flush_ = false;
+      is_trivial_move_compaction_ = false;
+      batch_count_ = 0;
+      deleted_files_.clear();
+      added_.clear();
+    }
+
     // parse the version edit json string to rocksdb::VersionEdit 
     rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */){
       rocksdb::VersionEdit edit;
@@ -329,6 +336,9 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           uint64_t largest_seqno = j_added_file["LargestSeqno"].get<uint64_t>();
           int level = j_added_file["Level"].get<int>();
           uint64_t file_num = j_added_file["FileNumber"].get<uint64_t>();
+          if(!is_trivial_move_compaction_){
+            added_.emplace(file_num, j_added_file["Slot"].get<int>());
+          }
           // max_file_num = std::max(max_file_num, (int)file_num);
           uint64_t file_size = j_added_file["FileSize"].get<uint64_t>();
 
@@ -463,21 +473,14 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     rocksdb::IOStatus UpdateSstBitMapAndShipSstFiles(const rocksdb::VersionEdit& edit){
 
       rocksdb::IOStatus ios;
-      // print names of sst files before doing anything
-      // std::cout << "[sync] print out fd names " << std::endl;
-      // for(const auto& new_file: edit.GetNewFiles()){
-      //   const rocksdb::FileMetaData& meta = new_file.second;
-      //   std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
-      //                   meta.fd.GetNumber(), meta.fd.GetPathId());
-      //   std::cout << " fname " << fname << std::endl;
-      // }
       for(const auto& new_file: edit.GetNewFiles()){
         const rocksdb::FileMetaData& meta = new_file.second;
-        int sst_real = TakeOneAvailableSstSlot(new_file.first, meta);
-        
+        uint64_t file_num = meta.fd.GetNumber();
+        // int sst_real = TakeOneAvailableSstSlot(new_file.first, meta);
+        int sst_real = added_[file_num];
+       
         rocksdb::DirectReadKBytes(fs_, sst_real, 32, db_path_.path + "/");
-        std::string fname = rocksdb::TableFileName(ioptions_->cf_paths,
-                        meta.fd.GetNumber(), meta.fd.GetPathId());
+        std::string fname = rocksdb::TableFileName(ioptions_->cf_paths, file_num, meta.fd.GetPathId());
         // update secondary's view of sst files
         // std::cout << " Link " << sst_real << " to " << fname << std::endl;
         ios = fs_->LinkFile(db_path_.path + "/" + std::to_string(sst_real), fname, rocksdb::IOOptions(), nullptr);
@@ -517,7 +520,8 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
           if(ios.IsIOError()){
             std::cerr << "[ File Deletion Failed ]:" <<  file_number << std::endl;
           }else if(ios.ok()){
-            FreeSstSlot(delete_file.second);
+            std::cout << "[ File Deletion] : " << sst_file_name << std::endl;
+            // FreeSstSlot(delete_file.second);
           }
         }else {
           if (ios.IsNotFound()){
@@ -535,19 +539,18 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
       rocksdb::JSONWriter jw;
 
       json j_reply;
+      j_reply["Id"] = request_id_;
       if(s_.ok()){
-        jw << "Status" << "Succeeds";
+        jw << "Status" << "Ok";
         
         if(!is_flush_ && !is_trivial_move_compaction_){
-          jw << "Type" << "FullCompaction";
-          jw << "DeletedFiles";
+          jw << "Type" << "Full";
+          jw << "Deleted";
           jw.StartArray();
 
           assert(!deleted_files_.empty());
           for (const auto& deleted_file : deleted_files_) {
-            jw.StartArrayedObject();
-            jw << "FileNumber" << deleted_file;
-            jw.EndArrayedObject();
+            jw << deleted_file;
           }
 
           jw.EndArray();
@@ -607,7 +610,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     
     rocksdb::FileSystem* fs_;
 
-    std::atomic<uint64_t> log_apply_counter_;
+    std::atomic<uint64_t> log_apply_counter_{0};
 
     // client for making Sync rpc call to downstream node
     std::shared_ptr<SyncClient> sync_client_;
@@ -629,6 +632,11 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     // get the next file num of secondary, which is the maximum file number of the AddedFiles in the shipped vesion edit plus 1
     int next_file_num_ = 0;
 
+    // id for a Sync Request, assign it to the reply id
+    uint64_t request_id_;
+
     // files that get deleted in a full compaction
     std::vector<uint64_t> deleted_files_;
+
+    std::unordered_map<uint64_t ,int> added_;
 };

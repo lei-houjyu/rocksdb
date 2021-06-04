@@ -13,6 +13,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
 #include "db/blob/blob_file_addition.h"
 #include "db/blob/blob_file_garbage.h"
@@ -375,6 +376,16 @@ class VersionEdit {
   using DeletedFiles = std::set<std::pair<int, uint64_t>>;
   const DeletedFiles& GetDeletedFiles() const { return deleted_files_; }
 
+  using FileSlots = std::unordered_map<uint64_t, int>;
+  // FileSlots& GetFileSlots() { return slots_; }
+  int GetSlot(const uint64_t file_num) const {
+    return slots_.at(file_num);
+  }
+
+  void TrackSlot(uint64_t file_num, int slot){
+    slots_.emplace(file_num, slot);
+  }
+
   // Add the specified table file at the specified level.
   // REQUIRES: This version has not been saved (see VersionSet::SaveTo)
   // REQUIRES: "smallest" and "largest" are smallest and largest keys in file
@@ -586,6 +597,8 @@ class VersionEdit {
   bool has_last_sequence_ = false;
 
   DeletedFiles deleted_files_;
+  // keep a mapping between the file and its occupied slot
+  FileSlots slots_;
   NewFiles new_files_;
 
   BlobFileAdditions blob_file_additions_;

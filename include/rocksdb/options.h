@@ -30,6 +30,7 @@
 #include "rocksdb/write_buffer_manager.h"
 //RUBBLE 
 #include "rubble/sync_client.h"
+#include "rubble/sst_bit_map.h"
 
 #ifdef max
 #undef max
@@ -1225,6 +1226,9 @@ struct DBOptions {
 
   // a client used to do Sync rpc to downstream node by the non-tail node
   std::shared_ptr<SyncClient> sync_client = nullptr;
+
+  // primary's view of secondary's slots, maintains a mapping between slot and sst file
+  std::shared_ptr<SstBitMap> sst_bit_map = nullptr; 
 };
 
 // Options to control the behavior of a database (passed to DB::Open)

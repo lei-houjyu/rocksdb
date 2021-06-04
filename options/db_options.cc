@@ -598,7 +598,8 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       target_address(options.target_address),
       remote_sst_dir(options.remote_sst_dir),
       preallocated_sst_pool_size(options.preallocated_sst_pool_size),
-      sync_client(options.sync_client)
+      sync_client(options.sync_client),
+      sst_bit_map(options.sst_bit_map)
        {
          // all nodes except tail needs to do Sync rpc and forward operations to target_address
         //  std::cout << "is_rubble: " << is_rubble << " is_tail : " << is_tail 

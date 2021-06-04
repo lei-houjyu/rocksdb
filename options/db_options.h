@@ -9,8 +9,6 @@
 #include <vector>
 
 #include "rocksdb/options.h"
-//RUBBLE 
-#include "rubble/sync_client.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -103,6 +101,7 @@ struct ImmutableDBOptions {
   std::string remote_sst_dir;
   int preallocated_sst_pool_size;
   std::shared_ptr<SyncClient> sync_client;
+  std::shared_ptr<SstBitMap> sst_bit_map;
 };
 
 struct MutableDBOptions {

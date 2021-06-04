@@ -1530,21 +1530,30 @@ Status CompactionJob::InstallCompactionResults(
 
     for (const auto& sub_compact : compact_->sub_compact_states) {
       for (const auto& out : sub_compact.outputs) {
+        uint64_t file_num = out.meta.fd.GetNumber();
         std::string fname = TableFileName(sub_compact.compaction->immutable_cf_options()->cf_paths,
-                        out.meta.fd.GetNumber(), out.meta.fd.GetPathId());
+                            file_num, out.meta.fd.GetPathId());
         uint64_t size = out.meta.fd.GetFileSize();
-        int sst_real = GetTakenSlot(out.meta.fd.GetNumber());
-        fprintf(stdout, "[File Shipped] : (l%u, %lu, %lu) , take slot : %u\n", compaction->output_level(), out.meta.fd.GetNumber(), size, sst_real);
+        int slot_num = db_options_.sst_bit_map->GetFileSlotNum(file_num);
+        edit->TrackSlot(file_num, slot_num);
+        // int sst_real = GetTakenSlot(out.meta.fd.GetNumber());
+        // fprintf(stdout, "[File Shipped] : (l%u, %lu, %lu) , take slot : %u\n", compaction->output_level(), file_num, size, slot_num);
       }
     }
 
-    std::cout << "[File Deletion] : ";
+    // std::cout << "[File Deletion] : ";
+    std::set<uint64_t> slots_to_free;
     for (unsigned int i = 0; i < compact_->compaction->num_input_levels(); i++){
       for (auto f : *(compact_->compaction->inputs(i))){
-        std::cout << "(l" << compact_->compaction->level(i) << ", " << f->fd.GetNumber() << " ) ";
+        slots_to_free.insert(f->fd.GetNumber());
+        // uint64_t file_num = f->fd.GetNumber();
+        // int slot = db_options_.sst_bit_map->FreeSlot(file_num);
+        // edit->TrackSlot(file_num, slot);
+        // std::cout << "(l" << compact_->compaction->level(i) << ", " << f->fd.GetNumber() << ", " << slot  << " ) ";
       }
     }
-    std::cout << "\n";
+    db_options_.sst_bit_map->FreeSlot(slots_to_free);
+    // std::cout << "\n";
   }
   
   return versions_->LogAndApply(compaction->column_family_data(),
@@ -1603,10 +1612,12 @@ Status CompactionJob::OpenCompactionOutputFile(
       NewWritableFile(fs_.get(), fname, &writable_file, file_options_);
   //[RUBBLE]
   if(db_options_.is_primary && db_options_.is_rubble){
-    int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, file_number);
+    int sst_real = db_options_.sst_bit_map->TakeOneAvailableSlot(file_number);
+    // int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, file_number);
     std::string r_fname = db_options_.remote_sst_dir + std::to_string(sst_real);
     //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
-    ((PosixWritableFile*)(writable_file.get()))->SetRemoteFileInfo(r_fname, &db_options_, false);
+    uint64_t buffer_size = sub_compact->compaction->mutable_cf_options()->target_file_size_base  + (1 << 20);
+    ((PosixWritableFile*)(writable_file.get()))->SetRemoteFileInfo(r_fname, &db_options_, false, true, buffer_size);
   }
 
   s = io_s;

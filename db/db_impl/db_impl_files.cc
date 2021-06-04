@@ -538,6 +538,7 @@ void DBImpl::PurgeObsoleteFiles(JobContext& state, bool schedule_only) {
     std::string dir_to_sync;
     if (type == kTableFile) {
       // evict from cache
+      // std::cout << "[RUBBLE LOG]Purge Obesolete Files :: Evict " <<  number << "\n";
       TableCache::Evict(table_cache_.get(), number);
       fname = MakeTableFileName(candidate_file.file_path, number);
       dir_to_sync = candidate_file.file_path;

@@ -56,10 +56,16 @@ class SyncClient {
     std::condition_variable cv_;
     std::atomic<bool> ready_ {true};
 
+    std::mutex read_lock_;
+    std::condition_variable cv_read_;
+    std::atomic<bool> read_ready_{true};
+
     ClientContext context_;
 
     // The bidirectional, asynchronous stream
     std::unique_ptr<ClientAsyncReaderWriter<SyncRequest, SyncReply>> stream_;
+
+    std::unique_ptr<ClientReaderWriter<SyncRequest, SyncReply>> sync_stream_;
 
     // Out of the passed in Channel comes the stub, stored here, our view of the
     // server's exposed services.

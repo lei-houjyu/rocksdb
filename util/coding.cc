@@ -137,19 +137,25 @@ void FreeSstSlot(std::set<uint64_t> file_nums){
   auto it = sst_bit_map.begin();
 
   size_t old_map_size = sst_bit_map.size();
-  size_t deleted_file_size = file_nums.size();
+  size_t num_files_to_delete = file_nums.size();
 
+  uint num_deleted_files = 0;
   for(; it != sst_bit_map.end(); ){
     if(file_nums.find(it->second) != file_nums.end()){
       // if file gets deleted, free its occupied slot
+      int file_num = it->second;
       std::cout << "Sst file num : " << it->second << " , free slot : " << it->first << std::endl;
       it = sst_bit_map.erase(it);
+      num_deleted_files++;
+      if(num_deleted_files == num_files_to_delete){
+        break;
+      }
     }else{
       it++;
     }
   }
 
-  assert(sst_bit_map.size() == old_map_size - deleted_file_size);
+  assert(sst_bit_map.size() == old_map_size - num_files_to_delete);
 }
 
 // get the slot number taken by the sst file whose file number is sst_num

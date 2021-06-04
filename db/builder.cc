@@ -140,10 +140,11 @@ Status BuildTable(
 #endif  // !NDEBUG
       IOStatus io_s = NewWritableFile(fs, fname, &file, file_options);
       if(db_options->is_primary && db_options->is_rubble){
-        int sst_real = GetAvailableSstSlot(db_options->preallocated_sst_pool_size, meta->fd.GetNumber());
+        int sst_real = db_options->sst_bit_map->TakeOneAvailableSlot(meta->fd.GetNumber());
+        // int sst_real = GetAvailableSstSlot(db_options->preallocated_sst_pool_size, meta->fd.GetNumber());
         std::string r_fname = db_options->remote_sst_dir + std::to_string(sst_real);
         //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
-        ((PosixWritableFile*)(file.get()))->SetRemoteFileInfo(r_fname, db_options, true);
+        ((PosixWritableFile*)(file.get()))->SetRemoteFileInfo(r_fname, db_options, true, false, mutable_cf_options.target_file_size_base + (1 << 20));
       }
       assert(s.ok());
       s = io_s;
@@ -171,7 +172,7 @@ Status BuildTable(
         // and we can write the sst to the local sst_dir and remote sst_dir using the same buffer when the buffer is full
         // basicall this avoids to read the table content into a buffer again since the content is already in the buffer
         // see also PosixWritableFile::Append
-        size_t buffer_size = (((mutable_cf_options.target_file_size_base >> 20) + 1) << 20);
+        size_t buffer_size = mutable_cf_options.target_file_size_base  + (1 << 20);
         file_writer->SetBufferAlignment(file_writer->writable_file()->GetRequiredBufferAlignment());
         file_writer->AllocateNewBuffer(buffer_size);
       }   

@@ -1159,11 +1159,14 @@ PosixWritableFile::PosixWritableFile(const std::string& fname, int fd,
 
 void PosixWritableFile::SetRemoteFileInfo(const std::string& r_fname, 
                                           const ImmutableDBOptions* db_options, 
-                                          bool is_flush_output_file){
-
+                                          bool is_flush_output_file, 
+                                          bool is_compact_output_file,
+                                          uint64_t buffer_size){
+  is_compact_output_file_ = is_compact_output_file;
   is_flush_output_file_ = is_flush_output_file;
   r_fname_ = r_fname;
   db_options_ = db_options;
+  buffer_size_ = buffer_size;
 }
 
 PosixWritableFile::~PosixWritableFile() {
@@ -1214,22 +1217,22 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
   }
   std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
   std::chrono::time_point<std::chrono::high_resolution_clock> end_time;
-  if(nbytes == (65 << 20)){
+  if(nbytes == buffer_size_){
     start_time = std::chrono::high_resolution_clock::now();
   }
   if (!PosixWrite(fd_, src, nbytes)) {
     return IOError("While appending to file", filename_, errno);
   }
-  if(nbytes == (65 << 20)){
+  if(nbytes == buffer_size_){
     end_time = std::chrono::high_resolution_clock::now();
     if (is_flush_output_file_){
       std::cout << "[ flush ]"; 
-    }else{
+    }else if(is_compact_output_file_){
       std::cout << "[compact]";
     }
     std::cout << " write " << (nbytes >> 20) << " MB to [local] "  <<  filename_.substr((filename_.find_last_of("/") + 1)) 
               << " ("  << std::setw(3) << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count()  << "ms) "
-              << ",to [remote]" << std::setw(3) << r_fname_.substr((r_fname_.find_last_of("/") + 1)) 
+              << ",to [remote] " << std::setw(3) << r_fname_.substr((r_fname_.find_last_of("/") + 1)) 
               << " ("  << std::setw(3) << std::chrono::duration_cast<std::chrono::milliseconds>(r_end_time - r_start_time).count() << "ms) " << std::endl;
   }
 

@@ -770,7 +770,7 @@ Version::~Version() {
   // Remove from linked list
   prev_->next_ = next_;
   next_->prev_ = prev_;
-
+  // std::cout << "[RUBBLE LOG]Version::~Version()\n";
   // Drop references to files
   for (int level = 0; level < storage_info_.num_levels_; level++) {
     for (size_t i = 0; i < storage_info_.files_[level].size(); i++) {
@@ -781,6 +781,7 @@ Version::~Version() {
         assert(cfd_ != nullptr);
         uint32_t path_id = f->fd.GetPathId();
         assert(path_id < cfd_->ioptions()->cf_paths.size());
+        // std::cout << "[RUBBLE LOG]push " << f->fd.GetNumber() << " into Obsolete_files_\n";
         vset_->obsolete_files_.push_back(
             ObsoleteFileInfo(f, cfd_->ioptions()->cf_paths[path_id].path));
       }
@@ -3776,6 +3777,7 @@ VersionSet::~VersionSet() {
   for (auto& file : obsolete_files_) {
     if (file.metadata->table_reader_handle) {
       table_cache_->Release(file.metadata->table_reader_handle);
+      std::cout << "~VersionSet() :: Evict \n";
       TableCache::Evict(table_cache_, file.metadata->fd.GetNumber());
     }
     file.DeleteMetadata();
@@ -4377,6 +4379,7 @@ Status VersionSet::LogAndApply(
   
       json j_vec(version_edits);
       j_args["EditList"] = j_vec;
+      j_args["Id"] = log_and_apply_counter.load();
       // std::cout << j_args.dump(4) << std::endl;
    
       auto start_time = std::chrono::high_resolution_clock::now();
@@ -6109,6 +6112,7 @@ void VersionSet::GetObsoleteFiles(std::vector<ObsoleteFileInfo>* files,
   std::vector<ObsoleteFileInfo> pending_files;
   for (auto& f : obsolete_files_) {
     if (f.metadata->fd.GetNumber() < min_pending_output) {
+      // std::cout << "[RUBBLE LOG]GetObsoleteFiles : " << f.metadata->fd.GetNumber() << std::endl;
       files->emplace_back(std::move(f));
     } else {
       pending_files.emplace_back(std::move(f));

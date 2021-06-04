@@ -107,7 +107,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   std::vector<rocksdb::ColumnFamilyDescriptor> loaded_cf_descs;
   rocksdb::Status s = LoadOptionsFromFile(
     /*config_options=*/config_options,
-    /*options_file_name=*/"/mnt/sdb/my_rocksdb/rubble/rocksdb_config_file.ini",
+    /*options_file_name=*/"/mnt/sdb/my_rocksdb/rubble/rubble_16gb_config.ini",
     /*db_options=*/&db_options,
     /*cf_descs=*/&loaded_cf_descs
   );
@@ -119,7 +119,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
  
   // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
   db_options.IncreaseParallelism();
-//   db_options.is_rubble=is_rubble;
+  //   db_options.is_rubble=is_rubble;
   db_options.is_primary=is_primary;
   db_options.is_tail=is_tail;
 
@@ -141,16 +141,20 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   rocksdb::ColumnFamilyOptions cf_options = loaded_cf_descs[0].options;
 
   if(db_options.is_rubble){
-     if(!db_options.is_primary){
-      db_options.use_direct_reads = true;
-     }
      if(!db_options.is_tail){
       db_options.sync_client = std::make_shared<SyncClient>(
          grpc::CreateChannel(db_options.target_address, grpc::InsecureChannelCredentials()));
      }
-    // right now, just set sst pool size to 200 if it's sufficient
+    // the sst pool size should be set to size_of_your_data/sst_file_size
     // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);
-    db_options.preallocated_sst_pool_size = 200;
+    db_options.preallocated_sst_pool_size = 400;
+    db_options.sst_bit_map = std::make_shared<SstBitMap>(db_options.preallocated_sst_pool_size);
+  }
+
+  if(!db_options.is_primary){
+     db_options.use_direct_reads = true;
+  }else{
+     db_options.use_direct_reads = false;
   }
 
   std::cout << "write_buffer_size: " << cf_options.write_buffer_size << '\n';
@@ -158,7 +162,6 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   rocksdb::Options options(db_options, cf_options);
 
   // open DB
-  // rocksdb::Status s = rocksdb::DB::Open(options, db_path, &db);
   s = rocksdb::DB::Open(options, db_path, &db);
   if(!s.ok()){
     std::cout << "DB open failed : " << s.ToString() << std::endl;
