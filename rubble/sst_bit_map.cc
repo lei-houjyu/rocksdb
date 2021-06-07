@@ -37,40 +37,24 @@ int SstBitMap::TakeOneAvailableSlot(uint64_t file_num){
 
 int SstBitMap::FreeSlot(uint64_t file_num){
     std::unique_lock<std::mutex> lk{mu_};
-    int slot_num = 0;
-    int i = 1;
-    for(; i <= size_; i++){
-        if(slots_[i] == file_num){
-            slot_num = i;
-            num_slots_taken_--;
-            slots_[i] = 0;
-            file_slots_.erase(file_num);
-            break;
-        }
-    }
-    assert(i != (size_ + 1));
+    assert(file_slots_.find(file_num) != file_slots_.end());
+    int slot_num = file_slots_[file_num];
+    num_slots_taken_--;
+    slots_[slot_num] = 0;
+    file_slots_.erase(file_num);
     return slot_num;
 }
 
 void SstBitMap::FreeSlot(std::set<uint64_t> file_nums){
     std::unique_lock<std::mutex> lk{mu_};
-    int num_slots_to_free = file_nums.size();
-    int num_slot_freed = 0;
-    
     std::cout << "Free :";
-    for(int i = 1 ; i <= size_; i++){
-        if(file_nums.find(slots_[i]) != file_nums.end()){
-            assert(slots_[i] != 0);
-            std::cout << " (" << i << "," << slots_[i] << ")";
-            uint64_t file_num = slots_[i];
-            file_slots_.erase(file_num);
-            slots_[i] = 0;
-            num_slot_freed++;
-            num_slots_taken_--;
-            if(num_slot_freed == num_slots_to_free){
-                break;
-            }
-        }
+    for(uint64_t file_num : file_nums){
+        assert(file_slots_.find(file_num) != file_slots_.end());
+        int slot_num = file_slots_[file_num];
+        std::cout << " (" << slot_num << "," << slots_[slot_num] << ")";
+        num_slots_taken_--;
+        slots_[slot_num] = 0;
+        file_slots_.erase(file_num);
     }
     std::cout << '\n';
 }
