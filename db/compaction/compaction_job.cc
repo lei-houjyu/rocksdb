@@ -1541,19 +1541,13 @@ Status CompactionJob::InstallCompactionResults(
       }
     }
 
-    // std::cout << "[File Deletion] : ";
     std::set<uint64_t> slots_to_free;
     for (unsigned int i = 0; i < compact_->compaction->num_input_levels(); i++){
       for (auto f : *(compact_->compaction->inputs(i))){
         slots_to_free.insert(f->fd.GetNumber());
-        // uint64_t file_num = f->fd.GetNumber();
-        // int slot = db_options_.sst_bit_map->FreeSlot(file_num);
-        // edit->TrackSlot(file_num, slot);
-        // std::cout << "(l" << compact_->compaction->level(i) << ", " << f->fd.GetNumber() << ", " << slot  << " ) ";
       }
     }
     db_options_.sst_bit_map->FreeSlot(slots_to_free);
-    // std::cout << "\n";
   }
   
   return versions_->LogAndApply(compaction->column_family_data(),

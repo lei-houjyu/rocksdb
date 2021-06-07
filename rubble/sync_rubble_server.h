@@ -1,9 +1,6 @@
 #pragma once
 
-#include <stdlib.h>
-#include <unistd.h>
 #include <iostream>
-#include <sstream>
 #include <iomanip>
 #include <string> 
 #include <memory>
@@ -12,10 +9,10 @@
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
-#include <grpcpp/alarm.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include "rubble_kv_store.grpc.pb.h"
-#include "sync_client.h"
+#include "reply_client.h"
+#include "forwarder.h"
 
 #include "rocksdb/db.h"
 #include "port/port_posix.h"
@@ -24,9 +21,6 @@
 #include "db/db_impl/db_impl.h"
 #include "rocksdb/slice.h"
 #include "rocksdb/options.h"
-#include "util/aligned_buffer.h"
-#include "file/read_write_util.h"
-#include "logging/event_logger.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -39,22 +33,36 @@ using grpc::Status;
 using rubble::RubbleKvStoreService;
 using rubble::SyncRequest;
 using rubble::SyncReply;
+using rubble::Op;
+using rubble::OpReply;
+using rubble::SingleOp;
+using rubble::SingleOpReply;
+using rubble::SingleOp_OpType_Name;
 
 using json = nlohmann::json;
+using std::chrono::time_point;
+using std::chrono::high_resolution_clock;
 
-//implements the Sync rpc call, if using this, server is serving DoOp requests asynchronously
-class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp<RubbleKvStoreService::Service> {
+// This service is serving DoOp and Sync both synchronously
+class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
   public:
-    explicit SyncServiceImpl(rocksdb::DB* db);
+    explicit RubbleKvServiceImpl(rocksdb::DB* db);
 
-    ~SyncServiceImpl();
-  
+    ~RubbleKvServiceImpl();
+
+  // synchronous version of DoOp
+  Status DoOp(ServerContext* context, 
+              ServerReaderWriter<OpReply, Op>* stream) override ;
+
+
   // a streaming RPC used by the non-tail node to sync Version(view of sst files) states to the downstream node 
   Status Sync(ServerContext* context, 
               ServerReaderWriter<SyncReply, SyncRequest>* stream) override;
 
 
   private:
+    // actually handle an op request
+    void HandleOp(const Op& op, OpReply* reply);
 
     // actually handle the SyncRequest
     void HandleSyncRequest(const SyncRequest* request, 
@@ -79,7 +87,7 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     rocksdb::IOStatus UpdateSstBitMapAndShipSstFiles(const rocksdb::VersionEdit& edit);
 
     // set the reply message according to the status
-    void SetReplyMessage(SyncReply* reply);
+    void SetReplyMessage(SyncReply* reply, const rocksdb::Status& s);
 
     // db instance
     rocksdb::DB* db_ = nullptr;
@@ -89,6 +97,13 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
     // db status after processing an operation
     rocksdb::Status s_;
     rocksdb::IOStatus ios_;
+
+    std::atomic<uint64_t> op_counter_{0};
+    std::shared_ptr<Channel> channel_ = nullptr;
+
+    std::shared_ptr<Forwarder> forwarder_ = nullptr;
+    // client for sending the reply back to the replicator
+    std::shared_ptr<ReplyClient> reply_client_ = nullptr;
 
     // rocksdb's version set
     rocksdb::VersionSet* version_set_;
@@ -139,6 +154,9 @@ class SyncServiceImpl final : public  RubbleKvStoreService::WithAsyncMethod_DoOp
 
     // files that get deleted in a full compaction
     std::vector<uint64_t> deleted_files_;
-
+    
+    // mapping between the added file num and its slot
     std::unordered_map<uint64_t ,int> added_;
 };
+
+

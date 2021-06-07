@@ -43,6 +43,8 @@ class Forwarder{
         request.set_value(op.value());
       }*/
       stream_->Write(op);
+      // OpReply reply;
+      // stream_->Read(&reply);
     }
   
   private:

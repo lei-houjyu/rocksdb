@@ -2,6 +2,7 @@
 #include <mutex>
 #include <atomic>
 #include <set>
+#include <unordered_map>
 
 // a circular array implementation of bit map
 class SstBitMap{
@@ -31,7 +32,11 @@ private:
 
     int size_;
 
+    //slots_[i] stores the file num that occupies slot i
     std::vector<uint64_t> slots_;
+
+    // keep track of the slot num taken by a file  
+    std::unordered_map<uint64_t, int> file_slots_;
 
     std::mutex mu_;
 };

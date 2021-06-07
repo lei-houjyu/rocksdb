@@ -1,5 +1,7 @@
 #include "util.h"
+#include "sync_rubble_server.h"
 #include "rubble_server.h"
+
 /**
  * primary/first node in the chain
  * 
@@ -21,6 +23,11 @@ int main(int argc, char** argv) {
   const std::string db_path = "/mnt/sdb/archive_dbs/primary/db";
   const std::string sst_path = "/mnt/sdb/archive_dbs/primary/sst_dir";
   rocksdb::DB* primary = GetDBInstance(db_path, sst_path, remote_sst_dir, secondary_server_address, false, true, false);
-  RunServer(primary, primary_server_address, 16);
+  bool is_async = false;
+  if(is_async){
+    RunAsyncServer(primary, primary_server_address);
+  }else{
+    RunServer(primary, primary_server_address);
+  }
   return 0;
 }

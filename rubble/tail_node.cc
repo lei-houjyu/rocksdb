@@ -11,7 +11,13 @@ int main(int argc, char** argv) {
   std::string db_path = "/mnt/sdb/archive_dbs/tail/db";
   std::string sst_path = "/mnt/sdb/archive_dbs/tail/sst_dir"; 
   rocksdb::DB* db = GetDBInstance(db_path, sst_path, "", target_addr, false, false, true);
- 
-  RunServer(db, server_addr, 16);
+  
+  bool is_async = false;
+  if(is_async){
+    RunAsyncServer(db, server_addr);
+  }else{
+    RunServer(db, server_addr);
+  }
+
   return 0;
 }

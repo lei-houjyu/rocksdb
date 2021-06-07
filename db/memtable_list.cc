@@ -465,7 +465,9 @@ Status MemTableList::TryInstallMemtableFlushResults(
 
         // [RUBBLE]
         m->edit_.MarkFlush();
-        m->edit_.TrackSlot(m->file_number_ ,vset->db_options()->sst_bit_map->GetFileSlotNum(m->file_number_));
+        if(vset->db_options()->is_rubble){
+          m->edit_.TrackSlot(m->file_number_ ,vset->db_options()->sst_bit_map->GetFileSlotNum(m->file_number_));
+        }
         edit_list.push_back(&m->edit_);
         memtables_to_flush.push_back(m);
 #ifndef ROCKSDB_LITE

@@ -7,7 +7,7 @@
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
 #include "rocksdb/utilities/options_util.h"
-#include "sync_client.h"
+#include "sync_rubble_server.h"
 
 using std::string;
 using rocksdb::LoadOptionsFromFile;
@@ -171,3 +171,17 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
   return db;
 }
 
+
+void RunServer(rocksdb::DB* db, const std::string& server_addr) {
+  
+  RubbleKvServiceImpl service(db);
+  grpc::EnableDefaultHealthCheckService(true);
+  grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+  ServerBuilder builder;
+
+  builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
+  std::cout << "Server listening on " << server_addr << std::endl;
+  builder.RegisterService(&service);
+  std::unique_ptr<Server> server(builder.BuildAndStart());
+  server->Wait();
+}

@@ -140,6 +140,9 @@ endif()
 
 set(ROCKSDB_DIR "/mnt/sdb/my_rocksdb")
 # set(ROCKSDB_DIR "{CMAKE_CURRENT_BINARY_DIR}/..")
+set(rubble_server "${ROCKSDB_DIR}/rubble/sync_rubble_server.cc")
+set(async_kv_server "${ROCKSDB_DIR}/rubble/rubble_server.cc")
+set(sync_service "${ROCKSDB_DIR}/rubble/sync_service_impl.cc")
 
 # Proto file
 get_filename_component(rubble_kv_store "${ROCKSDB_DIR}/protos/rubble_kv_store.proto" ABSOLUTE)
@@ -163,6 +166,9 @@ foreach(_target
   # replicator
   )
   add_executable(${_target} "${_target}.cc"
+    ${rubble_server}
+    ${async_kv_server}
+    ${sync_service}
   )
   target_link_libraries(${_target}
     nlohmann_json::nlohmann_json
