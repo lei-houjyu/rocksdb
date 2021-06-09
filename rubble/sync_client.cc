@@ -25,8 +25,10 @@ void SyncClient::Sync(const std::string& args){
     request.set_args(args);
     sync_stream_->Write(request);
 
-    // SyncReply reply;
-    // sync_stream_->Read(&reply);
+    SyncReply reply;
+    sync_stream_->Read(&reply);
+    // std::cout << "[Sync Reply] " << reply.message() << std::endl;
+    assert(CheckReply(reply));
     // std::cout << "thread : " << std::this_thread::get_id() << ", Ready : " << ready_.load() << std::endl;
     // if(!ready_.load()){ 
     //     std::unique_lock<std::mutex> lk{mu_};
@@ -50,6 +52,24 @@ void SyncClient::GetSyncReply() {
     // are being processed by gRPC.
 
     stream_->Read(&reply_, reinterpret_cast<void*>(Type::READ));
+}
+
+bool SyncClient::CheckReply(const SyncReply& reply){
+    assert(reply.message().compare("ok") == 0);
+    return true;
+    // auto j_reply = json::parse(reply.message());
+    // std::cout << "[Sync Reply] : " << j_reply.dump(4) << std::endl;
+    // auto reply_id = j_reply["Id"].get<uint64_t>();
+
+    // auto j_message = json::parse(j_reply["Message"].get<std::string>());
+    // if(j_message["Status"].get<std::string>().compare("Ok") == 0){
+    //     // succeeds
+    //     return true;
+    // }else{
+    //     // Sync rpc Failed for some reason
+    //     std::cout << "Sync rpc Failed : " << j_message["Reason"].get<std::string>() << std::endl;
+    //     return false;
+    // }
 }
 
 // Loop while listening for completed responses.

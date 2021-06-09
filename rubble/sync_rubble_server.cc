@@ -1,4 +1,5 @@
 #include "sync_rubble_server.h"
+#include <atomic>
 
 RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
       :db_(db), impl_((rocksdb::DBImpl*)db_), 
@@ -35,7 +36,8 @@ RubbleKvServiceImpl::~RubbleKvServiceImpl(){
     delete db_;
 }
 
-
+static std::atomic<int> op_counter{0};
+static std::atomic<int> reply_counter{0};
 Status RubbleKvServiceImpl::DoOp(ServerContext* context, 
               ServerReaderWriter<OpReply, Op>* stream) {
     // if(!op_counter_.load()){
@@ -57,31 +59,36 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     // client for sending the reply back to the replicator
     std::shared_ptr<ReplyClient> reply_client = nullptr;
     if(!db_options_->is_tail){
-        std::cout << "init the forwarder" << "\n";
-        forwarder = std::make_shared<Forwarder>(channel_);
-        // std::cout << "thread: " << map[std::this_thread::get_id()] << " Forwarded " << op_counter_ << " ops" << std::endl;
+      std::cout << "init the forwarder" << "\n";
+      forwarder = std::make_shared<Forwarder>(channel_);
+      // std::cout << "thread: " << map[std::this_thread::get_id()] << " Forwarded " << op_counter_ << " ops" << std::endl;
     }else {
-        // tail node should be responsible for sending the reply back to replicator
-        // use the sync stream to write the reply back
-        if(channel_ != nullptr){
-            std::cout << "init the reply client" << "\n";
-            reply_client = std::make_shared<ReplyClient>(channel_);
-        }
+      // tail node should be responsible for sending the reply back to replicator
+      // use the sync stream to write the reply back
+      if(channel_ != nullptr){
+        std::cout << "init the reply client" << "\n";
+        reply_client = std::make_shared<ReplyClient>(channel_);
+      }
     }
 
     Op request;
     OpReply reply;
     while (stream->Read(&request)){
-        op_counter_.fetch_add(1);
+      op_counter_.fetch_add(1);
 
-        HandleOp(request, &reply);
+      HandleOp(request, &reply);
 
-        if(forwarder != nullptr){
-            forwarder->Forward(request);
-        }
-        if(reply_client != nullptr){
-            reply_client->SendReply(reply);
-        }
+      if(forwarder != nullptr){
+        op_counter.fetch_add(1);
+        std::cout << "Forwarded " << op_counter.load() << " ops\n";
+        forwarder->Forward(request);
+      }
+      
+      if(reply_client != nullptr){
+        reply_counter.fetch_add(1);
+        std::cout << "Sent out " << reply_counter.load() << " opreplies \n";
+        reply_client->SendReply(reply);
+      }
 
         // stream->Write(reply);
     }
@@ -137,7 +144,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
         for(const auto& singleOp: op.ops()) {
           s = db_->Put(rocksdb::WriteOptions(), singleOp.key(), singleOp.value());
           if(!s.ok()){
-            std::cout << "Put Failed : " << s_.ToString() << std::endl;
+            std::cout << "Put Failed : " << s.ToString() << std::endl;
           }
           // std::cout << "Put ok\n";
           // return to replicator if tail
@@ -150,7 +157,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
               // std::cout << "Put : (" << singleOp.key() /* << " ," << op.value() */ << ")\n"; 
               singleOpReply->set_ok(true);
             }else{
-              std::cout << "Put Failed : " << s_.ToString() << std::endl;
+              std::cout << "Put Failed : " << s.ToString() << std::endl;
               singleOpReply->set_ok(false);
               singleOpReply->set_status(s.ToString());
             }
@@ -198,7 +205,7 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
     while (stream->Read(&request)) {
       SyncReply reply;
       HandleSyncRequest(&request, &reply);
-      // stream->Write(reply);
+      stream->Write(reply);
     }
     return Status::OK;
 }
@@ -375,6 +382,7 @@ void RubbleKvServiceImpl::HandleSyncRequest(const SyncRequest* request,
     }
 
     assert(s.ok());
+    reply->set_message("ok");
     // SetReplyMessage(reply, s);
 }
 
@@ -537,6 +545,9 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstBitMapAndShipSstFiles(const rock
         int sst_real = added_[file_num];
         
         rocksdb::DirectReadKBytes(fs_, sst_real, 32, db_path_.path + "/");
+
+        int len = std::to_string(file_num).length();
+        std::string sst_file_name = std::string("000000").replace(6 - len, len, std::to_string(file_num)) + ".sst";
         std::string fname = rocksdb::TableFileName(ioptions_->cf_paths, file_num, meta.fd.GetPathId());
         // update secondary's view of sst files
         // std::cout << " Link " << sst_real << " to " << fname << std::endl;
@@ -545,7 +556,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstBitMapAndShipSstFiles(const rock
             std::cout << ios.ToString() << std::endl;
             return ios;
         }else{
-            std::cout << "[create new sst]: "  << fname << " , linking to " << sst_real << std::endl;
+            std::cout << "[create new sst]: "  << sst_file_name << " , linking to " << sst_real << std::endl;
         }
         
         // tail node doesn't need to ship sst files

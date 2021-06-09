@@ -28,7 +28,7 @@ private:
     /* data */
     std::atomic<int> next_available_slot_{1};
 
-    int num_slots_taken_;
+    int num_slots_taken_ {0};
 
     int size_;
 

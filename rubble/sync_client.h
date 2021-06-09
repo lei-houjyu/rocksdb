@@ -44,6 +44,9 @@ class SyncClient {
     // read a reply back for a sync request
     void GetSyncReply();
 
+    // check the SyncReply status
+    bool CheckReply(const SyncReply& reply);
+
     // Runs a gRPC completion-queue processing thread. Checks for 'Next' tag
     // and processes them until there are no more (or when the completion queue
     // is shutdown).

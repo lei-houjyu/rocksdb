@@ -17,19 +17,31 @@ int SstBitMap::TakeOneAvailableSlot(uint64_t file_num){
 
     int slot_num = next_available_slot_.load();
     if(slots_[slot_num] != 0){
-        std::cerr << "slot " <<  slot_num << " already taken by " << slots_.at(slot_num) << std::endl;
-        std::cerr << "total " << num_slots_taken_ << " slots already taken\n";
-        assert(false);
+        int start = slot_num + 1;
+        while(start <= size_ && slots_[start] != 0){
+            start++;
+        }
+        while(start > size_ && ((start % size_) < slot_num) && (slots_[start & size_] != 0)){
+            start++;
+        }
+        if(start > size_ && ((start % size_) == slot_num)){
+            std::cerr << "total " << num_slots_taken_ << " slots already taken\n";
+            assert(false);
+        }
+    
+        slot_num = start > size_ ? start % size_ : start;
     }
     
     slots_[slot_num] = file_num;
     file_slots_.emplace(file_num, slot_num);
     // std::cout << "file " << file_num << " took slot " << next_available_slot_ << std::endl;
     num_slots_taken_++;
+    // std::cout << "num slots taken : " << num_slots_taken_ << ", file_slots size : " << file_slots_.size() << std::endl;
+    assert(static_cast<int>(file_slots_.size()) == num_slots_taken_);
     if(slot_num == size_){
         next_available_slot_.store(1);
     }else{
-        next_available_slot_.fetch_add(1);
+        next_available_slot_.store(slot_num + 1);
     }
 
     return slot_num;
@@ -56,6 +68,7 @@ void SstBitMap::FreeSlot(std::set<uint64_t> file_nums){
         slots_[slot_num] = 0;
         file_slots_.erase(file_num);
     }
+    assert(static_cast<int>(file_slots_.size()) == num_slots_taken_);
     std::cout << '\n';
 }
     
