@@ -262,9 +262,35 @@ class Op PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kOpsFieldNumber = 1,
+    kEditsFieldNumber = 2,
+    kOpsFieldNumber = 3,
+    kHasEditsFieldNumber = 1,
   };
-  // repeated .rubble.SingleOp ops = 1;
+  // repeated string edits = 2;
+  int edits_size() const;
+  private:
+  int _internal_edits_size() const;
+  public:
+  void clear_edits();
+  const std::string& edits(int index) const;
+  std::string* mutable_edits(int index);
+  void set_edits(int index, const std::string& value);
+  void set_edits(int index, std::string&& value);
+  void set_edits(int index, const char* value);
+  void set_edits(int index, const char* value, size_t size);
+  std::string* add_edits();
+  void add_edits(const std::string& value);
+  void add_edits(std::string&& value);
+  void add_edits(const char* value);
+  void add_edits(const char* value, size_t size);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>& edits() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>* mutable_edits();
+  private:
+  const std::string& _internal_edits(int index) const;
+  std::string* _internal_add_edits();
+  public:
+
+  // repeated .rubble.SingleOp ops = 3;
   int ops_size() const;
   private:
   int _internal_ops_size() const;
@@ -282,6 +308,15 @@ class Op PROTOBUF_FINAL :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOp >&
       ops() const;
 
+  // bool has_edits = 1;
+  void clear_has_edits();
+  bool has_edits() const;
+  void set_has_edits(bool value);
+  private:
+  bool _internal_has_edits() const;
+  void _internal_set_has_edits(bool value);
+  public:
+
   // @@protoc_insertion_point(class_scope:rubble.Op)
  private:
   class _Internal;
@@ -289,7 +324,9 @@ class Op PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string> edits_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOp > ops_;
+  bool has_edits_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
 };
@@ -626,9 +663,10 @@ class OpReply PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kRepliesFieldNumber = 1,
+    kRepliesFieldNumber = 2,
+    kSyncReplyFieldNumber = 1,
   };
-  // repeated .rubble.SingleOpReply replies = 1;
+  // repeated .rubble.SingleOpReply replies = 2;
   int replies_size() const;
   private:
   int _internal_replies_size() const;
@@ -646,6 +684,22 @@ class OpReply PROTOBUF_FINAL :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOpReply >&
       replies() const;
 
+  // string sync_reply = 1;
+  void clear_sync_reply();
+  const std::string& sync_reply() const;
+  void set_sync_reply(const std::string& value);
+  void set_sync_reply(std::string&& value);
+  void set_sync_reply(const char* value);
+  void set_sync_reply(const char* value, size_t size);
+  std::string* mutable_sync_reply();
+  std::string* release_sync_reply();
+  void set_allocated_sync_reply(std::string* sync_reply);
+  private:
+  const std::string& _internal_sync_reply() const;
+  void _internal_set_sync_reply(const std::string& value);
+  std::string* _internal_mutable_sync_reply();
+  public:
+
   // @@protoc_insertion_point(class_scope:rubble.OpReply)
  private:
   class _Internal;
@@ -654,6 +708,7 @@ class OpReply PROTOBUF_FINAL :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOpReply > replies_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr sync_reply_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
 };
@@ -1486,7 +1541,101 @@ class SyncReply PROTOBUF_FINAL :
 #endif  // __GNUC__
 // Op
 
-// repeated .rubble.SingleOp ops = 1;
+// bool has_edits = 1;
+inline void Op::clear_has_edits() {
+  has_edits_ = false;
+}
+inline bool Op::_internal_has_edits() const {
+  return has_edits_;
+}
+inline bool Op::has_edits() const {
+  // @@protoc_insertion_point(field_get:rubble.Op.has_edits)
+  return _internal_has_edits();
+}
+inline void Op::_internal_set_has_edits(bool value) {
+  
+  has_edits_ = value;
+}
+inline void Op::set_has_edits(bool value) {
+  _internal_set_has_edits(value);
+  // @@protoc_insertion_point(field_set:rubble.Op.has_edits)
+}
+
+// repeated string edits = 2;
+inline int Op::_internal_edits_size() const {
+  return edits_.size();
+}
+inline int Op::edits_size() const {
+  return _internal_edits_size();
+}
+inline void Op::clear_edits() {
+  edits_.Clear();
+}
+inline std::string* Op::add_edits() {
+  // @@protoc_insertion_point(field_add_mutable:rubble.Op.edits)
+  return _internal_add_edits();
+}
+inline const std::string& Op::_internal_edits(int index) const {
+  return edits_.Get(index);
+}
+inline const std::string& Op::edits(int index) const {
+  // @@protoc_insertion_point(field_get:rubble.Op.edits)
+  return _internal_edits(index);
+}
+inline std::string* Op::mutable_edits(int index) {
+  // @@protoc_insertion_point(field_mutable:rubble.Op.edits)
+  return edits_.Mutable(index);
+}
+inline void Op::set_edits(int index, const std::string& value) {
+  // @@protoc_insertion_point(field_set:rubble.Op.edits)
+  edits_.Mutable(index)->assign(value);
+}
+inline void Op::set_edits(int index, std::string&& value) {
+  // @@protoc_insertion_point(field_set:rubble.Op.edits)
+  edits_.Mutable(index)->assign(std::move(value));
+}
+inline void Op::set_edits(int index, const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  edits_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:rubble.Op.edits)
+}
+inline void Op::set_edits(int index, const char* value, size_t size) {
+  edits_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:rubble.Op.edits)
+}
+inline std::string* Op::_internal_add_edits() {
+  return edits_.Add();
+}
+inline void Op::add_edits(const std::string& value) {
+  edits_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:rubble.Op.edits)
+}
+inline void Op::add_edits(std::string&& value) {
+  edits_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:rubble.Op.edits)
+}
+inline void Op::add_edits(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  edits_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:rubble.Op.edits)
+}
+inline void Op::add_edits(const char* value, size_t size) {
+  edits_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:rubble.Op.edits)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>&
+Op::edits() const {
+  // @@protoc_insertion_point(field_list:rubble.Op.edits)
+  return edits_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>*
+Op::mutable_edits() {
+  // @@protoc_insertion_point(field_mutable_list:rubble.Op.edits)
+  return &edits_;
+}
+
+// repeated .rubble.SingleOp ops = 3;
 inline int Op::_internal_ops_size() const {
   return ops_.size();
 }
@@ -1697,7 +1846,69 @@ inline void SingleOp::set_type(::rubble::SingleOp_OpType value) {
 
 // OpReply
 
-// repeated .rubble.SingleOpReply replies = 1;
+// string sync_reply = 1;
+inline void OpReply::clear_sync_reply() {
+  sync_reply_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& OpReply::sync_reply() const {
+  // @@protoc_insertion_point(field_get:rubble.OpReply.sync_reply)
+  return _internal_sync_reply();
+}
+inline void OpReply::set_sync_reply(const std::string& value) {
+  _internal_set_sync_reply(value);
+  // @@protoc_insertion_point(field_set:rubble.OpReply.sync_reply)
+}
+inline std::string* OpReply::mutable_sync_reply() {
+  // @@protoc_insertion_point(field_mutable:rubble.OpReply.sync_reply)
+  return _internal_mutable_sync_reply();
+}
+inline const std::string& OpReply::_internal_sync_reply() const {
+  return sync_reply_.Get();
+}
+inline void OpReply::_internal_set_sync_reply(const std::string& value) {
+  
+  sync_reply_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void OpReply::set_sync_reply(std::string&& value) {
+  
+  sync_reply_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:rubble.OpReply.sync_reply)
+}
+inline void OpReply::set_sync_reply(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  sync_reply_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:rubble.OpReply.sync_reply)
+}
+inline void OpReply::set_sync_reply(const char* value,
+    size_t size) {
+  
+  sync_reply_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:rubble.OpReply.sync_reply)
+}
+inline std::string* OpReply::_internal_mutable_sync_reply() {
+  
+  return sync_reply_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* OpReply::release_sync_reply() {
+  // @@protoc_insertion_point(field_release:rubble.OpReply.sync_reply)
+  return sync_reply_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void OpReply::set_allocated_sync_reply(std::string* sync_reply) {
+  if (sync_reply != nullptr) {
+    
+  } else {
+    
+  }
+  sync_reply_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), sync_reply,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:rubble.OpReply.sync_reply)
+}
+
+// repeated .rubble.SingleOpReply replies = 2;
 inline int OpReply::_internal_replies_size() const {
   return replies_.size();
 }

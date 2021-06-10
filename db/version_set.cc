@@ -4323,6 +4323,7 @@ Status VersionSet::ProcessManifestWrites(
 }
 
 std::atomic<uint64_t> log_and_apply_counter{0};
+std::atomic<uint64_t> sync_counter{0};
 // 'datas' is gramatically incorrect. We still use this notation to indicate
 // that this variable represents a collection of column_family_data.
 Status VersionSet::LogAndApply(
@@ -4340,19 +4341,14 @@ Status VersionSet::LogAndApply(
   mu->AssertHeld();
   // RUBBLE: trigger RPC calls to downstream node to sync RocksDB states.
   if(db_options_->is_rubble && db_options_->is_primary){
-      log_and_apply_counter++;
-    
-      std::cout << "[Primary] calling Sync [" << log_and_apply_counter << "] times, ";
+    log_and_apply_counter++;
 
-      auto default_cf = GetColumnFamilySet()->GetDefault();
-      auto vstorage = default_cf->current()->storage_info();
+    // right now, only support one cloumn family(the default one)
+    assert(edit_lists.size() == 1);
 
-      MemTableList* imm = default_cf->imm();
-      MemTable* m = default_cf->mem();
-    
-      // right now, only support one cloumn family(the default one)
-      assert(edit_lists.size() == 1);
-
+    bool is_flush = edit_lists.back().back()->IsFlush();
+    if(db_options_->disallow_flush_on_secondary || (!db_options_->disallow_flush_on_secondary && !is_flush)){
+      sync_counter++;
       std::string type;
       json j_args;
       if(edit_lists.back().back()->IsFlush()){
@@ -4373,21 +4369,26 @@ Status VersionSet::LogAndApply(
 
       for (auto edit_list: edit_lists){
         for (auto e: edit_list) {
-          version_edits.emplace_back(e->DebugJSON((int) log_and_apply_counter, false));
+          version_edits.emplace_back(e->DebugJSON((int) sync_counter, false));
         }
       }
-  
       json j_vec(version_edits);
       j_args["EditList"] = j_vec;
-      j_args["Id"] = log_and_apply_counter.load();
+      j_args["Id"] = sync_counter.load();
       // std::cout << j_args.dump(4) << std::endl;
-   
-      auto start_time = std::chrono::high_resolution_clock::now();
-      assert(db_options_->sync_client != nullptr);
-      db_options_->sync_client->Sync(j_args.dump());
-      auto end_time = std::chrono::high_resolution_clock::now();
-      auto latency = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-      std::cout <<  "latency : " << latency << " us, type: " << type << std::endl;
+      if(!db_options_->piggyback_version_edits){
+        auto start_time = std::chrono::high_resolution_clock::now();
+        assert(db_options_->sync_client != nullptr);
+        std::cout << "[Primary] calling Sync [" << sync_counter << "] times, ";
+        db_options_->sync_client->Sync(j_args.dump());
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto latency = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+        std::cout <<  "latency : " << latency << " us, type: " << type << std::endl;
+      }else{
+        // std::cout << "[Primary] gererated " << size << " Version Edits " << std::endl;
+        db_options_->edits->AddEdit(std::move(j_args.dump()));
+      }
+    }
   
   }else if (db_options_->is_rubble && !db_options_->is_primary){
     std::cout << "[secondary] calling logAndApply " << std::endl;

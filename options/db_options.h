@@ -97,11 +97,15 @@ struct ImmutableDBOptions {
   bool is_rubble;
   bool is_primary;
   bool is_tail;
+  bool disallow_flush_on_secondary;
   std::string target_address;
   std::string remote_sst_dir;
   int preallocated_sst_pool_size;
+  std::shared_ptr<grpc::Channel> channel;
   std::shared_ptr<SyncClient> sync_client;
   std::shared_ptr<SstBitMap> sst_bit_map;
+  bool piggyback_version_edits;
+  std::shared_ptr<Edits> edits;
 };
 
 struct MutableDBOptions {

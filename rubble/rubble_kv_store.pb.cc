@@ -176,6 +176,8 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_rubble_5fkv_5fstore_2eproto::o
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  PROTOBUF_FIELD_OFFSET(::rubble::Op, has_edits_),
+  PROTOBUF_FIELD_OFFSET(::rubble::Op, edits_),
   PROTOBUF_FIELD_OFFSET(::rubble::Op, ops_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, _internal_metadata_),
@@ -191,6 +193,7 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_rubble_5fkv_5fstore_2eproto::o
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  PROTOBUF_FIELD_OFFSET(::rubble::OpReply, sync_reply_),
   PROTOBUF_FIELD_OFFSET(::rubble::OpReply, replies_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOpReply, _internal_metadata_),
@@ -230,13 +233,13 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_rubble_5fkv_5fstore_2eproto::o
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::rubble::Op)},
-  { 6, -1, sizeof(::rubble::SingleOp)},
-  { 15, -1, sizeof(::rubble::OpReply)},
-  { 21, -1, sizeof(::rubble::SingleOpReply)},
-  { 32, -1, sizeof(::rubble::OpReplies)},
-  { 38, -1, sizeof(::rubble::Reply)},
-  { 44, -1, sizeof(::rubble::SyncRequest)},
-  { 50, -1, sizeof(::rubble::SyncReply)},
+  { 8, -1, sizeof(::rubble::SingleOp)},
+  { 17, -1, sizeof(::rubble::OpReply)},
+  { 24, -1, sizeof(::rubble::SingleOpReply)},
+  { 35, -1, sizeof(::rubble::OpReplies)},
+  { 41, -1, sizeof(::rubble::Reply)},
+  { 47, -1, sizeof(::rubble::SyncRequest)},
+  { 53, -1, sizeof(::rubble::SyncReply)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -251,26 +254,27 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
 };
 
 const char descriptor_table_protodef_rubble_5fkv_5fstore_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\025rubble_kv_store.proto\022\006rubble\"#\n\002Op\022\035\n"
-  "\003ops\030\001 \003(\0132\020.rubble.SingleOp\"\215\001\n\010SingleO"
-  "p\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\022\n\n\002Id\030\003 \001("
-  "\004\022%\n\004type\030\004 \001(\0162\027.rubble.SingleOp.OpType"
-  "\"2\n\006OpType\022\007\n\003GET\020\000\022\007\n\003PUT\020\001\022\n\n\006DELETE\020\002"
-  "\022\n\n\006UPDATE\020\003\"1\n\007OpReply\022&\n\007replies\030\001 \003(\013"
-  "2\025.rubble.SingleOpReply\"\263\001\n\rSingleOpRepl"
-  "y\022\n\n\002ok\030\001 \001(\010\022\013\n\003key\030\002 \001(\t\022\r\n\005value\030\003 \001("
-  "\t\022\016\n\006status\030\004 \001(\t\022\n\n\002Id\030\005 \001(\003\022*\n\004type\030\006 "
-  "\001(\0162\034.rubble.SingleOpReply.OpType\"2\n\006OpT"
-  "ype\022\007\n\003GET\020\000\022\007\n\003PUT\020\001\022\n\n\006DELETE\020\002\022\n\n\006UPD"
-  "ATE\020\003\"+\n\tOpReplies\022\036\n\005reply\030\001 \003(\0132\017.rubb"
-  "le.OpReply\"\023\n\005Reply\022\n\n\002ok\030\001 \001(\010\"\033\n\013SyncR"
-  "equest\022\014\n\004args\030\001 \001(\t\"\034\n\tSyncReply\022\017\n\007mes"
-  "sage\030\001 \001(\t2\252\001\n\024RubbleKvStoreService\0224\n\004S"
-  "ync\022\023.rubble.SyncRequest\032\021.rubble.SyncRe"
-  "ply\"\000(\0010\001\022)\n\004DoOp\022\n.rubble.Op\032\017.rubble.O"
-  "pReply\"\000(\0010\001\0221\n\tSendReply\022\017.rubble.OpRep"
-  "ly\032\r.rubble.Reply\"\000(\0010\001B\034\n\nrubblejavaB\006R"
-  "ubbleP\001\242\002\003Rubb\006proto3"
+  "\n\025rubble_kv_store.proto\022\006rubble\"E\n\002Op\022\021\n"
+  "\thas_edits\030\001 \001(\010\022\r\n\005edits\030\002 \003(\t\022\035\n\003ops\030\003"
+  " \003(\0132\020.rubble.SingleOp\"\215\001\n\010SingleOp\022\013\n\003k"
+  "ey\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\022\n\n\002Id\030\003 \001(\004\022%\n\004t"
+  "ype\030\004 \001(\0162\027.rubble.SingleOp.OpType\"2\n\006Op"
+  "Type\022\007\n\003GET\020\000\022\007\n\003PUT\020\001\022\n\n\006DELETE\020\002\022\n\n\006UP"
+  "DATE\020\003\"E\n\007OpReply\022\022\n\nsync_reply\030\001 \001(\t\022&\n"
+  "\007replies\030\002 \003(\0132\025.rubble.SingleOpReply\"\263\001"
+  "\n\rSingleOpReply\022\n\n\002ok\030\001 \001(\010\022\013\n\003key\030\002 \001(\t"
+  "\022\r\n\005value\030\003 \001(\t\022\016\n\006status\030\004 \001(\t\022\n\n\002Id\030\005 "
+  "\001(\003\022*\n\004type\030\006 \001(\0162\034.rubble.SingleOpReply"
+  ".OpType\"2\n\006OpType\022\007\n\003GET\020\000\022\007\n\003PUT\020\001\022\n\n\006D"
+  "ELETE\020\002\022\n\n\006UPDATE\020\003\"+\n\tOpReplies\022\036\n\005repl"
+  "y\030\001 \003(\0132\017.rubble.OpReply\"\023\n\005Reply\022\n\n\002ok\030"
+  "\001 \001(\010\"\033\n\013SyncRequest\022\014\n\004args\030\001 \001(\t\"\034\n\tSy"
+  "ncReply\022\017\n\007message\030\001 \001(\t2\252\001\n\024RubbleKvSto"
+  "reService\0224\n\004Sync\022\023.rubble.SyncRequest\032\021"
+  ".rubble.SyncReply\"\000(\0010\001\022)\n\004DoOp\022\n.rubble"
+  ".Op\032\017.rubble.OpReply\"\000(\0010\001\0221\n\tSendReply\022"
+  "\017.rubble.OpReply\032\r.rubble.Reply\"\000(\0010\001B\034\n"
+  "\nrubblejavaB\006RubbleP\001\242\002\003Rubb\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_rubble_5fkv_5fstore_2eproto_deps[1] = {
 };
@@ -286,7 +290,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_rub
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_rubble_5fkv_5fstore_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_rubble_5fkv_5fstore_2eproto = {
-  false, false, descriptor_table_protodef_rubble_5fkv_5fstore_2eproto, "rubble_kv_store.proto", 781,
+  false, false, descriptor_table_protodef_rubble_5fkv_5fstore_2eproto, "rubble_kv_store.proto", 835,
   &descriptor_table_rubble_5fkv_5fstore_2eproto_once, descriptor_table_rubble_5fkv_5fstore_2eproto_sccs, descriptor_table_rubble_5fkv_5fstore_2eproto_deps, 8, 0,
   schemas, file_default_instances, TableStruct_rubble_5fkv_5fstore_2eproto::offsets,
   file_level_metadata_rubble_5fkv_5fstore_2eproto, 8, file_level_enum_descriptors_rubble_5fkv_5fstore_2eproto, file_level_service_descriptors_rubble_5fkv_5fstore_2eproto,
@@ -356,6 +360,7 @@ class Op::_Internal {
 
 Op::Op(::PROTOBUF_NAMESPACE_ID::Arena* arena)
   : ::PROTOBUF_NAMESPACE_ID::Message(arena),
+  edits_(arena),
   ops_(arena) {
   SharedCtor();
   RegisterArenaDtor(arena);
@@ -363,13 +368,16 @@ Op::Op(::PROTOBUF_NAMESPACE_ID::Arena* arena)
 }
 Op::Op(const Op& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
+      edits_(from.edits_),
       ops_(from.ops_) {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  has_edits_ = from.has_edits_;
   // @@protoc_insertion_point(copy_constructor:rubble.Op)
 }
 
 void Op::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Op_rubble_5fkv_5fstore_2eproto.base);
+  has_edits_ = false;
 }
 
 Op::~Op() {
@@ -403,7 +411,9 @@ void Op::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  edits_.Clear();
   ops_.Clear();
+  has_edits_ = false;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -415,16 +425,37 @@ const char* Op::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::interna
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // repeated .rubble.SingleOp ops = 1;
+      // bool has_edits = 1;
       case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          has_edits_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated string edits = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            auto str = _internal_add_edits();
+            ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+            CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "rubble.Op.edits"));
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<18>(ptr));
+        } else goto handle_unusual;
+        continue;
+      // repeated .rubble.SingleOp ops = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
           ptr -= 1;
           do {
             ptr += 1;
             ptr = ctx->ParseMessage(_internal_add_ops(), ptr);
             CHK_(ptr);
             if (!ctx->DataAvailable(ptr)) break;
-          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<10>(ptr));
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<26>(ptr));
         } else goto handle_unusual;
         continue;
       default: {
@@ -455,12 +486,28 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // repeated .rubble.SingleOp ops = 1;
+  // bool has_edits = 1;
+  if (this->has_edits() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteBoolToArray(1, this->_internal_has_edits(), target);
+  }
+
+  // repeated string edits = 2;
+  for (int i = 0, n = this->_internal_edits_size(); i < n; i++) {
+    const auto& s = this->_internal_edits(i);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      s.data(), static_cast<int>(s.length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "rubble.Op.edits");
+    target = stream->WriteString(2, s, target);
+  }
+
+  // repeated .rubble.SingleOp ops = 3;
   for (unsigned int i = 0,
       n = static_cast<unsigned int>(this->_internal_ops_size()); i < n; i++) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(1, this->_internal_ops(i), target, stream);
+      InternalWriteMessage(3, this->_internal_ops(i), target, stream);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -479,11 +526,24 @@ size_t Op::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // repeated .rubble.SingleOp ops = 1;
+  // repeated string edits = 2;
+  total_size += 1 *
+      ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(edits_.size());
+  for (int i = 0, n = edits_.size(); i < n; i++) {
+    total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+      edits_.Get(i));
+  }
+
+  // repeated .rubble.SingleOp ops = 3;
   total_size += 1UL * this->_internal_ops_size();
   for (const auto& msg : this->ops_) {
     total_size +=
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
+  }
+
+  // bool has_edits = 1;
+  if (this->has_edits() != 0) {
+    total_size += 1 + 1;
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -517,7 +577,11 @@ void Op::MergeFrom(const Op& from) {
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  edits_.MergeFrom(from.edits_);
   ops_.MergeFrom(from.ops_);
+  if (from.has_edits() != 0) {
+    _internal_set_has_edits(from._internal_has_edits());
+  }
 }
 
 void Op::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
@@ -541,7 +605,9 @@ bool Op::IsInitialized() const {
 void Op::InternalSwap(Op* other) {
   using std::swap;
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  edits_.InternalSwap(&other->edits_);
   ops_.InternalSwap(&other->ops_);
+  swap(has_edits_, other->has_edits_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata Op::GetMetadata() const {
@@ -877,11 +943,17 @@ OpReply::OpReply(const OpReply& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
       replies_(from.replies_) {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  sync_reply_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from._internal_sync_reply().empty()) {
+    sync_reply_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_sync_reply(),
+      GetArena());
+  }
   // @@protoc_insertion_point(copy_constructor:rubble.OpReply)
 }
 
 void OpReply::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_OpReply_rubble_5fkv_5fstore_2eproto.base);
+  sync_reply_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
 OpReply::~OpReply() {
@@ -892,6 +964,7 @@ OpReply::~OpReply() {
 
 void OpReply::SharedDtor() {
   GOOGLE_DCHECK(GetArena() == nullptr);
+  sync_reply_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
 void OpReply::ArenaDtor(void* object) {
@@ -916,6 +989,7 @@ void OpReply::Clear() {
   (void) cached_has_bits;
 
   replies_.Clear();
+  sync_reply_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -927,16 +1001,25 @@ const char* OpReply::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::in
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // repeated .rubble.SingleOpReply replies = 1;
+      // string sync_reply = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+          auto str = _internal_mutable_sync_reply();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "rubble.OpReply.sync_reply"));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated .rubble.SingleOpReply replies = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
           ptr -= 1;
           do {
             ptr += 1;
             ptr = ctx->ParseMessage(_internal_add_replies(), ptr);
             CHK_(ptr);
             if (!ctx->DataAvailable(ptr)) break;
-          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<10>(ptr));
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<18>(ptr));
         } else goto handle_unusual;
         continue;
       default: {
@@ -967,12 +1050,22 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // repeated .rubble.SingleOpReply replies = 1;
+  // string sync_reply = 1;
+  if (this->sync_reply().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_sync_reply().data(), static_cast<int>(this->_internal_sync_reply().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "rubble.OpReply.sync_reply");
+    target = stream->WriteStringMaybeAliased(
+        1, this->_internal_sync_reply(), target);
+  }
+
+  // repeated .rubble.SingleOpReply replies = 2;
   for (unsigned int i = 0,
       n = static_cast<unsigned int>(this->_internal_replies_size()); i < n; i++) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(1, this->_internal_replies(i), target, stream);
+      InternalWriteMessage(2, this->_internal_replies(i), target, stream);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -991,11 +1084,18 @@ size_t OpReply::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // repeated .rubble.SingleOpReply replies = 1;
+  // repeated .rubble.SingleOpReply replies = 2;
   total_size += 1UL * this->_internal_replies_size();
   for (const auto& msg : this->replies_) {
     total_size +=
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
+  }
+
+  // string sync_reply = 1;
+  if (this->sync_reply().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_sync_reply());
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -1030,6 +1130,9 @@ void OpReply::MergeFrom(const OpReply& from) {
   (void) cached_has_bits;
 
   replies_.MergeFrom(from.replies_);
+  if (from.sync_reply().size() > 0) {
+    _internal_set_sync_reply(from._internal_sync_reply());
+  }
 }
 
 void OpReply::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
@@ -1054,6 +1157,7 @@ void OpReply::InternalSwap(OpReply* other) {
   using std::swap;
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   replies_.InternalSwap(&other->replies_);
+  sync_reply_.Swap(&other->sync_reply_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata OpReply::GetMetadata() const {

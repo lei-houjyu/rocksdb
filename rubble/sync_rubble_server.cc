@@ -9,6 +9,8 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
        is_rubble_(db_options_->is_rubble),
        is_head_(db_options_->is_primary),
        is_tail_(db_options_->is_tail),
+       piggyback_edits_(db_options_->piggyback_version_edits),
+       edits_(db_options_->edits),
        db_path_(db_options_->db_paths.front()),
        sync_client_(db_options_->sync_client),
        column_family_set_(version_set_->GetColumnFamilySet()),
@@ -16,19 +18,19 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
        ioptions_(default_cf_->ioptions()),
        cf_options_(default_cf_->GetCurrentMutableCFOptions()),
        fs_(ioptions_->fs){
-         if(is_rubble_ && !is_head_){
-           std::cout << "init sync_service --- is_rubble: " << is_rubble_ << "; is_head: " << is_head_ << std::endl;
-           ios_ = CreateSstPool();
-           if(!ios_.ok()){
-             std::cout << "allocate sst pool failed \n";
-             assert(false);
-           }
-           std::cout << "[secondary] sst pool allocation finished" << std::endl;
-         }
+        if(is_rubble_ && !is_head_){
+          std::cout << "init sync_service --- is_rubble: " << is_rubble_ << "; is_head: " << is_head_ << std::endl;
+          ios_ = CreateSstPool();
+          if(!ios_.ok()){
+            std::cout << "allocate sst pool failed \n";
+            assert(false);
+          }
+          std::cout << "[secondary] sst pool allocation finished" << std::endl;
+        }
         std::cout << "target address : " << db_options_->target_address << std::endl;
         if(db_options_->target_address != ""){
-            channel_ = grpc::CreateChannel(db_options_->target_address, grpc::InsecureChannelCredentials());
-            assert(channel_ != nullptr);
+          channel_ = db_options_->channel;
+          assert(channel_ != nullptr);
         }
     };
 
@@ -76,11 +78,34 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     while (stream->Read(&request)){
       op_counter_.fetch_add(1);
 
+      // if there is version edits piggybacked in the DoOp request, apply those edits first
+      if(request.has_edits()){
+        for(int i = 0; i < request.edits_size(); i++){
+          std::string edit = request.edits(i);
+          ApplyVersionEdits(edit);
+        }
+      }
+
+      // handle DoOp request
       HandleOp(request, &reply);
 
       if(forwarder != nullptr){
         op_counter.fetch_add(1);
         std::cout << "Forwarded " << op_counter.load() << " ops\n";
+        if(piggyback_edits_ && is_rubble_ && is_head_){
+          std::vector<std::string> edits;
+          edits_->GetEdits(edits);
+          if(edits.size() != 0){
+            std::cout << "[primary] Got " << edits.size() << " new version edits\n"; 
+            // assert(edits.size() == 1);
+            request.set_has_edits(true);
+            for(auto edit : edits){
+              request.add_edits(std::move(edit));
+            }
+          }else{
+            request.set_has_edits(false);
+          }
+        }
         forwarder->Forward(request);
       }
       
@@ -90,7 +115,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
         reply_client->SendReply(reply);
       }
 
-        // stream->Write(reply);
+      // stream->Write(reply);
     }
 
     return Status::OK;
@@ -145,6 +170,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
           s = db_->Put(rocksdb::WriteOptions(), singleOp.key(), singleOp.value());
           if(!s.ok()){
             std::cout << "Put Failed : " << s.ToString() << std::endl;
+            assert(false);
           }
           // std::cout << "Put ok\n";
           // return to replicator if tail
@@ -198,7 +224,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     }
 }
 
-    // a streaming RPC used by the non-tail node to sync Version(view of sst files) states to the downstream node 
+// a streaming RPC used by the non-tail node to sync Version(view of sst files) states to the downstream node 
 Status RubbleKvServiceImpl::Sync(ServerContext* context, 
               ServerReaderWriter<SyncReply, SyncRequest>* stream) {
     SyncRequest request;
@@ -210,9 +236,16 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
     return Status::OK;
 }
 
-  // actually handle the SyncRequest
 void RubbleKvServiceImpl::HandleSyncRequest(const SyncRequest* request, 
                           SyncReply* reply) {
+      
+  std::string args = request->args();
+  reply->set_message(ApplyVersionEdits(args));
+}
+
+// Update the secondary's states by applying the version edits
+// and ship sst to the downstream node if necessary
+std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
     log_apply_counter_++;
     std::cout << " --------[Secondary] Accepting Sync RPC " << log_apply_counter_.load() << " th times --------- \n";
     // example args json :
@@ -233,9 +266,6 @@ void RubbleKvServiceImpl::HandleSyncRequest(const SyncRequest* request,
     //     ]
     // }
 
-    std::string args = request->args();
-    // std::cout << "entire args " << std::endl;
-    // std::cout << args << std::endl;
     const json j_args = json::parse(args);
     // std::cout << j_args.dump(4) << std::endl;
 
@@ -266,10 +296,10 @@ void RubbleKvServiceImpl::HandleSyncRequest(const SyncRequest* request,
     if(!is_trivial_move_compaction_){
       for(const auto& edit: edit_list){
         // this function is called by secondary nodes in the chain in rubble
-        ios_ = UpdateSstBitMapAndShipSstFiles(*edit);
+        ios_ = UpdateSstViewAndShipSstFiles(*edit);
         assert(ios_.ok());
       }
-      if(!is_tail_){
+      if(!is_tail_ && !piggyback_edits_){
         // non-tail node should also issue Sync rpc call to downstream node
         sync_client_->Sync(args);
         // std::cout << "[ Reply Status ]: " << sync_reply << std::endl;
@@ -382,7 +412,7 @@ void RubbleKvServiceImpl::HandleSyncRequest(const SyncRequest* request,
     }
 
     assert(s.ok());
-    reply->set_message("ok");
+    return s.ToString();
     // SetReplyMessage(reply, s);
 }
 
@@ -535,7 +565,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::CreateSstPool(){
  * @param edit The version edit received from the priamry 
  * 
  */
-rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstBitMapAndShipSstFiles(const rocksdb::VersionEdit& edit){
+rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksdb::VersionEdit& edit){
 
     rocksdb::IOStatus ios;
     for(const auto& new_file: edit.GetNewFiles()){

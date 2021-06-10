@@ -31,6 +31,7 @@
 //RUBBLE 
 #include "rubble/sync_client.h"
 #include "rubble/sst_bit_map.h"
+#include "rubble/edits.h"
 
 #ifdef max
 #undef max
@@ -1212,6 +1213,10 @@ struct DBOptions {
   // tail node is responsible for sending the true reply back to the replicator 
   bool is_tail = false;
 
+  // On rubble mode, if this is set to false, secondary is doing flush and not doing compaction
+  // if set to true, both flush and compaction on secondary nodes are disabled
+  bool disallow_flush_on_secondary = true;
+
   // downstream's server address to an upstream node, all nodes have a target_address 
   // example string : 10.10.1.2:50051
   std::string target_address = "";
@@ -1222,13 +1227,29 @@ struct DBOptions {
   //secondary node's number of preallocated sst files 
   //right now just set to a static number, should change to 
   //be set dynamically to DbPath.target_size/write_buffer_size
-  int preallocated_sst_pool_size;
+  int preallocated_sst_pool_size = 0;
+
+  // grpc channel 
+  std::shared_ptr<grpc::Channel> channel = nullptr;
 
   // a client used to do Sync rpc to downstream node by the non-tail node
   std::shared_ptr<SyncClient> sync_client = nullptr;
 
   // primary's view of secondary's slots, maintains a mapping between slot and sst file
   std::shared_ptr<SstBitMap> sst_bit_map = nullptr; 
+
+  // if set to true, piggyback the version edits in the normal doOp requests
+  // instead of calling the Sync rpc 
+  bool piggyback_version_edits = false;
+
+  // depends on the flag piggyback version edits, if set to true
+  // primary node will store the new generated version_edits in this vector
+  // when a normal doOp request arrives at the primary node and gets processed
+  // it will then check if there is new generated version edits in the primary node
+  // if there is, those edits will gets piggybacked in the normal doOp request 
+  // and gets forwarded to the secondary node together, then secondary will apply
+  // the version edits and server normal doOp requests
+  std::shared_ptr<Edits> edits = nullptr;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)

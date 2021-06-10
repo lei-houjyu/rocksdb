@@ -21,7 +21,9 @@ service RubbleKvStoreService {
 }
 
 message Op {
-  repeated SingleOp ops = 1;
+  bool has_edits = 1;
+  repeated string edits = 2;
+  repeated SingleOp ops = 3;
 }
 
 // operation to perform on a db
@@ -42,7 +44,8 @@ message SingleOp{
 }
 
 message OpReply {
-  repeated SingleOpReply replies = 1;
+  string sync_reply = 1;
+  repeated SingleOpReply replies = 2;
 }
 
 message SingleOpReply{

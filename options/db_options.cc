@@ -595,15 +595,16 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       is_rubble(options.is_rubble),
       is_primary(options.is_primary),
       is_tail(options.is_tail),
+      disallow_flush_on_secondary(options.disallow_flush_on_secondary),
       target_address(options.target_address),
       remote_sst_dir(options.remote_sst_dir),
       preallocated_sst_pool_size(options.preallocated_sst_pool_size),
+      channel(options.channel),
       sync_client(options.sync_client),
-      sst_bit_map(options.sst_bit_map)
-       {
-         // all nodes except tail needs to do Sync rpc and forward operations to target_address
-        //  std::cout << "is_rubble: " << is_rubble << " is_tail : " << is_tail 
-        //             << " preallocated sst pool size : " << options.preallocated_sst_pool_size << std::endl;
+      sst_bit_map(options.sst_bit_map),
+      piggyback_version_edits(options.piggyback_version_edits),
+      edits(options.edits)
+      {
         if(is_rubble && !is_tail){
           if(remote_sst_dir.back() != '/'){
             remote_sst_dir.append("/");

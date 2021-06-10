@@ -67,6 +67,10 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     // actually handle the SyncRequest
     void HandleSyncRequest(const SyncRequest* request, 
                             SyncReply* reply);
+
+    // calling UpdateSstView and logAndApply
+    std::string ApplyVersionEdits(const std::string& args);
+
     // every time server accepts a Sync rpc, needs to reset a few variables
     void ResetStates();
 
@@ -84,7 +88,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
      * @param edit The version edit received from the priamry 
      * 
      */
-    rocksdb::IOStatus UpdateSstBitMapAndShipSstFiles(const rocksdb::VersionEdit& edit);
+    rocksdb::IOStatus UpdateSstViewAndShipSstFiles(const rocksdb::VersionEdit& edit);
 
     // set the reply message according to the status
     void SetReplyMessage(SyncReply* reply, const rocksdb::Status& s);
@@ -132,11 +136,14 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     // client for making Sync rpc call to downstream node
     std::shared_ptr<SyncClient> sync_client_;
 
+    std::shared_ptr<Edits> edits_;
+
     // is rubble mode? If set to false, server runs a vanilla rocksdb
     bool is_rubble_ = false;
     bool is_head_ = false;
     bool is_tail_ = false;
 
+    bool  piggyback_edits_ = false;
     /* variables below are used for Sync method */
     // if true, means version edit received indicates a flush job
     bool is_flush_ = false; 

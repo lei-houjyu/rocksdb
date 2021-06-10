@@ -570,7 +570,10 @@ Status CompactionJob::Run() {
   TEST_SYNC_POINT("CompactionJob::Run():Start");
   log_buffer_->FlushBufferToLog();
   LogCompaction();
-
+  if(db_options_.is_rubble && !db_options_.is_primary){
+    std::cerr << "compaction is not disabled on the secondary in rubble\n";
+    assert(false);
+  }
   const size_t num_threads = compact_->sub_compact_states.size();
   assert(num_threads > 0);
   const uint64_t start_micros = env_->NowMicros();

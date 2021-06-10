@@ -1037,7 +1037,8 @@ list(APPEND SOURCES
     rubble/rubble_kv_store.grpc.pb.cc
     rubble/rubble_kv_store.pb.cc
     rubble/sync_client.cc
-    rubble/sst_bit_map.cc) 
+    rubble/sst_bit_map.cc
+    rubble/edits.cc) 
 # RUBBLE END
 
 # Typically you don't care so much for a third party library's tests to be
