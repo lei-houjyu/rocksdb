@@ -3,11 +3,12 @@
 #include <atomic>
 #include <set>
 #include <unordered_map>
+#include <rocksdb/env.h>
 
 // a circular array implementation of bit map
 class SstBitMap{
 public:
-    SstBitMap(int pool_size);
+    SstBitMap(int pool_size, std::shared_ptr<rocksdb::Logger> logger = nullptr);
     
     // take one slot for a specific file
     int TakeOneAvailableSlot(uint64_t file_num);
@@ -39,4 +40,6 @@ private:
     std::unordered_map<uint64_t, int> file_slots_;
 
     std::mutex mu_;
+
+    std::shared_ptr<rocksdb::Logger> logger_;
 };

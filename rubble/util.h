@@ -145,9 +145,36 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    }
 
    if(db_options.is_rubble){
+      std::string rubble_info_log_fname;
+      std::string rubble_log_path {"/mnt/sdb/my_rocksdb/rubble/log"};
+      std::shared_ptr<rocksdb::Logger> logger = nullptr;
+      db_options.env = rocksdb::Env::Default();
+      db_options.env->CreateDirIfMissing(rubble_log_path).PermitUncheckedError(); 
+      if(db_options.is_primary){
+         rubble_info_log_fname = rubble_log_path.append("/primary");
+      }else if(db_options.is_tail){
+         rubble_info_log_fname = rubble_log_path.append("/tail");
+      }else{
+         rubble_info_log_fname = rubble_log_path.append("/secondary");
+      }
+
+      rocksdb::Status s = rocksdb::NewEnvLogger(rubble_info_log_fname, db_options.env, &logger);
+      if (logger.get() != nullptr) {
+         logger->SetInfoLogLevel(db_options.info_log_level);
+      }
+      if(!s.ok()){
+         std::cout << "Error creating log : " << s.ToString() << std::endl;
+         assert(false);
+         logger = nullptr;
+      }
+
+      db_options.rubble_info_log = logger;
+      //ignore this flag for now, always set to true.
       db_options.disallow_flush_on_secondary = true;
-      db_options.piggyback_version_edits = false;
+
+      db_options.piggyback_version_edits = true;
       db_options.edits = std::make_shared<Edits>();
+
       if(!db_options.is_tail && !db_options.piggyback_version_edits){
          assert(db_options.target_address != "");
          db_options.sync_client = std::make_shared<SyncClient>(db_options.channel);
@@ -156,7 +183,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       // set to 450 for 5GB db and 16MB sst_file_size
       db_options.preallocated_sst_pool_size = 450;
       // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);
-      db_options.sst_bit_map = std::make_shared<SstBitMap>(db_options.preallocated_sst_pool_size);
+      db_options.sst_bit_map = std::make_shared<SstBitMap>(db_options.preallocated_sst_pool_size, db_options.rubble_info_log);
    }
 
    if(!db_options.is_primary){
@@ -180,7 +207,6 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       std::cout << "DB open failed : " << s.ToString() << std::endl;
    }
    assert(s.ok());
-
    return db;
 }
 

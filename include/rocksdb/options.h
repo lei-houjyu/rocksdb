@@ -1202,6 +1202,8 @@ struct DBOptions {
   std::string db_host_id = kHostnameForDbHostId;
 
   //RUBBLE
+  std::shared_ptr<Logger> rubble_info_log;
+
   bool is_rubble = false;
 
   // used when rubble mode is enabled

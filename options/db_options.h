@@ -94,6 +94,7 @@ struct ImmutableDBOptions {
   bool allow_data_in_errors;
   std::string db_host_id;
   //RUBBLE
+  std::shared_ptr<Logger> rubble_info_log;
   bool is_rubble;
   bool is_primary;
   bool is_tail;

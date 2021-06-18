@@ -1,9 +1,10 @@
 #include "sst_bit_map.h"
 #include <iostream>
 #include <assert.h>
+#include <logging/logging.h>
 
-SstBitMap::SstBitMap(int pool_size)
-    :size_(pool_size){
+SstBitMap::SstBitMap(int pool_size, std::shared_ptr<rocksdb::Logger> logger)
+    :size_(pool_size), logger_(logger){
         slots_.reserve(size_ + 1);
         slots_.assign(size_ + 1, 0);
     }
@@ -59,17 +60,15 @@ int SstBitMap::FreeSlot(uint64_t file_num){
 
 void SstBitMap::FreeSlot(std::set<uint64_t> file_nums){
     std::unique_lock<std::mutex> lk{mu_};
-    std::cout << "Free :";
     for(uint64_t file_num : file_nums){
         assert(file_slots_.find(file_num) != file_slots_.end());
         int slot_num = file_slots_[file_num];
-        std::cout << " (" << slot_num << "," << slots_[slot_num] << ")";
+        RUBBLE_LOG_INFO(logger_, "Free Slot (%d , %lu) \n", slot_num, slots_[slot_num]);
         num_slots_taken_--;
         slots_[slot_num] = 0;
         file_slots_.erase(file_num);
     }
     assert(static_cast<int>(file_slots_.size()) == num_slots_taken_);
-    std::cout << '\n';
 }
     
 uint64_t SstBitMap::GetSlotFileNum(int slot_num){

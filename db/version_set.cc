@@ -4342,13 +4342,20 @@ Status VersionSet::LogAndApply(
   // RUBBLE: trigger RPC calls to downstream node to sync RocksDB states.
   if(db_options_->is_rubble && db_options_->is_primary){
     log_and_apply_counter++;
+    auto default_cf = GetColumnFamilySet()->GetDefault();
+    auto vstorage = default_cf->current()->storage_info();
+    MemTableList* imm = default_cf->imm();
 
+    ROCKS_LOG_INFO(db_options_->rubble_info_log,
+                   "----------- Before logAndApply ( ImmutableList : %s ) ----------------\n",
+                    json::parse(imm->DebugJson()).dump(4).c_str());
     // right now, only support one cloumn family(the default one)
     assert(edit_lists.size() == 1);
 
     bool is_flush = edit_lists.back().back()->IsFlush();
+    // ignore this flag for now
     if(db_options_->disallow_flush_on_secondary || (!db_options_->disallow_flush_on_secondary && !is_flush)){
-      sync_counter++;
+      sync_counter.fetch_add(1);
       std::string type;
       json j_args;
       if(edit_lists.back().back()->IsFlush()){
@@ -4363,7 +4370,10 @@ Status VersionSet::LogAndApply(
       if(type.empty()){
         type = "compact";
       }
-
+      ROCKS_LOG_INFO(db_options_->rubble_info_log, 
+                    "[Primary] calling logAndApply [%" PRIu64 "] times, type : %s \n",
+                     sync_counter.load(), type.c_str());
+   
       j_args["NextFileNum"] = next_file_number_.load();
       std::vector<std::string> version_edits;
 
@@ -4375,7 +4385,7 @@ Status VersionSet::LogAndApply(
       json j_vec(version_edits);
       j_args["EditList"] = j_vec;
       j_args["Id"] = sync_counter.load();
-      // std::cout << j_args.dump(4) << std::endl;
+    
       if(!db_options_->piggyback_version_edits){
         auto start_time = std::chrono::high_resolution_clock::now();
         assert(db_options_->sync_client != nullptr);
@@ -4385,13 +4395,22 @@ Status VersionSet::LogAndApply(
         auto latency = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
         std::cout <<  "latency : " << latency << " us, type: " << type << std::endl;
       }else{
-        // std::cout << "[Primary] gererated " << size << " Version Edits " << std::endl;
+        ROCKS_LOG_INFO(db_options_->rubble_info_log, "[Primary] : %s \n", j_args.dump(4).c_str());
         db_options_->edits->AddEdit(std::move(j_args.dump()));
       }
     }
-  
   }else if (db_options_->is_rubble && !db_options_->is_primary){
-    std::cout << "[secondary] calling logAndApply " << std::endl;
+    assert(edit_lists.size() == 1);
+    int num_edits = 0;
+    for (const auto& elist : edit_lists) {
+      num_edits += static_cast<int>(elist.size());
+    }
+    ROCKS_LOG_INFO(db_options_->rubble_info_log, "[Secondary] num of edits : %" PRId32 "\n", num_edits);
+    for(const auto& edit : edit_lists[0]){
+      log_and_apply_counter.fetch_add(1);
+      ROCKS_LOG_INFO(db_options_->rubble_info_log, "[secondary] calling logAndApply， version edit: %s \n", 
+                      edit->DebugJSON((int)log_and_apply_counter.load()).c_str());
+    }
   }
   // RUBBLE END
   int num_edits = 0;
@@ -4492,6 +4511,11 @@ Status VersionSet::LogAndApplyHelper(ColumnFamilyData* cfd,
   assert(!edit->IsColumnFamilyManipulation());
 
   if (edit->has_log_number_) {
+    uint64_t log_num = cfd->GetLogNumber();
+    if(edit->log_number_ < log_num){
+      edit->SetLogNumber(log_num);
+    }
+    
     assert(edit->log_number_ >= cfd->GetLogNumber());
     assert(edit->log_number_ < next_file_number_.load());
   }

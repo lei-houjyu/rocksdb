@@ -114,8 +114,10 @@ Status BuildTable(
 
   std::string fname = TableFileName(ioptions.cf_paths, meta->fd.GetNumber(),
                                     meta->fd.GetPathId());
-  fprintf(stdout , "-------- Flush Job [%d] : WriteLevel0Table [%lu] -------------- \n", job_id, meta->fd.GetNumber());
   auto db_options = versions->db_options();
+  RUBBLE_LOG_INFO(db_options->rubble_info_log, 
+      "-------- Flush Job [%d] : WriteLevel0Table [%lu] -------------- \n", 
+      job_id, meta->fd.GetNumber());
   std::vector<std::string> blob_file_paths;
   std::string file_checksum = kUnknownFileChecksum;
   std::string file_checksum_func_name = kUnknownFileChecksumFuncName;
@@ -139,7 +141,7 @@ Status BuildTable(
       TEST_SYNC_POINT_CALLBACK("BuildTable:create_file", &use_direct_writes);
 #endif  // !NDEBUG
       IOStatus io_s = NewWritableFile(fs, fname, &file, file_options);
-      if(db_options->is_primary && db_options->is_rubble){
+      if(db_options->is_primary && db_options->is_rubble && db_options->disallow_flush_on_secondary){
         int sst_real = db_options->sst_bit_map->TakeOneAvailableSlot(meta->fd.GetNumber());
         // int sst_real = GetAvailableSstSlot(db_options->preallocated_sst_pool_size, meta->fd.GetNumber());
         std::string r_fname = db_options->remote_sst_dir + std::to_string(sst_real);
@@ -166,7 +168,7 @@ Status BuildTable(
           ioptions.statistics, ioptions.listeners,
           ioptions.file_checksum_gen_factory));
 
-      if(db_options->is_rubble && db_options->is_primary){
+      if(db_options->is_rubble && db_options->is_primary && db_options->disallow_flush_on_secondary){
         // allocate an aligned buffer whose size is equal to the sst file size 
         // so we can accumulate small block chunks into this buffer 
         // and we can write the sst to the local sst_dir and remote sst_dir using the same buffer when the buffer is full

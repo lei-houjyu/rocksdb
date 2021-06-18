@@ -68,14 +68,13 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     void HandleSyncRequest(const SyncRequest* request, 
                             SyncReply* reply);
 
+    std::string ApplyVersionEditsInBatch(const Op& op, size_t size);
+
     // calling UpdateSstView and logAndApply
     std::string ApplyVersionEdits(const std::string& args);
 
-    // every time server accepts a Sync rpc, needs to reset a few variables
-    void ResetStates();
-
     // parse the version edit json string to rocksdb::VersionEdit 
-    rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */);
+    rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */, bool is_trivial_move, int* num_of_added_files);
 
     //called by secondary nodes to create a pool of preallocated ssts in rubble mode
     rocksdb::IOStatus CreateSstPool();
@@ -91,7 +90,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     rocksdb::IOStatus UpdateSstViewAndShipSstFiles(const rocksdb::VersionEdit& edit);
 
     // set the reply message according to the status
-    void SetReplyMessage(SyncReply* reply, const rocksdb::Status& s);
+    void SetReplyMessage(SyncReply* reply, const rocksdb::Status& s, bool is_flush, bool is_trivial_move);
 
     // db instance
     rocksdb::DB* db_ = nullptr;
@@ -120,6 +119,8 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     // rocksdb internal immutable column family options
     const rocksdb::ImmutableCFOptions* ioptions_;
     const rocksdb::MutableCFOptions* cf_options_;
+
+    std::shared_ptr<rocksdb::Logger> logger_ = nullptr;
   
     // right now, just put all sst files under one path
     rocksdb::DbPath db_path_;
@@ -144,26 +145,14 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     bool is_tail_ = false;
 
     bool  piggyback_edits_ = false;
-    /* variables below are used for Sync method */
-    // if true, means version edit received indicates a flush job
-    bool is_flush_ = false; 
-    // indicates if version edit corresponds to a trivial move compaction
-    bool is_trivial_move_compaction_ = false;
-    // number of added sst files
-    int num_of_added_files_ = 0;
-    // number of memtables get flushed in a flush job
-    int batch_count_ = 0;
-    // get the next file num of secondary, which is the maximum file number of the AddedFiles in the shipped vesion edit plus 1
-    int next_file_num_ = 0;
-
+  
+    uint64_t version_edit_id_ = 0;
+ 
     // id for a Sync Request, assign it to the reply id
     uint64_t request_id_;
 
     // files that get deleted in a full compaction
     std::vector<uint64_t> deleted_files_;
-    
-    // mapping between the added file num and its slot
-    std::unordered_map<uint64_t ,int> added_;
 };
 
 

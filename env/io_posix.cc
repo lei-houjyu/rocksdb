@@ -42,6 +42,7 @@
 #include "util/coding.h"
 #include "util/string_util.h"
 #include "options/db_options.h"
+#include "logging/logging.h"
 
 #if defined(OS_LINUX) && !defined(F_SET_RW_HINT)
 #define F_LINUX_SPECIFIC_BASE 1024
@@ -1195,24 +1196,26 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
    // for rubble mode, the buffer size allocated is set to the sst file size,  
    // so basically we're only inside this function call when all block contents get copied and the buffer is full 
    // so we just write the sst to the remote dir as well to the local dir using the same buf
-    assert(IsSectorAligned(data.size(), GetRequiredBufferAlignment()));
-    assert(IsSectorAligned(data.data(), GetRequiredBufferAlignment()));
-    r_start_time = std::chrono::high_resolution_clock::now();
-    assert(r_fname_ != "");
-    int r_fd;
-    do {
-      r_fd = open(r_fname_.c_str(), O_WRONLY | O_DIRECT | O_DSYNC, 0755);
-    } while (r_fd < 0 && errno == EINTR);
-    if (r_fd < 0) {
-      return IOError("While open a file for appending", r_fname_ , errno);
+    if(db_options_->disallow_flush_on_secondary || is_compact_output_file_){
+      assert(IsSectorAligned(data.size(), GetRequiredBufferAlignment()));
+      assert(IsSectorAligned(data.data(), GetRequiredBufferAlignment()));
+      r_start_time = std::chrono::high_resolution_clock::now();
+      assert(r_fname_ != "");
+      int r_fd;
+      do {
+        r_fd = open(r_fname_.c_str(), O_WRONLY | O_DIRECT | O_DSYNC, 0755);
+      } while (r_fd < 0 && errno == EINTR);
+      if (r_fd < 0) {
+        return IOError("While open a file for appending", r_fname_ , errno);
+      }
+      // std::cout << "data : " << Slice(data.data(), 32).ToString()  << " , size : " << nbytes << std::endl;
+      ssize_t done = write(r_fd, src, nbytes);
+      if(done < 0){
+        return IOError("while appending to file" , r_fname_, errno);
+      }
+      close(r_fd);
+      r_end_time = std::chrono::high_resolution_clock::now();
     }
-    // std::cout << "data : " << Slice(data.data(), 32).ToString()  << " , size : " << nbytes << std::endl;
-    ssize_t done = write(r_fd, src, nbytes);
-    if(done < 0){
-      return IOError("while appending to file" , r_fname_, errno);
-    }
-    close(r_fd);
-    r_end_time = std::chrono::high_resolution_clock::now();
     // std::cout << "write " << nbytes << " bytes to "  <<  r_fname_ << ", latency : "  <<  std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count()  << " micros\n";
   }
   std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
@@ -1225,15 +1228,21 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
   }
   if(nbytes == buffer_size_){
     end_time = std::chrono::high_resolution_clock::now();
+    std::string type;
     if (is_flush_output_file_){
-      std::cout << "[ flush ]"; 
+      type.append("[ flush ]");
     }else if(is_compact_output_file_){
-      std::cout << "[compact]";
+      type.append("[compact]");
     }
-    std::cout << " write " << (nbytes >> 20) << " MB to [local] "  <<  filename_.substr((filename_.find_last_of("/") + 1)) 
-              << " ("  << std::setw(3) << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count()  << "ms) "
-              << ",to [remote] " << std::setw(3) << r_fname_.substr((r_fname_.find_last_of("/") + 1)) 
-              << " ("  << std::setw(3) << std::chrono::duration_cast<std::chrono::milliseconds>(r_end_time - r_start_time).count() << "ms) " << std::endl;
+    uint32_t local_write_latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+    uint32_t remote_write_latency = std::chrono::duration_cast<std::chrono::milliseconds>(r_end_time - r_start_time).count();
+
+    RUBBLE_LOG_INFO(
+        db_options_->rubble_info_log,
+        "%s write %lu MB to [local] %s ( %u ms), to [remote] %s (%u ms) \n",
+        type.c_str(), (nbytes >> 20), 
+        filename_.substr((filename_.find_last_of("/") + 1)).c_str(),local_write_latency, 
+        r_fname_.substr((r_fname_.find_last_of("/") + 1)).c_str(), remote_write_latency);
   }
 
   filesize_ += nbytes;

@@ -6,6 +6,7 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
        mu_(impl_->mutex()),
        version_set_(impl_->TEST_GetVersionSet()),
        db_options_(version_set_->db_options()),
+       logger_(db_options_->rubble_info_log),
        is_rubble_(db_options_->is_rubble),
        is_head_(db_options_->is_primary),
        is_tail_(db_options_->is_tail),
@@ -38,8 +39,8 @@ RubbleKvServiceImpl::~RubbleKvServiceImpl(){
     delete db_;
 }
 
-static std::atomic<int> op_counter{0};
-static std::atomic<int> reply_counter{0};
+static std::atomic<uint32_t> op_counter{0};
+static std::atomic<uint32_t> reply_counter{0};
 Status RubbleKvServiceImpl::DoOp(ServerContext* context, 
               ServerReaderWriter<OpReply, Op>* stream) {
     // if(!op_counter_.load()){
@@ -78,12 +79,23 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     while (stream->Read(&request)){
       op_counter_.fetch_add(1);
 
-      // if there is version edits piggybacked in the DoOp request, apply those edits first
+      // if there is version edits piggybacked in the DoOp request, apply those edits
       if(request.has_edits()){
-        for(int i = 0; i < request.edits_size(); i++){
-          std::string edit = request.edits(i);
+        size_t size = request.edits_size();
+        RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits, op_counter : %u \n", static_cast<uint32_t>(size), op_counter.load());
+        rocksdb::InstrumentedMutexLock l(mu_);
+        if(request.edits_size() >= 1){
+          ApplyVersionEditsInBatch(request, size);
+        }
+        else{
+          std::string edit = request.edits(0);
           ApplyVersionEdits(edit);
         }
+      }
+
+      if(forwarder == nullptr){
+        op_counter.fetch_add(1);
+        RUBBLE_LOG_INFO(logger_, "[Tail] received %u ops\n", op_counter.load());
       }
 
       // handle DoOp request
@@ -91,17 +103,18 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
 
       if(forwarder != nullptr){
         op_counter.fetch_add(1);
-        std::cout << "Forwarded " << op_counter.load() << " ops\n";
+        RUBBLE_LOG_INFO(logger_, "[Primary] Forwarded %u ops\n", op_counter.load());
         if(piggyback_edits_ && is_rubble_ && is_head_){
           std::vector<std::string> edits;
           edits_->GetEdits(edits);
           if(edits.size() != 0){
-            std::cout << "[primary] Got " << edits.size() << " new version edits\n"; 
-            // assert(edits.size() == 1);
+            size_t size = edits.size();
+            RUBBLE_LOG_INFO(logger_, "[primary] Got %u new version edits, op counter :  %u \n", static_cast<uint32_t>(size) ,op_counter.load()); 
             request.set_has_edits(true);
             for(auto edit : edits){
               request.add_edits(std::move(edit));
             }
+            assert(request.edits_size() == size);
           }else{
             request.set_has_edits(false);
           }
@@ -110,18 +123,17 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       }
       
       if(reply_client != nullptr){
-        reply_counter.fetch_add(1);
-        std::cout << "Sent out " << reply_counter.load() << " opreplies \n";
+        // reply_counter.fetch_add(1);
+        // std::cout << "Sent out " << reply_counter.load() << " opreplies \n";
         reply_client->SendReply(reply);
       }
-
       // stream->Write(reply);
     }
 
     return Status::OK;
 }
 
- void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
+void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
     // if(!op_counter_.load()){
     //   start_time_ = high_resolution_clock::now();
     // }
@@ -153,7 +165,6 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
           s = db_->Get(rocksdb::ReadOptions(), singleOp.key(), &value);
           singleOpReply->set_key(singleOp.key());
           singleOpReply->set_type(SingleOpReply::GET);
-        //   singleOpReply->set_status(s.ToString());
           if(s.ok()){
             singleOpReply->set_ok(true);
             singleOpReply->set_value(value);
@@ -172,15 +183,12 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
             std::cout << "Put Failed : " << s.ToString() << std::endl;
             assert(false);
           }
-          // std::cout << "Put ok\n";
-          // return to replicator if tail
           if(db_options_->is_tail){
             singleOpReply = reply->add_replies();
             singleOpReply->set_id(singleOp.id());
             singleOpReply->set_type(SingleOpReply::PUT);
             singleOpReply->set_key(singleOp.key());
-            if(s.ok()){
-              // std::cout << "Put : (" << singleOp.key() /* << " ," << op.value() */ << ")\n"; 
+            if(s.ok()){ 
               singleOpReply->set_ok(true);
             }else{
               std::cout << "Put Failed : " << s.ToString() << std::endl;
@@ -230,7 +238,10 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
     SyncRequest request;
     while (stream->Read(&request)) {
       SyncReply reply;
-      HandleSyncRequest(&request, &reply);
+      // HandleSyncRequest(&request, &reply);
+      std::string args = request.args();
+      std::string message = ApplyVersionEdits(args);
+      reply.set_message(message);
       stream->Write(reply);
     }
     return Status::OK;
@@ -243,61 +254,206 @@ void RubbleKvServiceImpl::HandleSyncRequest(const SyncRequest* request,
   reply->set_message(ApplyVersionEdits(args));
 }
 
+// If there is more than one version edit, could apply them in batch
+std::string RubbleKvServiceImpl::ApplyVersionEditsInBatch(const Op& op, size_t size){
+  assert(op.edits_size() != 0);
+
+  int num_of_imms_to_delete = 0;
+  int num_of_added_files = 0;
+  uint64_t next_file_num;
+  rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
+  std::vector<rocksdb::VersionEdit> edits;
+
+  int start = 0;
+  int end = 0;
+  uint64_t old_log_apply_counter = log_apply_counter_.load();
+  for(int i = 0; i < op.edits_size(); i++){
+    log_apply_counter_.fetch_add(1);
+
+    std::string edit = op.edits(i);
+    const json j_args = json::parse(edit);
+    bool is_trivial_move = false;
+    int batch_count = 0;
+    bool is_flush = false;
+
+    RUBBLE_LOG_INFO(logger_, " %s \n", j_args.dump(4).c_str());
+    if(j_args.contains("IsFlush")){
+      is_flush = true;
+      assert(j_args["IsFlush"].get<bool>());
+      batch_count = j_args["BatchCount"].get<int>();
+      num_of_imms_to_delete += batch_count;
+    }
+
+    if(j_args.contains("IsTrivial")){
+      is_trivial_move = true;
+    }
+
+    next_file_num = j_args["NextFileNum"].get<uint64_t>();
+
+    uint64_t version_edit_id = j_args["Id"].get<uint64_t>();
+    // assert version edit arrives in order
+    assert(version_edit_id = version_edit_id_ + 1);
+    version_edit_id_ = version_edit_id;
+
+    for(const auto& edit_string : j_args["EditList"].get<std::vector<std::string>>()){  
+      end++;
+      auto j_edit = json::parse(edit_string);
+      auto edit = ParseJsonStringToVersionEdit(j_edit, is_trivial_move, &num_of_added_files);
+      if(is_flush){
+        edit.SetBatchCount(batch_count);
+      }
+      edits.push_back(std::move(edit));     
+    }
+
+    for(int idx = start; idx < end; idx++){
+      edit_list.push_back(&edits[idx]);
+    }
+
+    if(!is_trivial_move){
+      for(int idx = start; idx < end; idx++){
+        rocksdb::IOStatus ios = UpdateSstViewAndShipSstFiles(*edit_list[idx]);
+        assert(ios.ok());
+      }
+    }
+    start = end;
+  }
+  assert(log_apply_counter_.load() == old_log_apply_counter + size);
+  assert(edit_list.size() == size);
+  assert(version_edit_id_ == log_apply_counter_.load());
+  for(const auto& edit: edit_list){
+    assert(edit != nullptr);
+  }
+  
+  const rocksdb::MutableCFOptions* cf_options = default_cf_->GetCurrentMutableCFOptions();
+  rocksdb::autovector<rocksdb::ColumnFamilyData*> cfds;
+  cfds.emplace_back(default_cf_);
+
+  rocksdb::autovector<const rocksdb::MutableCFOptions*> mutable_cf_options_list;
+  mutable_cf_options_list.emplace_back(cf_options);
+
+  rocksdb::autovector<rocksdb::autovector<rocksdb::VersionEdit*>> edit_lists;
+  edit_lists.emplace_back(edit_list);
+
+  rocksdb::FSDirectory* db_directory = impl_->directories_.GetDbDir();
+  rocksdb::MemTableList* imm = default_cf_->imm();
+  
+  uint64_t current_next_file_num = version_set_->current_next_file_number();
+  version_set_->FetchAddFileNumber(next_file_num - current_next_file_num);
+  assert(version_set_->current_next_file_number() == next_file_num);
+
+  RUBBLE_LOG_INFO(logger_, "--------[Secondary] Accepting Sync %lu th times, edit_list size : %u --------- \n", 
+                  log_apply_counter_.load(),  static_cast<uint32_t>(edit_list.size()));
+
+  rocksdb::Status s = version_set_->LogAndApply(cfds, mutable_cf_options_list, edit_lists, mu_, db_directory);
+  if(s.ok()){
+    RUBBLE_LOG_INFO(logger_, "[Secondary] logAndApply succeeds \n");
+  }else{
+    RUBBLE_LOG_INFO(logger_, "[Secondary] logAndApply failed : %s \n" , s.ToString().c_str());
+  }
+  assert(s.ok());
+
+  if(num_of_imms_to_delete > 0){
+    imm->InstallNewVersion();
+    rocksdb::autovector<rocksdb::MemTable*> to_delete;
+    
+    rocksdb::SuperVersion* sv = default_cf_->GetSuperVersion();
+    rocksdb::MemTableListVersion* current = imm->current();
+    int i = 0;
+    while(num_of_imms_to_delete-- > 0){
+      rocksdb::MemTable* m = current->GetMemlist().back();
+      m->SetFlushCompleted(true);
+      // while(!edit_list[i]->IsFlush()){
+      //   i++;
+      // }
+      // auto& edit = edit_list[i];
+      // auto& new_files = edit->GetNewFiles();
+      // m->SetFileNumber(new_files[0].second.fd.GetNumber()); 
+      // if(edit->GetBatchCount() == 1){
+      //   i++;
+      // }
+
+      current->RemoveLast(sv->GetToDelete());
+
+      imm->SetNumFlushNotStarted(current->GetMemlist().size());
+      imm->UpdateCachedValuesFromMemTableListVersion();
+      imm->ResetTrimHistoryNeeded();
+    }
+   
+    imm->SetCommitInProgress(false);
+    RUBBLE_LOG_INFO(logger_, " ----------- After RemoveLast : ( ImmutableList : %s ) ----------------\n",
+                    json::parse(imm->DebugJson()).dump(4).c_str());
+  }
+  return "ok";
+}
+
 // Update the secondary's states by applying the version edits
 // and ship sst to the downstream node if necessary
 std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
     log_apply_counter_++;
-    std::cout << " --------[Secondary] Accepting Sync RPC " << log_apply_counter_.load() << " th times --------- \n";
+    std::cout << " --------[Secondary] Accepting Sync " << log_apply_counter_.load() << " th times --------- \n";
     // example args json :
     // For a Flush:
-    //{
-    //     "BatchCount": 2,
-    //     "IsFlush": true,
-    //     "NextFileNum": 16,
-    //     "EditList": [
-    //         "{\"EditNumber\": 4, \"LogNumber\": 14, \"PrevLogNumber\": 0, \"BatchCount\": 2, \"AddedFiles\": [{\"Level\": 0, \"FileNumber\": 15, \"FileSize\": 64858, \"SmallestUserKey\": \"key00005281\", \"SmallestSeqno\": 5281, \"LargestUserKey\": \"key00007922\", \"LargestSeqno\": 7922}], \"ColumnFamily\": 0, \"IsFlush\": 1}"
-    //     ]
-    // }
-    // For a compaction:
-    //{
-    //     "NextFileNum": 16,
-    //     "EditList": [
-    //         "{\"EditNumber\": 5, \"DeletedFiles\": [{\"Level\": 0, \"FileNumber\": 15}], \"AddedFiles\": [{\"Level\": 1, \"FileNumber\": 15, \"FileSize\": 64858, \"SmallestUserKey\": \"key00005281\", \"SmallestSeqno\": 5281, \"LargestUserKey\": \"key00007922\", \"LargestSeqno\": 7922}], \"ColumnFamily\": 0}"
-    //     ]
-    // }
+    //  {
+    //   "BatchCount": 1,
+    //   "EditList": [
+    //       "{\"EditNumber\": 81, \"LogNumber\": 205, \"PrevLogNumber\": 0, \"BatchCount\": 1, 
+    //         \"AddedFiles\": [{\"Level\": 0, \"FileNumber\": 206, \"Slot\": 148, \"FileSize\": 17825792,
+    //         \"SmallestUserKey\": \"user1000305375367828682\", \"SmallestSeqno\": 695506, \"LargestUserKey\": \"user99949172114472487\", \"LargestSeqno\": 709153, 
+    //         \"OldestAncesterTime\": 1623936987, \"FileCreationTime\": 1623936988, \"FileChecksum\": \"\", \"FileChecksumFuncName\": \"Unknown\"}],
+    //         \"IsFlush\": 1}"
+    //   ],
+    //   "Id": 81,
+    //   "IsFlush": true,
+    //   "NextFileNum": 207
+    //   }
 
     const json j_args = json::parse(args);
-    // std::cout << j_args.dump(4) << std::endl;
+    std::cout << j_args.dump(4) << std::endl;
 
-    ResetStates();
-
+    bool is_flush = false;
+    bool is_trivial_move = false;
+    int batch_count = 0;
+    int num_of_added_files = 0;
     if(j_args.contains("IsFlush")){
       assert(j_args["IsFlush"].get<bool>());
-      batch_count_ = j_args["BatchCount"].get<int>();
-      is_flush_ = true;
-    }
-    if(j_args.contains("IsTrivial")){
-      is_trivial_move_compaction_ = true;
+      batch_count = j_args["BatchCount"].get<int>();
+      is_flush = true;
     }
 
-    request_id_ = j_args["Id"].get<uint64_t>();
-    next_file_num_ = j_args["NextFileNum"].get<uint64_t>();
+    if(!db_options_->disallow_flush_on_secondary){
+      std::cerr << "flush is enabled on secondary, shouldn't see the version edit which results from a flush here\n";
+      assert(!is_flush);
+    }
+
+    if(j_args.contains("IsTrivial")){
+      is_trivial_move = true;
+    }
+
+    uint64_t version_edit_id = j_args["Id"].get<uint64_t>();
+    assert(version_edit_id = version_edit_id_ + 1) ;
+    version_edit_id_ = version_edit_id;
+    
+    uint64_t next_file_num = j_args["NextFileNum"].get<uint64_t>();
     rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
     std::vector<rocksdb::VersionEdit> edits;
     for(const auto& edit_string : j_args["EditList"].get<std::vector<std::string>>()){  
       auto j_edit = json::parse(edit_string);
-      edits.push_back(ParseJsonStringToVersionEdit(j_edit));      
+      auto edit = ParseJsonStringToVersionEdit(j_edit, is_trivial_move, &num_of_added_files);
+      if(is_flush){
+        edit.SetBatchCount(batch_count);
+      }
+      edits.push_back(std::move(edit));      
     }
     for(auto& edit: edits) {
       edit_list.push_back(&edit);
     }
 
    // doesn't need to do anything for a trivial move compaction
-    if(!is_trivial_move_compaction_){
+    if(!is_trivial_move){
       for(const auto& edit: edit_list){
         // this function is called by secondary nodes in the chain in rubble
-        ios_ = UpdateSstViewAndShipSstFiles(*edit);
-        assert(ios_.ok());
+        rocksdb::IOStatus ios = UpdateSstViewAndShipSstFiles(*edit);
+        assert(ios.ok());
       }
       if(!is_tail_ && !piggyback_edits_){
         // non-tail node should also issue Sync rpc call to downstream node
@@ -305,9 +461,6 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
         // std::cout << "[ Reply Status ]: " << sync_reply << std::endl;
       }
     }
-
-    // logAndApply needs to hold the mutex
-    rocksdb::InstrumentedMutexLock l(mu_);
 
     const rocksdb::MutableCFOptions* cf_options = default_cf_->GetCurrentMutableCFOptions();
     rocksdb::autovector<rocksdb::ColumnFamilyData*> cfds;
@@ -328,8 +481,8 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
 
     uint64_t current_next_file_num = version_set_->current_next_file_number();
     // set secondary version set's next file num according to the primary's next_file_num_
-    version_set_->FetchAddFileNumber(next_file_num_ - current_next_file_num);
-    assert(version_set_->current_next_file_number() == next_file_num_);
+    version_set_->FetchAddFileNumber(next_file_num - current_next_file_num);
+    assert(version_set_->current_next_file_number() == next_file_num);
 
     // Calling LogAndApply on the secondary
     rocksdb::Status s = version_set_->LogAndApply(cfds, mutable_cf_options_list, edit_lists, mu_,
@@ -340,8 +493,8 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
 
     //Drop The corresponding MemTables in the Immutable MemTable List
     //If this version edit corresponds to a flush job
-    if(is_flush_){
-      assert(batch_count_ % num_of_added_files_ == 0);
+    if(is_flush){
+      assert(batch_count % num_of_added_files == 0);
       // creating a new verion after we applied the edit
       imm->InstallNewVersion();
 
@@ -359,13 +512,21 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
         // This is not always the case, sometimes secondary has only one immutable memtable in the list, say ID 89,
         // while the primary has 2 immutable memtables, say 89 and 90, with a more latest one,
         // so should set the number_of_immutable_memtable_to_delete to be the minimum of batch count and immutable memlist size
-        int num_of_imm_to_delete = std::min(batch_count_, (int)current->GetMemlist().size());
+        int num_of_imm_to_delete = std::min(batch_count, (int)current->GetMemlist().size());
+        std::cout << "memlist size : " << current->GetMemlist().size() << " , num_of_imm_to_delete : " << num_of_imm_to_delete << std::endl;
+        int i = 0;
         while(num_of_imm_to_delete -- > 0){
 
+          // not sure if all those are necessary
           rocksdb::MemTable* m = current->GetMemlist().back();
           m->SetFlushCompleted(true);
-          m->SetFileNumber(next_file_num_ - num_of_imm_to_delete/(batch_count_/num_of_added_files_)); 
 
+          auto& edit = edit_list[i];
+          auto& new_files = edit->GetNewFiles();
+          m->SetFileNumber(new_files[0].second.fd.GetNumber()); 
+          if(edit->GetBatchCount() == 1){
+            i++;
+          }
           // if (m->GetEdits().GetBlobFileAdditions().empty()) {
           //   ROCKS_LOG_BUFFER(log_buffer,
           //                   "[%s] Level-0 commit table #%" PRIu64
@@ -398,11 +559,11 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
       }
 
       imm->SetCommitInProgress(false);
-      // std::cout << " ----------- After RemoveLast : ( ImmutableList : " << json::parse(imm->DebugJson()).dump(4) << " ) ----------------\n";
+      std::cout << " ----------- After RemoveLast : ( ImmutableList : " << json::parse(imm->DebugJson()).dump(4) << " ) ----------------\n";
       int size = static_cast<int> (imm->current()->GetMemlist().size());
       // std::cout << " memlist size : " << size << " , num_flush_not_started : " << imm->GetNumFlushNotStarted() << std::endl;
     }else { // It is either a trivial move compaction or a full compaction
-      if(is_trivial_move_compaction_){
+      if(is_trivial_move){
         if(!s.ok()){
           std::cout << "[Secondary] Trivial Move LogAndApply Failed : " << s.ToString() << std::endl;
         }
@@ -412,28 +573,21 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
     }
 
     assert(s.ok());
-    return s.ToString();
-    // SetReplyMessage(reply, s);
+    std::string ret = "ok";
+    return ret;
+    // SetReplyMessage(reply, s, is_flush, is_trivial_move);
 }
 
-  
-void RubbleKvServiceImpl::ResetStates(){
-    // reset those variables every time called Sync
-    num_of_added_files_ = 0;
-    is_flush_ = false;
-    is_trivial_move_compaction_ = false;
-    batch_count_ = 0;
-    deleted_files_.clear();
-    added_.clear();
-}
 
 // parse the version edit json string to rocksdb::VersionEdit 
-rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */){
+rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */,
+                                                                      bool is_trivial_move,
+                                                                      int* num_of_added_files){
     rocksdb::VersionEdit edit;
 
     assert(j_edit.contains("AddedFiles"));
     if(j_edit.contains("IsFlush")){ // means edit corresponds to a flush job
-        num_of_added_files_ += j_edit["AddedFiles"].get<std::vector<json>>().size();
+        *num_of_added_files += j_edit["AddedFiles"].get<std::vector<json>>().size();
         edit.MarkFlush();
     }
 
@@ -454,7 +608,8 @@ rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const jso
         // TODO: should decide ValueType according to the info in the received version edit 
         // basically pass the ValueType of the primary's version Edit's smallest/largest InterKey's ValueType
         rocksdb::InternalKey smallest(rocksdb::Slice(j_added_file["SmallestUserKey"].get<std::string>()), 
-                                        j_added_file["SmallestSeqno"].get<uint64_t>(),rocksdb::ValueType::kTypeValue);
+                                      j_added_file["SmallestSeqno"].get<uint64_t>(),
+                                      rocksdb::ValueType::kTypeValue);
 
         assert(smallest.Valid());
 
@@ -463,17 +618,18 @@ rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const jso
         assert(!j_added_file["LargestUserKey"].is_null());
         assert(!j_added_file["LargestSeqno"].is_null());
         rocksdb::InternalKey largest(rocksdb::Slice(j_added_file["LargestUserKey"].get<std::string>()), 
-                                        j_added_file["LargestSeqno"].get<uint64_t>(),rocksdb::ValueType::kTypeValue);
+                                      j_added_file["LargestSeqno"].get<uint64_t>(),
+                                      rocksdb::ValueType::kTypeValue);
 
         assert(largest.Valid());
 
         uint64_t largest_seqno = j_added_file["LargestSeqno"].get<uint64_t>();
         int level = j_added_file["Level"].get<int>();
         uint64_t file_num = j_added_file["FileNumber"].get<uint64_t>();
-        if(!is_trivial_move_compaction_){
-          added_.emplace(file_num, j_added_file["Slot"].get<int>());
+
+        if(!is_trivial_move){
+          edit.TrackSlot(file_num, j_added_file["Slot"].get<int>());
         }
-        // max_file_num = std::max(max_file_num, (int)file_num);
         uint64_t file_size = j_added_file["FileSize"].get<uint64_t>();
 
         std::string file_checksum = j_added_file["FileChecksum"].get<std::string>();
@@ -498,7 +654,6 @@ rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const jso
     if(j_edit.contains("DeletedFiles")){
         for(const auto& j_delete_file : j_edit["DeletedFiles"].get<std::vector<json>>()){
             edit.DeleteFile(j_delete_file["Level"].get<int>(), j_delete_file["FileNumber"].get<uint64_t>());
-            deleted_files_.push_back(j_delete_file["FileNumber"].get<uint64_t>());
         }   
     }
     return std::move(edit);
@@ -572,9 +727,9 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
         const rocksdb::FileMetaData& meta = new_file.second;
         uint64_t file_num = meta.fd.GetNumber();
         // int sst_real = TakeOneAvailableSstSlot(new_file.first, meta);
-        int sst_real = added_[file_num];
+        int sst_real = edit.GetSlot(file_num);
         
-        rocksdb::DirectReadKBytes(fs_, sst_real, 32, db_path_.path + "/");
+        // rocksdb::DirectReadKBytes(fs_, sst_real, 32, db_path_.path + "/");
 
         int len = std::to_string(file_num).length();
         std::string sst_file_name = std::string("000000").replace(6 - len, len, std::to_string(file_num)) + ".sst";
@@ -586,7 +741,8 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
             std::cout << ios.ToString() << std::endl;
             return ios;
         }else{
-            std::cout << "[create new sst]: "  << sst_file_name << " , linking to " << sst_real << std::endl;
+          RUBBLE_LOG_INFO(logger_, "[create new sst]: %s , linking to %d \n", sst_file_name.c_str(), sst_real);
+          // std::cout << "[create new sst]: "  << sst_file_name << " , linking to " << sst_real << std::endl;
         }
         
         // tail node doesn't need to ship sst files
@@ -597,6 +753,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
                 remote_sst_dir = remote_sst_dir + '/';
             }
             std::string remote_sst_fname = remote_sst_dir + std::to_string(sst_real);
+            // maybe not ship the sst file here, instead ship after we finish the logAndApply..
             ios = rocksdb::CopySstFile(fs_, fname, remote_sst_fname, 0,  true);
             if (!ios.ok()){
                 std::cerr << "[ File Ship Failed ] : " << meta.fd.GetNumber() << std::endl;
@@ -606,24 +763,28 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
         }
     }
     
-    // delete the ssts(the symbolic link) that get deleted in a non-trivial compaction
+    // TODO: should delete file after logAndApply finishes and invalidated the block cache for the deleted files
+    // delete the ssts(the hard link) that get deleted in a non-trivial compaction
     for(const auto& delete_file : edit.GetDeletedFiles()){
-        std::string file_number = std::to_string(delete_file.second);
-        std::string sst_file_name = std::string("000000").replace(6 - file_number.length(), file_number.length(), file_number) + ".sst";
-        std::string fname = db_path_.path + "/" + sst_file_name;
-        ios = fs_->FileExists(fname, rocksdb::IOOptions(), nullptr);
+        uint64_t file_number = delete_file.second;
+        std::string file_path = rocksdb::MakeTableFileName(ioptions_->cf_paths[0].path, file_number);
+
+        std::string sst_file_name = file_path.substr((file_path.find_last_of("/") + 1));
+        // std::string fname = db_path_.path + "/" + sst_file_name;
+        ios = fs_->FileExists(file_path, rocksdb::IOOptions(), nullptr);
         if (ios.ok()){
             // delete the symbolic link
-            ios = fs_->DeleteFile(fname, rocksdb::IOOptions(), nullptr); 
+            ios = fs_->DeleteFile(file_path, rocksdb::IOOptions(), nullptr); 
             if(ios.IsIOError()){
-                std::cerr << "[ File Deletion Failed ]:" <<  file_number << std::endl;
+                std::cerr << "[ File Deletion Failed ]:" <<  file_path << std::endl;
             }else if(ios.ok()){
-                std::cout << "[ File Deletion] : " << sst_file_name << std::endl;
-            // FreeSstSlot(delete_file.second);
+              RUBBLE_LOG_INFO(logger_,"[ File Deletion] : %s \n", sst_file_name.c_str());
+              // std::cout << "[ File Deletion] : " << file_path << std::endl;
+              // FreeSstSlot(delete_file.second);
             }
         }else {
             if (ios.IsNotFound()){
-                std::cerr << "file :" << file_number << "does not exist \n";
+                std::cerr << "file :" << file_path << "does not exist \n";
             } else {
                 std::cerr << "unknown error in sync_service_impl" << std::endl;
             }
@@ -633,7 +794,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
 }
 
 // set the reply message according to the status
-void RubbleKvServiceImpl::SetReplyMessage(SyncReply* reply,const rocksdb::Status& s){
+void RubbleKvServiceImpl::SetReplyMessage(SyncReply* reply,const rocksdb::Status& s, bool is_flush, bool is_trivial_move){
     rocksdb::JSONWriter jw;
 
     json j_reply;
@@ -641,7 +802,7 @@ void RubbleKvServiceImpl::SetReplyMessage(SyncReply* reply,const rocksdb::Status
     if(s.ok()){
         jw << "Status" << "Ok";
         
-        if(!is_flush_ && !is_trivial_move_compaction_){
+        if(!is_flush && !is_trivial_move){
             jw << "Type" << "Full";
             jw << "Deleted";
             jw.StartArray();
@@ -652,7 +813,7 @@ void RubbleKvServiceImpl::SetReplyMessage(SyncReply* reply,const rocksdb::Status
             }
 
             jw.EndArray();
-        }else if(is_flush_){
+        }else if(is_flush){
             jw << "Type" << "Flush";
         }else{
             jw << "Type" << "Trivial";

@@ -592,6 +592,7 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       allow_data_in_errors(options.allow_data_in_errors),
       db_host_id(options.db_host_id),
       //RUBBLE
+      rubble_info_log(options.rubble_info_log),
       is_rubble(options.is_rubble),
       is_primary(options.is_primary),
       is_tail(options.is_tail),

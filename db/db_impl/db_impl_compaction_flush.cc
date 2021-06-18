@@ -2090,7 +2090,7 @@ void DBImpl::MaybeScheduleFlushOrCompaction() {
   mutex_.AssertHeld();
   //RUBBLE: only primary is doing Flush, disable scheduling of Flush Job for secondaries in rubble mode 
   if(immutable_db_options_.is_rubble && !immutable_db_options_.is_primary && immutable_db_options_.disallow_flush_on_secondary){
-    std::cout << " -------- Secondary Flush/Compaction disabled  ---------" << std::endl;
+    RUBBLE_LOG_INFO(immutable_db_options_.rubble_info_log, " -------- Secondary Flush/Compaction disabled  ---------\n");
     return;
   }
 
