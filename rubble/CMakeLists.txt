@@ -140,8 +140,8 @@ endif()
 
 set(ROCKSDB_DIR "/mnt/sdb/my_rocksdb")
 # set(ROCKSDB_DIR "{CMAKE_CURRENT_BINARY_DIR}/..")
-set(rubble_server "${ROCKSDB_DIR}/rubble/sync_rubble_server.cc")
-set(async_kv_server "${ROCKSDB_DIR}/rubble/rubble_server.cc")
+set(rubble_server "${ROCKSDB_DIR}/rubble/rubble_sync_server.cc")
+set(async_kv_server "${ROCKSDB_DIR}/rubble/rubble_async_server.cc")
 set(sync_service "${ROCKSDB_DIR}/rubble/sync_service_impl.cc")
 
 # Proto file
@@ -156,12 +156,12 @@ link_libraries("${ROCKSDB_DIR}/librocksdb.a")
 
 # Targets greeter_[async_](client|server)
 foreach(_target
-  rocksdb_server
+  # rocksdb_server
   primary_node
-  secondary_node
+  # secondary_node
   tail_node
-  sync_kvstore_client
-  rocksdb_load_test
+  # sync_kvstore_client
+  # rocksdb_load_test
   # kv_store_client
   # replicator
   )

@@ -4347,7 +4347,7 @@ Status VersionSet::LogAndApply(
     MemTableList* imm = default_cf->imm();
 
     ROCKS_LOG_INFO(db_options_->rubble_info_log,
-                   "----------- Before logAndApply ( ImmutableList : %s ) ----------------\n",
+                   " Before logAndApply ( ImmutableList : %s ) \n",
                     json::parse(imm->DebugJson()).dump(4).c_str());
     // right now, only support one cloumn family(the default one)
     assert(edit_lists.size() == 1);

@@ -53,6 +53,11 @@ ROCKSDB_NAMESPACE::Log(ROCKSDB_NAMESPACE::InfoLogLevel::INFO_LEVEL, LGR,    \
                          ROCKS_LOG_PREPEND_FILE_LINE(FMT), \
                          RocksLogShorterFileName(__FILE__), ##__VA_ARGS__)
 
+#define RUBBLE_LOG_ERROR(LGR, FMT, ...)                      \
+ROCKSDB_NAMESPACE::Log(ROCKSDB_NAMESPACE::InfoLogLevel::ERROR_LEVEL, LGR,    \
+                        ROCKS_LOG_PREPEND_FILE_LINE(FMT), \
+                        RocksLogShorterFileName(__FILE__), ##__VA_ARGS__)
+
 #define ROCKS_LOG_FATAL(LGR, FMT, ...)                     \
   ROCKSDB_NAMESPACE::Log(InfoLogLevel::FATAL_LEVEL, LGR,   \
                          ROCKS_LOG_PREPEND_FILE_LINE(FMT), \

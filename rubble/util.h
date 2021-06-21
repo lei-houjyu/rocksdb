@@ -7,7 +7,7 @@
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
 #include "rocksdb/utilities/options_util.h"
-#include "sync_rubble_server.h"
+#include "rubble_sync_server.h"
 
 using std::string;
 using rocksdb::LoadOptionsFromFile;
@@ -144,31 +144,32 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       db_options.channel = grpc::CreateChannel(db_options.target_address, grpc::InsecureChannelCredentials());
    }
 
+   // add logger for rubble
+   std::string rubble_info_log_fname;
+   std::string rubble_log_path {"/mnt/sdb/my_rocksdb/rubble/log"};
+   std::shared_ptr<rocksdb::Logger> logger = nullptr;
+   db_options.env = rocksdb::Env::Default();
+   db_options.env->CreateDirIfMissing(rubble_log_path).PermitUncheckedError(); 
+   if(db_options.is_primary){
+      rubble_info_log_fname = rubble_log_path.append("/primary");
+   }else if(db_options.is_tail){
+      rubble_info_log_fname = rubble_log_path.append("/tail");
+   }else{
+      rubble_info_log_fname = rubble_log_path.append("/secondary");
+   }
+
+   s = rocksdb::NewEnvLogger(rubble_info_log_fname, db_options.env, &logger);
+   if (logger.get() != nullptr) {
+      logger->SetInfoLogLevel(rocksdb::InfoLogLevel::DEBUG_LEVEL);
+   }
+   if(!s.ok()){
+      std::cout << "Error creating log : " << s.ToString() << std::endl;
+      assert(false);
+      logger = nullptr;
+   }
+   db_options.rubble_info_log = logger;
+
    if(db_options.is_rubble){
-      std::string rubble_info_log_fname;
-      std::string rubble_log_path {"/mnt/sdb/my_rocksdb/rubble/log"};
-      std::shared_ptr<rocksdb::Logger> logger = nullptr;
-      db_options.env = rocksdb::Env::Default();
-      db_options.env->CreateDirIfMissing(rubble_log_path).PermitUncheckedError(); 
-      if(db_options.is_primary){
-         rubble_info_log_fname = rubble_log_path.append("/primary");
-      }else if(db_options.is_tail){
-         rubble_info_log_fname = rubble_log_path.append("/tail");
-      }else{
-         rubble_info_log_fname = rubble_log_path.append("/secondary");
-      }
-
-      rocksdb::Status s = rocksdb::NewEnvLogger(rubble_info_log_fname, db_options.env, &logger);
-      if (logger.get() != nullptr) {
-         logger->SetInfoLogLevel(db_options.info_log_level);
-      }
-      if(!s.ok()){
-         std::cout << "Error creating log : " << s.ToString() << std::endl;
-         assert(false);
-         logger = nullptr;
-      }
-
-      db_options.rubble_info_log = logger;
       //ignore this flag for now, always set to true.
       db_options.disallow_flush_on_secondary = true;
 

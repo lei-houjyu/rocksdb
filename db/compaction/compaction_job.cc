@@ -1516,7 +1516,7 @@ Status CompactionJob::InstallCompactionResults(
   // Add compaction inputs
   compaction->AddInputDeletions(compact_->compaction->edit());
 
-  RUBBLE_LOG_INFO(db_options_.rubble_info_log, " -------- Compaction Job : [ %d ] ----------\n", job_id_);
+  RUBBLE_LOG_INFO(db_options_.rubble_info_log, " Compaction Job : [ %d ]\n", job_id_);
   for (const auto& sub_compact : compact_->sub_compact_states) {
     for (const auto& out : sub_compact.outputs) {
       edit->AddFile(compaction->output_level(), out.meta);

@@ -75,17 +75,6 @@ CMAKE_BINARY_DIR = /mnt/sdb/my_rocksdb/rubble
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target edit_cache
-edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/usr/local/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
-.PHONY : edit_cache
-
-# Special rule for the target edit_cache
-edit_cache/fast: edit_cache
-
-.PHONY : edit_cache/fast
-
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
@@ -96,6 +85,17 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 
 .PHONY : rebuild_cache/fast
+
+# Special rule for the target edit_cache
+edit_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
+	/usr/local/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+.PHONY : edit_cache
+
+# Special rule for the target edit_cache
+edit_cache/fast: edit_cache
+
+.PHONY : edit_cache/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -143,32 +143,6 @@ primary_node/fast:
 .PHONY : primary_node/fast
 
 #=============================================================================
-# Target rules for targets named rocksdb_server
-
-# Build rule for target.
-rocksdb_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rocksdb_server
-.PHONY : rocksdb_server
-
-# fast build rule for target.
-rocksdb_server/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_server.dir/build.make CMakeFiles/rocksdb_server.dir/build
-.PHONY : rocksdb_server/fast
-
-#=============================================================================
-# Target rules for targets named secondary_node
-
-# Build rule for target.
-secondary_node: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 secondary_node
-.PHONY : secondary_node
-
-# fast build rule for target.
-secondary_node/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_node.dir/build.make CMakeFiles/secondary_node.dir/build
-.PHONY : secondary_node/fast
-
-#=============================================================================
 # Target rules for targets named tail_node
 
 # Build rule for target.
@@ -180,32 +154,6 @@ tail_node: cmake_check_build_system
 tail_node/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/build
 .PHONY : tail_node/fast
-
-#=============================================================================
-# Target rules for targets named sync_kvstore_client
-
-# Build rule for target.
-sync_kvstore_client: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sync_kvstore_client
-.PHONY : sync_kvstore_client
-
-# fast build rule for target.
-sync_kvstore_client/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sync_kvstore_client.dir/build.make CMakeFiles/sync_kvstore_client.dir/build
-.PHONY : sync_kvstore_client/fast
-
-#=============================================================================
-# Target rules for targets named rocksdb_load_test
-
-# Build rule for target.
-rocksdb_load_test: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rocksdb_load_test
-.PHONY : rocksdb_load_test
-
-# fast build rule for target.
-rocksdb_load_test/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_load_test.dir/build.make CMakeFiles/rocksdb_load_test.dir/build
-.PHONY : rocksdb_load_test/fast
 
 primary_node.o: primary_node.cc.o
 
@@ -234,113 +182,95 @@ primary_node.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/primary_node.cc.s
 .PHONY : primary_node.cc.s
 
-rocksdb_load_test.o: rocksdb_load_test.cc.o
+rubble_async_server.o: rubble_async_server.cc.o
 
-.PHONY : rocksdb_load_test.o
-
-# target to build an object file
-rocksdb_load_test.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_load_test.dir/build.make CMakeFiles/rocksdb_load_test.dir/rocksdb_load_test.cc.o
-.PHONY : rocksdb_load_test.cc.o
-
-rocksdb_load_test.i: rocksdb_load_test.cc.i
-
-.PHONY : rocksdb_load_test.i
-
-# target to preprocess a source file
-rocksdb_load_test.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_load_test.dir/build.make CMakeFiles/rocksdb_load_test.dir/rocksdb_load_test.cc.i
-.PHONY : rocksdb_load_test.cc.i
-
-rocksdb_load_test.s: rocksdb_load_test.cc.s
-
-.PHONY : rocksdb_load_test.s
-
-# target to generate assembly for a file
-rocksdb_load_test.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_load_test.dir/build.make CMakeFiles/rocksdb_load_test.dir/rocksdb_load_test.cc.s
-.PHONY : rocksdb_load_test.cc.s
-
-rocksdb_server.o: rocksdb_server.cc.o
-
-.PHONY : rocksdb_server.o
+.PHONY : rubble_async_server.o
 
 # target to build an object file
-rocksdb_server.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_server.dir/build.make CMakeFiles/rocksdb_server.dir/rocksdb_server.cc.o
-.PHONY : rocksdb_server.cc.o
+rubble_async_server.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/rubble_async_server.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/rubble_async_server.cc.o
+.PHONY : rubble_async_server.cc.o
 
-rocksdb_server.i: rocksdb_server.cc.i
+rubble_async_server.i: rubble_async_server.cc.i
 
-.PHONY : rocksdb_server.i
+.PHONY : rubble_async_server.i
 
 # target to preprocess a source file
-rocksdb_server.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_server.dir/build.make CMakeFiles/rocksdb_server.dir/rocksdb_server.cc.i
-.PHONY : rocksdb_server.cc.i
+rubble_async_server.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/rubble_async_server.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/rubble_async_server.cc.i
+.PHONY : rubble_async_server.cc.i
 
-rocksdb_server.s: rocksdb_server.cc.s
+rubble_async_server.s: rubble_async_server.cc.s
 
-.PHONY : rocksdb_server.s
+.PHONY : rubble_async_server.s
 
 # target to generate assembly for a file
-rocksdb_server.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rocksdb_server.dir/build.make CMakeFiles/rocksdb_server.dir/rocksdb_server.cc.s
-.PHONY : rocksdb_server.cc.s
+rubble_async_server.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/rubble_async_server.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/rubble_async_server.cc.s
+.PHONY : rubble_async_server.cc.s
 
-secondary_node.o: secondary_node.cc.o
+rubble_sync_server.o: rubble_sync_server.cc.o
 
-.PHONY : secondary_node.o
+.PHONY : rubble_sync_server.o
 
 # target to build an object file
-secondary_node.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_node.dir/build.make CMakeFiles/secondary_node.dir/secondary_node.cc.o
-.PHONY : secondary_node.cc.o
+rubble_sync_server.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/rubble_sync_server.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/rubble_sync_server.cc.o
+.PHONY : rubble_sync_server.cc.o
 
-secondary_node.i: secondary_node.cc.i
+rubble_sync_server.i: rubble_sync_server.cc.i
 
-.PHONY : secondary_node.i
+.PHONY : rubble_sync_server.i
 
 # target to preprocess a source file
-secondary_node.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_node.dir/build.make CMakeFiles/secondary_node.dir/secondary_node.cc.i
-.PHONY : secondary_node.cc.i
+rubble_sync_server.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/rubble_sync_server.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/rubble_sync_server.cc.i
+.PHONY : rubble_sync_server.cc.i
 
-secondary_node.s: secondary_node.cc.s
+rubble_sync_server.s: rubble_sync_server.cc.s
 
-.PHONY : secondary_node.s
+.PHONY : rubble_sync_server.s
 
 # target to generate assembly for a file
-secondary_node.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/secondary_node.dir/build.make CMakeFiles/secondary_node.dir/secondary_node.cc.s
-.PHONY : secondary_node.cc.s
+rubble_sync_server.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/rubble_sync_server.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/rubble_sync_server.cc.s
+.PHONY : rubble_sync_server.cc.s
 
-sync_kvstore_client.o: sync_kvstore_client.cc.o
+sync_service_impl.o: sync_service_impl.cc.o
 
-.PHONY : sync_kvstore_client.o
+.PHONY : sync_service_impl.o
 
 # target to build an object file
-sync_kvstore_client.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sync_kvstore_client.dir/build.make CMakeFiles/sync_kvstore_client.dir/sync_kvstore_client.cc.o
-.PHONY : sync_kvstore_client.cc.o
+sync_service_impl.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/sync_service_impl.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/sync_service_impl.cc.o
+.PHONY : sync_service_impl.cc.o
 
-sync_kvstore_client.i: sync_kvstore_client.cc.i
+sync_service_impl.i: sync_service_impl.cc.i
 
-.PHONY : sync_kvstore_client.i
+.PHONY : sync_service_impl.i
 
 # target to preprocess a source file
-sync_kvstore_client.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sync_kvstore_client.dir/build.make CMakeFiles/sync_kvstore_client.dir/sync_kvstore_client.cc.i
-.PHONY : sync_kvstore_client.cc.i
+sync_service_impl.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/sync_service_impl.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/sync_service_impl.cc.i
+.PHONY : sync_service_impl.cc.i
 
-sync_kvstore_client.s: sync_kvstore_client.cc.s
+sync_service_impl.s: sync_service_impl.cc.s
 
-.PHONY : sync_kvstore_client.s
+.PHONY : sync_service_impl.s
 
 # target to generate assembly for a file
-sync_kvstore_client.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sync_kvstore_client.dir/build.make CMakeFiles/sync_kvstore_client.dir/sync_kvstore_client.cc.s
-.PHONY : sync_kvstore_client.cc.s
+sync_service_impl.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/primary_node.dir/build.make CMakeFiles/primary_node.dir/sync_service_impl.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tail_node.dir/build.make CMakeFiles/tail_node.dir/sync_service_impl.cc.s
+.PHONY : sync_service_impl.cc.s
 
 tail_node.o: tail_node.cc.o
 
@@ -378,26 +308,19 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... primary_node"
-	@echo "... rocksdb_load_test"
-	@echo "... rocksdb_server"
-	@echo "... secondary_node"
-	@echo "... sync_kvstore_client"
 	@echo "... tail_node"
 	@echo "... primary_node.o"
 	@echo "... primary_node.i"
 	@echo "... primary_node.s"
-	@echo "... rocksdb_load_test.o"
-	@echo "... rocksdb_load_test.i"
-	@echo "... rocksdb_load_test.s"
-	@echo "... rocksdb_server.o"
-	@echo "... rocksdb_server.i"
-	@echo "... rocksdb_server.s"
-	@echo "... secondary_node.o"
-	@echo "... secondary_node.i"
-	@echo "... secondary_node.s"
-	@echo "... sync_kvstore_client.o"
-	@echo "... sync_kvstore_client.i"
-	@echo "... sync_kvstore_client.s"
+	@echo "... rubble_async_server.o"
+	@echo "... rubble_async_server.i"
+	@echo "... rubble_async_server.s"
+	@echo "... rubble_sync_server.o"
+	@echo "... rubble_sync_server.i"
+	@echo "... rubble_sync_server.s"
+	@echo "... sync_service_impl.o"
+	@echo "... sync_service_impl.i"
+	@echo "... sync_service_impl.s"
 	@echo "... tail_node.o"
 	@echo "... tail_node.i"
 	@echo "... tail_node.s"

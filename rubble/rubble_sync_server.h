@@ -6,6 +6,7 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <unordered_map>
+#include <chrono>
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -74,7 +75,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     std::string ApplyVersionEdits(const std::string& args);
 
     // parse the version edit json string to rocksdb::VersionEdit 
-    rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */, bool is_trivial_move, int* num_of_added_files);
+    rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */);
 
     //called by secondary nodes to create a pool of preallocated ssts in rubble mode
     rocksdb::IOStatus CreateSstPool();
@@ -153,6 +154,10 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     // files that get deleted in a full compaction
     std::vector<uint64_t> deleted_files_;
+    
+    std::atomic<uint64_t> batch_counter_{0};
+    time_point<high_resolution_clock> batch_start_time_;
+    time_point<high_resolution_clock> batch_end_time_;
 };
 
 

@@ -19,3 +19,4 @@ echo "remove tail db"
 LOG_DIR="/mnt/sdb/my_rocksdb/rubble/log"
 rm ${LOG_DIR}/primary
 rm ${LOG_DIR}/tail
+echo "remove log"
