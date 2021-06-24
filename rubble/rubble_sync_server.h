@@ -147,8 +147,9 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     bool  piggyback_edits_ = false;
   
-    uint64_t version_edit_id_ = 0;
- 
+    std::atomic<uint64_t> version_edit_id_{0};
+    std::map<uint64_t, rocksdb::VersionEdit> cached_edits_;
+
     // id for a Sync Request, assign it to the reply id
     uint64_t request_id_;
 

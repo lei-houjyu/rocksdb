@@ -813,11 +813,11 @@ std::string VersionEdit::DebugJSON(int edit_num, bool hex_key) const {
       // jw << "SmallestIKey" << f.smallest.DebugString(hex_key);
       jw << "LargestUserKey" << f.largest.user_key().ToString();
       jw << "LargestSeqno" << f.fd.largest_seqno;
+      // jw << "LargestIKey" << f.largest.DebugString(hex_key);
       jw << "OldestAncesterTime" << f.oldest_ancester_time;
       jw << "FileCreationTime" << f.file_creation_time;
       jw << "FileChecksum" << f.file_checksum;
       jw << "FileChecksumFuncName" << f.file_checksum_func_name;
-      // jw << "LargestIKey" << f.largest.DebugString(hex_key);
       if (f.oldest_blob_file_number != kInvalidBlobFileNumber) {
         jw << "OldestBlobFile" << f.oldest_blob_file_number;
       }

@@ -2,6 +2,7 @@
 #include <vector>
 #include <mutex>
 #include <map>
+#include <atomic>
 
 class Edits {
 
@@ -16,9 +17,9 @@ class Edits {
     size_t size(){ return edits_.size();}
 
     // used by the non-primary nodes
-    void Put(uint64_t id, const std::string& edit);
+    void Insert(uint64_t id, const std::string& edit);
 
-    std::string GetFirst();
+    std::string PopFirst();
 
   private:
     std::vector<std::string> edits_;

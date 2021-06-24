@@ -4347,8 +4347,11 @@ Status VersionSet::LogAndApply(
     MemTableList* imm = default_cf->imm();
 
     ROCKS_LOG_INFO(db_options_->rubble_info_log,
-                   " Before logAndApply ( ImmutableList : %s ) \n",
-                    json::parse(imm->DebugJson()).dump(4).c_str());
+                   " Before logAndApply ( ImmutableList size : %u ) \n",
+                    static_cast<uint32_t>(imm->current()->GetMemlist().size()));
+    // ROCKS_LOG_INFO(db_options_->rubble_info_log,
+    //                " Before logAndApply ( ImmutableList : %s ) \n",
+    //                 json::parse(imm->DebugJson()).dump(4).c_str());
     // right now, only support one cloumn family(the default one)
     assert(edit_lists.size() == 1);
 
@@ -4408,8 +4411,8 @@ Status VersionSet::LogAndApply(
     ROCKS_LOG_INFO(db_options_->rubble_info_log, "[Secondary] num of edits : %" PRId32 "\n", num_edits);
     for(const auto& edit : edit_lists[0]){
       log_and_apply_counter.fetch_add(1);
-      ROCKS_LOG_INFO(db_options_->rubble_info_log, "[secondary] calling logAndApply， version edit: %s \n", 
-                      edit->DebugJSON((int)log_and_apply_counter.load()).c_str());
+      ROCKS_LOG_INFO(db_options_->rubble_info_log, "[secondary] calling logAndApply， version edit: %lu \n", 
+                      edit->GetEditNumber());
     }
   }
   // RUBBLE END

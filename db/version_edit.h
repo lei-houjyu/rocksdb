@@ -537,6 +537,14 @@ class VersionEdit {
   std::string DebugJSON(int edit_num, bool hex_key = false) const;
 
   //rubble
+  void SetEditNumber(uint64_t number){
+    edit_number_ = number;
+  }
+
+  uint64_t GetEditNumber() const{
+    return edit_number_;
+  }
+
   void MarkFlush() {
     is_flush_ = true;
   }
@@ -549,7 +557,7 @@ class VersionEdit {
     is_trivial_move_compaction_ = true;
   }
 
-  bool IsTrivialMove(){
+  bool IsTrivialMove() const{
     return is_trivial_move_compaction_;
   }
 
@@ -620,6 +628,7 @@ class VersionEdit {
   bool is_in_atomic_group_ = false;
   uint32_t remaining_entries_ = 0;
 
+  uint64_t edit_number_ = 0;
   // Does this edit corresponds to a flush
   bool is_flush_ = false;
   // does this edit corresponds to a trivial move compaction

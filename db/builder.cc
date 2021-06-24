@@ -116,7 +116,7 @@ Status BuildTable(
                                     meta->fd.GetPathId());
   auto db_options = versions->db_options();
   RUBBLE_LOG_INFO(db_options->rubble_info_log, 
-      "-------- Flush Job [%d] : WriteLevel0Table [%lu] -------------- \n", 
+      " Flush Job [%d] : WriteLevel0Table [%lu] \n", 
       job_id, meta->fd.GetNumber());
   std::vector<std::string> blob_file_paths;
   std::string file_checksum = kUnknownFileChecksum;
