@@ -4354,7 +4354,7 @@ Status VersionSet::LogAndApply(
     //                 json::parse(imm->DebugJson()).dump(4).c_str());
     // right now, only support one cloumn family(the default one)
     assert(edit_lists.size() == 1);
-
+    
     bool is_flush = edit_lists.back().back()->IsFlush();
     // ignore this flag for now
     if(db_options_->disallow_flush_on_secondary || (!db_options_->disallow_flush_on_secondary && !is_flush)){
@@ -4364,7 +4364,7 @@ Status VersionSet::LogAndApply(
       if(edit_lists.back().back()->IsFlush()){
         type = "flush";
         j_args["IsFlush"] = true;
-        j_args["BatchCount"] = edit_lists.back().back()->GetBactchCount();
+        j_args["BatchCount"] = edit_lists.back().back()->GetBatchCount();
       }
       if(edit_lists.back().back()->IsTrivialMove()){
         type = "trivial";
@@ -4388,6 +4388,10 @@ Status VersionSet::LogAndApply(
       json j_vec(version_edits);
       j_args["EditList"] = j_vec;
       j_args["Id"] = sync_counter.load();
+      if(edit_lists.back().size() > 1){
+        assert(is_flush);
+        // std::cout << j_args.dump(4) << std::endl;
+      }
     
       if(!db_options_->piggyback_version_edits){
         auto start_time = std::chrono::high_resolution_clock::now();
@@ -4411,8 +4415,8 @@ Status VersionSet::LogAndApply(
     ROCKS_LOG_INFO(db_options_->rubble_info_log, "[Secondary] num of edits : %" PRId32 "\n", num_edits);
     for(const auto& edit : edit_lists[0]){
       log_and_apply_counter.fetch_add(1);
-      ROCKS_LOG_INFO(db_options_->rubble_info_log, "[secondary] calling logAndApply， version edit: %lu \n", 
-                      edit->GetEditNumber());
+      ROCKS_LOG_INFO(db_options_->rubble_info_log, "[secondary] calling logAndApply， version edit: %s \n", 
+                      edit->DebugJSON(edit->GetEditNumber(), false).c_str());
     }
   }
   // RUBBLE END

@@ -8,10 +8,11 @@
 // a circular array implementation of bit map
 class SstBitMap{
 public:
-    SstBitMap(int pool_size, std::shared_ptr<rocksdb::Logger> logger = nullptr);
+    SstBitMap(int pool_size, int max_num_mems_in_flush,
+    std::shared_ptr<rocksdb::Logger> logger = nullptr);
     
     // take one slot for a specific file
-    int TakeOneAvailableSlot(uint64_t file_num);
+    int TakeOneAvailableSlot(uint64_t file_num, int times);
     
     // free the slots occupied by the set of files
     void FreeSlot(std::set<uint64_t> file_nums);
@@ -26,12 +27,21 @@ public:
     int GetFileSlotNum(uint64_t file_num);
 
 private:
+    // check if the total num of slots taken matches the size of file_slots_
+    void CheckNumSlotsTaken();
+
     /* data */
-    std::atomic<int> next_available_slot_{1};
+    std::vector<int> next_available_slot_;
 
-    int num_slots_taken_ {0};
+    std::vector<int> num_slots_taken_ ;
 
+    // size of the slots of sst of normal size
     int size_;
+
+    // number of slots for each size of sst which is multiple times as the normal size
+    int num_big_slots_{20};
+
+    int max_num_mems_in_flush_{0};
 
     //slots_[i] stores the file num that occupies slot i
     std::vector<uint64_t> slots_;

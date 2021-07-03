@@ -1609,11 +1609,11 @@ Status CompactionJob::OpenCompactionOutputFile(
       NewWritableFile(fs_.get(), fname, &writable_file, file_options_);
   //[RUBBLE]
   if(db_options_.is_primary && db_options_.is_rubble){
-    int sst_real = db_options_.sst_bit_map->TakeOneAvailableSlot(file_number);
+    int sst_real = db_options_.sst_bit_map->TakeOneAvailableSlot(file_number, 1);
     // int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, file_number);
     std::string r_fname = db_options_.remote_sst_dir + std::to_string(sst_real);
     //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
-    uint64_t buffer_size = sub_compact->compaction->mutable_cf_options()->target_file_size_base  + (1 << 20);
+    uint64_t buffer_size = sub_compact->compaction->mutable_cf_options()->target_file_size_base  + db_options_.sst_pad_len;
     ((PosixWritableFile*)(writable_file.get()))->SetRemoteFileInfo(r_fname, &db_options_, false, true, buffer_size);
   }
 
@@ -1683,7 +1683,7 @@ Status CompactionJob::OpenCompactionOutputFile(
       db_options_.file_checksum_gen_factory.get()));
   //[RUBBLE]
   if(db_options_.is_rubble && db_options_.is_primary){
-    size_t buffer_size = (sub_compact->compaction->mutable_cf_options()->target_file_size_base  + (1 << 20));
+    size_t buffer_size = sub_compact->compaction->mutable_cf_options()->target_file_size_base  + db_options_.sst_pad_len;
     sub_compact->outfile->SetBufferAlignment(sub_compact->outfile->writable_file()->GetRequiredBufferAlignment());
     sub_compact->outfile->AllocateNewBuffer(buffer_size);
   }   

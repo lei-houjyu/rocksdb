@@ -1231,6 +1231,12 @@ struct DBOptions {
   //be set dynamically to DbPath.target_size/write_buffer_size
   int preallocated_sst_pool_size = 0;
 
+  // pad the sst size to sst_pad_len + target_file_size_base;
+  uint64_t sst_pad_len = 2 << 20;
+
+  // the max size of memtables possibly appearing in a flush
+  int max_num_mems_in_flush = 10;
+
   // grpc channel 
   std::shared_ptr<grpc::Channel> channel = nullptr;
 

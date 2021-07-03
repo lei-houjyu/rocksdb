@@ -24,7 +24,7 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
           std::cout << "init sync_service --- is_rubble: " << is_rubble_ << "; is_head: " << is_head_ << std::endl;
           ios_ = CreateSstPool();
           if(!ios_.ok()){
-            std::cout << "allocate sst pool failed \n";
+            std::cout << "allocate sst pool failed :" << ios_.ToString() << std::endl;
             assert(false);
           }
           std::cout << "[secondary] sst pool allocation finished" << std::endl;
@@ -90,54 +90,40 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     OpReply reply;
     while (stream->Read(&request)){
       op_counter_.fetch_add(1);
-      if(!is_rubble_){
-        assert(!request.has_edits());
-      }
-      // if there is version edits piggybacked in the DoOp request, apply those edits
-      if(request.has_edits()){
-        size_t size = request.edits_size();
-        RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits, op_counter : %u \n", static_cast<uint32_t>(size), op_counter.load());
-        fprintf(stdout , "[Tail] Got %u new version edits, op_counter : %u \n", static_cast<uint32_t>(size), op_counter.load());
-        rocksdb::InstrumentedMutexLock l(mu_);
-        // if(size >= 1){
-        //   ApplyVersionEditsInBatch(request, size);
-        // }
-        // else{
-          for(int i = 0; i < size; i++){
-            ApplyVersionEdits(request.edits(i));
-          }
-        // }
-      }
-
-      if(forwarder == nullptr){
-        op_counter.fetch_add(1);
-        RUBBLE_LOG_INFO(logger_, "[Tail] received %u ops\n", op_counter.load());
-      }
 
       // handle DoOp request
       HandleOp(request, &reply);
 
-      if(forwarder != nullptr){
-        op_counter.fetch_add(1);
-        RUBBLE_LOG_INFO(logger_, "[Primary] thread %u Forwarded %u ops\n", map[this_id], op_counter.load());
-        if(piggyback_edits_ && is_rubble_ && is_head_){
+      // if there is version edits piggybacked in the DoOp request, apply those edits
+      if(request.has_edits()){
+        size_t size = request.edits_size();
+        RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
+        fprintf(stdout , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
+        rocksdb::InstrumentedMutexLock l(mu_);
+        for(int i = 0; i < size; i++){
+          ApplyVersionEdits(request.edits(i));
+        }
+      }
 
-          // if(map[std::this_thread::get_id()] == 0){
-            std::vector<std::string> edits;
-            edits_->GetEdits(edits);
-            if(edits.size() != 0){
-              size_t size = edits.size();
-              RUBBLE_LOG_INFO(logger_, "[primary] Got %u new version edits, op counter :  %u \n", static_cast<uint32_t>(size) ,op_counter.load()); 
-              request.set_has_edits(true);
-              for(const auto& edit : edits){
-                RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
-                request.add_edits(edit);
-              }
-              assert(request.edits_size() == size);
-            }else{
-              request.set_has_edits(false);
+      if(forwarder == nullptr){ /* tail */
+        RUBBLE_LOG_INFO(logger_, "[Tail] received %lu ops\n", op_counter_.load());
+      }else{ /* non-tail */
+        RUBBLE_LOG_INFO(logger_, "[Primary] thread %u Forwarded %lu ops\n", map[this_id], op_counter_.load());
+        if(piggyback_edits_ && is_rubble_ && is_head_){
+          std::vector<std::string> edits;
+          edits_->GetEdits(edits);
+          if(edits.size() != 0){
+            size_t size = edits.size();
+            RUBBLE_LOG_INFO(logger_, "[primary] Got %u new version edits, op counter : %lu \n", static_cast<uint32_t>(size) ,op_counter_.load()); 
+            request.set_has_edits(true);
+            for(const auto& edit : edits){
+              RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
+              request.add_edits(edit);
             }
-          // }
+            assert(request.edits_size() == size);
+          }else{
+            request.set_has_edits(false);
+          }
         }
         forwarder->Forward(request);
       }
@@ -233,8 +219,15 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
           singleOpReply = reply->add_replies();
           singleOpReply->set_id(singleOp.id());
           s = db_->Get(rocksdb::ReadOptions(), singleOp.key(), &value);
-          assert(s.ok());
+          if(!s.ok()){
+            RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
+            assert(false);
+          }
           s = db_->Put(rocksdb::WriteOptions(), singleOp.key(), singleOp.value());
+          if(!s.ok()){
+            RUBBLE_LOG_ERROR(logger_, "Put Failed : %s \n", s.ToString().c_str());
+            assert(false);
+          }
           if(is_tail_){
             singleOpReply->set_key(singleOp.key());
             singleOpReply->set_type(SingleOpReply::UPDATE);
@@ -277,226 +270,18 @@ void RubbleKvServiceImpl::HandleSyncRequest(const SyncRequest* request,
   reply->set_message(ApplyVersionEdits(args));
 }
 
-// If there is more than one version edit, could apply them in batch
-std::string RubbleKvServiceImpl::ApplyVersionEditsInBatch(const Op& op, size_t size){
-  assert(size != 0);
-
-  int num_of_imms_to_delete = 0;
-  // int num_of_added_files = 0;
-  uint64_t next_file_num;
-  rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
-  std::vector<rocksdb::VersionEdit> edits;
-
-  int start = 0;
-  int end = 0;
-  uint64_t old_log_apply_counter = log_apply_counter_.load();
-  bool out_of_order = false;
-  for(int i = 0; i < size; i++){
-    log_apply_counter_.fetch_add(1);
-
-    std::string edit = op.edits(i);
-    const json j_args = json::parse(edit);
-    bool is_trivial_move = false;
-    int batch_count = 0;
-    bool is_flush = false;
-
-    // RUBBLE_LOG_INFO(logger_, " %s \n", j_args.dump(4).c_str());
-    if(j_args.contains("IsFlush")){
-      is_flush = true;
-      assert(j_args["IsFlush"].get<bool>());
-      batch_count = j_args["BatchCount"].get<int>();
-      num_of_imms_to_delete += batch_count;
-    }
-
-    if(j_args.contains("IsTrivial")){
-      is_trivial_move = true;
-    }
-
-    next_file_num = j_args["NextFileNum"].get<uint64_t>();
-
-    uint64_t version_edit_id = j_args["Id"].get<uint64_t>();
-    // RUBBLE_LOG_INFO(logger_, "New Version Edit Id : %lu \n", version_edit_id);
-    uint64_t expected = version_edit_id_.load() + 1;
-
-    // For out of order version edit, cache it in the cached_edits_, and when the expected edit arrives,
-    // apply all correctly ordered edits
-    if(version_edit_id != expected){
-      assert(version_edit_id > expected);
-      out_of_order = true;
-      for(const auto& edit_string : j_args["EditList"].get<std::vector<std::string>>()){
-        auto j_edit = json::parse(edit_string);
-        auto edit = ParseJsonStringToVersionEdit(j_edit);
-        if(is_flush){
-          edit.SetBatchCount(batch_count);
-        }else if(is_trivial_move){
-          edit.MarkTrivialMove();
-        }
-        cached_edits_.insert({edit.GetEditNumber(), edit});
-        // edits_->Insert(edit.GetEditNumber(), edit);
-      }
-    }
-
-    if(out_of_order){
-      if(i == size - 1){
-        return "";
-      }
-      continue;
-    }
-
-    assert(version_edit_id == version_edit_id_.load() + 1);
-    version_edit_id_.store(version_edit_id);
-
-    for(const auto& edit_string : j_args["EditList"].get<std::vector<std::string>>()){  
-      end++;
-      auto j_edit = json::parse(edit_string);
-      auto edit = ParseJsonStringToVersionEdit(j_edit);
-      RUBBLE_LOG_INFO(logger_, "Got a new edit %s ", j_edit.dump(4).c_str());
-      fprintf(stdout,"Got a new edit %s \n", j_edit.dump(4).c_str());
-      if(is_flush){
-        edit.SetBatchCount(batch_count);
-      }
-      edits.push_back(std::move(edit));     
-    }
-
-    for(int idx = start; idx < end; idx++){
-      edit_list.push_back(&edits[idx]);
-    }
-
-    start = end;
-  }
-
-  if(cached_edits_.size() != 0){
-    auto it = cached_edits_.begin();
-    while(it->first == edits.back().GetEditNumber() + 1){
-      log_apply_counter_.fetch_add(1);
-      edits.push_back(it->second);
-      version_edit_id_.store(edits.back().GetEditNumber());
-      RUBBLE_LOG_INFO(logger_, "Got a new edit in cache %lu ", edits.back().GetEditNumber());
-      if(edits.back().IsFlush()){
-        num_of_imms_to_delete += edits.back().GetBatchCount();
-      }
-      edit_list.push_back(&edits.back());
-      cached_edits_.erase(it);
-      if(cached_edits_.size() == 0){
-        break;
-      }
-      it = cached_edits_.begin();
-    }
-  }
-
-  for(int idx = 0; idx < edit_list.size(); idx++){
-    rocksdb::IOStatus ios = UpdateSstViewAndShipSstFiles(*edit_list[idx]);
-    assert(ios.ok());
-  }
-
-  assert(log_apply_counter_.load() == old_log_apply_counter + edit_list.size());
-
-  // assert(version_edit_id_ == log_apply_counter_.load());
-  
-  const rocksdb::MutableCFOptions* cf_options = default_cf_->GetCurrentMutableCFOptions();
-  rocksdb::autovector<rocksdb::ColumnFamilyData*> cfds;
-  cfds.emplace_back(default_cf_);
-
-  rocksdb::autovector<const rocksdb::MutableCFOptions*> mutable_cf_options_list;
-  mutable_cf_options_list.emplace_back(cf_options);
-
-  rocksdb::autovector<rocksdb::autovector<rocksdb::VersionEdit*>> edit_lists;
-  edit_lists.emplace_back(edit_list);
-
-  rocksdb::FSDirectory* db_directory = impl_->directories_.GetDbDir();
-  rocksdb::MemTableList* imm = default_cf_->imm();
-  
-  uint64_t current_next_file_num = version_set_->current_next_file_number();
-  version_set_->FetchAddFileNumber(next_file_num - current_next_file_num);
-  assert(version_set_->current_next_file_number() == next_file_num);
-
-  RUBBLE_LOG_INFO(logger_, "[Secondary] Accepting Sync %lu th times, edit_list size : %u \n", 
-                  log_apply_counter_.load(),  static_cast<uint32_t>(edit_list.size()));
-
-  rocksdb::Status s = version_set_->LogAndApply(cfds, mutable_cf_options_list, edit_lists, mu_, db_directory);
-  if(s.ok()){
-    RUBBLE_LOG_INFO(logger_, "[Secondary] logAndApply succeeds \n");
-  }else{
-    RUBBLE_LOG_ERROR(logger_, "[Secondary] logAndApply failed : %s \n" , s.ToString().c_str());
-    std::cerr << "[Secondary] logAndApply failed : " << s.ToString() << std::endl;
-  }
-  assert(s.ok());
-
-  if(num_of_imms_to_delete > 0){
-    imm->InstallNewVersion();
-    rocksdb::autovector<rocksdb::MemTable*> to_delete;
-    
-    rocksdb::SuperVersion* sv = default_cf_->GetSuperVersion();
-    rocksdb::MemTableListVersion* current = imm->current();
-    int i = 0;
-    while(num_of_imms_to_delete-- > 0){
-      rocksdb::MemTable* m = current->GetMemlist().back();
-      m->SetFlushCompleted(true);
-      // while(!edit_list[i]->IsFlush()){
-      //   i++;
-      // }
-      // auto& edit = edit_list[i];
-      // auto& new_files = edit->GetNewFiles();
-      // m->SetFileNumber(new_files[0].second.fd.GetNumber()); 
-      // if(edit->GetBatchCount() == 1){
-      //   i++;
-      // }
-
-      current->RemoveLast(sv->GetToDelete());
-
-      imm->SetNumFlushNotStarted(current->GetMemlist().size());
-      imm->UpdateCachedValuesFromMemTableListVersion();
-      imm->ResetTrimHistoryNeeded();
-    }
-   
-    imm->SetCommitInProgress(false);
-    RUBBLE_LOG_INFO(logger_, " After RemoveLast : ( ImmutableList : %s ) \n",
-                    json::parse(imm->DebugJson()).dump(4).c_str());
-    fprintf(stdout, " After RemoveLast : ( ImmutableList size : %u ) \n",
-                    static_cast<uint32_t>(imm->current()->GetMemlist().size()));
-  }
-  return "ok";
-}
-
 // Update the secondary's states by applying the version edits
 // and ship sst to the downstream node if necessary
 std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
-    log_apply_counter_++;
-    RUBBLE_LOG_INFO(logger_, " Accepting Sync %lu th times \n", log_apply_counter_.load());
-    // std::cout << " --------[Secondary] Accepting Sync " << log_apply_counter_.load() << " th times --------- \n";
-    // example args json :
-    // For a Flush:
-    //  {
-    //   "BatchCount": 1,
-    //   "EditList": [
-    //       "{\"EditNumber\": 81, \"LogNumber\": 205, \"PrevLogNumber\": 0, \"BatchCount\": 1, 
-    //         \"AddedFiles\": [{\"Level\": 0, \"FileNumber\": 206, \"Slot\": 148, \"FileSize\": 17825792,
-    //         \"SmallestUserKey\": \"user1000305375367828682\", \"SmallestSeqno\": 695506, \"LargestUserKey\": \"user99949172114472487\", \"LargestSeqno\": 709153, 
-    //         \"OldestAncesterTime\": 1623936987, \"FileCreationTime\": 1623936988, \"FileChecksum\": \"\", \"FileChecksumFuncName\": \"Unknown\"}],
-    //         \"IsFlush\": 1}"
-    //   ],
-    //   "Id": 81,
-    //   "IsFlush": true,
-    //   "NextFileNum": 207
-    //   }
-
     const json j_args = json::parse(args);
-    RUBBLE_LOG_INFO(logger_, "New Version Edit : %s\n", j_args.dump(4).c_str());
-    // std::cout << j_args.dump(4) << std::endl;
-
     bool is_flush = false;
     bool is_trivial_move = false;
     int batch_count = 0;
-    // int num_of_added_files = 0;
+
     if(j_args.contains("IsFlush")){
       assert(j_args["IsFlush"].get<bool>());
       batch_count = j_args["BatchCount"].get<int>();
       is_flush = true;
-    }
-
-    if(!db_options_->disallow_flush_on_secondary){
-      std::cerr << "flush is enabled on secondary, shouldn't see the version edit which results from a flush here\n";
-      assert(!is_flush);
     }
 
     if(j_args.contains("IsTrivial")){
@@ -505,11 +290,6 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
 
     uint64_t version_edit_id = j_args["Id"].get<uint64_t>();
     uint64_t expected = version_edit_id_.load() + 1;
-    if(version_edit_id != expected){
-      RUBBLE_LOG_ERROR(logger_, "Version Edit arrives out of order, was expecting %lu, but Got %lu instead \n", expected, version_edit_id);
-      assert(false);
-    }
-    version_edit_id_.store(version_edit_id);
     
     uint64_t next_file_num = j_args["NextFileNum"].get<uint64_t>();
     rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
@@ -518,30 +298,79 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
       auto j_edit = json::parse(edit_string);
       auto edit = ParseJsonStringToVersionEdit(j_edit);
       // RUBBLE_LOG_INFO(logger_, "Got a new edit %s ", edit.DebugString().c_str());
-
       if(is_flush){
         edit.SetBatchCount(batch_count);
       }else if(is_trivial_move){
         edit.MarkTrivialMove();
       }
-      edits.push_back(std::move(edit));      
+      edit.SetNextFile(next_file_num);
+      edits.push_back(edit);      
     }
-    for(auto& edit: edits) {
-      edit_list.push_back(&edit);
+  
+    if(version_edit_id != expected){
+      RUBBLE_LOG_INFO(logger_, "Version Edit arrives out of order, expecting %lu, cache %lu \n", expected, version_edit_id);
+      for(const auto& edit : edits){
+       cached_edits_.insert({edit.GetEditNumber(), edit});
+      }
+      return "ok";
     }
 
-   // doesn't need to do anything for a trivial move compaction
-    if(!is_trivial_move){
-      for(const auto& edit: edit_list){
-        // this function is called by secondary nodes in the chain in rubble
-        rocksdb::IOStatus ios = UpdateSstViewAndShipSstFiles(*edit);
-        assert(ios.ok());
+    version_edit_id_.store(version_edit_id);
+    ApplyOneVersionEdit(edits);
+    edits.clear();
+    if(cached_edits_.size() != 0){
+      expected = version_edit_id + 1;
+      int count = cached_edits_.count(expected);
+      // auto it = cached_edits_.cbegin();
+      while(count != 0){
+        RUBBLE_LOG_INFO(logger_, "Got %d edits in cache, edit id : %lu \n", count, expected);
+        for(int i = 0; i < count; i++){
+          auto it = cached_edits_.cbegin();
+          assert(it->first == expected);
+          edits.push_back(it->second);
+          cached_edits_.erase(it);
+        }
+        version_edit_id_.store(expected);
+        ApplyOneVersionEdit(edits);
+        edits.clear();
+        expected++;
+        count = cached_edits_.count(expected);
       }
-      if(!is_tail_ && !piggyback_edits_){
-        // non-tail node should also issue Sync rpc call to downstream node
-        sync_client_->Sync(args);
-        // std::cout << "[ Reply Status ]: " << sync_reply << std::endl;
+    }
+
+    return "ok";
+}
+
+
+std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::VersionEdit>& edits) {
+   
+    bool is_flush = false;
+    bool is_trivial_move = false;
+    int batch_count = 0;
+    if(edits.size() == 2){
+      for(const auto& edit : edits){
+        assert(edit.IsFlush());
       }
+    }
+    auto& first_edit = edits[0];
+    if(first_edit.IsFlush()){
+      is_flush = true;
+    }else if(first_edit.IsTrivialMove()){
+      is_trivial_move = true;
+    }
+
+    batch_count += first_edit.GetBatchCount();
+    uint64_t next_file_num = first_edit.GetNextFile();
+
+    rocksdb::IOStatus ios;
+    for(const auto& edit: edits){
+      ios = UpdateSstViewAndShipSstFiles(edit);
+      assert(ios.ok());
+    }
+     
+    rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
+    for(auto& edit : edits){  
+      edit_list.push_back(&edit);
     }
 
     const rocksdb::MutableCFOptions* cf_options = default_cf_->GetCurrentMutableCFOptions();
@@ -557,15 +386,13 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
     rocksdb::FSDirectory* db_directory = impl_->directories_.GetDbDir();
     rocksdb::MemTableList* imm = default_cf_->imm();
     
-    // std::cout << "MemTable : " <<  json::parse(default_cf->mem()->DebugJson()).dump(4) << std::endl;
-    // std::cout  << "Immutable MemTable list : " << json::parse(imm->DebugJson()).dump(4) << std::endl;
-    // std::cout << " Current Version :\n " << default_cf_->current()->DebugString(false) <<std::endl;
-
     uint64_t current_next_file_num = version_set_->current_next_file_number();
     // set secondary version set's next file num according to the primary's next_file_num_
     version_set_->FetchAddFileNumber(next_file_num - current_next_file_num);
     assert(version_set_->current_next_file_number() == next_file_num);
 
+    log_apply_counter_.fetch_add(1);
+    RUBBLE_LOG_INFO(logger_, " Accepting Sync %lu th times \n", log_apply_counter_.load());
     // Calling LogAndApply on the secondary
     rocksdb::Status s = version_set_->LogAndApply(cfds, mutable_cf_options_list, edit_lists, mu_,
                       db_directory);
@@ -575,12 +402,10 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
       RUBBLE_LOG_ERROR(logger_, "[Secondary] logAndApply failed : %s \n" , s.ToString().c_str());
       std::cerr << "[Secondary] logAndApply failed : " << s.ToString() << std::endl;
     }
-    assert(s.ok());
 
     //Drop The corresponding MemTables in the Immutable MemTable List
     //If this version edit corresponds to a flush job
     if(is_flush){
-      // assert(batch_count % num_of_added_files == 0);
       // creating a new verion after we applied the edit
       imm->InstallNewVersion();
 
@@ -589,7 +414,6 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
       uint64_t mem_id = 1;  // how many memtables have been flushed.
       
       rocksdb::autovector<rocksdb::MemTable*> to_delete;
-      // std::cout << s_.ToString() << std::endl;
       if(s.ok() && !default_cf_->IsDropped()){
 
         rocksdb::SuperVersion* sv = default_cf_->GetSuperVersion();
@@ -600,11 +424,10 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
         // so should set the number_of_immutable_memtable_to_delete to be the minimum of batch count and immutable memlist size
         int imm_size = (int)current->GetMemlist().size();
         int num_of_imm_to_delete = std::min(batch_count, imm_size);
-        RUBBLE_LOG_INFO(logger_ , "memlist size : %d, num_of_imms_to_delete : %d \n", imm_size ,  num_of_imm_to_delete);
+        RUBBLE_LOG_INFO(logger_ , "memlist size : %d, batch count : %d \n", imm_size ,  batch_count);
+        fprintf(stdout, "memlist size : %d, bacth count : %d ,num_of_imms_to_delete : %d \n", imm_size ,batch_count, num_of_imm_to_delete);
         int i = 0;
         while(num_of_imm_to_delete -- > 0){
-
-          // not sure if all those are necessary
           rocksdb::MemTable* m = current->GetMemlist().back();
           m->SetFlushCompleted(true);
 
@@ -614,19 +437,10 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
           if(edit->GetBatchCount() == 1){
             i++;
           }
-          // if (m->GetEdits().GetBlobFileAdditions().empty()) {
-          //   ROCKS_LOG_BUFFER(log_buffer,
-          //                   "[%s] Level-0 commit table #%" PRIu64
-          //                   ": memtable #%" PRIu64 " done",
-          //                   default_cf_->GetName().c_str(), m->file_number_, mem_id);
-          // } else {
-          //   ROCKS_LOG_BUFFER(log_buffer,
-          //                   "[%s] Level-0 commit table #%" PRIu64
-          //                   " (+%zu blob files)"
-          //                   ": memtable #%" PRIu64 " done",
-          //                   default_cf_->GetName().c_str(), m->file_number_,
-          //                   m->edit_.GetBlobFileAdditions().size(), mem_id);
-          // }
+          
+          RUBBLE_LOG_INFO(logger_,
+                        "[%s] Level-0 commit table #%lu : memtable #%lu done",
+                        default_cf_->GetName().c_str(), m->GetFileNumber(), mem_id);
 
           assert(m->GetFileNumber() > 0);
           /* drop the corresponding immutable memtable in the list if version edit corresponds to a flush */
@@ -654,9 +468,11 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
       if(is_trivial_move){
         if(!s.ok()){
           std::cout << "[Secondary] Trivial Move LogAndApply Failed : " << s.ToString() << std::endl;
+        }else{
+          // std::cout << "[Secondary] Trivial Move LogAndApply Succeeds \n";
         }
       }else{ // it's a full compaction
-        std::cout << "[Secondary] Full compaction LogAndApply status : " << s.ToString() << std::endl;
+        // std::cout << "[Secondary] Full compaction LogAndApply status : " << s.ToString() << std::endl;
       }
     }
 
@@ -756,16 +572,18 @@ rocksdb::IOStatus RubbleKvServiceImpl::CreateSstPool(){
     assert((target_file_size_base % (1 << 20)) == 0);
     //assume the target_file_size_base is an integer multiple of 1MB
     // use one more MB because of the footer, and pad to the buffer_size
-    uint64_t buffer_size = target_file_size_base + (1 << 20);
+    uint64_t buffer_size = target_file_size_base + db_options_->sst_pad_len;
+    uint64_t big_buffer_size = 2*target_file_size_base + db_options_->sst_pad_len;
 
     std::cout << "sst file size : " << buffer_size << std::endl;
 
     rocksdb::AlignedBuffer buf;
     rocksdb::IOStatus s;
-
-    int preallocated_sst_pool_size = db_options_->preallocated_sst_pool_size;
-
-    for (int i = 1; i <= preallocated_sst_pool_size; i++) {
+    
+    int max_num_mems_to_flush = db_options_->max_num_mems_in_flush;
+    int pool_size = db_options_->preallocated_sst_pool_size;
+    int big_sst_pool_size = pool_size / 50;
+    for (int i = 1; i <= pool_size + (max_num_mems_to_flush - 1)* big_sst_pool_size; i++) {
         std::string sst_num = std::to_string(i);
         // rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size, 'c')), sst_dir + "/" + fname, true);
         std::string sst_name = sst_dir + "/" + sst_num;
@@ -782,6 +600,13 @@ rocksdb::IOStatus RubbleKvServiceImpl::CreateSstPool(){
                 buf.Alignment(file->GetRequiredBufferAlignment());
                 buf.AllocateNewBuffer(buffer_size);
                 buf.PadWith(buffer_size, 'c');
+            }else if( i > pool_size && ( ((i - pool_size) % big_sst_pool_size) == 1) ){
+                int times = (i - pool_size) / big_sst_pool_size + 2;
+                std::cout << " times : " << times << std::endl;
+                buffer_size = times * target_file_size_base + db_options_->sst_pad_len;
+                buf.Alignment(file->GetRequiredBufferAlignment());
+                buf.AllocateNewBuffer(buffer_size);
+                buf.PadWith(buffer_size - buf.CurrentSize(), 'c');
             }
 
             s = file->Append(rocksdb::Slice(buf.BufferStart()), rocksdb::IOOptions(), nullptr);
@@ -794,7 +619,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::CreateSstPool(){
             }
         }
     }
-
+         
     std::cout << "allocated " << db_options_->preallocated_sst_pool_size << " sst slots in " << sst_dir << std::endl;
     return s;
 }

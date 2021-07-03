@@ -173,6 +173,8 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       //ignore this flag for now, always set to true.
       db_options.disallow_flush_on_secondary = true;
 
+      db_options.max_num_mems_in_flush = 12;
+      db_options.sst_pad_len = 1 << 20;
       db_options.piggyback_version_edits = true;
       db_options.edits = std::make_shared<Edits>();
 
@@ -182,9 +184,12 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       }
       // the sst pool size should be set to size_of_your_data/sst_file_size
       // set to 450 for 5GB db and 16MB sst_file_size
-      db_options.preallocated_sst_pool_size = 450;
+      db_options.preallocated_sst_pool_size = 500;
       // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);
-      db_options.sst_bit_map = std::make_shared<SstBitMap>(db_options.preallocated_sst_pool_size, db_options.rubble_info_log);
+      db_options.sst_bit_map = std::make_shared<SstBitMap>(
+            db_options.preallocated_sst_pool_size, 
+            db_options.max_num_mems_in_flush,
+            db_options.rubble_info_log);
    }
 
    if(!db_options.is_primary){
@@ -197,6 +202,10 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    std::cout << "target_file_size_base: " << cf_options.target_file_size_base << '\n';
    rocksdb::Options options(db_options, cf_options);
 
+   options.statistics = rocksdb::CreateDBStatistics();
+   // options.statistics->getTickerCount(rocksdb::NUMBER_BLOCK_COMPRESSED);
+   // rocksdb::HistogramData hist;
+   // options.statistics->histogramData(rocksdb::FLUSH_TIME, &hist);
    if(db_options.is_rubble && !db_options.is_primary){
       // make sure compaction is disabled on the secondary nodes in rubble mode
       options.compaction_style = rocksdb::kCompactionStyleNone;

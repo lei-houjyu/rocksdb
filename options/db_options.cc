@@ -600,6 +600,8 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       target_address(options.target_address),
       remote_sst_dir(options.remote_sst_dir),
       preallocated_sst_pool_size(options.preallocated_sst_pool_size),
+      sst_pad_len(options.sst_pad_len),
+      max_num_mems_in_flush(options.max_num_mems_in_flush),
       channel(options.channel),
       sync_client(options.sync_client),
       sst_bit_map(options.sst_bit_map),

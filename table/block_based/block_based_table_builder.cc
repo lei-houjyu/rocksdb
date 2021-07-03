@@ -1618,10 +1618,12 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
   uint64_t footer_size = static_cast<uint64_t>(footer_encoding.size());
   uint64_t size = offset + footer_size;
 
- // pad the file size to target_file_size_base + 1MB
-  assert(size <= target_file_size_base + (1 << 20));
-  pad_len = target_file_size_base +  (1 << 20) - size;
-  // std::cout << " [padding] pad_len: " << pad_len << std::endl;
+  uint64_t target_file_size = target_file_size_base + r->ioptions.sst_pad_len;
+  
+  int times = (size - r->ioptions.sst_pad_len) / target_file_size_base;
+  pad_len = (times + 1)*target_file_size_base + r->ioptions.sst_pad_len - size;
+
+  // std::cout << "current size : " << size <<", [padding] pad_len: " << pad_len << std::endl;
   assert(pad_len >= 0);
   
   std::string pad_str((size_t)pad_len, '.');

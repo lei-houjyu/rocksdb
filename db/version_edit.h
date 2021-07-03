@@ -549,7 +549,7 @@ class VersionEdit {
     is_flush_ = true;
   }
 
-  bool IsFlush(){
+  bool IsFlush() const{
     return is_flush_;
   }
 
@@ -561,15 +561,11 @@ class VersionEdit {
     return is_trivial_move_compaction_;
   }
 
-  int GetBactchCount(){
-    return batch_count_;
-  }
-
   void SetBatchCount(int batch_count ){
     batch_count_ = batch_count;
   }
 
-  int GetBatchCount(){
+  int GetBatchCount() const{
     return batch_count_;
   }
 

@@ -69,10 +69,10 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     void HandleSyncRequest(const SyncRequest* request, 
                             SyncReply* reply);
 
-    std::string ApplyVersionEditsInBatch(const Op& op, size_t size);
-
     // calling UpdateSstView and logAndApply
     std::string ApplyVersionEdits(const std::string& args);
+    
+    std::string ApplyOneVersionEdit(std::vector<rocksdb::VersionEdit>& edits);
 
     // parse the version edit json string to rocksdb::VersionEdit 
     rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */);
@@ -148,7 +148,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     bool  piggyback_edits_ = false;
   
     std::atomic<uint64_t> version_edit_id_{0};
-    std::map<uint64_t, rocksdb::VersionEdit> cached_edits_;
+    std::multimap<uint64_t, rocksdb::VersionEdit> cached_edits_;
 
     // id for a Sync Request, assign it to the reply id
     uint64_t request_id_;

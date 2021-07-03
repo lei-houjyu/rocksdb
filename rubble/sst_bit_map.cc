@@ -3,56 +3,106 @@
 #include <assert.h>
 #include <logging/logging.h>
 
-SstBitMap::SstBitMap(int pool_size, std::shared_ptr<rocksdb::Logger> logger)
-    :size_(pool_size), logger_(logger){
-        slots_.reserve(size_ + 1);
-        slots_.assign(size_ + 1, 0);
+SstBitMap::SstBitMap(int pool_size, int max_num_mems_in_flush,
+        std::shared_ptr<rocksdb::Logger> logger)
+    :size_(pool_size), num_big_slots_(size_ / 50),
+    max_num_mems_in_flush_(max_num_mems_in_flush),
+    logger_(logger) {
+        int num_big_slots = (max_num_mems_in_flush_ - 1) *num_big_slots_;
+        slots_.reserve(size_ + 1 + num_big_slots);
+        slots_.assign(size_ + 1 + num_big_slots, 0);
+        next_available_slot_.push_back(1);
+        for(int i = 0; i < max_num_mems_in_flush_ - 1; i++){
+            next_available_slot_.push_back(size_ + 1 + i * num_big_slots_);
+        }
+        for(int i = 0; i < max_num_mems_in_flush_; i++){
+            num_slots_taken_.push_back(0);
+        }
     }
 
-int SstBitMap::TakeOneAvailableSlot(uint64_t file_num){
+
+int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
     std::unique_lock<std::mutex> lk{mu_};
-    if(num_slots_taken_ == size_){
+
+    if(num_slots_taken_[0] == size_ || (times >= 2 && num_slots_taken_[times - 1] == num_big_slots_)){
         std::cerr << "run out of slots, please choose a larger pool size\n";
         assert(false);
     }
-
-    int slot_num = next_available_slot_.load();
-    if(slots_[slot_num] != 0){
-        int start = slot_num + 1;
-        while(start <= size_ && slots_[start] != 0){
-            start++;
-        }
-        while(start > size_ && ((start % size_) < slot_num) && (slots_[start & size_] != 0)){
-            start++;
-        }
-        if(start > size_ && ((start % size_) == slot_num)){
-            std::cerr << "total " << num_slots_taken_ << " slots already taken\n";
-            assert(false);
-        }
     
-        slot_num = start > size_ ? start % size_ : start;
+    int start, end;
+    if(times == 1){
+        start = 1;
+        end = size_;
+    }else{
+        start = size_ + 1 + (times - 2)*num_big_slots_;
+        end = start + num_big_slots_ - 1;
+    }
+   
+    int slot_num = next_available_slot_[times - 1];
+    if(slots_[slot_num] != 0){
+        int cur = slot_num + 1;
+        while(cur <= end && slots_[cur] != 0){
+            cur++;
+        }
+        if(cur > end){
+            cur = start;
+            while(cur <= end && slots_[cur] != 0){
+                cur++;
+            }
+            if(cur > end){
+                std::cerr << "total " << num_slots_taken_[times - 1] << " taken\n";
+                assert(false);
+            }
+        }
+        slot_num = cur;
     }
     
     slots_[slot_num] = file_num;
     file_slots_.emplace(file_num, slot_num);
     // std::cout << "file " << file_num << " took slot " << next_available_slot_ << std::endl;
-    num_slots_taken_++;
+    num_slots_taken_[times - 1]++;
     // std::cout << "num slots taken : " << num_slots_taken_ << ", file_slots size : " << file_slots_.size() << std::endl;
-    assert(static_cast<int>(file_slots_.size()) == num_slots_taken_);
-    if(slot_num == size_){
-        next_available_slot_.store(1);
+
+    CheckNumSlotsTaken();
+    if(slot_num == end){
+        next_available_slot_[times - 1]= start;
     }else{
-        next_available_slot_.store(slot_num + 1);
+        next_available_slot_[times - 1] = slot_num + 1;
     }
 
     return slot_num;
+}
+
+void SstBitMap::CheckNumSlotsTaken(){
+    int total_slots_taken = 0;
+    for(int count : num_slots_taken_){
+        total_slots_taken += count;
+    }
+    int total_file_slots = static_cast<int>(file_slots_.size());
+    std::vector<int> slot_taken;
+
+    if(total_file_slots != total_slots_taken){
+        std::unordered_map<uint64_t, int>::iterator it;
+        for(it = file_slots_.begin(); it != file_slots_.end(); ++it){
+            if(it->second <= size_){
+                slot_taken[0]++;
+            }else{
+                int idx = (it->second - size_) /num_big_slots_ + 1;
+                slot_taken[idx]++;
+            }
+        }
+        for(int i = 0 ; i < static_cast<int>(slot_taken.size()); i++){
+            std::cout << " ( " << i << " : " << slot_taken[i] << " , " << num_slots_taken_[i] << " ) \n";
+        }
+    }
+    assert(static_cast<int>(file_slots_.size()) == total_slots_taken);
 }
 
 int SstBitMap::FreeSlot(uint64_t file_num){
     std::unique_lock<std::mutex> lk{mu_};
     assert(file_slots_.find(file_num) != file_slots_.end());
     int slot_num = file_slots_[file_num];
-    num_slots_taken_--;
+    num_slots_taken_[0]--;
     slots_[slot_num] = 0;
     file_slots_.erase(file_num);
     return slot_num;
@@ -64,11 +114,12 @@ void SstBitMap::FreeSlot(std::set<uint64_t> file_nums){
         assert(file_slots_.find(file_num) != file_slots_.end());
         int slot_num = file_slots_[file_num];
         RUBBLE_LOG_INFO(logger_, "Free Slot (%d , %lu) \n", slot_num, slots_[slot_num]);
-        num_slots_taken_--;
+        int idx = slot_num <= size_ ? 0 : ((slot_num - size_ - 1) /num_big_slots_  + 1 );
+        num_slots_taken_[idx]--; 
         slots_[slot_num] = 0;
         file_slots_.erase(file_num);
     }
-    assert(static_cast<int>(file_slots_.size()) == num_slots_taken_);
+    CheckNumSlotsTaken();
 }
     
 uint64_t SstBitMap::GetSlotFileNum(int slot_num){
