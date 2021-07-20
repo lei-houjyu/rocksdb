@@ -1,14 +1,13 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "rubblejava";
+option java_package = "site.ycsb";
 option java_outer_classname = "Rubble";
 option objc_class_prefix = "Rub";
 
 package rubble;
 
 service RubbleKvStoreService {
-
   // an internal rpc call used by the upstream (except the tail node) 
   // to synchronize states to the downstream nodes in the chain
   rpc Sync (stream SyncRequest) returns (stream SyncReply) {} 
@@ -20,32 +19,33 @@ service RubbleKvStoreService {
   rpc SendReply(stream OpReply) returns (stream Reply){}
 }
 
-message Op {
-  bool has_edits = 1;
-  repeated string edits = 2;
-  repeated SingleOp ops = 3;
+enum OpType {
+  GET = 0;
+  PUT = 1;
+  DELETE = 2;
+  UPDATE = 3;
 }
 
-// operation to perform on a db
-message SingleOp{
-  
-  string key = 1;
-  string value = 2;
-  uint64 Id = 3;
-
-  enum OpType {
-    GET = 0;
-    PUT = 1;
-    DELETE = 2;
-    UPDATE = 3;
-  }
-
-  OpType type = 4;
+message Op {
+  bool has_edits = 1;
+  int32 batchSize = 2;
+  repeated string edits = 3;
+  repeated SingleOp ops = 4;
+  repeated int64 time = 5;
 }
 
 message OpReply {
   string sync_reply = 1;
-  repeated SingleOpReply replies = 2;
+  int32 batchSize = 2;
+  repeated SingleOpReply replies = 3;
+  repeated int64 time = 4;
+}
+
+message SingleOp{
+  string key = 1;
+  string value = 2;
+  uint64 Id = 3;
+  OpType type = 4;
 }
 
 message SingleOpReply{
@@ -53,15 +53,7 @@ message SingleOpReply{
   string key = 2;
   string value = 3;
   string status = 4;
-
   int64  Id = 5;
-  enum  OpType {
-    GET = 0;
-    PUT = 1;
-    DELETE = 2;
-    UPDATE = 3;
-  }
-
   OpType type = 6;
 }
 
@@ -79,6 +71,6 @@ message SyncRequest {
   string  args = 1;
 }
 
-message SyncReply {
+message SyncReply { 
   string message = 1;
 }

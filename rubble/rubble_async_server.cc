@@ -63,7 +63,7 @@ CallDataBidi::CallDataBidi(SyncServiceImpl* service,
             std::cout << "init the forwarder" << "\n";
             forwarder_ = std::make_shared<Forwarder>(channel_);
           }
-          forwarder_->Forward(request_);
+          // forwarder_->Forward(request_);
             // request_.clear_ops();
           // std::cout << "thread: " << map[std::this_thread::get_id()] << " Forwarded " << op_counter_ << " ops" << std::endl;
         }else {
@@ -147,13 +147,13 @@ void CallDataBidi::HandleOp(){
     //     <<  " first key in batch: " << request_.ops(0).key() << " size: " << request_.ops_size() << "\n";
     switch (request_.ops(0).type())
     {
-      case SingleOp::GET:
+      case rubble::GET:
         for(const auto& request: request_.ops()) {
           reply = reply_.add_replies();
           reply->set_id(request.id());
           s_ = db_->Get(rocksdb::ReadOptions(), request.key(), &value);
           reply->set_key(request.key());
-          reply->set_type(SingleOpReply::GET);
+          reply->set_type(rubble::GET);
           reply->set_status(s_.ToString());
           if(s_.ok()){
             reply->set_ok(true);
@@ -164,7 +164,7 @@ void CallDataBidi::HandleOp(){
           }
         }
         break;
-      case SingleOp::PUT:
+      case rubble::PUT:
         // batch_start_time_ = high_resolution_clock::now();
         batch_counter_++;
         for(const auto& request: request_.ops()) {
@@ -177,7 +177,7 @@ void CallDataBidi::HandleOp(){
           if(db_options_->is_tail){
             reply = reply_.add_replies();
             reply->set_id(request.id());
-            reply->set_type(SingleOpReply::PUT);
+            reply->set_type(rubble::PUT);
             reply->set_key(request.key());
             if(s_.ok()){
               // std::cout << "Put : (" << request.key() /* << " ," << request_.value() */ << ")\n"; 
@@ -195,11 +195,11 @@ void CallDataBidi::HandleOp(){
         //           << " millisecs , size : " << request_.ops_size() << std::endl;
 
         break;
-      case SingleOp::DELETE:
+      case rubble::DELETE:
         //TODO
         break;
 
-      case SingleOp::UPDATE:
+      case rubble::UPDATE:
         // std::cout << "in UPDATE " << request_.ops(0).key() << "\n"; 
         for(const auto& request: request_.ops()) {
           reply = reply_.add_replies();
@@ -207,7 +207,7 @@ void CallDataBidi::HandleOp(){
           s_ = db_->Get(rocksdb::ReadOptions(), request.key(), &value);
           s_ = db_->Put(rocksdb::WriteOptions(), request.key(), request.value());
           reply->set_key(request.key());
-          reply->set_type(SingleOpReply::UPDATE);
+          reply->set_type(rubble::UPDATE);
           reply->set_status(s_.ToString());
           if(s_.ok()){
             reply->set_ok(true);

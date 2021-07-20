@@ -14,160 +14,127 @@
 #include <google/protobuf/wire_format.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
-extern PROTOBUF_INTERNAL_EXPORT_rubble_5fkv_5fstore_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_OpReply_rubble_5fkv_5fstore_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_rubble_5fkv_5fstore_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_SingleOp_rubble_5fkv_5fstore_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_rubble_5fkv_5fstore_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_SingleOpReply_rubble_5fkv_5fstore_2eproto;
+
+PROTOBUF_PRAGMA_INIT_SEG
 namespace rubble {
-class OpDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Op> _instance;
-} _Op_default_instance_;
-class SingleOpDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<SingleOp> _instance;
-} _SingleOp_default_instance_;
-class OpReplyDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<OpReply> _instance;
-} _OpReply_default_instance_;
-class SingleOpReplyDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<SingleOpReply> _instance;
-} _SingleOpReply_default_instance_;
-class OpRepliesDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<OpReplies> _instance;
-} _OpReplies_default_instance_;
-class ReplyDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Reply> _instance;
-} _Reply_default_instance_;
-class SyncRequestDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<SyncRequest> _instance;
-} _SyncRequest_default_instance_;
-class SyncReplyDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<SyncReply> _instance;
-} _SyncReply_default_instance_;
+constexpr Op::Op(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : edits_()
+  , ops_()
+  , time_()
+  , _time_cached_byte_size_()
+  , has_edits_(false)
+  , batchsize_(0){}
+struct OpDefaultTypeInternal {
+  constexpr OpDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~OpDefaultTypeInternal() {}
+  union {
+    Op _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT OpDefaultTypeInternal _Op_default_instance_;
+constexpr OpReply::OpReply(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : replies_()
+  , time_()
+  , _time_cached_byte_size_()
+  , sync_reply_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , batchsize_(0){}
+struct OpReplyDefaultTypeInternal {
+  constexpr OpReplyDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~OpReplyDefaultTypeInternal() {}
+  union {
+    OpReply _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT OpReplyDefaultTypeInternal _OpReply_default_instance_;
+constexpr SingleOp::SingleOp(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : key_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , value_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , id_(PROTOBUF_ULONGLONG(0))
+  , type_(0)
+{}
+struct SingleOpDefaultTypeInternal {
+  constexpr SingleOpDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~SingleOpDefaultTypeInternal() {}
+  union {
+    SingleOp _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT SingleOpDefaultTypeInternal _SingleOp_default_instance_;
+constexpr SingleOpReply::SingleOpReply(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : key_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , value_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , status_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , ok_(false)
+  , type_(0)
+
+  , id_(PROTOBUF_LONGLONG(0)){}
+struct SingleOpReplyDefaultTypeInternal {
+  constexpr SingleOpReplyDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~SingleOpReplyDefaultTypeInternal() {}
+  union {
+    SingleOpReply _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT SingleOpReplyDefaultTypeInternal _SingleOpReply_default_instance_;
+constexpr OpReplies::OpReplies(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : reply_(){}
+struct OpRepliesDefaultTypeInternal {
+  constexpr OpRepliesDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~OpRepliesDefaultTypeInternal() {}
+  union {
+    OpReplies _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT OpRepliesDefaultTypeInternal _OpReplies_default_instance_;
+constexpr Reply::Reply(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : ok_(false){}
+struct ReplyDefaultTypeInternal {
+  constexpr ReplyDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~ReplyDefaultTypeInternal() {}
+  union {
+    Reply _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT ReplyDefaultTypeInternal _Reply_default_instance_;
+constexpr SyncRequest::SyncRequest(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : args_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string){}
+struct SyncRequestDefaultTypeInternal {
+  constexpr SyncRequestDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~SyncRequestDefaultTypeInternal() {}
+  union {
+    SyncRequest _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT SyncRequestDefaultTypeInternal _SyncRequest_default_instance_;
+constexpr SyncReply::SyncReply(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : message_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string){}
+struct SyncReplyDefaultTypeInternal {
+  constexpr SyncReplyDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~SyncReplyDefaultTypeInternal() {}
+  union {
+    SyncReply _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT SyncReplyDefaultTypeInternal _SyncReply_default_instance_;
 }  // namespace rubble
-static void InitDefaultsscc_info_Op_rubble_5fkv_5fstore_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::rubble::_Op_default_instance_;
-    new (ptr) ::rubble::Op();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::rubble::Op::InitAsDefaultInstance();
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_Op_rubble_5fkv_5fstore_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_Op_rubble_5fkv_5fstore_2eproto}, {
-      &scc_info_SingleOp_rubble_5fkv_5fstore_2eproto.base,}};
-
-static void InitDefaultsscc_info_OpReplies_rubble_5fkv_5fstore_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::rubble::_OpReplies_default_instance_;
-    new (ptr) ::rubble::OpReplies();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::rubble::OpReplies::InitAsDefaultInstance();
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_OpReplies_rubble_5fkv_5fstore_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_OpReplies_rubble_5fkv_5fstore_2eproto}, {
-      &scc_info_OpReply_rubble_5fkv_5fstore_2eproto.base,}};
-
-static void InitDefaultsscc_info_OpReply_rubble_5fkv_5fstore_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::rubble::_OpReply_default_instance_;
-    new (ptr) ::rubble::OpReply();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::rubble::OpReply::InitAsDefaultInstance();
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_OpReply_rubble_5fkv_5fstore_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_OpReply_rubble_5fkv_5fstore_2eproto}, {
-      &scc_info_SingleOpReply_rubble_5fkv_5fstore_2eproto.base,}};
-
-static void InitDefaultsscc_info_Reply_rubble_5fkv_5fstore_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::rubble::_Reply_default_instance_;
-    new (ptr) ::rubble::Reply();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::rubble::Reply::InitAsDefaultInstance();
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Reply_rubble_5fkv_5fstore_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_Reply_rubble_5fkv_5fstore_2eproto}, {}};
-
-static void InitDefaultsscc_info_SingleOp_rubble_5fkv_5fstore_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::rubble::_SingleOp_default_instance_;
-    new (ptr) ::rubble::SingleOp();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::rubble::SingleOp::InitAsDefaultInstance();
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_SingleOp_rubble_5fkv_5fstore_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_SingleOp_rubble_5fkv_5fstore_2eproto}, {}};
-
-static void InitDefaultsscc_info_SingleOpReply_rubble_5fkv_5fstore_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::rubble::_SingleOpReply_default_instance_;
-    new (ptr) ::rubble::SingleOpReply();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::rubble::SingleOpReply::InitAsDefaultInstance();
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_SingleOpReply_rubble_5fkv_5fstore_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_SingleOpReply_rubble_5fkv_5fstore_2eproto}, {}};
-
-static void InitDefaultsscc_info_SyncReply_rubble_5fkv_5fstore_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::rubble::_SyncReply_default_instance_;
-    new (ptr) ::rubble::SyncReply();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::rubble::SyncReply::InitAsDefaultInstance();
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_SyncReply_rubble_5fkv_5fstore_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_SyncReply_rubble_5fkv_5fstore_2eproto}, {}};
-
-static void InitDefaultsscc_info_SyncRequest_rubble_5fkv_5fstore_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::rubble::_SyncRequest_default_instance_;
-    new (ptr) ::rubble::SyncRequest();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::rubble::SyncRequest::InitAsDefaultInstance();
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_SyncRequest_rubble_5fkv_5fstore_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_SyncRequest_rubble_5fkv_5fstore_2eproto}, {}};
-
 static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_rubble_5fkv_5fstore_2eproto[8];
-static const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* file_level_enum_descriptors_rubble_5fkv_5fstore_2eproto[2];
+static const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* file_level_enum_descriptors_rubble_5fkv_5fstore_2eproto[1];
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_rubble_5fkv_5fstore_2eproto = nullptr;
 
 const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_rubble_5fkv_5fstore_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
@@ -177,8 +144,19 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_rubble_5fkv_5fstore_2eproto::o
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   PROTOBUF_FIELD_OFFSET(::rubble::Op, has_edits_),
+  PROTOBUF_FIELD_OFFSET(::rubble::Op, batchsize_),
   PROTOBUF_FIELD_OFFSET(::rubble::Op, edits_),
   PROTOBUF_FIELD_OFFSET(::rubble::Op, ops_),
+  PROTOBUF_FIELD_OFFSET(::rubble::Op, time_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::rubble::OpReply, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  PROTOBUF_FIELD_OFFSET(::rubble::OpReply, sync_reply_),
+  PROTOBUF_FIELD_OFFSET(::rubble::OpReply, batchsize_),
+  PROTOBUF_FIELD_OFFSET(::rubble::OpReply, replies_),
+  PROTOBUF_FIELD_OFFSET(::rubble::OpReply, time_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -188,13 +166,6 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_rubble_5fkv_5fstore_2eproto::o
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, value_),
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, id_),
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, type_),
-  ~0u,  // no _has_bits_
-  PROTOBUF_FIELD_OFFSET(::rubble::OpReply, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::rubble::OpReply, sync_reply_),
-  PROTOBUF_FIELD_OFFSET(::rubble::OpReply, replies_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOpReply, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -233,19 +204,19 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_rubble_5fkv_5fstore_2eproto::o
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::rubble::Op)},
-  { 8, -1, sizeof(::rubble::SingleOp)},
-  { 17, -1, sizeof(::rubble::OpReply)},
-  { 24, -1, sizeof(::rubble::SingleOpReply)},
-  { 35, -1, sizeof(::rubble::OpReplies)},
-  { 41, -1, sizeof(::rubble::Reply)},
-  { 47, -1, sizeof(::rubble::SyncRequest)},
-  { 53, -1, sizeof(::rubble::SyncReply)},
+  { 10, -1, sizeof(::rubble::OpReply)},
+  { 19, -1, sizeof(::rubble::SingleOp)},
+  { 28, -1, sizeof(::rubble::SingleOpReply)},
+  { 39, -1, sizeof(::rubble::OpReplies)},
+  { 45, -1, sizeof(::rubble::Reply)},
+  { 51, -1, sizeof(::rubble::SyncRequest)},
+  { 57, -1, sizeof(::rubble::SyncReply)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::rubble::_Op_default_instance_),
-  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::rubble::_SingleOp_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::rubble::_OpReply_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::rubble::_SingleOp_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::rubble::_SingleOpReply_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::rubble::_OpReplies_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::rubble::_Reply_default_instance_),
@@ -254,56 +225,49 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
 };
 
 const char descriptor_table_protodef_rubble_5fkv_5fstore_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\025rubble_kv_store.proto\022\006rubble\"E\n\002Op\022\021\n"
-  "\thas_edits\030\001 \001(\010\022\r\n\005edits\030\002 \003(\t\022\035\n\003ops\030\003"
-  " \003(\0132\020.rubble.SingleOp\"\215\001\n\010SingleOp\022\013\n\003k"
-  "ey\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\022\n\n\002Id\030\003 \001(\004\022%\n\004t"
-  "ype\030\004 \001(\0162\027.rubble.SingleOp.OpType\"2\n\006Op"
-  "Type\022\007\n\003GET\020\000\022\007\n\003PUT\020\001\022\n\n\006DELETE\020\002\022\n\n\006UP"
-  "DATE\020\003\"E\n\007OpReply\022\022\n\nsync_reply\030\001 \001(\t\022&\n"
-  "\007replies\030\002 \003(\0132\025.rubble.SingleOpReply\"\263\001"
-  "\n\rSingleOpReply\022\n\n\002ok\030\001 \001(\010\022\013\n\003key\030\002 \001(\t"
-  "\022\r\n\005value\030\003 \001(\t\022\016\n\006status\030\004 \001(\t\022\n\n\002Id\030\005 "
-  "\001(\003\022*\n\004type\030\006 \001(\0162\034.rubble.SingleOpReply"
-  ".OpType\"2\n\006OpType\022\007\n\003GET\020\000\022\007\n\003PUT\020\001\022\n\n\006D"
-  "ELETE\020\002\022\n\n\006UPDATE\020\003\"+\n\tOpReplies\022\036\n\005repl"
-  "y\030\001 \003(\0132\017.rubble.OpReply\"\023\n\005Reply\022\n\n\002ok\030"
-  "\001 \001(\010\"\033\n\013SyncRequest\022\014\n\004args\030\001 \001(\t\"\034\n\tSy"
-  "ncReply\022\017\n\007message\030\001 \001(\t2\252\001\n\024RubbleKvSto"
-  "reService\0224\n\004Sync\022\023.rubble.SyncRequest\032\021"
-  ".rubble.SyncReply\"\000(\0010\001\022)\n\004DoOp\022\n.rubble"
-  ".Op\032\017.rubble.OpReply\"\000(\0010\001\0221\n\tSendReply\022"
-  "\017.rubble.OpReply\032\r.rubble.Reply\"\000(\0010\001B\034\n"
-  "\nrubblejavaB\006RubbleP\001\242\002\003Rubb\006proto3"
+  "\n\025rubble_kv_store.proto\022\006rubble\"f\n\002Op\022\021\n"
+  "\thas_edits\030\001 \001(\010\022\021\n\tbatchSize\030\002 \001(\005\022\r\n\005e"
+  "dits\030\003 \003(\t\022\035\n\003ops\030\004 \003(\0132\020.rubble.SingleO"
+  "p\022\014\n\004time\030\005 \003(\003\"f\n\007OpReply\022\022\n\nsync_reply"
+  "\030\001 \001(\t\022\021\n\tbatchSize\030\002 \001(\005\022&\n\007replies\030\003 \003"
+  "(\0132\025.rubble.SingleOpReply\022\014\n\004time\030\004 \003(\003\""
+  "P\n\010SingleOp\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\022"
+  "\n\n\002Id\030\003 \001(\004\022\034\n\004type\030\004 \001(\0162\016.rubble.OpTyp"
+  "e\"q\n\rSingleOpReply\022\n\n\002ok\030\001 \001(\010\022\013\n\003key\030\002 "
+  "\001(\t\022\r\n\005value\030\003 \001(\t\022\016\n\006status\030\004 \001(\t\022\n\n\002Id"
+  "\030\005 \001(\003\022\034\n\004type\030\006 \001(\0162\016.rubble.OpType\"+\n\t"
+  "OpReplies\022\036\n\005reply\030\001 \003(\0132\017.rubble.OpRepl"
+  "y\"\023\n\005Reply\022\n\n\002ok\030\001 \001(\010\"\033\n\013SyncRequest\022\014\n"
+  "\004args\030\001 \001(\t\"\034\n\tSyncReply\022\017\n\007message\030\001 \001("
+  "\t*2\n\006OpType\022\007\n\003GET\020\000\022\007\n\003PUT\020\001\022\n\n\006DELETE\020"
+  "\002\022\n\n\006UPDATE\020\0032\252\001\n\024RubbleKvStoreService\0224"
+  "\n\004Sync\022\023.rubble.SyncRequest\032\021.rubble.Syn"
+  "cReply\"\000(\0010\001\022)\n\004DoOp\022\n.rubble.Op\032\017.rubbl"
+  "e.OpReply\"\000(\0010\001\0221\n\tSendReply\022\017.rubble.Op"
+  "Reply\032\r.rubble.Reply\"\000(\0010\001B\033\n\tsite.ycsbB"
+  "\006RubbleP\001\242\002\003Rubb\006proto3"
   ;
-static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_rubble_5fkv_5fstore_2eproto_deps[1] = {
-};
-static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_rubble_5fkv_5fstore_2eproto_sccs[8] = {
-  &scc_info_Op_rubble_5fkv_5fstore_2eproto.base,
-  &scc_info_OpReplies_rubble_5fkv_5fstore_2eproto.base,
-  &scc_info_OpReply_rubble_5fkv_5fstore_2eproto.base,
-  &scc_info_Reply_rubble_5fkv_5fstore_2eproto.base,
-  &scc_info_SingleOp_rubble_5fkv_5fstore_2eproto.base,
-  &scc_info_SingleOpReply_rubble_5fkv_5fstore_2eproto.base,
-  &scc_info_SyncReply_rubble_5fkv_5fstore_2eproto.base,
-  &scc_info_SyncRequest_rubble_5fkv_5fstore_2eproto.base,
-};
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_rubble_5fkv_5fstore_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_rubble_5fkv_5fstore_2eproto = {
-  false, false, descriptor_table_protodef_rubble_5fkv_5fstore_2eproto, "rubble_kv_store.proto", 835,
-  &descriptor_table_rubble_5fkv_5fstore_2eproto_once, descriptor_table_rubble_5fkv_5fstore_2eproto_sccs, descriptor_table_rubble_5fkv_5fstore_2eproto_deps, 8, 0,
+  false, false, 823, descriptor_table_protodef_rubble_5fkv_5fstore_2eproto, "rubble_kv_store.proto", 
+  &descriptor_table_rubble_5fkv_5fstore_2eproto_once, nullptr, 0, 8,
   schemas, file_default_instances, TableStruct_rubble_5fkv_5fstore_2eproto::offsets,
-  file_level_metadata_rubble_5fkv_5fstore_2eproto, 8, file_level_enum_descriptors_rubble_5fkv_5fstore_2eproto, file_level_service_descriptors_rubble_5fkv_5fstore_2eproto,
+  file_level_metadata_rubble_5fkv_5fstore_2eproto, file_level_enum_descriptors_rubble_5fkv_5fstore_2eproto, file_level_service_descriptors_rubble_5fkv_5fstore_2eproto,
 };
+PROTOBUF_ATTRIBUTE_WEAK ::PROTOBUF_NAMESPACE_ID::Metadata
+descriptor_table_rubble_5fkv_5fstore_2eproto_metadata_getter(int index) {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_rubble_5fkv_5fstore_2eproto);
+  return descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[index];
+}
 
 // Force running AddDescriptors() at dynamic initialization time.
-static bool dynamic_init_dummy_rubble_5fkv_5fstore_2eproto = (static_cast<void>(::PROTOBUF_NAMESPACE_ID::internal::AddDescriptors(&descriptor_table_rubble_5fkv_5fstore_2eproto)), true);
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY static ::PROTOBUF_NAMESPACE_ID::internal::AddDescriptorsRunner dynamic_init_dummy_rubble_5fkv_5fstore_2eproto(&descriptor_table_rubble_5fkv_5fstore_2eproto);
 namespace rubble {
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* SingleOp_OpType_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* OpType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_rubble_5fkv_5fstore_2eproto);
   return file_level_enum_descriptors_rubble_5fkv_5fstore_2eproto[0];
 }
-bool SingleOp_OpType_IsValid(int value) {
+bool OpType_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
@@ -315,45 +279,9 @@ bool SingleOp_OpType_IsValid(int value) {
   }
 }
 
-#if (__cplusplus < 201703) && (!defined(_MSC_VER) || _MSC_VER >= 1900)
-constexpr SingleOp_OpType SingleOp::GET;
-constexpr SingleOp_OpType SingleOp::PUT;
-constexpr SingleOp_OpType SingleOp::DELETE;
-constexpr SingleOp_OpType SingleOp::UPDATE;
-constexpr SingleOp_OpType SingleOp::OpType_MIN;
-constexpr SingleOp_OpType SingleOp::OpType_MAX;
-constexpr int SingleOp::OpType_ARRAYSIZE;
-#endif  // (__cplusplus < 201703) && (!defined(_MSC_VER) || _MSC_VER >= 1900)
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* SingleOpReply_OpType_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_rubble_5fkv_5fstore_2eproto);
-  return file_level_enum_descriptors_rubble_5fkv_5fstore_2eproto[1];
-}
-bool SingleOpReply_OpType_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-      return true;
-    default:
-      return false;
-  }
-}
-
-#if (__cplusplus < 201703) && (!defined(_MSC_VER) || _MSC_VER >= 1900)
-constexpr SingleOpReply_OpType SingleOpReply::GET;
-constexpr SingleOpReply_OpType SingleOpReply::PUT;
-constexpr SingleOpReply_OpType SingleOpReply::DELETE;
-constexpr SingleOpReply_OpType SingleOpReply::UPDATE;
-constexpr SingleOpReply_OpType SingleOpReply::OpType_MIN;
-constexpr SingleOpReply_OpType SingleOpReply::OpType_MAX;
-constexpr int SingleOpReply::OpType_ARRAYSIZE;
-#endif  // (__cplusplus < 201703) && (!defined(_MSC_VER) || _MSC_VER >= 1900)
 
 // ===================================================================
 
-void Op::InitAsDefaultInstance() {
-}
 class Op::_Internal {
  public:
 };
@@ -361,7 +289,8 @@ class Op::_Internal {
 Op::Op(::PROTOBUF_NAMESPACE_ID::Arena* arena)
   : ::PROTOBUF_NAMESPACE_ID::Message(arena),
   edits_(arena),
-  ops_(arena) {
+  ops_(arena),
+  time_(arena) {
   SharedCtor();
   RegisterArenaDtor(arena);
   // @@protoc_insertion_point(arena_constructor:rubble.Op)
@@ -369,15 +298,20 @@ Op::Op(::PROTOBUF_NAMESPACE_ID::Arena* arena)
 Op::Op(const Op& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
       edits_(from.edits_),
-      ops_(from.ops_) {
+      ops_(from.ops_),
+      time_(from.time_) {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  has_edits_ = from.has_edits_;
+  ::memcpy(&has_edits_, &from.has_edits_,
+    static_cast<size_t>(reinterpret_cast<char*>(&batchsize_) -
+    reinterpret_cast<char*>(&has_edits_)) + sizeof(batchsize_));
   // @@protoc_insertion_point(copy_constructor:rubble.Op)
 }
 
 void Op::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Op_rubble_5fkv_5fstore_2eproto.base);
-  has_edits_ = false;
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&has_edits_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&batchsize_) -
+    reinterpret_cast<char*>(&has_edits_)) + sizeof(batchsize_));
 }
 
 Op::~Op() {
@@ -399,11 +333,6 @@ void Op::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void Op::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const Op& Op::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Op_rubble_5fkv_5fstore_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void Op::Clear() {
 // @@protoc_insertion_point(message_clear_start:rubble.Op)
@@ -413,13 +342,15 @@ void Op::Clear() {
 
   edits_.Clear();
   ops_.Clear();
-  has_edits_ = false;
+  time_.Clear();
+  ::memset(&has_edits_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&batchsize_) -
+      reinterpret_cast<char*>(&has_edits_)) + sizeof(batchsize_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 const char* Op::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
@@ -432,9 +363,16 @@ const char* Op::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::interna
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // repeated string edits = 2;
+      // int32 batchSize = 2;
       case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          batchsize_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated string edits = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
           ptr -= 1;
           do {
             ptr += 1;
@@ -443,19 +381,29 @@ const char* Op::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::interna
             CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "rubble.Op.edits"));
             CHK_(ptr);
             if (!ctx->DataAvailable(ptr)) break;
-          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<18>(ptr));
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<26>(ptr));
         } else goto handle_unusual;
         continue;
-      // repeated .rubble.SingleOp ops = 3;
-      case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
+      // repeated .rubble.SingleOp ops = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
           ptr -= 1;
           do {
             ptr += 1;
             ptr = ctx->ParseMessage(_internal_add_ops(), ptr);
             CHK_(ptr);
             if (!ctx->DataAvailable(ptr)) break;
-          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<26>(ptr));
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<34>(ptr));
+        } else goto handle_unusual;
+        continue;
+      // repeated int64 time = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedInt64Parser(_internal_mutable_time(), ptr, ctx);
+          CHK_(ptr);
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 40) {
+          _internal_add_time(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr));
+          CHK_(ptr);
         } else goto handle_unusual;
         continue;
       default: {
@@ -492,22 +440,37 @@ failure:
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteBoolToArray(1, this->_internal_has_edits(), target);
   }
 
-  // repeated string edits = 2;
+  // int32 batchSize = 2;
+  if (this->batchsize() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(2, this->_internal_batchsize(), target);
+  }
+
+  // repeated string edits = 3;
   for (int i = 0, n = this->_internal_edits_size(); i < n; i++) {
     const auto& s = this->_internal_edits(i);
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
       s.data(), static_cast<int>(s.length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "rubble.Op.edits");
-    target = stream->WriteString(2, s, target);
+    target = stream->WriteString(3, s, target);
   }
 
-  // repeated .rubble.SingleOp ops = 3;
+  // repeated .rubble.SingleOp ops = 4;
   for (unsigned int i = 0,
       n = static_cast<unsigned int>(this->_internal_ops_size()); i < n; i++) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(3, this->_internal_ops(i), target, stream);
+      InternalWriteMessage(4, this->_internal_ops(i), target, stream);
+  }
+
+  // repeated int64 time = 5;
+  {
+    int byte_size = _time_cached_byte_size_.load(std::memory_order_relaxed);
+    if (byte_size > 0) {
+      target = stream->WriteInt64Packed(
+          5, _internal_time(), byte_size, target);
+    }
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -526,7 +489,7 @@ size_t Op::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // repeated string edits = 2;
+  // repeated string edits = 3;
   total_size += 1 *
       ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(edits_.size());
   for (int i = 0, n = edits_.size(); i < n; i++) {
@@ -534,16 +497,38 @@ size_t Op::ByteSizeLong() const {
       edits_.Get(i));
   }
 
-  // repeated .rubble.SingleOp ops = 3;
+  // repeated .rubble.SingleOp ops = 4;
   total_size += 1UL * this->_internal_ops_size();
   for (const auto& msg : this->ops_) {
     total_size +=
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
+  // repeated int64 time = 5;
+  {
+    size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      Int64Size(this->time_);
+    if (data_size > 0) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+            static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
+    }
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
+    _time_cached_byte_size_.store(cached_size,
+                                    std::memory_order_relaxed);
+    total_size += data_size;
+  }
+
   // bool has_edits = 1;
   if (this->has_edits() != 0) {
     total_size += 1 + 1;
+  }
+
+  // int32 batchSize = 2;
+  if (this->batchsize() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+        this->_internal_batchsize());
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -579,8 +564,12 @@ void Op::MergeFrom(const Op& from) {
 
   edits_.MergeFrom(from.edits_);
   ops_.MergeFrom(from.ops_);
+  time_.MergeFrom(from.time_);
   if (from.has_edits() != 0) {
     _internal_set_has_edits(from._internal_has_edits());
+  }
+  if (from.batchsize() != 0) {
+    _internal_set_batchsize(from._internal_batchsize());
   }
 }
 
@@ -607,7 +596,13 @@ void Op::InternalSwap(Op* other) {
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   edits_.InternalSwap(&other->edits_);
   ops_.InternalSwap(&other->ops_);
-  swap(has_edits_, other->has_edits_);
+  time_.InternalSwap(&other->time_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(Op, batchsize_)
+      + sizeof(Op::batchsize_)
+      - PROTOBUF_FIELD_OFFSET(Op, has_edits_)>(
+          reinterpret_cast<char*>(&has_edits_),
+          reinterpret_cast<char*>(&other->has_edits_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata Op::GetMetadata() const {
@@ -617,8 +612,304 @@ void Op::InternalSwap(Op* other) {
 
 // ===================================================================
 
-void SingleOp::InitAsDefaultInstance() {
+class OpReply::_Internal {
+ public:
+};
+
+OpReply::OpReply(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena),
+  replies_(arena),
+  time_(arena) {
+  SharedCtor();
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:rubble.OpReply)
 }
+OpReply::OpReply(const OpReply& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
+      replies_(from.replies_),
+      time_(from.time_) {
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  sync_reply_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from._internal_sync_reply().empty()) {
+    sync_reply_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_sync_reply(), 
+      GetArena());
+  }
+  batchsize_ = from.batchsize_;
+  // @@protoc_insertion_point(copy_constructor:rubble.OpReply)
+}
+
+void OpReply::SharedCtor() {
+sync_reply_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+batchsize_ = 0;
+}
+
+OpReply::~OpReply() {
+  // @@protoc_insertion_point(destructor:rubble.OpReply)
+  SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+void OpReply::SharedDtor() {
+  GOOGLE_DCHECK(GetArena() == nullptr);
+  sync_reply_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+}
+
+void OpReply::ArenaDtor(void* object) {
+  OpReply* _this = reinterpret_cast< OpReply* >(object);
+  (void)_this;
+}
+void OpReply::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
+void OpReply::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+
+void OpReply::Clear() {
+// @@protoc_insertion_point(message_clear_start:rubble.OpReply)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  replies_.Clear();
+  time_.Clear();
+  sync_reply_.ClearToEmpty();
+  batchsize_ = 0;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* OpReply::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
+      // string sync_reply = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+          auto str = _internal_mutable_sync_reply();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "rubble.OpReply.sync_reply"));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // int32 batchSize = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          batchsize_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated .rubble.SingleOpReply replies = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_replies(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<26>(ptr));
+        } else goto handle_unusual;
+        continue;
+      // repeated int64 time = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedInt64Parser(_internal_mutable_time(), ptr, ctx);
+          CHK_(ptr);
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32) {
+          _internal_add_time(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
+          goto success;
+        }
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
+      }
+    }  // switch
+  }  // while
+success:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto success;
+#undef CHK_
+}
+
+::PROTOBUF_NAMESPACE_ID::uint8* OpReply::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:rubble.OpReply)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string sync_reply = 1;
+  if (this->sync_reply().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_sync_reply().data(), static_cast<int>(this->_internal_sync_reply().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "rubble.OpReply.sync_reply");
+    target = stream->WriteStringMaybeAliased(
+        1, this->_internal_sync_reply(), target);
+  }
+
+  // int32 batchSize = 2;
+  if (this->batchsize() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(2, this->_internal_batchsize(), target);
+  }
+
+  // repeated .rubble.SingleOpReply replies = 3;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->_internal_replies_size()); i < n; i++) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(3, this->_internal_replies(i), target, stream);
+  }
+
+  // repeated int64 time = 4;
+  {
+    int byte_size = _time_cached_byte_size_.load(std::memory_order_relaxed);
+    if (byte_size > 0) {
+      target = stream->WriteInt64Packed(
+          4, _internal_time(), byte_size, target);
+    }
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:rubble.OpReply)
+  return target;
+}
+
+size_t OpReply::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:rubble.OpReply)
+  size_t total_size = 0;
+
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // repeated .rubble.SingleOpReply replies = 3;
+  total_size += 1UL * this->_internal_replies_size();
+  for (const auto& msg : this->replies_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
+  }
+
+  // repeated int64 time = 4;
+  {
+    size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      Int64Size(this->time_);
+    if (data_size > 0) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+            static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
+    }
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
+    _time_cached_byte_size_.store(cached_size,
+                                    std::memory_order_relaxed);
+    total_size += data_size;
+  }
+
+  // string sync_reply = 1;
+  if (this->sync_reply().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_sync_reply());
+  }
+
+  // int32 batchSize = 2;
+  if (this->batchsize() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+        this->_internal_batchsize());
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void OpReply::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:rubble.OpReply)
+  GOOGLE_DCHECK_NE(&from, this);
+  const OpReply* source =
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<OpReply>(
+          &from);
+  if (source == nullptr) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:rubble.OpReply)
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:rubble.OpReply)
+    MergeFrom(*source);
+  }
+}
+
+void OpReply::MergeFrom(const OpReply& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:rubble.OpReply)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  replies_.MergeFrom(from.replies_);
+  time_.MergeFrom(from.time_);
+  if (from.sync_reply().size() > 0) {
+    _internal_set_sync_reply(from._internal_sync_reply());
+  }
+  if (from.batchsize() != 0) {
+    _internal_set_batchsize(from._internal_batchsize());
+  }
+}
+
+void OpReply::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:rubble.OpReply)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void OpReply::CopyFrom(const OpReply& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:rubble.OpReply)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool OpReply::IsInitialized() const {
+  return true;
+}
+
+void OpReply::InternalSwap(OpReply* other) {
+  using std::swap;
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  replies_.InternalSwap(&other->replies_);
+  time_.InternalSwap(&other->time_);
+  sync_reply_.Swap(&other->sync_reply_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  swap(batchsize_, other->batchsize_);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata OpReply::GetMetadata() const {
+  return GetMetadataStatic();
+}
+
+
+// ===================================================================
+
 class SingleOp::_Internal {
  public:
 };
@@ -634,12 +925,12 @@ SingleOp::SingleOp(const SingleOp& from)
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   key_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (!from._internal_key().empty()) {
-    key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_key(),
+    key_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_key(), 
       GetArena());
   }
   value_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (!from._internal_value().empty()) {
-    value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_value(),
+    value_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_value(), 
       GetArena());
   }
   ::memcpy(&id_, &from.id_,
@@ -649,12 +940,12 @@ SingleOp::SingleOp(const SingleOp& from)
 }
 
 void SingleOp::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_SingleOp_rubble_5fkv_5fstore_2eproto.base);
-  key_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  value_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(&id_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&type_) -
-      reinterpret_cast<char*>(&id_)) + sizeof(type_));
+key_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+value_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&id_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&type_) -
+    reinterpret_cast<char*>(&id_)) + sizeof(type_));
 }
 
 SingleOp::~SingleOp() {
@@ -678,11 +969,6 @@ void SingleOp::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void SingleOp::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const SingleOp& SingleOp::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_SingleOp_rubble_5fkv_5fstore_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void SingleOp::Clear() {
 // @@protoc_insertion_point(message_clear_start:rubble.SingleOp)
@@ -690,8 +976,8 @@ void SingleOp::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  key_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  value_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  key_.ClearToEmpty();
+  value_.ClearToEmpty();
   ::memset(&id_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&type_) -
       reinterpret_cast<char*>(&id_)) + sizeof(type_));
@@ -700,7 +986,6 @@ void SingleOp::Clear() {
 
 const char* SingleOp::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
@@ -731,12 +1016,12 @@ const char* SingleOp::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::i
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // .rubble.SingleOp.OpType type = 4;
+      // .rubble.OpType type = 4;
       case 4:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32)) {
           ::PROTOBUF_NAMESPACE_ID::uint64 val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
-          _internal_set_type(static_cast<::rubble::SingleOp_OpType>(val));
+          _internal_set_type(static_cast<::rubble::OpType>(val));
         } else goto handle_unusual;
         continue;
       default: {
@@ -793,7 +1078,7 @@ failure:
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(3, this->_internal_id(), target);
   }
 
-  // .rubble.SingleOp.OpType type = 4;
+  // .rubble.OpType type = 4;
   if (this->type() != 0) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumToArray(
@@ -837,7 +1122,7 @@ size_t SingleOp::ByteSizeLong() const {
         this->_internal_id());
   }
 
-  // .rubble.SingleOp.OpType type = 4;
+  // .rubble.OpType type = 4;
   if (this->type() != 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->_internal_type());
@@ -926,249 +1211,6 @@ void SingleOp::InternalSwap(SingleOp* other) {
 
 // ===================================================================
 
-void OpReply::InitAsDefaultInstance() {
-}
-class OpReply::_Internal {
- public:
-};
-
-OpReply::OpReply(::PROTOBUF_NAMESPACE_ID::Arena* arena)
-  : ::PROTOBUF_NAMESPACE_ID::Message(arena),
-  replies_(arena) {
-  SharedCtor();
-  RegisterArenaDtor(arena);
-  // @@protoc_insertion_point(arena_constructor:rubble.OpReply)
-}
-OpReply::OpReply(const OpReply& from)
-  : ::PROTOBUF_NAMESPACE_ID::Message(),
-      replies_(from.replies_) {
-  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  sync_reply_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  if (!from._internal_sync_reply().empty()) {
-    sync_reply_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_sync_reply(),
-      GetArena());
-  }
-  // @@protoc_insertion_point(copy_constructor:rubble.OpReply)
-}
-
-void OpReply::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_OpReply_rubble_5fkv_5fstore_2eproto.base);
-  sync_reply_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-
-OpReply::~OpReply() {
-  // @@protoc_insertion_point(destructor:rubble.OpReply)
-  SharedDtor();
-  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
-}
-
-void OpReply::SharedDtor() {
-  GOOGLE_DCHECK(GetArena() == nullptr);
-  sync_reply_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-
-void OpReply::ArenaDtor(void* object) {
-  OpReply* _this = reinterpret_cast< OpReply* >(object);
-  (void)_this;
-}
-void OpReply::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
-}
-void OpReply::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
-}
-const OpReply& OpReply::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_OpReply_rubble_5fkv_5fstore_2eproto.base);
-  return *internal_default_instance();
-}
-
-
-void OpReply::Clear() {
-// @@protoc_insertion_point(message_clear_start:rubble.OpReply)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  replies_.Clear();
-  sync_reply_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
-}
-
-const char* OpReply::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
-#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
-  while (!ctx->Done(&ptr)) {
-    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-    CHK_(ptr);
-    switch (tag >> 3) {
-      // string sync_reply = 1;
-      case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
-          auto str = _internal_mutable_sync_reply();
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
-          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "rubble.OpReply.sync_reply"));
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      // repeated .rubble.SingleOpReply replies = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
-          ptr -= 1;
-          do {
-            ptr += 1;
-            ptr = ctx->ParseMessage(_internal_add_replies(), ptr);
-            CHK_(ptr);
-            if (!ctx->DataAvailable(ptr)) break;
-          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<18>(ptr));
-        } else goto handle_unusual;
-        continue;
-      default: {
-      handle_unusual:
-        if ((tag & 7) == 4 || tag == 0) {
-          ctx->SetLastTag(tag);
-          goto success;
-        }
-        ptr = UnknownFieldParse(tag,
-            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
-            ptr, ctx);
-        CHK_(ptr != nullptr);
-        continue;
-      }
-    }  // switch
-  }  // while
-success:
-  return ptr;
-failure:
-  ptr = nullptr;
-  goto success;
-#undef CHK_
-}
-
-::PROTOBUF_NAMESPACE_ID::uint8* OpReply::_InternalSerialize(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
-  // @@protoc_insertion_point(serialize_to_array_start:rubble.OpReply)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // string sync_reply = 1;
-  if (this->sync_reply().size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-      this->_internal_sync_reply().data(), static_cast<int>(this->_internal_sync_reply().length()),
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "rubble.OpReply.sync_reply");
-    target = stream->WriteStringMaybeAliased(
-        1, this->_internal_sync_reply(), target);
-  }
-
-  // repeated .rubble.SingleOpReply replies = 2;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->_internal_replies_size()); i < n; i++) {
-    target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(2, this->_internal_replies(i), target, stream);
-  }
-
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:rubble.OpReply)
-  return target;
-}
-
-size_t OpReply::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:rubble.OpReply)
-  size_t total_size = 0;
-
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  // repeated .rubble.SingleOpReply replies = 2;
-  total_size += 1UL * this->_internal_replies_size();
-  for (const auto& msg : this->replies_) {
-    total_size +=
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
-  }
-
-  // string sync_reply = 1;
-  if (this->sync_reply().size() > 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-        this->_internal_sync_reply());
-  }
-
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
-        _internal_metadata_, total_size, &_cached_size_);
-  }
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
-}
-
-void OpReply::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:rubble.OpReply)
-  GOOGLE_DCHECK_NE(&from, this);
-  const OpReply* source =
-      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<OpReply>(
-          &from);
-  if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:rubble.OpReply)
-    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:rubble.OpReply)
-    MergeFrom(*source);
-  }
-}
-
-void OpReply::MergeFrom(const OpReply& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:rubble.OpReply)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  replies_.MergeFrom(from.replies_);
-  if (from.sync_reply().size() > 0) {
-    _internal_set_sync_reply(from._internal_sync_reply());
-  }
-}
-
-void OpReply::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:rubble.OpReply)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void OpReply::CopyFrom(const OpReply& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:rubble.OpReply)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool OpReply::IsInitialized() const {
-  return true;
-}
-
-void OpReply::InternalSwap(OpReply* other) {
-  using std::swap;
-  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
-  replies_.InternalSwap(&other->replies_);
-  sync_reply_.Swap(&other->sync_reply_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-}
-
-::PROTOBUF_NAMESPACE_ID::Metadata OpReply::GetMetadata() const {
-  return GetMetadataStatic();
-}
-
-
-// ===================================================================
-
-void SingleOpReply::InitAsDefaultInstance() {
-}
 class SingleOpReply::_Internal {
  public:
 };
@@ -1184,17 +1226,17 @@ SingleOpReply::SingleOpReply(const SingleOpReply& from)
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   key_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (!from._internal_key().empty()) {
-    key_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_key(),
+    key_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_key(), 
       GetArena());
   }
   value_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (!from._internal_value().empty()) {
-    value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_value(),
+    value_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_value(), 
       GetArena());
   }
   status_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (!from._internal_status().empty()) {
-    status_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_status(),
+    status_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_status(), 
       GetArena());
   }
   ::memcpy(&ok_, &from.ok_,
@@ -1204,13 +1246,13 @@ SingleOpReply::SingleOpReply(const SingleOpReply& from)
 }
 
 void SingleOpReply::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_SingleOpReply_rubble_5fkv_5fstore_2eproto.base);
-  key_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  value_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  status_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(&ok_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&id_) -
-      reinterpret_cast<char*>(&ok_)) + sizeof(id_));
+key_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+value_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+status_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&ok_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&id_) -
+    reinterpret_cast<char*>(&ok_)) + sizeof(id_));
 }
 
 SingleOpReply::~SingleOpReply() {
@@ -1235,11 +1277,6 @@ void SingleOpReply::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void SingleOpReply::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const SingleOpReply& SingleOpReply::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_SingleOpReply_rubble_5fkv_5fstore_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void SingleOpReply::Clear() {
 // @@protoc_insertion_point(message_clear_start:rubble.SingleOpReply)
@@ -1247,9 +1284,9 @@ void SingleOpReply::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  key_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  value_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  status_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  key_.ClearToEmpty();
+  value_.ClearToEmpty();
+  status_.ClearToEmpty();
   ::memset(&ok_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&id_) -
       reinterpret_cast<char*>(&ok_)) + sizeof(id_));
@@ -1258,7 +1295,6 @@ void SingleOpReply::Clear() {
 
 const char* SingleOpReply::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
@@ -1305,12 +1341,12 @@ const char* SingleOpReply::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // .rubble.SingleOpReply.OpType type = 6;
+      // .rubble.OpType type = 6;
       case 6:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 48)) {
           ::PROTOBUF_NAMESPACE_ID::uint64 val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
-          _internal_set_type(static_cast<::rubble::SingleOpReply_OpType>(val));
+          _internal_set_type(static_cast<::rubble::OpType>(val));
         } else goto handle_unusual;
         continue;
       default: {
@@ -1383,7 +1419,7 @@ failure:
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt64ToArray(5, this->_internal_id(), target);
   }
 
-  // .rubble.SingleOpReply.OpType type = 6;
+  // .rubble.OpType type = 6;
   if (this->type() != 0) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumToArray(
@@ -1432,7 +1468,7 @@ size_t SingleOpReply::ByteSizeLong() const {
     total_size += 1 + 1;
   }
 
-  // .rubble.SingleOpReply.OpType type = 6;
+  // .rubble.OpType type = 6;
   if (this->type() != 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->_internal_type());
@@ -1535,8 +1571,6 @@ void SingleOpReply::InternalSwap(SingleOpReply* other) {
 
 // ===================================================================
 
-void OpReplies::InitAsDefaultInstance() {
-}
 class OpReplies::_Internal {
  public:
 };
@@ -1556,7 +1590,6 @@ OpReplies::OpReplies(const OpReplies& from)
 }
 
 void OpReplies::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_OpReplies_rubble_5fkv_5fstore_2eproto.base);
 }
 
 OpReplies::~OpReplies() {
@@ -1578,11 +1611,6 @@ void OpReplies::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void OpReplies::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const OpReplies& OpReplies::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_OpReplies_rubble_5fkv_5fstore_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void OpReplies::Clear() {
 // @@protoc_insertion_point(message_clear_start:rubble.OpReplies)
@@ -1596,7 +1624,6 @@ void OpReplies::Clear() {
 
 const char* OpReplies::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
@@ -1738,8 +1765,6 @@ void OpReplies::InternalSwap(OpReplies* other) {
 
 // ===================================================================
 
-void Reply::InitAsDefaultInstance() {
-}
 class Reply::_Internal {
  public:
 };
@@ -1758,7 +1783,7 @@ Reply::Reply(const Reply& from)
 }
 
 void Reply::SharedCtor() {
-  ok_ = false;
+ok_ = false;
 }
 
 Reply::~Reply() {
@@ -1780,11 +1805,6 @@ void Reply::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void Reply::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const Reply& Reply::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Reply_rubble_5fkv_5fstore_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void Reply::Clear() {
 // @@protoc_insertion_point(message_clear_start:rubble.Reply)
@@ -1798,7 +1818,6 @@ void Reply::Clear() {
 
 const char* Reply::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
@@ -1933,8 +1952,6 @@ void Reply::InternalSwap(Reply* other) {
 
 // ===================================================================
 
-void SyncRequest::InitAsDefaultInstance() {
-}
 class SyncRequest::_Internal {
  public:
 };
@@ -1950,15 +1967,14 @@ SyncRequest::SyncRequest(const SyncRequest& from)
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   args_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (!from._internal_args().empty()) {
-    args_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_args(),
+    args_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_args(), 
       GetArena());
   }
   // @@protoc_insertion_point(copy_constructor:rubble.SyncRequest)
 }
 
 void SyncRequest::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_SyncRequest_rubble_5fkv_5fstore_2eproto.base);
-  args_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+args_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
 SyncRequest::~SyncRequest() {
@@ -1981,11 +1997,6 @@ void SyncRequest::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void SyncRequest::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const SyncRequest& SyncRequest::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_SyncRequest_rubble_5fkv_5fstore_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void SyncRequest::Clear() {
 // @@protoc_insertion_point(message_clear_start:rubble.SyncRequest)
@@ -1993,13 +2004,12 @@ void SyncRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  args_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  args_.ClearToEmpty();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 const char* SyncRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
@@ -2142,8 +2152,6 @@ void SyncRequest::InternalSwap(SyncRequest* other) {
 
 // ===================================================================
 
-void SyncReply::InitAsDefaultInstance() {
-}
 class SyncReply::_Internal {
  public:
 };
@@ -2159,15 +2167,14 @@ SyncReply::SyncReply(const SyncReply& from)
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   message_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (!from._internal_message().empty()) {
-    message_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_message(),
+    message_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_message(), 
       GetArena());
   }
   // @@protoc_insertion_point(copy_constructor:rubble.SyncReply)
 }
 
 void SyncReply::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_SyncReply_rubble_5fkv_5fstore_2eproto.base);
-  message_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+message_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
 SyncReply::~SyncReply() {
@@ -2190,11 +2197,6 @@ void SyncReply::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void SyncReply::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const SyncReply& SyncReply::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_SyncReply_rubble_5fkv_5fstore_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void SyncReply::Clear() {
 // @@protoc_insertion_point(message_clear_start:rubble.SyncReply)
@@ -2202,13 +2204,12 @@ void SyncReply::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  message_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  message_.ClearToEmpty();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 const char* SyncReply::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
@@ -2355,11 +2356,11 @@ PROTOBUF_NAMESPACE_OPEN
 template<> PROTOBUF_NOINLINE ::rubble::Op* Arena::CreateMaybeMessage< ::rubble::Op >(Arena* arena) {
   return Arena::CreateMessageInternal< ::rubble::Op >(arena);
 }
-template<> PROTOBUF_NOINLINE ::rubble::SingleOp* Arena::CreateMaybeMessage< ::rubble::SingleOp >(Arena* arena) {
-  return Arena::CreateMessageInternal< ::rubble::SingleOp >(arena);
-}
 template<> PROTOBUF_NOINLINE ::rubble::OpReply* Arena::CreateMaybeMessage< ::rubble::OpReply >(Arena* arena) {
   return Arena::CreateMessageInternal< ::rubble::OpReply >(arena);
+}
+template<> PROTOBUF_NOINLINE ::rubble::SingleOp* Arena::CreateMaybeMessage< ::rubble::SingleOp >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::rubble::SingleOp >(arena);
 }
 template<> PROTOBUF_NOINLINE ::rubble::SingleOpReply* Arena::CreateMaybeMessage< ::rubble::SingleOpReply >(Arena* arena) {
   return Arena::CreateMessageInternal< ::rubble::SingleOpReply >(arena);

@@ -131,7 +131,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       if(reply_client != nullptr){
         // reply_counter.fetch_add(1);
         // std::cout << "Sent out " << reply_counter.load() << " opreplies \n";
-        // reply_client->SendReply(reply);
+        reply_client->SendReply(reply);
       }
       // stream->Write(reply);
     }
@@ -165,13 +165,13 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
     uint64_t batch_counter = batch_counter_.load(std::memory_order_relaxed);
     switch (op.ops(0).type())
     {
-      case SingleOp::GET:
+      case rubble::GET:
         for(const auto& singleOp: op.ops()) {
           singleOpReply = reply->add_replies();
           singleOpReply->set_id(singleOp.id());
           s = db_->Get(rocksdb::ReadOptions(), singleOp.key(), &value);
           singleOpReply->set_key(singleOp.key());
-          singleOpReply->set_type(SingleOpReply::GET);
+          singleOpReply->set_type(rubble::GET);
           if(s.ok()){
             singleOpReply->set_ok(true);
             singleOpReply->set_value(value);
@@ -181,7 +181,7 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
           }
         }
         break;
-      case SingleOp::PUT:
+      case rubble::PUT:
         batch_start_time_ = high_resolution_clock::now();
         for(const auto& singleOp: op.ops()) {
           s = db_->Put(rocksdb::WriteOptions(), singleOp.key(), singleOp.value());
@@ -192,7 +192,7 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
           if(is_tail_){
             auto singleOpReply = reply->add_replies();
             singleOpReply->set_id(singleOp.id());
-            singleOpReply->set_type(SingleOpReply::PUT);
+            singleOpReply->set_type(rubble::PUT);
             singleOpReply->set_key(singleOp.key());
             if(s.ok()){ 
               singleOpReply->set_ok(true);
@@ -202,18 +202,18 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
             }
           }
         }
-        std::cout << "Processed batch " << batch_counter << std::endl;
+        // std::cout << "Processed batch " << batch_counter << std::endl;
         batch_end_time_ = high_resolution_clock::now();
         // RUBBLE_LOG_INFO(logger_, "Processed batch %lu in %u ms, size : %u \n", batch_counter, 
         //           static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(batch_end_time_ - batch_start_time_).count()),
         //           op.ops_size());
 
         break;
-      case SingleOp::DELETE:
+      case rubble::DELETE:
         //TODO
         break;
 
-      case SingleOp::UPDATE:
+      case rubble::UPDATE:
         // std::cout << "in UPDATE " << op.ops(0).key() << "\n"; 
         for(const auto& singleOp: op.ops()) {
           singleOpReply = reply->add_replies();
@@ -230,7 +230,7 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
           }
           if(is_tail_){
             singleOpReply->set_key(singleOp.key());
-            singleOpReply->set_type(SingleOpReply::UPDATE);
+            singleOpReply->set_type(rubble::UPDATE);
             singleOpReply->set_status(s.ToString());
             if(s.ok()){
               singleOpReply->set_ok(true);
@@ -582,7 +582,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::CreateSstPool(){
     
     int max_num_mems_to_flush = db_options_->max_num_mems_in_flush;
     int pool_size = db_options_->preallocated_sst_pool_size;
-    int big_sst_pool_size = pool_size / 50;
+    int big_sst_pool_size = 10;
     for (int i = 1; i <= pool_size + (max_num_mems_to_flush - 1)* big_sst_pool_size; i++) {
         std::string sst_num = std::to_string(i);
         // rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size, 'c')), sst_dir + "/" + fname, true);

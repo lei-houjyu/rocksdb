@@ -38,7 +38,7 @@ using rubble::Op;
 using rubble::OpReply;
 using rubble::SingleOp;
 using rubble::SingleOpReply;
-using rubble::SingleOp_OpType_Name;
+using rubble::OpType_Name;
 
 using std::chrono::time_point;
 using std::chrono::high_resolution_clock;

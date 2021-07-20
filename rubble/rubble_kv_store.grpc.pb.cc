@@ -29,14 +29,14 @@ static const char* RubbleKvStoreService_method_names[] = {
 
 std::unique_ptr< RubbleKvStoreService::Stub> RubbleKvStoreService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
   (void)options;
-  std::unique_ptr< RubbleKvStoreService::Stub> stub(new RubbleKvStoreService::Stub(channel));
+  std::unique_ptr< RubbleKvStoreService::Stub> stub(new RubbleKvStoreService::Stub(channel, options));
   return stub;
 }
 
-RubbleKvStoreService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_Sync_(RubbleKvStoreService_method_names[0], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
-  , rpcmethod_DoOp_(RubbleKvStoreService_method_names[1], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
-  , rpcmethod_SendReply_(RubbleKvStoreService_method_names[2], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
+RubbleKvStoreService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options)
+  : channel_(channel), rpcmethod_Sync_(RubbleKvStoreService_method_names[0], options.suffix_for_stats(),::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
+  , rpcmethod_DoOp_(RubbleKvStoreService_method_names[1], options.suffix_for_stats(),::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
+  , rpcmethod_SendReply_(RubbleKvStoreService_method_names[2], options.suffix_for_stats(),::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
   {}
 
 ::grpc::ClientReaderWriter< ::rubble::SyncRequest, ::rubble::SyncReply>* RubbleKvStoreService::Stub::SyncRaw(::grpc::ClientContext* context) {

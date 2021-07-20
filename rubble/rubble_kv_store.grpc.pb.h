@@ -110,7 +110,7 @@ class RubbleKvStoreService final {
   };
   class Stub final : public StubInterface {
    public:
-    Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel);
+    Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
     std::unique_ptr< ::grpc::ClientReaderWriter< ::rubble::SyncRequest, ::rubble::SyncReply>> Sync(::grpc::ClientContext* context) {
       return std::unique_ptr< ::grpc::ClientReaderWriter< ::rubble::SyncRequest, ::rubble::SyncReply>>(SyncRaw(context));
     }

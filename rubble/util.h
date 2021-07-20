@@ -184,7 +184,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       }
       // the sst pool size should be set to size_of_your_data/sst_file_size
       // set to 450 for 5GB db and 16MB sst_file_size
-      db_options.preallocated_sst_pool_size = 500;
+      db_options.preallocated_sst_pool_size = 5000;
       // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);
       db_options.sst_bit_map = std::make_shared<SstBitMap>(
             db_options.preallocated_sst_pool_size, 
