@@ -3,126 +3,54 @@
 static std::atomic<int> counter{0};
 static std::unordered_map<std::thread::id, int> map;
 
+// async version of DoOp
+void CallData::Proceed() {
+  switch (status_) {
+    case CallStatus::CREATE:
+      status_ = CallStatus::PROCESS;
+      service_->RequestDoOp(&ctx_, &request_, &responder_, cq_, cq_, (void*)this);
+      db_options_ = ((rocksdb::DBImpl*)db_)->TEST_GetVersionSet()->db_options();
+      break;
+    case CallStatus::PROCESS:
+      // Spawn a new CallData instance to serve new clients while we process
+      // the one for this CallData. The instance will deallocate itself as
+      // part of its FINISH state.
+      new CallData(service_, cq_, db_, channel_);
 
-// CallData for Bidirectional streaming rpc 
-// Take in the "service" instance (in this case representing an asynchronous
-// server) and the completion queue "cq" used for asynchronous communication
-// with the gRPC runtime.
-CallDataBidi::CallDataBidi(SyncServiceImpl* service, 
-                ServerCompletionQueue* cq, 
-                rocksdb::DB* db,
-                std::shared_ptr<Channel> channel)
-   :CallDataBase(service, cq, db, channel),rw_(&ctx_){
-    // Invoke the serving logic right away.
-
-    status_ = BidiStatus::CONNECT;
-
-    ctx_.AsyncNotifyWhenDone((void*)this);
-
-    // As part of the initial CREATE state, we *request* that the system
-    // start processing DoOp requests. In this request, "this" acts are
-    // the tag uniquely identifying the request (so that different CallData
-    // instances can serve different requests concurrently), in this case
-    // the memory address of this CallData instance.
-    service_->RequestDoOp(&ctx_, &rw_, cq_, cq_, (void*)this);
-    db_options_ = ((rocksdb::DBImpl*)db_)->TEST_GetVersionSet()->db_options(); 
-  }
-
-
-  // async version of DoOp
-  void CallDataBidi::Proceed(bool ok) {
-
-    std::unique_lock<std::mutex> _wlock(this->m_mutex);
-
-    switch (status_) {
-    case BidiStatus::READ:
-        // std::cout << "I'm at READ state ! \n";
-        //Meaning client said it wants to end the stream either by a 'writedone' or 'finish' call.
-        if (!ok) {
-            std::cout << "------server is tail: " << db_options_->is_tail << "\n"; 
-            std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " CQ returned false." << std::endl;
-            Status _st(StatusCode::OUT_OF_RANGE,"test error msg");
-            // rw_.Write(reply_, (void*)this);
-            rw_.Finish(_st,(void*)this);
-            status_ = BidiStatus::DONE;
-            std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " after call Finish(), cancelled:" << this->ctx_.IsCancelled() << std::endl;
-            break;
+      // The actual processing.
+      HandleOp();
+      counter.fetch_add(request_.ops_size());
+      std::cout  << "counter : " << counter.load() << std::endl;
+      
+      /* chain replication */
+      // Forward the request to the downstream node in the chain if it's not a tail node
+      if(!db_options_->is_tail){
+        if (forwarder_ == nullptr) {
+          std::cout << "init the forwarder" << "\n";
+          forwarder_ = std::make_shared<Forwarder>(channel_);
         }
-
-        // std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " Received a new " << Op_OpType_Name(request_.type()) << " op witk key : " << request_.key() << std::endl;
-        // Handle a db operation
-        // std::cout << "entering HandleOp\n";
-        HandleOp();
-        counter.fetch_add(1);
-        std::cout  << " counter : " << counter.load() << std::endl;
-        assert(request_.ops_size());
-        /* chain replication */
-        // Forward the request to the downstream node in the chain if it's not a tail node
-        if(!db_options_->is_tail){
-          if (forwarder_ == nullptr) {
-            std::cout << "init the forwarder" << "\n";
-            forwarder_ = std::make_shared<Forwarder>(channel_);
-          }
-          // forwarder_->Forward(request_);
-            // request_.clear_ops();
-          // std::cout << "thread: " << map[std::this_thread::get_id()] << " Forwarded " << op_counter_ << " ops" << std::endl;
-        }else {
-          // tail node should be responsible for sending the reply back to replicator
-          // use the sync stream to write the reply back
-          if (reply_client_ == nullptr) {
-            std::cout << "init the reply client" << "\n";
-            reply_client_ = std::make_shared<ReplyClient>(channel_);
-          }
-          reply_client_->SendReply(reply_);
-          // reply_.clear_replies();
+        // forwarder_->AsyncForward(request_);
+        // std::cout << "thread: " << map[std::this_thread::get_id()] << " Forwarded " << op_counter_ << " ops" << std::endl;
+      }else {
+        if (reply_client_ == nullptr) {
+          // std::cout << "init the reply client" << "\n";
+          reply_client_ = std::make_shared<ReplyClient>(channel_);
         }
-        rw_.Read(&request_, (void*)this);
-        status_ = BidiStatus::READ;
-        // rw_.Write(reply_, (void*)this);
-        // status_ = BidiStatus::WRITE;
-        break;
-
-    case BidiStatus::WRITE:
-        // std::cout << "I'm at WRITE state ! \n";
-        // std::cout << "thread:" << map[std::this_thread::get_id()] << " tag:" << this << " Get For key : " << request_.key() << " , status : " << reply_.status() << std::endl;
-        // For a get request, return a reply back to the client
-        rw_.Read(&request_, (void*)this);
-
-        status_ = BidiStatus::READ;
-        break;
-
-    case BidiStatus::CONNECT:
-        std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " tag:" << this << " connected:" << std::endl;
-        // Spawn a new CallData instance to serve new clients while we process
-        // the one for this CallData. The instance will deallocate itself as
-        // part of its FINISH state.
-        new CallDataBidi(service_, cq_, db_, channel_);
-        rw_.Read(&request_, (void*)this);
-        // request_.set_type(Op::PUT);
-        // std::cout << "thread:" << std::setw(2) << map[std::this_thread::get_id()] << " Received a new " << Op_OpType_Name(request_.type()) << " op witk key : " << request_.key() << std::endl;
-        status_ = BidiStatus::READ;
-        break;
-
-    case BidiStatus::DONE:
-        std::cout << "thread:" << std::this_thread::get_id() << " tag:" << this
-                << " Server done, cancelled:" << this->ctx_.IsCancelled() << std::endl;
-        status_ = BidiStatus::FINISH;
-        break;
-
-    case BidiStatus::FINISH:
-        std::cout << "thread:" << map[std::this_thread::get_id()] <<  "tag:" << this << " Server finish, cancelled:" << this->ctx_.IsCancelled() << std::endl;
-        _wlock.unlock();
-        delete this;
-        break;
-
+        // reply_client_->SendReply(reply_);
+      }
+      status_ = CallStatus::FINISH;
+      // responder_.Finish(reply_, Status::OK, this);
+      break;
+    case CallStatus::FINISH:
+      break;
     default:
-        std::cerr << "Unexpected tag " << int(status_) << std::endl;
-        assert(false);
-    }
+      std::cerr << "Should not reach here\n";
+      assert(false);
+  }
 }
 
 
-void CallDataBidi::HandleOp(){
+void CallData::HandleOp(){
     std::string value;
     // if(!op_counter_.load()){
     //   start_time_ = high_resolution_clock::now();
@@ -139,7 +67,6 @@ void CallDataBidi::HandleOp(){
     // std::cout << "handling a " << request_.type() <<" " <<  request_.id() << " op...\n";
     // ASSUME that each batch is with the same type of operation
     assert(request_.ops_size() > 0);
-    op_counter_ += 1;
 
     SingleOpReply* reply;
     reply_.clear_replies();
@@ -166,7 +93,6 @@ void CallDataBidi::HandleOp(){
         break;
       case rubble::PUT:
         // batch_start_time_ = high_resolution_clock::now();
-        batch_counter_++;
         for(const auto& request: request_.ops()) {
           s_ = db_->Put(rocksdb::WriteOptions(), request.key(), request.value());
          if(!s_.ok()){
@@ -226,7 +152,7 @@ void CallDataBidi::HandleOp(){
   
 
 
-ServerImpl::ServerImpl(const std::string& server_addr, rocksdb::DB* db, SyncServiceImpl* service)
+ServerImpl::ServerImpl(const std::string& server_addr, rocksdb::DB* db, RubbleKvStoreService::AsyncService* service)
    :server_addr_(server_addr), db_(db), service_(service){
         auto db_options = ((rocksdb::DBImpl*)db_)->TEST_GetVersionSet()->db_options(); 
         std::cout << "target address : " << db_options->target_address << std::endl;
@@ -267,7 +193,7 @@ void ServerImpl::Run(int g_thread_num, int g_pool, int g_cq_num) {
     for (int i = 0; i < g_thread_num; ++i) {
         int _cq_idx = i % g_cq_num;
         for (int j = 0; j < g_pool; ++j) {
-            new CallDataBidi(service_, m_cq[_cq_idx].get(), db_, channel_);
+            new CallData(service_, m_cq[_cq_idx].get(), db_, channel_);
         }
         auto new_thread =  new std::thread(&ServerImpl::HandleRpcs, this, _cq_idx);
         map[new_thread->get_id()] = i;
@@ -293,18 +219,19 @@ void  ServerImpl::HandleRpcs(int cq_idx) {
       // The return value of Next should always be checked. This return value
       // tells us whether there is any kind of event or cq_ is shutting down.
       GPR_ASSERT(m_cq[cq_idx]->Next(&tag, &ok));
+      GPR_ASSERT(ok);
 
-      CallDataBase* _p_ins = (CallDataBase*)tag;
-      _p_ins->Proceed(ok);
+      CallData* _p_ins = (CallData*)tag;
+      _p_ins->Proceed();
     }
 }
 
 void RunAsyncServer(rocksdb::DB* db, const std::string& server_addr){
   
-  SyncServiceImpl service(db);
+  RubbleKvStoreService::AsyncService service;
 
   int g_thread_num = 16;
-  int g_cq_num = 8;
+  int g_cq_num = 16;
   int g_pool = 1;
 
   grpc::EnableDefaultHealthCheckService(true);

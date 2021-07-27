@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   const std::string db_path = "/mnt/sdb/archive_dbs/primary/db";
   const std::string sst_path = "/mnt/sdb/archive_dbs/primary/sst_dir";
   rocksdb::DB* primary = GetDBInstance(db_path, sst_path, remote_sst_dir, secondary_server_address, false, true, false);
-  bool is_async = false;
+  bool is_async = true;
   if(is_async){
     RunAsyncServer(primary, primary_server_address);
   }else{

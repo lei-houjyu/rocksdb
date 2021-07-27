@@ -52,8 +52,8 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     ~RubbleKvServiceImpl();
 
   // synchronous version of DoOp
-  Status DoOp(ServerContext* context, 
-              ServerReaderWriter<OpReply, Op>* stream) override ;
+  // Status DoOp(ServerContext* context, 
+  //             ServerReaderWriter<OpReply, Op>* stream) override ;
 
 
   // a streaming RPC used by the non-tail node to sync Version(view of sst files) states to the downstream node 

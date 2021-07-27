@@ -20,7 +20,13 @@
 #include "rocksdb/db.h"
 #include "rocksdb/slice.h"
 #include "rocksdb/options.h"
-#include "sync_service_impl.h"
+#include "port/port_posix.h"
+#include "port/port.h"
+#include "db/version_edit.h"
+#include "db/db_impl/db_impl.h"
+#include "util/aligned_buffer.h"
+#include "file/read_write_util.h"
+#include "logging/event_logger.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -29,7 +35,7 @@ using grpc::ServerCompletionQueue;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::ServerReaderWriter;
-using grpc::ServerAsyncReaderWriter;
+using grpc::ServerAsyncResponseWriter;
 using grpc::Status;
 using grpc::StatusCode;
 
@@ -43,22 +49,21 @@ using rubble::OpType_Name;
 using std::chrono::time_point;
 using std::chrono::high_resolution_clock;
 
-class CallDataBase {
+class CallData {
 public:
-  CallDataBase(SyncServiceImpl* service, 
-                ServerCompletionQueue* cq, 
-                rocksdb::DB* db, 
-                std::shared_ptr<Channel> channel)
-   :service_(service), cq_(cq), db_(db), 
-    channel_(channel){
+  CallData(RubbleKvStoreService::AsyncService* service, 
+           ServerCompletionQueue* cq, 
+           rocksdb::DB* db, 
+           std::shared_ptr<Channel> channel)
+    :service_(service), cq_(cq), db_(db), channel_(channel), responder_(&ctx_), status_(CREATE) {
+      Proceed();
+    }
 
-   }
+  void Proceed();
 
-  virtual void Proceed(bool ok) = 0;
+  void HandleOp();
 
-  virtual void HandleOp() = 0;
-
-protected:
+private:
 
   // db instance
   rocksdb::DB* db_;
@@ -74,7 +79,7 @@ protected:
   std::shared_ptr<ReplyClient> reply_client_ = nullptr;
   // The means of communication with the gRPC runtime for an asynchronous
   // server.
-  SyncServiceImpl* service_;
+  RubbleKvStoreService::AsyncService* service_;
   // The producer-consumer queue where for asynchronous server notifications.
   ServerCompletionQueue* cq_;
 
@@ -83,55 +88,23 @@ protected:
   // client.
   ServerContext ctx_;
 
+  // The means to get back to the client.
+  ServerAsyncResponseWriter<OpReply> responder_;
+
   // What we get from the client.
   Op request_;
   // What we send back to the client.
   OpReply reply_;
 
-};
-
-// CallData for Bidirectional streaming rpc 
-class CallDataBidi : CallDataBase {
-
- public:
-
-  // Take in the "service" instance (in this case representing an asynchronous
-  // server) and the completion queue "cq" used for asynchronous communication
-  // with the gRPC runtime.
-  CallDataBidi(SyncServiceImpl* service, 
-                ServerCompletionQueue* cq, 
-                rocksdb::DB* db,
-                std::shared_ptr<Channel> channel);
-
-  // async version of DoOp
-  void Proceed(bool ok) override;
-
- private:
-
-  void HandleOp() override;
-
-  // The means to get back to the client.
-  ServerAsyncReaderWriter<OpReply, Op>  rw_;
-
   // Let's implement a tiny state machine with the following states.
-  enum class BidiStatus { READ = 1, WRITE = 2, CONNECT = 3, DONE = 4, FINISH = 5 };
-  BidiStatus status_;
-
-  std::mutex   m_mutex;
-
-  std::atomic<uint64_t> op_counter_{0};
-  std::atomic<uint64_t> batch_counter_{0};
-  int reply_counter_{0};
-
-  time_point<high_resolution_clock> start_time_;
-  time_point<high_resolution_clock> end_time_;
-  time_point<high_resolution_clock> batch_start_time_;
-  time_point<high_resolution_clock> batch_end_time_;
+  enum CallStatus { CREATE, PROCESS, FINISH };
+  // The current serving state.
+  CallStatus status_;
 };
 
 class ServerImpl final {
   public:
-  ServerImpl(const std::string& server_addr, rocksdb::DB* db, SyncServiceImpl* service);
+  ServerImpl(const std::string& server_addr, rocksdb::DB* db, RubbleKvStoreService::AsyncService* service);
 
   ~ServerImpl();
 
@@ -145,7 +118,7 @@ class ServerImpl final {
 
   std::shared_ptr<Channel> channel_ = nullptr;
   std::vector<std::unique_ptr<ServerCompletionQueue>>  m_cq;
-  SyncServiceImpl* service_;
+  RubbleKvStoreService::AsyncService* service_;
   std::unique_ptr<Server> server_;
   const std::string& server_addr_;
   ServerBuilder builder_;

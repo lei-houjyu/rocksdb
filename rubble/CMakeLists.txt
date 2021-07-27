@@ -29,6 +29,8 @@ endif()
 
 find_package(Threads REQUIRED)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 if(GRPC_AS_SUBMODULE)
   # One way to build a projects that uses gRPC is to just include the
   # entire gRPC project tree via "add_subdirectory".

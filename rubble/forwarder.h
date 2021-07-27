@@ -26,7 +26,7 @@ class Forwarder{
   public:
     Forwarder(std::shared_ptr<Channel> channel)
         : stub_(RubbleKvStoreService::NewStub(channel)) {    
-        stream_ = stub_->DoOp(&context_);
+        // stream_ = stub_->DoOp(&context_);
     };
 
     ~Forwarder(){
@@ -42,7 +42,7 @@ class Forwarder{
       if(op.type() == Op::PUT){
         request.set_value(op.value());
       }*/
-      stream_->Write(op);
+      // stream_->Write(op);
       // OpReply reply;
       // stream_->Read(&reply);
     }
