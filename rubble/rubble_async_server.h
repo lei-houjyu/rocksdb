@@ -75,8 +75,7 @@ private:
 
   std::shared_ptr<Channel> channel_ = nullptr;
   std::shared_ptr<Forwarder> forwarder_ = nullptr;
-  // client for sending the reply back to the replicator
-  std::shared_ptr<ReplyClient> reply_client_ = nullptr;
+
   // The means of communication with the gRPC runtime for an asynchronous
   // server.
   RubbleKvStoreService::AsyncService* service_;

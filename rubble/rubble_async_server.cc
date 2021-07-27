@@ -19,29 +19,27 @@ void CallData::Proceed() {
 
       // The actual processing.
       HandleOp();
+      reply_.set_batchsize(reply_.replies_size());
       counter.fetch_add(request_.ops_size());
-      std::cout  << "counter : " << counter.load() << std::endl;
       
       /* chain replication */
       // Forward the request to the downstream node in the chain if it's not a tail node
-      if(!db_options_->is_tail){
+      if (!db_options_->is_tail) {
         if (forwarder_ == nullptr) {
-          std::cout << "init the forwarder" << "\n";
+          // std::cout << "init the forwarder" << "\n";
           forwarder_ = std::make_shared<Forwarder>(channel_);
         }
-        // forwarder_->AsyncForward(request_);
-        // std::cout << "thread: " << map[std::this_thread::get_id()] << " Forwarded " << op_counter_ << " ops" << std::endl;
-      }else {
-        if (reply_client_ == nullptr) {
-          // std::cout << "init the reply client" << "\n";
-          reply_client_ = std::make_shared<ReplyClient>(channel_);
-        }
-        // reply_client_->SendReply(reply_);
+        forwarder_->Forward(request_);
+        responder_.Finish(forwarder_->AsyncCompleteRpc(), Status::OK, this);
+        std::cout  << "counter : " << counter.load() << std::endl;
+      } else {
+        responder_.Finish(reply_, Status::OK, this);
+        std::cout  << "counter : " << counter.load() << std::endl;
       }
       status_ = CallStatus::FINISH;
-      // responder_.Finish(reply_, Status::OK, this);
       break;
     case CallStatus::FINISH:
+      delete this;
       break;
     default:
       std::cerr << "Should not reach here\n";
