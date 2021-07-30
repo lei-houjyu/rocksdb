@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <string> 
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <unordered_map>
 #include <atomic>
 
@@ -46,6 +47,7 @@ using rubble::SingleOp;
 using rubble::SingleOpReply;
 using rubble::OpType_Name;
 
+using json = nlohmann::json;
 using std::chrono::time_point;
 using std::chrono::high_resolution_clock;
 
@@ -55,23 +57,67 @@ public:
            ServerCompletionQueue* cq, 
            rocksdb::DB* db, 
            std::shared_ptr<Channel> channel)
-    :service_(service), cq_(cq), db_(db), channel_(channel), responder_(&ctx_), status_(CREATE) {
-      Proceed();
+    :service_(service),
+     cq_(cq),
+     channel_(channel),
+     responder_(&ctx_),
+     status_(CREATE),
+     db_(db), impl_((rocksdb::DBImpl*)db_), 
+     mu_(impl_->mutex()),
+     version_set_(impl_->TEST_GetVersionSet()),
+     db_options_(version_set_->db_options()),
+     is_rubble_(db_options_->is_rubble),
+     is_head_(db_options_->is_primary),
+     is_tail_(db_options_->is_tail),
+     piggyback_edits_(db_options_->piggyback_version_edits),
+     edits_(db_options_->edits),
+     db_path_(db_options_->db_paths.front()),
+     column_family_set_(version_set_->GetColumnFamilySet()),
+     default_cf_(column_family_set_->GetDefault()),
+     ioptions_(default_cf_->ioptions()),
+     cf_options_(default_cf_->GetCurrentMutableCFOptions()),
+     fs_(ioptions_->fs) {
+       Proceed();
     }
 
   void Proceed();
 
   void HandleOp();
 
+  // calling UpdateSstView and logAndApply
+  std::string ApplyVersionEdits(const std::string& args);
+  
+  std::string ApplyOneVersionEdit(std::vector<rocksdb::VersionEdit>& edits);
+
+  // parse the version edit json string to rocksdb::VersionEdit 
+  rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */);
+
+  rocksdb::IOStatus UpdateSstViewAndShipSstFiles(const rocksdb::VersionEdit& edit);
+
 private:
 
   // db instance
   rocksdb::DB* db_;
+  rocksdb::DBImpl* impl_ = nullptr;
+  rocksdb::InstrumentedMutex* mu_;
+  rocksdb::VersionSet* version_set_;
+  const rocksdb::ImmutableDBOptions* db_options_;
+
+  bool is_rubble_ = false;
+  bool is_head_ = false;
+  bool is_tail_ = false;
+  bool piggyback_edits_ = false;
+  std::shared_ptr<Edits> edits_;
+  rocksdb::DbPath db_path_;
+
+  rocksdb::ColumnFamilySet* column_family_set_;
+  rocksdb::ColumnFamilyData* default_cf_;
+  const rocksdb::ImmutableCFOptions* ioptions_;
+  const rocksdb::MutableCFOptions* cf_options_;
+  rocksdb::FileSystem* fs_;
 
   // status of the db after performing an operation.
   rocksdb::Status s_;
-
-  const rocksdb::ImmutableDBOptions* db_options_;
 
   std::shared_ptr<Channel> channel_ = nullptr;
   std::shared_ptr<Forwarder> forwarder_ = nullptr;
@@ -114,6 +160,8 @@ class ServerImpl final {
 
   // This can be run in multiple threads if needed.
   void HandleRpcs(int cq_idx);
+
+  rocksdb::IOStatus CreateSstPool();
 
   std::shared_ptr<Channel> channel_ = nullptr;
   std::vector<std::unique_ptr<ServerCompletionQueue>>  m_cq;
