@@ -45,99 +45,111 @@ static std::atomic<uint32_t> reply_counter{0};
 static std::atomic<uint32_t> thread_counter{0};
 static std::unordered_map<std::thread::id, uint32_t> map;
 static std::mutex mu;
-// Status RubbleKvServiceImpl::DoOp(ServerContext* context, 
-//               ServerReaderWriter<OpReply, Op>* stream) {
-//     // if(!op_counter_.load()){
-//     //     start_time_ = high_resolution_clock::now();
-//     // }
+Status RubbleKvServiceImpl::DoOp(ServerContext* context, 
+              ServerReaderWriter<OpReply, Op>* stream) {
+    // if(!op_counter_.load()){
+    //     start_time_ = high_resolution_clock::now();
+    // }
 
-//     // if(op_counter_.load() && op_counter_.load()%100000 == 0){
-//     //     end_time_ = high_resolution_clock::now();
-//     //     auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
-//     //     // why this doesn't print anything?
-//     //     std::cout << "Throughput : handle 100000  in " << millisecs.count() << " milisecs\n";
-//     //     start_time_ = end_time_;
-//     // }
+    // if(op_counter_.load() && op_counter_.load()%100000 == 0){
+    //     end_time_ = high_resolution_clock::now();
+    //     auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
+    //     // why this doesn't print anything?
+    //     std::cout << "Throughput : handle 100000  in " << millisecs.count() << " milisecs\n";
+    //     start_time_ = end_time_;
+    // }
 
-//     /* chain replication */
-//     // Forward the request to the downstream node in the chain if it's not a tail node
+    /* chain replication */
+    // Forward the request to the downstream node in the chain if it's not a tail node
 
-//     std::shared_ptr<Forwarder> forwarder = nullptr;
-//     // client for sending the reply back to the replicator
-//     std::shared_ptr<ReplyClient> reply_client = nullptr;
-//     if(!db_options_->is_tail){
-//       std::cout << "init the forwarder" << "\n";
-//       forwarder = std::make_shared<Forwarder>(channel_);
-//       // std::cout << "thread: " << map[std::this_thread::get_id()] << " Forwarded " << op_counter_ << " ops" << std::endl;
-//     }else {
-//       // tail node should be responsible for sending the reply back to replicator
-//       // use the sync stream to write the reply back
-//       if(channel_ != nullptr){
-//         std::cout << "init the reply client" << "\n";
-//         reply_client = std::make_shared<ReplyClient>(channel_);
-//       }
-//     }
+    std::shared_ptr<Forwarder> forwarder = nullptr;
+    // client for sending the reply back to the replicator
+    std::shared_ptr<ReplyClient> reply_client = nullptr;
+    if(!db_options_->is_tail){
+      std::cout << "init the forwarder" << "\n";
+      forwarder = std::make_shared<Forwarder>(channel_);
+      // std::cout << "thread: " << map[std::this_thread::get_id()] << " Forwarded " << op_counter_ << " ops" << std::endl;
+    }else {
+      // tail node should be responsible for sending the reply back to replicator
+      // use the sync stream to write the reply back
+      if(channel_ != nullptr){
+        std::cout << "init the reply client" << "\n";
+        reply_client = std::make_shared<ReplyClient>(channel_);
+      }
+    }
 
-//     std::thread::id this_id = std::this_thread::get_id();
-//     mu.lock();
-//     if(map.find(this_id) == map.end()){
-//       map[this_id] = thread_counter.load();
-//       thread_counter.fetch_add(1);
-//     }
-//     mu.unlock();
+    std::thread::id this_id = std::this_thread::get_id();
+    // mu.lock();
+    // if(map.find(this_id) == map.end()){
+    //   map[this_id] = thread_counter.load();
+    //   thread_counter.fetch_add(1);
+    // }
+    // mu.unlock();
 
-//     Op request;
-//     OpReply reply;
-//     while (stream->Read(&request)){
-//       op_counter_.fetch_add(1);
+    Op request;
+    while (stream->Read(&request)){
+      op_counter_.fetch_add(request.ops_size());
 
-//       // handle DoOp request
-//       HandleOp(request, &reply);
+      // handle DoOp request
+      OpReply reply;
+      HandleOp(request, &reply);
 
-//       // if there is version edits piggybacked in the DoOp request, apply those edits
-//       if(request.has_edits()){
-//         size_t size = request.edits_size();
-//         RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
-//         fprintf(stdout , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
-//         rocksdb::InstrumentedMutexLock l(mu_);
-//         for(int i = 0; i < size; i++){
-//           ApplyVersionEdits(request.edits(i));
-//         }
-//       }
+      // if there is version edits piggybacked in the DoOp request, apply those edits
+      if(request.has_edits()){
+        size_t size = request.edits_size();
+        RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
+        // fprintf(stdout , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
+        rocksdb::InstrumentedMutexLock l(mu_);
+        for(int i = 0; i < size; i++){
+          ApplyVersionEdits(request.edits(i));
+        }
+      }
 
-//       if(forwarder == nullptr){ /* tail */
-//         RUBBLE_LOG_INFO(logger_, "[Tail] received %lu ops\n", op_counter_.load());
-//       }else{ /* non-tail */
-//         RUBBLE_LOG_INFO(logger_, "[Primary] thread %u Forwarded %lu ops\n", map[this_id], op_counter_.load());
-//         if(piggyback_edits_ && is_rubble_ && is_head_){
-//           std::vector<std::string> edits;
-//           edits_->GetEdits(edits);
-//           if(edits.size() != 0){
-//             size_t size = edits.size();
-//             RUBBLE_LOG_INFO(logger_, "[primary] Got %u new version edits, op counter : %lu \n", static_cast<uint32_t>(size) ,op_counter_.load()); 
-//             request.set_has_edits(true);
-//             for(const auto& edit : edits){
-//               RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
-//               request.add_edits(edit);
-//             }
-//             assert(request.edits_size() == size);
-//           }else{
-//             request.set_has_edits(false);
-//           }
-//         }
-//         forwarder->Forward(request);
-//       }
-      
-//       if(reply_client != nullptr){
-//         // reply_counter.fetch_add(1);
-//         // std::cout << "Sent out " << reply_counter.load() << " opreplies \n";
-//         reply_client->SendReply(reply);
-//       }
-//       // stream->Write(reply);
-//     }
+      if(forwarder == nullptr) { /* tail */
+        RUBBLE_LOG_INFO(logger_, "[Tail] received %lu ops\n", op_counter_.load());
+        // fprintf(stdout, "[Tail] received %lu ops\n", op_counter_.load());
+        if(reply_client != nullptr) {
+          // reply_counter.fetch_add(1);
+          // std::cout << "Sent out " << reply_counter.load() << " opreplies \n";
+          reply_client->SendReply(reply);
+        }
+      } else { /* non-tail */
+        RUBBLE_LOG_INFO(logger_, "[Primary] thread %u Forwarded %lu ops\n", map[this_id], op_counter_.load());
+        // fprintf(stdout, "[Primary] thread %u Forwarded %lu ops\n", map[this_id], op_counter_.load());
+        if(piggyback_edits_ && is_rubble_ && is_head_) {
+          std::vector<std::string> edits;
+          edits_->GetEdits(edits);
+          // for (std::string e : edits) {
+          //   std::cout << "[Primary] Edit " << e << std::endl;
+          // }
+          if(edits.size() != 0) {
+            size_t size = edits.size();
+            RUBBLE_LOG_INFO(logger_, "[primary] Got %u new version edits, op counter : %lu \n", static_cast<uint32_t>(size) ,op_counter_.load()); 
+            request.set_has_edits(true);
+            for(const auto& edit : edits) {
+              RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
+              request.add_edits(edit);
+            }
+            assert(request.edits_size() == size);
+          } else {
+            request.set_has_edits(false);
+          }
+        }
+        forwarder->Forward(request);
+      }
+    }
+    std::cout << "end while loop with " << op_counter_.load() << " ops done\n";
 
-//     return Status::OK;
-// }
+    if (forwarder != nullptr) {
+      forwarder->WritesDone();
+    }
+
+    if (reply_client != nullptr) {
+      reply_client->WritesDone();
+    }
+
+    return Status::OK;
+}
 
 void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
     // if(!op_counter_.load()){
@@ -155,6 +167,9 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
     // std::cout << "handling a " << request_.type() <<" " <<  request_.id() << " op...\n";
     // ASSUME that each batch is with the same type of operation
     assert(op.ops_size() > 0);
+    assert(reply->replies_size() == 0);
+    reply->set_client_idx(op.client_idx());
+    reply->add_time(op.time(0));
 
     std::string value;
     SingleOpReply* singleOpReply;
@@ -464,7 +479,7 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
       // RUBBLE_LOG_INFO(logger_, "After RemoveLast : ( ImmutableList : %s ) \n", json::parse(imm->DebugJson()).dump(4).c_str());
       int size = static_cast<int> (imm->current()->GetMemlist().size());
       // std::cout << " memlist size : " << size << " , num_flush_not_started : " << imm->GetNumFlushNotStarted() << std::endl;
-    }else { // It is either a trivial move compaction or a full compaction
+    } else { // It is either a trivial move compaction or a full compaction
       if(is_trivial_move){
         if(!s.ok()){
           std::cout << "[Secondary] Trivial Move LogAndApply Failed : " << s.ToString() << std::endl;

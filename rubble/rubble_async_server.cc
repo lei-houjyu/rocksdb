@@ -8,72 +8,72 @@ static std::multimap<uint64_t, rocksdb::VersionEdit> cached_edits_;
 
 // async version of DoOp
 void CallData::Proceed() {
-  switch (status_) {
-    case CallStatus::CREATE:
-      status_ = CallStatus::PROCESS;
-      service_->RequestDoOp(&ctx_, &request_, &responder_, cq_, cq_, (void*)this);
-      db_options_ = ((rocksdb::DBImpl*)db_)->TEST_GetVersionSet()->db_options();
-      break;
-    case CallStatus::PROCESS:
-      // Spawn a new CallData instance to serve new clients while we process
-      // the one for this CallData. The instance will deallocate itself as
-      // part of its FINISH state.
-      new CallData(service_, cq_, db_, channel_);
+  // switch (status_) {
+  //   case CallStatus::CREATE:
+  //     status_ = CallStatus::PROCESS;
+  //     service_->RequestDoOp(&ctx_, &request_, &responder_, cq_, cq_, (void*)this);
+  //     db_options_ = ((rocksdb::DBImpl*)db_)->TEST_GetVersionSet()->db_options();
+  //     break;
+  //   case CallStatus::PROCESS:
+  //     // Spawn a new CallData instance to serve new clients while we process
+  //     // the one for this CallData. The instance will deallocate itself as
+  //     // part of its FINISH state.
+  //     new CallData(service_, cq_, db_, channel_);
 
-      // The actual processing.
-      HandleOp();
-      reply_.set_batchsize(reply_.replies_size());
-      counter.fetch_add(request_.ops_size());
+  //     // The actual processing.
+  //     HandleOp();
+  //     reply_.set_batchsize(reply_.replies_size());
+  //     counter.fetch_add(request_.ops_size());
 
-      // if there is version edits piggybacked in the DoOp request, apply those edits
-      if(request_.has_edits()){
-        size_t size = request_.edits_size();
-        rocksdb::InstrumentedMutexLock l(mu_);
-        for(int i = 0; i < size; i++){
-          ApplyVersionEdits(request_.edits(i));
-        }
-      }
+  //     // if there is version edits piggybacked in the DoOp request, apply those edits
+  //     if(request_.has_edits()){
+  //       size_t size = request_.edits_size();
+  //       rocksdb::InstrumentedMutexLock l(mu_);
+  //       for(int i = 0; i < size; i++){
+  //         ApplyVersionEdits(request_.edits(i));
+  //       }
+  //     }
       
-      /* chain replication */
-      // Forward the request to the downstream node in the chain if it's not a tail node
-      if (!db_options_->is_tail) {
-        // RUBBLE_LOG_INFO(logger_, "[Primary] thread %u Forwarded %lu ops\n", map[this_id], op_counter_.load());
-        if(piggyback_edits_ && is_rubble_ && is_head_){
-          std::vector<std::string> edits;
-          edits_->GetEdits(edits);
-          if(edits.size() != 0){
-            size_t size = edits.size();
-            // RUBBLE_LOG_INFO(logger_, "[primary] Got %u new version edits, op counter : %lu \n", static_cast<uint32_t>(size) ,op_counter_.load()); 
-            request_.set_has_edits(true);
-            for(const auto& edit : edits){
-              // RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
-              request_.add_edits(edit);
-            }
-            assert(request_.edits_size() == size);
-          }else{
-            request_.set_has_edits(false);
-          }
-        }
-        if (forwarder_ == nullptr) {
-          // std::cout << "init the forwarder" << "\n";
-          forwarder_ = std::make_shared<Forwarder>(channel_);
-        }
-        forwarder_->Forward(request_);
-        responder_.Finish(forwarder_->AsyncCompleteRpc(), Status::OK, this);
-        // std::cout  << "counter : " << counter.load() << std::endl;
-      } else {
-        responder_.Finish(reply_, Status::OK, this);
-        // std::cout  << "counter : " << counter.load() << std::endl;
-      }
-      status_ = CallStatus::FINISH;
-      break;
-    case CallStatus::FINISH:
-      delete this;
-      break;
-    default:
-      std::cerr << "Should not reach here\n";
-      assert(false);
-  }
+  //     /* chain replication */
+  //     // Forward the request to the downstream node in the chain if it's not a tail node
+  //     if (!db_options_->is_tail) {
+  //       // RUBBLE_LOG_INFO(logger_, "[Primary] thread %u Forwarded %lu ops\n", map[this_id], op_counter_.load());
+  //       if(piggyback_edits_ && is_rubble_ && is_head_){
+  //         std::vector<std::string> edits;
+  //         edits_->GetEdits(edits);
+  //         if(edits.size() != 0){
+  //           size_t size = edits.size();
+  //           // RUBBLE_LOG_INFO(logger_, "[primary] Got %u new version edits, op counter : %lu \n", static_cast<uint32_t>(size) ,op_counter_.load()); 
+  //           request_.set_has_edits(true);
+  //           for(const auto& edit : edits){
+  //             // RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
+  //             request_.add_edits(edit);
+  //           }
+  //           assert(request_.edits_size() == size);
+  //         }else{
+  //           request_.set_has_edits(false);
+  //         }
+  //       }
+  //       if (forwarder_ == nullptr) {
+  //         // std::cout << "init the forwarder" << "\n";
+  //         forwarder_ = std::make_shared<Forwarder>(channel_);
+  //       }
+  //       forwarder_->Forward(request_);
+  //       responder_.Finish(forwarder_->AsyncCompleteRpc(), Status::OK, this);
+  //       // std::cout  << "counter : " << counter.load() << std::endl;
+  //     } else {
+  //       responder_.Finish(reply_, Status::OK, this);
+  //       // std::cout  << "counter : " << counter.load() << std::endl;
+  //     }
+  //     status_ = CallStatus::FINISH;
+  //     break;
+  //   case CallStatus::FINISH:
+  //     delete this;
+  //     break;
+  //   default:
+  //     std::cerr << "Should not reach here\n";
+  //     assert(false);
+  // }
 }
 
 

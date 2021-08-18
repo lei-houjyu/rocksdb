@@ -30,13 +30,21 @@ class ReplyClient{
     };
 
     ~ReplyClient(){
+      std::cout << "reply client destroyed\n";
     }
 
     // send the reply to the replicator
     void SendReply(const OpReply& reply){
       // std::cout << "Sent reply, size : "  << reply.reply_size() << std::endl;
-      stream_->Write(reply);
+      if (!stream_->Write(reply)) {
+        std::cout << "sendReply fail!\n";
+      }
       //  std::cout << "sendReply client on reply: " << reply.ok() << "\n";
+    }
+
+    void WritesDone() {
+      stream_->WritesDone();
+      stream_->Finish();
     }
   
   private:

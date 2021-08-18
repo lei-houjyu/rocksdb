@@ -239,7 +239,7 @@ class Op PROTOBUF_FINAL :
     kOpsFieldNumber = 4,
     kTimeFieldNumber = 5,
     kHasEditsFieldNumber = 1,
-    kBatchSizeFieldNumber = 2,
+    kClientIdxFieldNumber = 2,
   };
   // repeated string edits = 3;
   int edits_size() const;
@@ -314,13 +314,13 @@ class Op PROTOBUF_FINAL :
   void _internal_set_has_edits(bool value);
   public:
 
-  // int32 batchSize = 2;
-  void clear_batchsize();
-  ::PROTOBUF_NAMESPACE_ID::int32 batchsize() const;
-  void set_batchsize(::PROTOBUF_NAMESPACE_ID::int32 value);
+  // int32 client_idx = 2;
+  void clear_client_idx();
+  ::PROTOBUF_NAMESPACE_ID::int32 client_idx() const;
+  void set_client_idx(::PROTOBUF_NAMESPACE_ID::int32 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int32 _internal_batchsize() const;
-  void _internal_set_batchsize(::PROTOBUF_NAMESPACE_ID::int32 value);
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_client_idx() const;
+  void _internal_set_client_idx(::PROTOBUF_NAMESPACE_ID::int32 value);
   public:
 
   // @@protoc_insertion_point(class_scope:rubble.Op)
@@ -335,7 +335,7 @@ class Op PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int64 > time_;
   mutable std::atomic<int> _time_cached_byte_size_;
   bool has_edits_;
-  ::PROTOBUF_NAMESPACE_ID::int32 batchsize_;
+  ::PROTOBUF_NAMESPACE_ID::int32 client_idx_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
 };
@@ -457,7 +457,7 @@ class OpReply PROTOBUF_FINAL :
     kRepliesFieldNumber = 3,
     kTimeFieldNumber = 4,
     kSyncReplyFieldNumber = 1,
-    kBatchSizeFieldNumber = 2,
+    kClientIdxFieldNumber = 2,
   };
   // repeated .rubble.SingleOpReply replies = 3;
   int replies_size() const;
@@ -515,13 +515,13 @@ class OpReply PROTOBUF_FINAL :
   std::string* _internal_mutable_sync_reply();
   public:
 
-  // int32 batchSize = 2;
-  void clear_batchsize();
-  ::PROTOBUF_NAMESPACE_ID::int32 batchsize() const;
-  void set_batchsize(::PROTOBUF_NAMESPACE_ID::int32 value);
+  // int32 client_idx = 2;
+  void clear_client_idx();
+  ::PROTOBUF_NAMESPACE_ID::int32 client_idx() const;
+  void set_client_idx(::PROTOBUF_NAMESPACE_ID::int32 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int32 _internal_batchsize() const;
-  void _internal_set_batchsize(::PROTOBUF_NAMESPACE_ID::int32 value);
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_client_idx() const;
+  void _internal_set_client_idx(::PROTOBUF_NAMESPACE_ID::int32 value);
   public:
 
   // @@protoc_insertion_point(class_scope:rubble.OpReply)
@@ -535,7 +535,7 @@ class OpReply PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int64 > time_;
   mutable std::atomic<int> _time_cached_byte_size_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr sync_reply_;
-  ::PROTOBUF_NAMESPACE_ID::int32 batchsize_;
+  ::PROTOBUF_NAMESPACE_ID::int32 client_idx_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
 };
@@ -1538,24 +1538,24 @@ inline void Op::set_has_edits(bool value) {
   // @@protoc_insertion_point(field_set:rubble.Op.has_edits)
 }
 
-// int32 batchSize = 2;
-inline void Op::clear_batchsize() {
-  batchsize_ = 0;
+// int32 client_idx = 2;
+inline void Op::clear_client_idx() {
+  client_idx_ = 0;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int32 Op::_internal_batchsize() const {
-  return batchsize_;
+inline ::PROTOBUF_NAMESPACE_ID::int32 Op::_internal_client_idx() const {
+  return client_idx_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int32 Op::batchsize() const {
-  // @@protoc_insertion_point(field_get:rubble.Op.batchSize)
-  return _internal_batchsize();
+inline ::PROTOBUF_NAMESPACE_ID::int32 Op::client_idx() const {
+  // @@protoc_insertion_point(field_get:rubble.Op.client_idx)
+  return _internal_client_idx();
 }
-inline void Op::_internal_set_batchsize(::PROTOBUF_NAMESPACE_ID::int32 value) {
+inline void Op::_internal_set_client_idx(::PROTOBUF_NAMESPACE_ID::int32 value) {
   
-  batchsize_ = value;
+  client_idx_ = value;
 }
-inline void Op::set_batchsize(::PROTOBUF_NAMESPACE_ID::int32 value) {
-  _internal_set_batchsize(value);
-  // @@protoc_insertion_point(field_set:rubble.Op.batchSize)
+inline void Op::set_client_idx(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_client_idx(value);
+  // @@protoc_insertion_point(field_set:rubble.Op.client_idx)
 }
 
 // repeated string edits = 3;
@@ -1784,24 +1784,24 @@ inline void OpReply::set_allocated_sync_reply(std::string* sync_reply) {
   // @@protoc_insertion_point(field_set_allocated:rubble.OpReply.sync_reply)
 }
 
-// int32 batchSize = 2;
-inline void OpReply::clear_batchsize() {
-  batchsize_ = 0;
+// int32 client_idx = 2;
+inline void OpReply::clear_client_idx() {
+  client_idx_ = 0;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int32 OpReply::_internal_batchsize() const {
-  return batchsize_;
+inline ::PROTOBUF_NAMESPACE_ID::int32 OpReply::_internal_client_idx() const {
+  return client_idx_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int32 OpReply::batchsize() const {
-  // @@protoc_insertion_point(field_get:rubble.OpReply.batchSize)
-  return _internal_batchsize();
+inline ::PROTOBUF_NAMESPACE_ID::int32 OpReply::client_idx() const {
+  // @@protoc_insertion_point(field_get:rubble.OpReply.client_idx)
+  return _internal_client_idx();
 }
-inline void OpReply::_internal_set_batchsize(::PROTOBUF_NAMESPACE_ID::int32 value) {
+inline void OpReply::_internal_set_client_idx(::PROTOBUF_NAMESPACE_ID::int32 value) {
   
-  batchsize_ = value;
+  client_idx_ = value;
 }
-inline void OpReply::set_batchsize(::PROTOBUF_NAMESPACE_ID::int32 value) {
-  _internal_set_batchsize(value);
-  // @@protoc_insertion_point(field_set:rubble.OpReply.batchSize)
+inline void OpReply::set_client_idx(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_client_idx(value);
+  // @@protoc_insertion_point(field_set:rubble.OpReply.client_idx)
 }
 
 // repeated .rubble.SingleOpReply replies = 3;
