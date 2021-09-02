@@ -4,9 +4,10 @@
 #include "db/memtable.h"
 
 RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
-      :db_(db), impl_((rocksdb::DBImpl*)db_), 
+      :db_(db), impl_(static_cast<rocksdb::DBImpl*> (db)), 
        mu_(impl_->mutex()),
        version_set_(impl_->TEST_GetVersionSet()),
+       table_cache_(impl_->TEST_table_cache()),
        db_options_(version_set_->db_options()),
        logger_(db_options_->rubble_info_log),
        is_rubble_(db_options_->is_rubble),
@@ -410,7 +411,7 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
     bool is_flush = false;
     bool is_trivial_move = false;
     int batch_count = 0;
-    if(edits.size() == 2){
+    if(edits.size() >= 2){
       for(const auto& edit : edits){
         assert(edit.IsFlush());
       }
@@ -751,6 +752,8 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
         // std::string fname = db_path_.path + "/" + sst_file_name;
         ios = fs_->FileExists(file_path, rocksdb::IOOptions(), nullptr);
         if (ios.ok()){
+            // Evict cache entry for the deleted file
+            rocksdb::TableCache::Evict(table_cache_, file_number);
             // delete the symbolic link
             ios = fs_->DeleteFile(file_path, rocksdb::IOOptions(), nullptr); 
             if(ios.IsIOError()){

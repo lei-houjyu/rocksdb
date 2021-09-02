@@ -121,6 +121,8 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     const rocksdb::ImmutableCFOptions* ioptions_;
     const rocksdb::MutableCFOptions* cf_options_;
 
+    rocksdb::Cache* table_cache_;
+
     std::shared_ptr<rocksdb::Logger> logger_ = nullptr;
   
     // right now, just put all sst files under one path
