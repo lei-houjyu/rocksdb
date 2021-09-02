@@ -202,6 +202,13 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    std::cout << "target_file_size_base: " << cf_options.target_file_size_base << '\n';
    rocksdb::Options options(db_options, cf_options);
 
+   size_t capacity = 8 << 20;
+   std::shared_ptr<rocksdb::Cache> cache = rocksdb::NewLRUCache(capacity);
+   rocksdb::BlockBasedTableOptions table_options;
+   table_options.block_cache = cache;
+   
+   options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
+
    options.statistics = rocksdb::CreateDBStatistics();
    // options.statistics->getTickerCount(rocksdb::NUMBER_BLOCK_COMPRESSED);
    // rocksdb::HistogramData hist;
