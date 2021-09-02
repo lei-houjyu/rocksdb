@@ -95,6 +95,9 @@ class Random {
   // Returns a Random instance for use by the current thread without
   // additional locking
   static Random* GetTLSInstance();
+
+  // Returns a Random instance for RandomHeight() in InlineSkipList
+  static Random* GetInstance();
 };
 
 // A good 32-bit random number generator based on std::mt19937.

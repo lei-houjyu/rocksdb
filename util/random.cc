@@ -35,6 +35,19 @@ Random* Random::GetTLSInstance() {
   return rv;
 }
 
+Random* Random::GetInstance() {
+  STORAGE_DECL Random* instance;
+  STORAGE_DECL std::aligned_storage<sizeof(Random)>::type instance_bytes;
+
+  auto rv = instance;
+  if (UNLIKELY(rv == nullptr)) {
+    size_t seed = std::hash<uint32_t>()(12345);
+    rv = new (&instance_bytes) Random((uint32_t)seed);
+    instance = rv;
+  }
+  return rv;
+}
+
 std::string Random::HumanReadableString(int len) {
   std::string ret;
   ret.resize(len);

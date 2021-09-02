@@ -206,10 +206,10 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    // options.statistics->getTickerCount(rocksdb::NUMBER_BLOCK_COMPRESSED);
    // rocksdb::HistogramData hist;
    // options.statistics->histogramData(rocksdb::FLUSH_TIME, &hist);
-   if(db_options.is_rubble && !db_options.is_primary){
-      // make sure compaction is disabled on the secondary nodes in rubble mode
-      options.compaction_style = rocksdb::kCompactionStyleNone;
-   }
+   // if(db_options.is_rubble && !db_options.is_primary){
+   //    // make sure compaction is disabled on the secondary nodes in rubble mode
+   //    options.compaction_style = rocksdb::kCompactionStyleNone;
+   // }
 
    // open DB
    s = rocksdb::DB::Open(options, db_path, &db);

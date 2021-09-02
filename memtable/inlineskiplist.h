@@ -427,7 +427,7 @@ inline void InlineSkipList<Comparator>::Iterator::SeekToLast() {
 
 template <class Comparator>
 int InlineSkipList<Comparator>::RandomHeight() {
-  auto rnd = Random::GetTLSInstance();
+  auto rnd = Random::GetInstance();
 
   // Increase height with probability 1 in kBranching
   int height = 1;
