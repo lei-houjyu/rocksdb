@@ -88,8 +88,8 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     mu.unlock();
 
     Op request;
-    OpReply reply;
     while (stream->Read(&request)){
+      OpReply reply;
       op_counter_.fetch_add(1);
 
       // handle DoOp request
@@ -756,4 +756,4 @@ void RubbleKvServiceImpl::SetReplyMessage(SyncReply* reply,const rocksdb::Status
     }
 }
 
-    
+  

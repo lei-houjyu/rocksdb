@@ -9,7 +9,8 @@
 class SstBitMap{
 public:
     SstBitMap(int pool_size, int max_num_mems_in_flush,
-    std::shared_ptr<rocksdb::Logger> logger = nullptr);
+    std::shared_ptr<rocksdb::Logger> logger = nullptr,
+    std::shared_ptr<rocksdb::Logger> map_logger = nullptr);
     
     // take one slot for a specific file
     int TakeOneAvailableSlot(uint64_t file_num, int times);
@@ -29,7 +30,7 @@ public:
 private:
     // check if the total num of slots taken matches the size of file_slots_
     void CheckNumSlotsTaken();
-
+  
     /* data */
     std::vector<int> next_available_slot_;
 
@@ -52,4 +53,7 @@ private:
     std::mutex mu_;
 
     std::shared_ptr<rocksdb::Logger> logger_;
+
+    // log the operations on the map, including add and delete an entry
+    std::shared_ptr<rocksdb::Logger> map_logger_;
 };

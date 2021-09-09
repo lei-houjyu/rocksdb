@@ -1364,6 +1364,8 @@ Status DBImpl::WriteLevel0TableForRecovery(int job_id, ColumnFamilyData* cfd,
       }
 
       IOStatus io_s;
+      assert(meta.fd.GetFileSize() == 0);
+      meta.fd.file_size = 1;
       s = BuildTable(
           dbname_, versions_.get(), env_, fs_.get(), *cfd->ioptions(),
           mutable_cf_options, file_options_for_compaction_, cfd->table_cache(),
