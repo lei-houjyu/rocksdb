@@ -60,7 +60,8 @@ int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
     }
     
     slots_[slot_num] = file_num;
-    RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, slot_num);
+    RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, times);
+    RUBBLE_LOG_INFO(logger_, "Take Slot (%lu , %d)\n", file_num, slot_num);
     file_slots_.emplace(file_num, slot_num);
     // std::cout << "file " << file_num << " took slot " << next_available_slot_ << std::endl;
     num_slots_taken_[times - 1]++;
