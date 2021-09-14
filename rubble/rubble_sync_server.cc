@@ -2,6 +2,24 @@
 #include <atomic>
 #include <thread>
 #include "db/memtable.h"
+#include <ctime>
+
+void PrintStatus(RubbleKvServiceImpl *srv) {
+  uint64_t r_now = 0, r_old = srv->r_op_counter_;
+  uint64_t w_now = 0, w_old = srv->w_op_counter_;
+  while (true) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    time_t t = time(0);
+    r_now = srv->r_op_counter_;
+    w_now = srv->w_op_counter_;
+    std::cout << "read thru " << (r_now- r_old) 
+      << " write thru " << (w_now - w_old) 
+      << " queued " << (srv->q_op_counter_ - w_now)  
+      << " " << ctime(&t);
+    r_old = r_now;
+    w_old = w_now;
+  }
+}
 
 RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
       :db_(db), impl_(static_cast<rocksdb::DBImpl*> (db)), 
@@ -21,7 +39,9 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
        default_cf_(column_family_set_->GetDefault()),
        ioptions_(default_cf_->ioptions()),
        cf_options_(default_cf_->GetCurrentMutableCFOptions()),
-       fs_(ioptions_->fs){
+       fs_(ioptions_->fs),
+       status_thread_(PrintStatus, this){
+        status_thread_.detach(); 
         if(is_rubble_ && !is_head_){
           std::cout << "init sync_service --- is_rubble: " << is_rubble_ << "; is_head: " << is_head_ << std::endl;
           ios_ = CreateSstPool();
@@ -90,7 +110,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
 
     Op request;
     while (stream->Read(&request)){
-      op_counter_.fetch_add(request.ops_size());
+      q_op_counter_ += request.ops_size();
 
       // handle DoOp request
       OpReply reply;
@@ -99,16 +119,17 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       // if there is version edits piggybacked in the DoOp request, apply those edits
       if(request.has_edits()){
         size_t size = request.edits_size();
-        RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
+        RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits\n", static_cast<uint32_t>(size));
         // fprintf(stdout , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
         rocksdb::InstrumentedMutexLock l(mu_);
         for(int i = 0; i < size; i++){
           ApplyVersionEdits(request.edits(i));
         }
+        RUBBLE_LOG_INFO(logger_ , "[Tail] finishes version edits\n");
       }
 
       if(forwarder == nullptr) { /* tail */
-        RUBBLE_LOG_INFO(logger_, "[Tail] received %lu ops\n", op_counter_.load());
+        // RUBBLE_LOG_INFO(logger_, "[Tail] received %lu ops\n", op_counter_.load());
         // fprintf(stdout, "[Tail] received %lu ops\n", op_counter_.load());
         if(reply_client != nullptr) {
           // reply_counter.fetch_add(1);
@@ -116,7 +137,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
           reply_client->SendReply(reply);
         }
       } else { /* non-tail */
-        RUBBLE_LOG_INFO(logger_, "[Primary] thread %u Forwarded %lu ops\n", map[this_id], op_counter_.load());
+        // RUBBLE_LOG_INFO(logger_, "[Primary] thread %u Forwarded %lu ops\n", map[this_id], op_counter_.load());
         // fprintf(stdout, "[Primary] thread %u Forwarded %lu ops\n", map[this_id], op_counter_.load());
         if(piggyback_edits_ && is_rubble_ && is_head_) {
           std::vector<std::string> edits;
@@ -126,7 +147,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
           // }
           if(edits.size() != 0) {
             size_t size = edits.size();
-            RUBBLE_LOG_INFO(logger_, "[primary] Got %u new version edits, op counter : %lu \n", static_cast<uint32_t>(size) ,op_counter_.load()); 
+            // RUBBLE_LOG_INFO(logger_, "[primary] Got %u new version edits, op counter : %lu \n", static_cast<uint32_t>(size) ,op_counter_.load()); 
             request.set_has_edits(true);
             for(const auto& edit : edits) {
               RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
@@ -140,7 +161,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
         forwarder->Forward(request);
       }
     }
-    std::cout << "end while loop with " << op_counter_.load() << " ops done\n";
+    std::cout << "end while loop with " << r_op_counter_ << " read and " << w_op_counter_ << " write ops done\n";
 
     if (forwarder != nullptr) {
       forwarder->WritesDone();
@@ -187,9 +208,11 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
         // idx = 0;
         for(const auto& singleOp: op.ops()) {
           assert(singleOp.type() == rubble::GET);
+          assert(is_tail_);
           singleOpReply = reply->add_replies();
           singleOpReply->set_id(singleOp.id());
           s = db_->Get(rocksdb::ReadOptions(), singleOp.key(), &value);
+          r_op_counter_++;
           singleOpReply->set_key(singleOp.key());
           singleOpReply->set_type(rubble::GET);
           singleOpReply->set_status(s.ToString());
@@ -222,6 +245,7 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
         for(const auto& singleOp: op.ops()) {
           assert(singleOp.type() == rubble::PUT);
           s = db_->Put(rocksdb::WriteOptions(), singleOp.key(), singleOp.value());
+          w_op_counter_++;
           if(!s.ok()){
             RUBBLE_LOG_ERROR(logger_, "Put Failed : %s \n", s.ToString().c_str());
             assert(false);
@@ -273,6 +297,7 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
             assert(false);
           }
           s = db_->Put(rocksdb::WriteOptions(), singleOp.key(), singleOp.value());
+          w_op_counter_++;
           if(!s.ok()){
             RUBBLE_LOG_ERROR(logger_, "Put Failed : %s \n", s.ToString().c_str());
             assert(false);

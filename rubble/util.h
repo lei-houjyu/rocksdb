@@ -192,22 +192,23 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
             db_options.rubble_info_log);
    }
 
-   if(!db_options.is_primary){
-      db_options.use_direct_reads = true;
-   }else{
-      db_options.use_direct_reads = false;
-   }
+   // if(!db_options.is_primary){
+   //    db_options.use_direct_reads = true;
+   // }else{
+   //    db_options.use_direct_reads = false;
+   // }
+   db_options.use_direct_reads = false;
 
    std::cout << "write_buffer_size: " << cf_options.write_buffer_size << '\n';
    std::cout << "target_file_size_base: " << cf_options.target_file_size_base << '\n';
    rocksdb::Options options(db_options, cf_options);
 
-   size_t capacity = 8 << 20;
-   std::shared_ptr<rocksdb::Cache> cache = rocksdb::NewLRUCache(capacity);
-   rocksdb::BlockBasedTableOptions table_options;
-   table_options.block_cache = cache;
+   // size_t capacity = 2147483648; // 2 GB
+   // std::shared_ptr<rocksdb::Cache> cache = rocksdb::NewLRUCache(capacity);
+   // rocksdb::BlockBasedTableOptions table_options;
+   // table_options.block_cache = cache;
    
-   options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
+   // options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
 
    options.statistics = rocksdb::CreateDBStatistics();
    // options.statistics->getTickerCount(rocksdb::NUMBER_BLOCK_COMPRESSED);

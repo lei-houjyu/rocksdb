@@ -60,6 +60,9 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
   Status Sync(ServerContext* context, 
               ServerReaderWriter<SyncReply, SyncRequest>* stream) override;
 
+  volatile uint64_t r_op_counter_{0};
+  volatile uint64_t w_op_counter_{0};
+  volatile uint64_t q_op_counter_{0};
 
   private:
     // actually handle an op request
@@ -102,7 +105,6 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     rocksdb::Status s_;
     rocksdb::IOStatus ios_;
 
-    std::atomic<uint64_t> op_counter_{0};
     std::shared_ptr<Channel> channel_ = nullptr;
 
     std::shared_ptr<Forwarder> forwarder_ = nullptr;
@@ -161,6 +163,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     std::atomic<uint64_t> batch_counter_{0};
     time_point<high_resolution_clock> batch_start_time_;
     time_point<high_resolution_clock> batch_end_time_;
+    std::thread status_thread_;
 };
 
 
