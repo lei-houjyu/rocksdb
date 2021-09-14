@@ -843,5 +843,3 @@ void RubbleKvServiceImpl::SetReplyMessage(SyncReply* reply,const rocksdb::Status
         reply->set_message(j_reply.dump());
     }
 }
-
-    

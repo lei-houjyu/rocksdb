@@ -1364,6 +1364,8 @@ Status DBImpl::WriteLevel0TableForRecovery(int job_id, ColumnFamilyData* cfd,
       }
 
       IOStatus io_s;
+      assert(meta.fd.GetFileSize() == 0);
+      meta.fd.file_size = 1;
       s = BuildTable(
           dbname_, versions_.get(), env_, fs_.get(), *cfd->ioptions(),
           mutable_cf_options, file_options_for_compaction_, cfd->table_cache(),
@@ -1397,6 +1399,7 @@ Status DBImpl::WriteLevel0TableForRecovery(int job_id, ColumnFamilyData* cfd,
 
   constexpr int level = 0;
 
+  auto db_options = versions_->db_options();
   if (s.ok() && has_output) {
     edit->AddFile(level, meta.fd.GetNumber(), meta.fd.GetPathId(),
                   meta.fd.GetFileSize(), meta.smallest, meta.largest,
@@ -1406,6 +1409,9 @@ Status DBImpl::WriteLevel0TableForRecovery(int job_id, ColumnFamilyData* cfd,
                   meta.file_checksum, meta.file_checksum_func_name);
 
     edit->SetBlobFileAdditions(std::move(blob_file_additions));
+    if(db_options->is_rubble && db_options->is_primary){
+      edit->TrackSlot(meta.fd.GetNumber(), db_options->sst_bit_map->GetFileSlotNum(meta.fd.GetNumber()));
+    }
   }
 
   InternalStats::CompactionStats stats(CompactionReason::kFlush, 1);

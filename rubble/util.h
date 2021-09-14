@@ -3,7 +3,9 @@
 #include <string>
 #include <iostream>
 #include <cstring>
+#include <fstream>
 #include <random>
+#include <fcntl.h>
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
 #include "rocksdb/utilities/options_util.h"
@@ -85,6 +87,69 @@ class zipf_table_distribution
       }
 };
 
+void RunServer(rocksdb::DB* db, const std::string& server_addr) {
+  
+   RubbleKvServiceImpl service(db);
+   grpc::EnableDefaultHealthCheckService(true);
+   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+   ServerBuilder builder;
+
+   builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
+   std::cout << "Server listening on " << server_addr << std::endl;
+   builder.RegisterService(&service);
+   std::unique_ptr<Server> server(builder.BuildAndStart());
+   server->Wait();
+}
+
+void NewLogger(const std::string& log_fname, rocksdb::Env* env, std::shared_ptr<rocksdb::Logger>& logger){
+   rocksdb::Status s = rocksdb::NewEnvLogger(log_fname, env, &logger);
+   if (logger.get() != nullptr) {
+      logger->SetInfoLogLevel(rocksdb::InfoLogLevel::DEBUG_LEVEL);
+   }
+   if(!s.ok()){
+      std::cout << "Error creating log : " << s.ToString() << std::endl;
+      assert(false);
+      logger = nullptr;
+   }
+}
+
+void ReconstructSstBitMap(const std::string& map_log_fname, std::shared_ptr<SstBitMap>& map){
+   std::fstream file;
+   file.open(map_log_fname, std::ios::in); //open a file to perform read operation using file object
+
+   if (file.is_open()) {
+      std::string line;
+      while (std::getline(file, line)) {
+         int idx = 0;
+         
+         std::vector<std::string> tokens;
+         std::size_t start = 0, end = 0;
+
+         while ((end = line.find(" ", start)) != std::string::npos) {
+               if(idx >= 3){
+                  tokens.push_back(line.substr(start, end - start));
+               }
+               start = end + 1;
+               idx++;
+         }
+         tokens.push_back(line.substr(start));
+
+         std::vector<int> nums;
+         for (auto token: tokens){
+               nums.push_back(atoi(token.data()));
+         }
+
+         if(nums.size() == 2){ // means its an insert operation to map  
+            map->TakeOneAvailableSlot(static_cast<uint64_t>(nums[0]), nums[1]);
+         }else{
+            assert(nums.size() == 1);// delete operation 
+            map->FreeSlot(static_cast<uint64_t>(nums[0]));
+         }
+      }
+      file.close();
+   }
+}
+
 /**
  * @param db_path the db path
  * @param sst_dir local sst directory
@@ -144,11 +209,28 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       db_options.channel = grpc::CreateChannel(db_options.target_address, grpc::InsecureChannelCredentials());
    }
 
+   db_options.env = rocksdb::Env::Default();
+
    // add logger for rubble
    std::string rubble_info_log_fname;
-   std::string rubble_log_path {"/mnt/sdb/my_rocksdb/rubble/log"};
+   // the default path for the sst bit map log file, will try to reconstruct map from this file
+   std::string rubble_log_path {"/mnt/sdb/my_rocksdb/rubble/log"}; 
+   std::string map_log_fname {"/mnt/sdb/my_rocksdb/rubble/log/sst_bit_map_log"}; // this is the path of the old sst_bit_map log
+
+   // std::string new_map_log_fname {"/mnt/sdb/my_rocksdb/rubble/log/sst_bit_map_new"}; 
+   
+   bool recover_mode = false;
+   std::string current_fname = rocksdb::CurrentFileName(db_path);
+   s = db_options.env->FileExists(current_fname);
+   // means menifest exits, which means db is recovered from wal
+   if(s.ok()){
+      s = db_options.env->FileExists(map_log_fname);
+      assert(s.ok());
+      recover_mode = true;
+   }
+
    std::shared_ptr<rocksdb::Logger> logger = nullptr;
-   db_options.env = rocksdb::Env::Default();
+   std::shared_ptr<rocksdb::Logger> map_logger = nullptr;
    db_options.env->CreateDirIfMissing(rubble_log_path).PermitUncheckedError(); 
    if(db_options.is_primary){
       rubble_info_log_fname = rubble_log_path.append("/primary");
@@ -158,16 +240,13 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       rubble_info_log_fname = rubble_log_path.append("/secondary");
    }
 
-   s = rocksdb::NewEnvLogger(rubble_info_log_fname, db_options.env, &logger);
-   if (logger.get() != nullptr) {
-      logger->SetInfoLogLevel(rocksdb::InfoLogLevel::DEBUG_LEVEL);
-   }
-   if(!s.ok()){
-      std::cout << "Error creating log : " << s.ToString() << std::endl;
-      assert(false);
-      logger = nullptr;
-   }
+  // create rubble info logger
+   NewLogger(rubble_info_log_fname, db_options.env, logger);
    db_options.rubble_info_log = logger;
+
+   if(!recover_mode){ // load phase, create new map logger
+      NewLogger(map_log_fname, db_options.env, map_logger);
+   }
 
    if(db_options.is_rubble){
       //ignore this flag for now, always set to true.
@@ -189,7 +268,12 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       db_options.sst_bit_map = std::make_shared<SstBitMap>(
             db_options.preallocated_sst_pool_size, 
             db_options.max_num_mems_in_flush,
-            db_options.rubble_info_log);
+            db_options.rubble_info_log,
+            map_logger);
+   }
+
+   if(recover_mode){
+      ReconstructSstBitMap(map_log_fname, db_options.sst_bit_map);
    }
 
    // if(!db_options.is_primary){
@@ -228,17 +312,3 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    return db;
 }
 
-
-void RunServer(rocksdb::DB* db, const std::string& server_addr) {
-  
-   RubbleKvServiceImpl service(db);
-   grpc::EnableDefaultHealthCheckService(true);
-   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-   ServerBuilder builder;
-
-   builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
-   std::cout << "Server listening on " << server_addr << std::endl;
-   builder.RegisterService(&service);
-   std::unique_ptr<Server> server(builder.BuildAndStart());
-   server->Wait();
-}

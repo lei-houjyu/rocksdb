@@ -4,10 +4,12 @@
 #include <logging/logging.h>
 
 SstBitMap::SstBitMap(int pool_size, int max_num_mems_in_flush,
-        std::shared_ptr<rocksdb::Logger> logger)
-    :size_(pool_size), num_big_slots_(10),
+        std::shared_ptr<rocksdb::Logger> logger, 
+        std::shared_ptr<rocksdb::Logger> map_logger)
+    :size_(pool_size), num_big_slots_(size_ / 50),
     max_num_mems_in_flush_(max_num_mems_in_flush),
-    logger_(logger) {
+    logger_(logger),
+    map_logger_(map_logger){
         int num_big_slots = (max_num_mems_in_flush_ - 1) *num_big_slots_;
         slots_.reserve(size_ + 1 + num_big_slots);
         slots_.assign(size_ + 1 + num_big_slots, 0);
@@ -58,6 +60,8 @@ int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
     }
     
     slots_[slot_num] = file_num;
+    RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, times);
+    RUBBLE_LOG_INFO(logger_, "Take Slot (%lu , %d)\n", file_num, slot_num);
     file_slots_.emplace(file_num, slot_num);
     // std::cout << "file " << file_num << " took slot " << next_available_slot_ << std::endl;
     num_slots_taken_[times - 1]++;
@@ -101,9 +105,10 @@ void SstBitMap::CheckNumSlotsTaken(){
 int SstBitMap::FreeSlot(uint64_t file_num){
     std::unique_lock<std::mutex> lk{mu_};
     assert(file_slots_.find(file_num) != file_slots_.end());
+    RUBBLE_LOG_INFO(map_logger_, "%lu\n", file_num);
     int slot_num = file_slots_[file_num];
-    num_slots_taken_[0]--;
-    slots_[slot_num] = 0;
+    int idx = slot_num <= size_ ? 0 : ((slot_num - size_ - 1) /num_big_slots_  + 1 );
+    num_slots_taken_[idx]--; 
     file_slots_.erase(file_num);
     return slot_num;
 }
@@ -113,6 +118,7 @@ void SstBitMap::FreeSlot(std::set<uint64_t> file_nums){
     for(uint64_t file_num : file_nums){
         assert(file_slots_.find(file_num) != file_slots_.end());
         int slot_num = file_slots_[file_num];
+        RUBBLE_LOG_INFO(map_logger_, "%lu\n", file_num);
         RUBBLE_LOG_INFO(logger_, "Free Slot (%d , %lu) \n", slot_num, slots_[slot_num]);
         int idx = slot_num <= size_ ? 0 : ((slot_num - size_ - 1) /num_big_slots_  + 1 );
         num_slots_taken_[idx]--; 
