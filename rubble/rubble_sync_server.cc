@@ -5,17 +5,16 @@
 #include <ctime>
 
 void PrintStatus(RubbleKvServiceImpl *srv) {
-  uint64_t r_now = 0, r_old = srv->r_op_counter_;
-  uint64_t w_now = 0, w_old = srv->w_op_counter_;
+  uint64_t r_now = 0, r_old = srv->r_op_counter_.load();
+  uint64_t w_now = 0, w_old = srv->w_op_counter_.load();
   while (true) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     time_t t = time(0);
-    r_now = srv->r_op_counter_;
-    w_now = srv->w_op_counter_;
-    std::cout << "read thru " << (r_now- r_old) 
-      << " write thru " << (w_now - w_old) 
-      << " queued " << (srv->q_op_counter_ - w_now)  
-      << " " << ctime(&t);
+    r_now = srv->r_op_counter_.load();
+    w_now = srv->w_op_counter_.load();
+    std::cout << "[READ] " << r_now << " op " << (r_now- r_old) << " op/s "
+              << "[WRITE] " << w_now << " op " << (w_now- w_old) << " op/s "
+              << ctime(&t);
     r_old = r_now;
     w_old = w_now;
   }
@@ -110,8 +109,6 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
 
     Op request;
     while (stream->Read(&request)){
-      q_op_counter_ += request.ops_size();
-
       // handle DoOp request
       OpReply reply;
       HandleOp(request, &reply);
@@ -161,7 +158,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
         forwarder->Forward(request);
       }
     }
-    std::cout << "end while loop with " << r_op_counter_ << " read and " << w_op_counter_ << " write ops done\n";
+    std::cout << "end while loop with " << r_op_counter_.load() << " read and " << w_op_counter_.load() << " write ops done\n";
 
     if (forwarder != nullptr) {
       forwarder->WritesDone();
@@ -212,7 +209,7 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
           singleOpReply = reply->add_replies();
           singleOpReply->set_id(singleOp.id());
           s = db_->Get(rocksdb::ReadOptions(), singleOp.key(), &value);
-          r_op_counter_++;
+          r_op_counter_.fetch_add(1);
           singleOpReply->set_key(singleOp.key());
           singleOpReply->set_type(rubble::GET);
           singleOpReply->set_status(s.ToString());
@@ -245,7 +242,7 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
         for(const auto& singleOp: op.ops()) {
           assert(singleOp.type() == rubble::PUT);
           s = db_->Put(rocksdb::WriteOptions(), singleOp.key(), singleOp.value());
-          w_op_counter_++;
+          w_op_counter_.fetch_add(1);
           if(!s.ok()){
             RUBBLE_LOG_ERROR(logger_, "Put Failed : %s \n", s.ToString().c_str());
             assert(false);

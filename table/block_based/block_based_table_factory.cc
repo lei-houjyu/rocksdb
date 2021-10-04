@@ -422,14 +422,10 @@ void BlockBasedTableFactory::InitializeOptions() {
     table_options_.block_cache.reset();
   } else if (table_options_.block_cache == nullptr) {
     LRUCacheOptions co;
-    // co.capacity = 8 << 20;
+    co.capacity = 8 << 20;
     // It makes little sense to pay overhead for mid-point insertion while the
     // block size is only 8MB.
     co.high_pri_pool_ratio = 0.0;
-    //Changxu: hack to have our cache_size
-    //Chen: 1GB block_cache in keeping with 5GB DRAM
-    //set for a 16GB database
-    co.capacity = 8 << 27;
     table_options_.block_cache = NewLRUCache(co);
   }
   if (table_options_.block_size_deviation < 0 ||

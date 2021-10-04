@@ -235,13 +235,14 @@ class Op PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kEditsFieldNumber = 3,
-    kOpsFieldNumber = 4,
-    kTimeFieldNumber = 5,
+    kEditsFieldNumber = 4,
+    kOpsFieldNumber = 5,
+    kTimeFieldNumber = 6,
     kHasEditsFieldNumber = 1,
-    kClientIdxFieldNumber = 2,
+    kShardIdxFieldNumber = 2,
+    kClientIdxFieldNumber = 3,
   };
-  // repeated string edits = 3;
+  // repeated string edits = 4;
   int edits_size() const;
   private:
   int _internal_edits_size() const;
@@ -265,7 +266,7 @@ class Op PROTOBUF_FINAL :
   std::string* _internal_add_edits();
   public:
 
-  // repeated .rubble.SingleOp ops = 4;
+  // repeated .rubble.SingleOp ops = 5;
   int ops_size() const;
   private:
   int _internal_ops_size() const;
@@ -283,7 +284,7 @@ class Op PROTOBUF_FINAL :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::rubble::SingleOp >&
       ops() const;
 
-  // repeated int64 time = 5;
+  // repeated int64 time = 6;
   int time_size() const;
   private:
   int _internal_time_size() const;
@@ -314,7 +315,16 @@ class Op PROTOBUF_FINAL :
   void _internal_set_has_edits(bool value);
   public:
 
-  // int32 client_idx = 2;
+  // int32 shard_idx = 2;
+  void clear_shard_idx();
+  ::PROTOBUF_NAMESPACE_ID::int32 shard_idx() const;
+  void set_shard_idx(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_shard_idx() const;
+  void _internal_set_shard_idx(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // int32 client_idx = 3;
   void clear_client_idx();
   ::PROTOBUF_NAMESPACE_ID::int32 client_idx() const;
   void set_client_idx(::PROTOBUF_NAMESPACE_ID::int32 value);
@@ -335,6 +345,7 @@ class Op PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int64 > time_;
   mutable std::atomic<int> _time_cached_byte_size_;
   bool has_edits_;
+  ::PROTOBUF_NAMESPACE_ID::int32 shard_idx_;
   ::PROTOBUF_NAMESPACE_ID::int32 client_idx_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
@@ -1538,7 +1549,27 @@ inline void Op::set_has_edits(bool value) {
   // @@protoc_insertion_point(field_set:rubble.Op.has_edits)
 }
 
-// int32 client_idx = 2;
+// int32 shard_idx = 2;
+inline void Op::clear_shard_idx() {
+  shard_idx_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 Op::_internal_shard_idx() const {
+  return shard_idx_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 Op::shard_idx() const {
+  // @@protoc_insertion_point(field_get:rubble.Op.shard_idx)
+  return _internal_shard_idx();
+}
+inline void Op::_internal_set_shard_idx(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  shard_idx_ = value;
+}
+inline void Op::set_shard_idx(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_shard_idx(value);
+  // @@protoc_insertion_point(field_set:rubble.Op.shard_idx)
+}
+
+// int32 client_idx = 3;
 inline void Op::clear_client_idx() {
   client_idx_ = 0;
 }
@@ -1558,7 +1589,7 @@ inline void Op::set_client_idx(::PROTOBUF_NAMESPACE_ID::int32 value) {
   // @@protoc_insertion_point(field_set:rubble.Op.client_idx)
 }
 
-// repeated string edits = 3;
+// repeated string edits = 4;
 inline int Op::_internal_edits_size() const {
   return edits_.size();
 }
@@ -1632,7 +1663,7 @@ Op::mutable_edits() {
   return &edits_;
 }
 
-// repeated .rubble.SingleOp ops = 4;
+// repeated .rubble.SingleOp ops = 5;
 inline int Op::_internal_ops_size() const {
   return ops_.size();
 }
@@ -1671,7 +1702,7 @@ Op::ops() const {
   return ops_;
 }
 
-// repeated int64 time = 5;
+// repeated int64 time = 6;
 inline int Op::_internal_time_size() const {
   return time_.size();
 }

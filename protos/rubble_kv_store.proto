@@ -8,72 +8,73 @@ option objc_class_prefix = "Rub";
 package rubble;
 
 service RubbleKvStoreService {
-  // an internal rpc call used by the upstream (except the tail node) 
-  // to synchronize states to the downstream nodes in the chain
-  rpc Sync (stream SyncRequest) returns (stream SyncReply) {} 
+    // an internal rpc call used by the upstream (except the tail node) 
+    // to synchronize states to the downstream nodes in the chain
+    rpc Sync (stream SyncRequest) returns (stream SyncReply) {} 
 
-  // perform db operations (CRUD)
-  rpc DoOp(stream Op) returns (stream OpReply){}
+    // perform db operations (CRUD)
+    rpc DoOp(stream Op) returns (stream OpReply){}
 
-  // used by the tail node to send the true rely to the replicator
-  rpc SendReply(stream OpReply) returns (stream Reply){}
+    // used by the tail node to send the true rely to the replicator
+    rpc SendReply(stream OpReply) returns (stream Reply){}
 }
 
 enum OpType {
-  GET = 0;
-  PUT = 1;
-  DELETE = 2;
-  UPDATE = 3;
+    GET = 0;
+    PUT = 1;
+    DELETE = 2;
+    UPDATE = 3;
 }
 
 message Op {
-  bool has_edits = 1;
-  int32 client_idx = 2;
-  repeated string edits = 3;
-  repeated SingleOp ops = 4;
-  repeated int64 time = 5;
-  // int32 id = 6;
-  // repeated string status = 7;
-  // repeated string value = 8;
+    bool has_edits = 1;
+    int32 shard_idx = 2;
+    int32 client_idx = 3;
+    repeated string edits = 4;
+    repeated SingleOp ops = 5;
+    repeated int64 time = 6;
+    // int32 id = 6;
+    // repeated string status = 7;
+    // repeated string value = 8;
 }
 
 message OpReply {
-  string sync_reply = 1;
-  int32 client_idx = 2;
-  repeated SingleOpReply replies = 3;
-  repeated int64 time = 4;
+    string sync_reply = 1;
+    int32 client_idx = 2;
+    repeated SingleOpReply replies = 3;
+    repeated int64 time = 4;
 }
 
 message SingleOp{
-  string key = 1;
-  string value = 2;
-  uint64 Id = 3;
-  OpType type = 4;
+    string key = 1;
+    string value = 2;
+    uint64 Id = 3;
+    OpType type = 4;
 }
 
 message SingleOpReply{
-  bool ok = 1;
-  string key = 2;
-  string value = 3;
-  string status = 4;
-  int64  Id = 5;
-  OpType type = 6;
+    bool ok = 1;
+    string key = 2;
+    string value = 3;
+    string status = 4;
+    int64  Id = 5;
+    OpType type = 6;
 }
 
 message OpReplies{
-  repeated OpReply reply = 1;
+    repeated OpReply reply = 1;
 }
 
 //Reply from the replicator to the tail node, probably not needed
 message Reply{
-  bool ok = 1;
+    bool ok = 1;
 }
 
 message SyncRequest {
-  // a json string of args
-  string  args = 1;
+    // a json string of args
+    string  args = 1;
 }
 
-message SyncReply { 
-  string message = 1;
+message SyncReply {
+    string message = 1;
 }

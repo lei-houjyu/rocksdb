@@ -287,10 +287,11 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    std::cout << "target_file_size_base: " << cf_options.target_file_size_base << '\n';
    rocksdb::Options options(db_options, cf_options);
 
-   // size_t capacity = 2147483648; // 2 GB
+   // size_t capacity = 17179869184; // 16 GB
    // std::shared_ptr<rocksdb::Cache> cache = rocksdb::NewLRUCache(capacity);
    // rocksdb::BlockBasedTableOptions table_options;
    // table_options.block_cache = cache;
+   // table_options.cache_index_and_filter_blocks = true;
    
    // options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
 

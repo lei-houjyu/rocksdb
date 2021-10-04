@@ -60,9 +60,8 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
   Status Sync(ServerContext* context, 
               ServerReaderWriter<SyncReply, SyncRequest>* stream) override;
 
-  volatile uint64_t r_op_counter_{0};
-  volatile uint64_t w_op_counter_{0};
-  volatile uint64_t q_op_counter_{0};
+  volatile std::atomic<uint64_t> r_op_counter_{0};
+  volatile std::atomic<uint64_t> w_op_counter_{0};
 
   private:
     // actually handle an op request
