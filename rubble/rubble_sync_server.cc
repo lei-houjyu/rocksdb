@@ -3,6 +3,7 @@
 #include <thread>
 #include "db/memtable.h"
 #include <ctime>
+#include "util/coding.h"
 
 void PrintStatus(RubbleKvServiceImpl *srv) {
   uint64_t r_now = 0, r_old = srv->r_op_counter_.load();
@@ -12,9 +13,9 @@ void PrintStatus(RubbleKvServiceImpl *srv) {
     time_t t = time(0);
     r_now = srv->r_op_counter_.load();
     w_now = srv->w_op_counter_.load();
-    std::cout << "[READ] " << r_now << " op " << (r_now- r_old) << " op/s "
-              << "[WRITE] " << w_now << " op " << (w_now- w_old) << " op/s "
-              << ctime(&t);
+    // std::cout << "[READ] " << r_now << " op " << (r_now- r_old) << " op/s "
+       //        << "[WRITE] " << w_now << " op " << (w_now- w_old) << " op/s "
+          //    << ctime(&t);
     r_old = r_now;
     w_old = w_now;
   }
@@ -488,7 +489,11 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
       RUBBLE_LOG_ERROR(logger_, "[Secondary] logAndApply failed : %s \n" , s.ToString().c_str());
       std::cerr << "[Secondary] logAndApply failed : " << s.ToString() << std::endl;
     }
-
+    // CHANGE: delete file
+    for(const auto& edit: edits){
+      ios = DeleteSstFiles(edit);
+      assert(ios.ok());
+    }
     //Drop The corresponding MemTables in the Immutable MemTable List
     //If this version edit corresponds to a flush job
     if(is_flush){
@@ -755,15 +760,24 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
             }
             std::string remote_sst_fname = remote_sst_dir + std::to_string(sst_real);
             // maybe not ship the sst file here, instead ship after we finish the logAndApply..
-            ios = rocksdb::CopySstFile(fs_, fname, remote_sst_fname, 0,  true);
-            if (!ios.ok()){
-                std::cerr << "[ File Ship Failed ] : " << meta.fd.GetNumber() << std::endl;
+            // ios = rocksdb::CopySstFile(fs_, fname, remote_sst_fname, 0,  true);
+            auto ret =  rocksdb::copy_sst(fname, remote_sst_fname);
+	    if (ret){
+                 std::cerr << "[ File Ship Failed ] : " << meta.fd.GetNumber() << std::endl;
             }else {
-                std::cout << "[ File Shipped ] : " << meta.fd.GetNumber() << std::endl;
+                 std::cout << "[ File Shipped ] : " << meta.fd.GetNumber() << std::endl;
             }
         }
     }
     
+    return ios;
+}
+
+rocksdb::IOStatus RubbleKvServiceImpl::DeleteSstFiles(const rocksdb::VersionEdit& edit) {
+    if(edit.IsTrivialMove()){
+      return rocksdb::IOStatus::OK();
+    }
+    rocksdb::IOStatus ios;
     // TODO: should delete file after logAndApply finishes and invalidated the block cache for the deleted files
     // delete the ssts(the hard link) that get deleted in a non-trivial compaction
     for(const auto& delete_file : edit.GetDeletedFiles()){

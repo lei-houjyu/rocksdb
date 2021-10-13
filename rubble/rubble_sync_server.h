@@ -91,7 +91,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
      * 
      */
     rocksdb::IOStatus UpdateSstViewAndShipSstFiles(const rocksdb::VersionEdit& edit);
-
+    rocksdb::IOStatus DeleteSstFiles(const rocksdb::VersionEdit& edit);
     // set the reply message according to the status
     void SetReplyMessage(SyncReply* reply, const rocksdb::Status& s, bool is_flush, bool is_trivial_move);
 
