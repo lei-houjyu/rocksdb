@@ -27,6 +27,9 @@ public:
     // Get the slot num occupied by a file
     int GetFileSlotNum(uint64_t file_num);
 
+    // update sst bit map with file num and slot num
+    void TakeSlot(uint64_t file_num, int slot_num, int times);
+
 private:
     // check if the total num of slots taken matches the size of file_slots_
     void CheckNumSlotsTaken();

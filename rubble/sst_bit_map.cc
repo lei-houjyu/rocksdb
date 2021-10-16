@@ -139,3 +139,24 @@ int SstBitMap::GetFileSlotNum(uint64_t file_num){
     assert(file_slots_.find(file_num) != file_slots_.end());
     return file_slots_[file_num];
 }
+
+void SstBitMap::TakeSlot(uint64_t file_num, int slot_num, int times) {
+    std::unique_lock<std::mutex> lk{mu_};
+    slots_[slot_num] = file_num;
+    file_slots_[file_num] = slot_num;
+    num_slots_taken_[times-1]++;
+
+    int start, end;
+    if(times == 1){
+        start = 1;
+        end = size_;
+    }else{
+        start = size_ + 1 + (times - 2)*num_big_slots_;
+        end = start + num_big_slots_ - 1;
+    }
+    if(slot_num == end){
+        next_available_slot_[times - 1]= start;
+    }else{
+        next_available_slot_[times - 1] = slot_num + 1;
+    }
+}
