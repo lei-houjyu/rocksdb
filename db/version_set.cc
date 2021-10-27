@@ -4417,6 +4417,7 @@ Status VersionSet::LogAndApply(
       log_and_apply_counter.fetch_add(1);
       ROCKS_LOG_INFO(db_options_->rubble_info_log, "[secondary] calling logAndApply， version edit: %s \n", 
                       edit->DebugJSON(edit->GetEditNumber(), false).c_str());
+      sync_counter.fetch_add(1);
     }
   }
   // RUBBLE END
