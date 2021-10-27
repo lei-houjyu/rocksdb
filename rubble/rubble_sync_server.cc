@@ -615,7 +615,7 @@ rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const jso
 
     assert(j_edit.contains("EditNumber"));
     edit.SetEditNumber(j_edit["EditNumber"].get<uint64_t>());
-    std::cout << j_edit.dump(4) << std::endl;
+    // std::cout << j_edit.dump(4) << std::endl;
     for(const auto& j_added_file : j_edit["AddedFiles"].get<std::vector<json>>()){
         // std::cout << j_added_file.dump(4) << std::endl;
         assert(!j_added_file["SmallestUserKey"].is_null());
