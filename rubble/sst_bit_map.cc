@@ -13,8 +13,9 @@ SstBitMap::SstBitMap(int pool_size, int max_num_mems_in_flush,
         int num_big_slots = (max_num_mems_in_flush_ - 1) *num_big_slots_;
         slots_.reserve(size_ + 1 + num_big_slots);
         slots_.assign(size_ + 1 + num_big_slots, 0);
-        next_available_slot_.push_back(1);
+        next_available_slot_.push_back(1); // default slot start from 1
         for(int i = 0; i < max_num_mems_in_flush_ - 1; i++){
+            // offset start of big sst slots
             next_available_slot_.push_back(size_ + 1 + i * num_big_slots_);
         }
         for(int i = 0; i < max_num_mems_in_flush_; i++){
@@ -41,16 +42,20 @@ int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
     }
    
     int slot_num = next_available_slot_[times - 1];
-    if(slots_[slot_num] != 0){
+    // we need to do elaborate checking because some slots might have been freed
+    // we would like to maximize the utilization
+    if(slots_[slot_num] != 0){ // if this slot has been taken
         int cur = slot_num + 1;
         while(cur <= end && slots_[cur] != 0){
             cur++;
         }
+        // circular buffer, loop from start again to find available slots
         if(cur > end){
             cur = start;
             while(cur <= end && slots_[cur] != 0){
                 cur++;
             }
+            // if still couldn't find it
             if(cur > end){
                 std::cerr << "total " << num_slots_taken_[times - 1] << " taken\n";
                 assert(false);
@@ -82,15 +87,16 @@ void SstBitMap::CheckNumSlotsTaken(){
     for(int count : num_slots_taken_){
         total_slots_taken += count;
     }
-    int total_file_slots = static_cast<int>(file_slots_.size());
+    int total_file_slots = static_cast<int>(file_slots_.size()); //initialization
     std::vector<int> slot_taken;
-
+    
+    // TODO: for debugging purposes only I think...
     if(total_file_slots != total_slots_taken){
         std::unordered_map<uint64_t, int>::iterator it;
         for(it = file_slots_.begin(); it != file_slots_.end(); ++it){
-            if(it->second <= size_){
+            if(it->second <= size_){ // if normal, idx = 0
                 slot_taken[0]++;
-            }else{
+            }else{ // else calculate times
                 int idx = (it->second - size_) /num_big_slots_ + 1;
                 slot_taken[idx]++;
             }
@@ -104,6 +110,7 @@ void SstBitMap::CheckNumSlotsTaken(){
 
 int SstBitMap::FreeSlot(uint64_t file_num){
     std::unique_lock<std::mutex> lk{mu_};
+    // assert that the file num in file_slots map
     assert(file_slots_.find(file_num) != file_slots_.end());
     RUBBLE_LOG_INFO(map_logger_, "%lu\n", file_num);
     int slot_num = file_slots_[file_num];
@@ -130,6 +137,7 @@ void SstBitMap::FreeSlot(std::set<uint64_t> file_nums){
     
 uint64_t SstBitMap::GetSlotFileNum(int slot_num){
     std::unique_lock<std::mutex> lk{mu_};
+    // why this assert here? what about big slots
     assert(slot_num <= size_);
     return slots_[slot_num];
 }
