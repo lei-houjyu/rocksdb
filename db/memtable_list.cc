@@ -468,6 +468,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
         if(vset->db_options()->is_rubble){
           m->edit_.TrackSlot(m->file_number_ ,vset->db_options()->sst_bit_map->GetFileSlotNum(m->file_number_));
         }
+        // [RUBBLE END]
         edit_list.push_back(&m->edit_);
         memtables_to_flush.push_back(m);
 #ifndef ROCKSDB_LITE
@@ -497,6 +498,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
       }
 
       // this can release and reacquire the mutex.
+      ROCKS_LOG_INFO(vset->db_options()->rubble_info_log, "Calling logAndApply from flush\n");
       s = vset->LogAndApply(cfd, mutable_cf_options, edit_list, mu,
                             db_directory);
       *io_s = vset->io_status();
