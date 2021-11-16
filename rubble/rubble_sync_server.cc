@@ -1,9 +1,12 @@
 #include "rubble_sync_server.h"
 #include <atomic>
 #include <thread>
+#include <chrono>
+#include <inttypes.h>
 #include "db/memtable.h"
 #include <ctime>
 #include "util/coding.h"
+
 
 void PrintStatus(RubbleKvServiceImpl *srv) {
   uint64_t r_now = 0, r_old = srv->r_op_counter_.load();
@@ -112,6 +115,11 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     while (stream->Read(&request)){
       // handle DoOp request
       OpReply reply;
+
+      // auto duration = std::chrono::system_clock::now().time_since_epoch();
+      // auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+		  // std::cout << "time since epoch in millisecond: " << millis << "\n";
+
       HandleOp(request, &reply);
 
       // if there is version edits piggybacked in the DoOp request, apply those edits
@@ -292,7 +300,7 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
           s = db_->Get(rocksdb::ReadOptions(), singleOp.key(), &value);
           if(!s.ok()){
             RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
-            assert(false);
+            // assert(false);
           }
           s = db_->Put(rocksdb::WriteOptions(), singleOp.key(), singleOp.value());
           w_op_counter_++;
@@ -493,6 +501,8 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
     rocksdb::FSDirectory* db_directory = impl_->directories_.GetDbDir();
     rocksdb::MemTableList* imm = default_cf_->imm();
     
+    std::cout << "memtable list size: " << imm->current()->GetMemlist().size() << "\n";
+    
     uint64_t current_next_file_num = version_set_->current_next_file_number();
     // set secondary version set's next file num according to the primary's next_file_num_
     version_set_->FetchAddFileNumber(next_file_num - current_next_file_num);
@@ -597,7 +607,7 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
 // parse the version edit json string to rocksdb::VersionEdit 
 rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */){
     rocksdb::VersionEdit edit;
-
+    // std::cout << j_edit.dump(4) << std::endl;
     assert(j_edit.contains("AddedFiles"));
     if(j_edit.contains("IsFlush")){ // means edit corresponds to a flush job
         edit.MarkFlush();
@@ -615,7 +625,6 @@ rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const jso
 
     assert(j_edit.contains("EditNumber"));
     edit.SetEditNumber(j_edit["EditNumber"].get<uint64_t>());
-    // std::cout << j_edit.dump(4) << std::endl;
     for(const auto& j_added_file : j_edit["AddedFiles"].get<std::vector<json>>()){
         // std::cout << j_added_file.dump(4) << std::endl;
         assert(!j_added_file["SmallestUserKey"].is_null());
@@ -753,14 +762,16 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
     for(const auto& new_file: edit.GetNewFiles()){
         const rocksdb::FileMetaData& meta = new_file.second;
         uint64_t file_num = meta.fd.GetNumber();
-        // int sst_real = TakeOneAvailableSstSlot(new_file.first, meta);
         int sst_real = edit.GetSlot(file_num);
         
         // rocksdb::DirectReadKBytes(fs_, sst_real, 32, db_path_.path + "/");
 
-        int file_size = meta.fd.GetFileSize();
+        uint64_t file_size = meta.fd.GetFileSize();
+        printf("filesize: %" PRIu64 " | target file base: %" PRIu64 "\n", file_size, cf_options_->target_file_size_base);
+        // int times = file_size/cf_options_->target_file_size_base;
+        // std::cout << "times: " << times << "\n";
         db_options_->sst_bit_map->TakeSlot(file_num, sst_real,
-            file_size/cf_options_->target_file_size_base);
+            file_size/16777216);
 
 
         int len = std::to_string(file_num).length();
