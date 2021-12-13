@@ -48,7 +48,7 @@ struct TableStruct_rubble_5fkv_5fstore_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[8]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[10]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -56,6 +56,9 @@ struct TableStruct_rubble_5fkv_5fstore_2eproto {
 };
 extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_rubble_5fkv_5fstore_2eproto;
 namespace rubble {
+class Empty;
+class EmptyDefaultTypeInternal;
+extern EmptyDefaultTypeInternal _Empty_default_instance_;
 class Op;
 class OpDefaultTypeInternal;
 extern OpDefaultTypeInternal _Op_default_instance_;
@@ -65,6 +68,9 @@ extern OpRepliesDefaultTypeInternal _OpReplies_default_instance_;
 class OpReply;
 class OpReplyDefaultTypeInternal;
 extern OpReplyDefaultTypeInternal _OpReply_default_instance_;
+class PingRequest;
+class PingRequestDefaultTypeInternal;
+extern PingRequestDefaultTypeInternal _PingRequest_default_instance_;
 class Reply;
 class ReplyDefaultTypeInternal;
 extern ReplyDefaultTypeInternal _Reply_default_instance_;
@@ -82,9 +88,11 @@ class SyncRequestDefaultTypeInternal;
 extern SyncRequestDefaultTypeInternal _SyncRequest_default_instance_;
 }  // namespace rubble
 PROTOBUF_NAMESPACE_OPEN
+template<> ::rubble::Empty* Arena::CreateMaybeMessage<::rubble::Empty>(Arena*);
 template<> ::rubble::Op* Arena::CreateMaybeMessage<::rubble::Op>(Arena*);
 template<> ::rubble::OpReplies* Arena::CreateMaybeMessage<::rubble::OpReplies>(Arena*);
 template<> ::rubble::OpReply* Arena::CreateMaybeMessage<::rubble::OpReply>(Arena*);
+template<> ::rubble::PingRequest* Arena::CreateMaybeMessage<::rubble::PingRequest>(Arena*);
 template<> ::rubble::Reply* Arena::CreateMaybeMessage<::rubble::Reply>(Arena*);
 template<> ::rubble::SingleOp* Arena::CreateMaybeMessage<::rubble::SingleOp>(Arena*);
 template<> ::rubble::SingleOpReply* Arena::CreateMaybeMessage<::rubble::SingleOpReply>(Arena*);
@@ -1518,6 +1526,278 @@ class SyncReply PROTOBUF_FINAL :
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
 };
+// -------------------------------------------------------------------
+
+class PingRequest PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.PingRequest) */ {
+ public:
+  inline PingRequest() : PingRequest(nullptr) {}
+  virtual ~PingRequest();
+
+  PingRequest(const PingRequest& from);
+  PingRequest(PingRequest&& from) noexcept
+    : PingRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline PingRequest& operator=(const PingRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline PingRequest& operator=(PingRequest&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const PingRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const PingRequest* internal_default_instance() {
+    return reinterpret_cast<const PingRequest*>(
+               &_PingRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    8;
+
+  friend void swap(PingRequest& a, PingRequest& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(PingRequest* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(PingRequest* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline PingRequest* New() const final {
+    return CreateMaybeMessage<PingRequest>(nullptr);
+  }
+
+  PingRequest* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<PingRequest>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const PingRequest& from);
+  void MergeFrom(const PingRequest& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(PingRequest* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "rubble.PingRequest";
+  }
+  protected:
+  explicit PingRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
+    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kIsActionFieldNumber = 1,
+    kIsPrimaryFieldNumber = 2,
+  };
+  // bool isAction = 1;
+  void clear_isaction();
+  bool isaction() const;
+  void set_isaction(bool value);
+  private:
+  bool _internal_isaction() const;
+  void _internal_set_isaction(bool value);
+  public:
+
+  // bool isPrimary = 2;
+  void clear_isprimary();
+  bool isprimary() const;
+  void set_isprimary(bool value);
+  private:
+  bool _internal_isprimary() const;
+  void _internal_set_isprimary(bool value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:rubble.PingRequest)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  bool isaction_;
+  bool isprimary_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
+};
+// -------------------------------------------------------------------
+
+class Empty PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:rubble.Empty) */ {
+ public:
+  inline Empty() : Empty(nullptr) {}
+  virtual ~Empty();
+
+  Empty(const Empty& from);
+  Empty(Empty&& from) noexcept
+    : Empty() {
+    *this = ::std::move(from);
+  }
+
+  inline Empty& operator=(const Empty& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Empty& operator=(Empty&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const Empty& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const Empty* internal_default_instance() {
+    return reinterpret_cast<const Empty*>(
+               &_Empty_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    9;
+
+  friend void swap(Empty& a, Empty& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Empty* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Empty* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline Empty* New() const final {
+    return CreateMaybeMessage<Empty>(nullptr);
+  }
+
+  Empty* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<Empty>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const Empty& from);
+  void MergeFrom(const Empty& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Empty* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "rubble.Empty";
+  }
+  protected:
+  explicit Empty(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_rubble_5fkv_5fstore_2eproto);
+    return ::descriptor_table_rubble_5fkv_5fstore_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:rubble.Empty)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
+};
 // ===================================================================
 
 
@@ -2538,9 +2818,61 @@ inline void SyncReply::set_allocated_message(std::string* message) {
   // @@protoc_insertion_point(field_set_allocated:rubble.SyncReply.message)
 }
 
+// -------------------------------------------------------------------
+
+// PingRequest
+
+// bool isAction = 1;
+inline void PingRequest::clear_isaction() {
+  isaction_ = false;
+}
+inline bool PingRequest::_internal_isaction() const {
+  return isaction_;
+}
+inline bool PingRequest::isaction() const {
+  // @@protoc_insertion_point(field_get:rubble.PingRequest.isAction)
+  return _internal_isaction();
+}
+inline void PingRequest::_internal_set_isaction(bool value) {
+  
+  isaction_ = value;
+}
+inline void PingRequest::set_isaction(bool value) {
+  _internal_set_isaction(value);
+  // @@protoc_insertion_point(field_set:rubble.PingRequest.isAction)
+}
+
+// bool isPrimary = 2;
+inline void PingRequest::clear_isprimary() {
+  isprimary_ = false;
+}
+inline bool PingRequest::_internal_isprimary() const {
+  return isprimary_;
+}
+inline bool PingRequest::isprimary() const {
+  // @@protoc_insertion_point(field_get:rubble.PingRequest.isPrimary)
+  return _internal_isprimary();
+}
+inline void PingRequest::_internal_set_isprimary(bool value) {
+  
+  isprimary_ = value;
+}
+inline void PingRequest::set_isprimary(bool value) {
+  _internal_set_isprimary(value);
+  // @@protoc_insertion_point(field_set:rubble.PingRequest.isPrimary)
+}
+
+// -------------------------------------------------------------------
+
+// Empty
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
