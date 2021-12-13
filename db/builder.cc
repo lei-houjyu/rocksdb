@@ -104,7 +104,11 @@ Status BuildTable(
       mutable_cf_options.check_flush_compaction_key_order,
       /*enable_hash=*/paranoid_file_checks);
   Status s;
-  size_t num_mems_to_flush = meta->fd.GetFileSize(); //[RUBBLE] extract # of memtables to flush
+  //[RUBBLE] extract # of memtables to flush and make sure number
+  //         within bound of slot size
+  size_t num_mems_to_flush = meta->fd.GetFileSize(); 
+  assert((int)num_mems_to_flush <= mutable_cf_options.max_write_buffer_number);
+  // [END RUBBLE]
   meta->fd.file_size = 0;
   iter->SeekToFirst();
   std::unique_ptr<CompactionRangeDelAggregator> range_del_agg(
@@ -145,7 +149,7 @@ Status BuildTable(
       // [RUBBLE]
       if(db_options->is_primary && db_options->is_rubble && db_options->disallow_flush_on_secondary){
         // we need to ship sst files over
-        // RUBBLE_LOG_INFO(db_options_->rubble_info_log, "num_mems_to_flush: ")
+        // RUBBLE_LOG_INFO(db_options->rubble_info_log, "[times]: %lu", num_mems_to_flush);
         int sst_real = db_options->sst_bit_map->TakeOneAvailableSlot(meta->fd.GetNumber(), num_mems_to_flush);
         std::string r_fname = db_options->remote_sst_dir + std::to_string(sst_real);
         //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
