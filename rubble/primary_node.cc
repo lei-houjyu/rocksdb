@@ -17,7 +17,8 @@ int main(int argc, char** argv) {
   }
 
   // const std::string remote_sst_dir= "/mnt/nvme1n1p4/archive_dbs/tail/sst_dir";
-  const std::string remote_sst_dir= "/mnt/sdb/archive_dbs/secondary/sst_dir/";
+  const std::string remote_sst_dir= "/mnt/sdb/archive_dbs/tail/sst_dir";
+  // const std::string remote_sst_dir= "/mnt/sdb/archive_dbs/secondary/sst_dir/";
   const std::string secondary_server_address= argv[1];
   const std::string db_path = "/mnt/sdb/archive_dbs/primary/db";
   const std::string sst_path = "/mnt/sdb/archive_dbs/primary/sst_dir";
