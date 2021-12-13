@@ -139,7 +139,7 @@ void ReconstructSstBitMap(const std::string& map_log_fname, std::shared_ptr<SstB
                nums.push_back(atoi(token.data()));
          }
 
-         if(nums.size() == 2){ // means its an insert operation to map  
+         if(nums.size() == 2){ // means its an insert operation to map
             map->TakeOneAvailableSlot(static_cast<uint64_t>(nums[0]), nums[1]);
          }else{
             assert(nums.size() == 1);// delete operation 
@@ -252,7 +252,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       //ignore this flag for now, always set to true.
       db_options.disallow_flush_on_secondary = true;
 
-      db_options.max_num_mems_in_flush = 12;
+      db_options.max_num_mems_in_flush = 4;
       db_options.sst_pad_len = 1 << 20;
       db_options.piggyback_version_edits = true;
       db_options.edits = std::make_shared<Edits>();
