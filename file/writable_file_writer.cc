@@ -11,6 +11,8 @@
 
 #include <algorithm>
 #include <mutex>
+#include <iostream>
+#include <regex>
 
 #include "db/version_edit.h"
 #include "monitoring/histogram.h"
@@ -92,6 +94,10 @@ IOStatus WritableFileWriter::Append(const Slice& data) {
   TEST_KILL_RANDOM("WritableFileWriter::Append:1", rocksdb_kill_odds);
   if (s.ok()) {
     filesize_ += data.size();
+    // std::regex sst_regex(".*.sst");
+    // if (std::regex_match(file_name_, sst_regex)){
+    //   std::cout << "[Append]: " << file_name_ << " " << filesize_ << ", adding: " << data.size() << "\n";
+    // }
   }
   return s;
 }
