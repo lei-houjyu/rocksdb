@@ -146,4 +146,12 @@ std::string Status::ToString() const {
   return result;
 }
 
+void Status::set_target_mem_id(uint64_t id) {
+  target_mem_id_ = id;
+}
+
+uint64_t Status::get_target_mem_id() {
+  return target_mem_id_;
+}
+
 }  // namespace ROCKSDB_NAMESPACE

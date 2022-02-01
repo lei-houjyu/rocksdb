@@ -502,6 +502,10 @@ class Status {
   // Returns the string "OK" for success.
   std::string ToString() const;
 
+  void set_target_mem_id(uint64_t id);
+
+  uint64_t get_target_mem_id();
+
  protected:
   // A nullptr state_ (which is always the case for OK) means the message
   // is empty.
@@ -512,6 +516,7 @@ class Status {
   SubCode subcode_;
   Severity sev_;
   const char* state_;
+  uint64_t target_mem_id_;
 #ifdef ROCKSDB_ASSERT_STATUS_CHECKED
   mutable bool checked_ = false;
 #endif  // ROCKSDB_ASSERT_STATUS_CHECKED
@@ -527,14 +532,14 @@ class Status {
 };
 
 inline Status::Status(const Status& s)
-    : code_(s.code_), subcode_(s.subcode_), sev_(s.sev_) {
+    : code_(s.code_), subcode_(s.subcode_), sev_(s.sev_), target_mem_id_(s.target_mem_id_) {
 #ifdef ROCKSDB_ASSERT_STATUS_CHECKED
   s.checked_ = true;
 #endif  // ROCKSDB_ASSERT_STATUS_CHECKED
   state_ = (s.state_ == nullptr) ? nullptr : CopyState(s.state_);
 }
 inline Status::Status(const Status& s, Severity sev)
-    : code_(s.code_), subcode_(s.subcode_), sev_(sev) {
+    : code_(s.code_), subcode_(s.subcode_), sev_(sev), target_mem_id_(s.target_mem_id_) {
 #ifdef ROCKSDB_ASSERT_STATUS_CHECKED
   s.checked_ = true;
 #endif  // ROCKSDB_ASSERT_STATUS_CHECKED
@@ -551,6 +556,7 @@ inline Status& Status::operator=(const Status& s) {
     sev_ = s.sev_;
     delete[] state_;
     state_ = (s.state_ == nullptr) ? nullptr : CopyState(s.state_);
+    target_mem_id_ = s.target_mem_id_;
   }
   return *this;
 }
@@ -585,6 +591,8 @@ inline Status& Status::operator=(Status&& s)
     delete[] state_;
     state_ = nullptr;
     std::swap(state_, s.state_);
+    target_mem_id_ = s.target_mem_id_;
+    s.target_mem_id_ = 0;
   }
   return *this;
 }

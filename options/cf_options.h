@@ -128,6 +128,8 @@ struct ImmutableCFOptions {
   std::string db_host_id;
 
   uint64_t sst_pad_len;
+
+  const ImmutableDBOptions* db_options_;
 };
 
 struct MutableCFOptions {

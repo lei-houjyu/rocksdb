@@ -212,6 +212,7 @@ class WriteThread {
         // because a memtable insert should not have been attempted
         assert(callback != nullptr);
         assert(status.ok());
+        callback_status.set_target_mem_id(status.get_target_mem_id());
         return callback_status;
       } else {
         // if there is no callback then we only care about

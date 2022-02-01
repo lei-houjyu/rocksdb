@@ -12,8 +12,16 @@ void PrintStatus(RubbleKvServiceImpl *srv) {
     time_t t = time(0);
     r_now = srv->r_op_counter_.load();
     w_now = srv->w_op_counter_.load();
+    int mem_num = srv->GetCFD()->imm()->current()->GetMemlist().size();
+    int queued_op = srv->QueuedOpNum();
+    uint64_t mem_id = srv->GetCFD()->mem()->GetID();
+    uint64_t num_entries = srv->GetCFD()->mem()->num_entries();
+    uint64_t ops = srv->GetCFD()->mem()->num_operations();
+    uint64_t data_size = srv->GetCFD()->mem()->get_data_size();
     std::cout << "[READ] " << r_now << " op " << (r_now- r_old) << " op/s "
               << "[WRITE] " << w_now << " op " << (w_now- w_old) << " op/s "
+              << "mem_num " << mem_num << " queued_op " << queued_op << " "
+              << "mem_id " << mem_id << " entries " << num_entries << " ops " << ops << " data " << data_size << " "
               << ctime(&t);
     r_old = r_now;
     w_old = w_now;
@@ -40,7 +48,7 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
        cf_options_(default_cf_->GetCurrentMutableCFOptions()),
        fs_(ioptions_->fs),
        status_thread_(PrintStatus, this){
-        status_thread_.detach(); 
+        status_thread_.detach();
         if(is_rubble_ && !is_head_){
           std::cout << "init sync_service --- is_rubble: " << is_rubble_ << "; is_head: " << is_head_ << std::endl;
           ios_ = CreateSstPool();
@@ -61,11 +69,31 @@ RubbleKvServiceImpl::~RubbleKvServiceImpl(){
     delete db_;
 }
 
+rocksdb::ColumnFamilyData* RubbleKvServiceImpl::GetCFD() {
+  return default_cf_;
+}
+
+int RubbleKvServiceImpl::QueuedOpNum() {
+  int num = 0;
+  for (std::map< std::thread::id, std::map< uint64_t, std::queue<SingleOp*> >* >::iterator it = buffers_.begin();
+    it != buffers_.end(); it++) {
+      for (std::map<uint64_t, std::queue<SingleOp*>>::iterator itt = it->second->begin();
+        itt != it->second->end(); itt++) {
+          num += itt->second.size();
+        }
+    }
+  return num;
+}
+
 static std::atomic<uint32_t> op_counter{0};
 static std::atomic<uint32_t> reply_counter{0};
 static std::atomic<uint32_t> thread_counter{0};
 static std::unordered_map<std::thread::id, uint32_t> map;
 static std::mutex mu;
+static std::map<uint64_t, uint64_t> primary_op_cnt_map;
+#define G_MEM_ARR_LEN 1024
+static std::atomic<uint64_t> histogram[G_MEM_ARR_LEN];
+
 Status RubbleKvServiceImpl::DoOp(ServerContext* context, 
               ServerReaderWriter<OpReply, Op>* stream) {
     // if(!op_counter_.load()){
@@ -86,14 +114,14 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     std::shared_ptr<Forwarder> forwarder = nullptr;
     // client for sending the reply back to the replicator
     std::shared_ptr<ReplyClient> reply_client = nullptr;
-    if(!db_options_->is_tail){
+    if(!db_options_->is_tail) {
       std::cout << "init the forwarder" << "\n";
       forwarder = std::make_shared<Forwarder>(channel_);
       // std::cout << "thread: " << map[std::this_thread::get_id()] << " Forwarded " << op_counter_ << " ops" << std::endl;
-    }else {
+    } else {
       // tail node should be responsible for sending the reply back to replicator
       // use the sync stream to write the reply back
-      if(channel_ != nullptr){
+      if(channel_ != nullptr) {
         std::cout << "init the reply client" << "\n";
         reply_client = std::make_shared<ReplyClient>(channel_);
       }
@@ -107,20 +135,23 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     // }
     // mu.unlock();
 
-    Op request;
-    while (stream->Read(&request)){
-      // handle DoOp request
+    Op tmp_op;
+    std::map<uint64_t, std::queue<SingleOp *>> op_buffer;
+    buffers_[std::this_thread::get_id()] = &op_buffer;
+    while (stream->Read(&tmp_op)){
+      Op* request = new Op(tmp_op);
+      // handle DoOp requestbt
       OpReply reply;
-      HandleOp(request, &reply);
+      HandleOp(request, &reply, op_buffer);
 
       // if there is version edits piggybacked in the DoOp request, apply those edits
-      if(request.has_edits()){
-        size_t size = request.edits_size();
+      if(request->has_edits()){
+        size_t size = request->edits_size();
         RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits\n", static_cast<uint32_t>(size));
         // fprintf(stdout , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
         rocksdb::InstrumentedMutexLock l(mu_);
         for(int i = 0; i < size; i++){
-          ApplyVersionEdits(request.edits(i));
+          ApplyVersionEdits(request->edits(i));
         }
         RUBBLE_LOG_INFO(logger_ , "[Tail] finishes version edits\n");
       }
@@ -145,20 +176,26 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
           if(edits.size() != 0) {
             size_t size = edits.size();
             // RUBBLE_LOG_INFO(logger_, "[primary] Got %u new version edits, op counter : %lu \n", static_cast<uint32_t>(size) ,op_counter_.load()); 
-            request.set_has_edits(true);
+            request->set_has_edits(true);
             for(const auto& edit : edits) {
               RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
-              request.add_edits(edit);
+              request->add_edits(edit);
             }
-            assert(request.edits_size() == size);
+            assert(request->edits_size() == size);
           } else {
-            request.set_has_edits(false);
+            request->set_has_edits(false);
           }
         }
-        forwarder->Forward(request);
+        forwarder->Forward(*request);
       }
     }
     std::cout << "end while loop with " << r_op_counter_.load() << " read and " << w_op_counter_.load() << " write ops done\n";
+    for (int i = 1; i < G_MEM_ARR_LEN; i++) {
+      if (histogram[i].load() == 0) {
+        break;
+      }
+      std::cout << i << " : " << histogram[i].load() << std::endl;
+    }
 
     if (forwarder != nullptr) {
       forwarder->WritesDone();
@@ -171,167 +208,217 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     return Status::OK;
 }
 
-void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
-    // if(!op_counter_.load()){
-    //   start_time_ = high_resolution_clock::now();
-    // }
+uint64_t RubbleKvServiceImpl::get_mem_id() {
+  return default_cf_->mem()->GetID();
+}
 
-    // if(op_counter_.load() && op_counter_.load()%100000 == 0 ){
-    //   std::cout << "opcount: " << op_counter_.load() << "\n";
-    //   end_time_ = high_resolution_clock::now();
-    //   auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
-    //   std::cout << "Throughput : handled 100000 ops in " << std::to_string(millisecs.count()) << " millisecs\n";
-    //   start_time_ = end_time_;
-    // }
-    
-    // std::cout << "handling a " << request_.type() <<" " <<  request_.id() << " op...\n";
-    // ASSUME that each batch is with the same type of operation
-    assert(op.ops_size() > 0);
-    assert(reply->replies_size() == 0);
-    reply->set_client_idx(op.client_idx());
-    reply->add_time(op.time(0));
+bool RubbleKvServiceImpl::is_ooo_write(SingleOp* singleOp) {
+  if (!is_rubble_ || is_head_) {
+    return false;
+  }
 
-    std::string value;
-    SingleOpReply* singleOpReply;
-    rocksdb::Status s;
-    // std::cout << "thread: " << map[std::this_thread::get_id()] << " op_counter: " << op_counter_ << std::endl;
-    //  <<  "first key in batch: " << op.ops(0).key() << " size: " << op.ops_size() << "\n";
-    batch_counter_.fetch_add(1);
-    uint64_t batch_counter = batch_counter_.load(std::memory_order_relaxed);
-    // int idx;
-    switch (op.ops(0).type())
-    {
-      case rubble::GET:
-        // idx = 0;
-        for(const auto& singleOp: op.ops()) {
-          assert(singleOp.type() == rubble::GET);
-          assert(is_tail_);
-          singleOpReply = reply->add_replies();
-          singleOpReply->set_id(singleOp.id());
-          s = db_->Get(rocksdb::ReadOptions(), singleOp.key(), &value);
-          r_op_counter_.fetch_add(1);
-          singleOpReply->set_key(singleOp.key());
-          singleOpReply->set_type(rubble::GET);
-          singleOpReply->set_status(s.ToString());
-          if(s.ok()){
-            singleOpReply->set_ok(true);
-            singleOpReply->set_value(value);
-          }else{
-            singleOpReply->set_ok(false);
-          }
-          // if (is_tail_) {
-          //   if (s.ToString() != op.status(idx)) {
-          //     std::cout << "GET different status! Head " << op.status(idx) << " Tail " << s.ok() << std::endl;
-          //     assert(false);
-          //   }
-          //   if (value != op.value(idx)) {
-          //     std::cout << "GET different value! Head " << op.value(idx) << " Tail " << value << std::endl;
-          //     assert(false);
-          //   }
-          // }
-          // if (is_head_) {
-          //   op.add_status(s.ToString());
-          //   op.add_value(value);
-          // }
-          // idx++;
+  if (singleOp->type() == rubble::GET) {
+    return false;
+  }
+
+  uint64_t id = singleOp->target_mem_id();
+  if (id == 0 || id == get_mem_id()) {
+    assert(!is_rubble_ || id != 0);
+    return false;
+  }
+
+  return true;
+}
+
+bool RubbleKvServiceImpl::should_execute(uint64_t target_mem_id) {
+  rocksdb::MemTable* cur_mem = default_cf_->mem();
+  uint64_t cur_mem_id = cur_mem->GetID();
+
+  // 1. the request is for the current memtable
+  if (target_mem_id == cur_mem_id) {
+    return true;
+  }
+
+  // 2. the request is for the next memtable, but all requests for
+  // the current one have been executed, so we need to execute it
+  // to trigger SwitchMemTable
+  if (target_mem_id == cur_mem_id + 1 &&
+      cur_mem->num_target_op() != 0 &&
+      cur_mem->num_operations() == cur_mem->num_target_op()) {
+    std::cout << "trigger SwitchMemTable " << cur_mem_id << " by executing request for " << target_mem_id << std::endl;
+    return true;
+  }
+
+  return false;
+}
+
+void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply, std::map<uint64_t, std::queue<SingleOp*>>& op_buffer) {
+  assert(op->ops_size() > 0);
+  assert(reply->replies_size() == 0);
+
+  reply->set_client_idx(op->client_idx());
+  reply->add_time(op->time(0));
+
+  batch_counter_.fetch_add(1);
+  for (int i = 0; i < op->ops_size(); i++) {
+    SingleOp* singleOp = op->mutable_ops(i);
+    uint64_t id = singleOp->target_mem_id();
+    if (!is_ooo_write(singleOp)) {
+      HandleSingleOp(singleOp, reply);
+    } else {
+      rocksdb::MemTable* mem = default_cf_->mem();
+      
+      if (singleOp->mem_op_cnt() != 0) {
+        uint64_t target_mem = singleOp->target_mem_id();
+        uint64_t switched_mem = target_mem - 1;
+        uint64_t target_op_cnt = singleOp->mem_op_cnt();
+        std::cout << "received mem_op_cnt for mem " << switched_mem << " target_op_cnt " << target_op_cnt << std::endl;
+
+        rocksdb::g_mem_id_arr[switched_mem % G_MEM_ARR_LEN] = switched_mem;
+        rocksdb::g_mem_op_cnt_arr[switched_mem % G_MEM_ARR_LEN] = target_op_cnt;
+
+        if (mem->GetID() == switched_mem) {
+          std::cout << "set " << mem->GetID() << " 's target_op to " << target_op_cnt << std::endl;
+          mem->set_num_target_op(target_op_cnt);
         }
-        break;
-      case rubble::PUT:
-        batch_start_time_ = high_resolution_clock::now();
-        // idx = 0;
-        for(const auto& singleOp: op.ops()) {
-          assert(singleOp.type() == rubble::PUT);
-          s = db_->Put(rocksdb::WriteOptions(), singleOp.key(), singleOp.value());
-          w_op_counter_.fetch_add(1);
-          if(!s.ok()){
-            RUBBLE_LOG_ERROR(logger_, "Put Failed : %s \n", s.ToString().c_str());
-            assert(false);
-          }
-          if(is_tail_){
-            auto singleOpReply = reply->add_replies();
-            singleOpReply->set_id(singleOp.id());
-            singleOpReply->set_type(rubble::PUT);
-            singleOpReply->set_key(singleOp.key());
-            singleOpReply->set_status(s.ToString());
-            if(s.ok()){ 
-              singleOpReply->set_ok(true);
-            }else{
-              singleOpReply->set_ok(false);
-            }  
-          }
-          // if (is_tail_) {
-          //   if (s.ToString() != op.status(idx)) {
-          //     std::cout << "PUT different status! Head " << op.status(idx) << " Tail " << s.ok() << std::endl;
-          //     assert(false);
-          //   }
-          // }
-          // if (is_head_) {
-          //   op.add_status(s.ToString());
-          // }
-          // idx++;
-        }
-        // std::cout << "Processed batch " << batch_counter << std::endl;
-        batch_end_time_ = high_resolution_clock::now();
-        // RUBBLE_LOG_INFO(logger_, "Processed batch %lu in %u ms, size : %u \n", batch_counter, 
-        //           static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(batch_end_time_ - batch_start_time_).count()),
-        //           op.ops_size());
+      }
 
-        break;
-      case rubble::DELETE:
-        //TODO
-        break;
-
-      case rubble::UPDATE:
-        // std::cout << "in UPDATE " << op.ops(0).key() << "\n"; 
-        // idx = 0;
-        for(const auto& singleOp: op.ops()) {
-          assert(singleOp.type() == rubble::UPDATE);
-          singleOpReply = reply->add_replies();
-          singleOpReply->set_id(singleOp.id());
-          s = db_->Get(rocksdb::ReadOptions(), singleOp.key(), &value);
-          if(!s.ok()){
-            RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
-            assert(false);
-          }
-          s = db_->Put(rocksdb::WriteOptions(), singleOp.key(), singleOp.value());
-          w_op_counter_++;
-          if(!s.ok()){
-            RUBBLE_LOG_ERROR(logger_, "Put Failed : %s \n", s.ToString().c_str());
-            assert(false);
-          }
-          if(is_tail_){
-            singleOpReply->set_key(singleOp.key());
-            singleOpReply->set_type(rubble::UPDATE);
-            singleOpReply->set_status(s.ToString());
-            if(s.ok()){
-              singleOpReply->set_ok(true);
-              singleOpReply->set_value(value);
-            }else{
-              singleOpReply->set_ok(false);
-            }
-          }
-          // if (is_tail_) {
-          //   if (s.ToString() != op.status(idx)) {
-          //     std::cout << "UPDATE different status! Head " << op.status(idx) << " Tail " << s.ok() << std::endl;
-          //     assert(false);
-          //   }
-          //   if (value != op.value(idx)) {
-          //     std::cout << "UPDATE different value! Head " << op.value(idx) << " Tail " << value << std::endl;
-          //     assert(false);
-          //   }
-          // }
-          // if (is_head_) {
-          //   op.add_status(s.ToString());
-          //   op.add_value(value);
-          // }
-          // idx++;
-        }
-        break;
-
-      default:
-        std::cerr << "Unsupported Operation \n";
-        break;
+      op_buffer[id].emplace(singleOp);
+      assert(id == singleOp->target_mem_id());
     }
+
+    for (std::map<uint64_t, std::queue<SingleOp*>>::iterator it = op_buffer.begin();
+      it != op_buffer.end(); it++) {
+        id = it->first;
+        if (should_execute(id)) {
+          while (!op_buffer[id].empty()) {
+            HandleSingleOp(op_buffer[id].front(), reply);
+            op_buffer[id].pop();
+          }
+        }
+      }
+  }
+}
+
+void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, OpReply* reply) {
+  rocksdb::Status s;
+  std::string value;
+  SingleOpReply* singleOpReply;
+
+  switch (singleOp->type()) {
+    case rubble::GET:
+      assert(is_tail_);
+      s = db_->Get(rocksdb::ReadOptions(), singleOp->key(), &value);
+      r_op_counter_.fetch_add(1);
+      if (!s.ok()){
+        RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
+        // assert(false);
+      }
+      
+      singleOpReply = reply->add_replies();
+      singleOpReply->set_id(singleOp->id());
+      singleOpReply->set_key(singleOp->key());
+      singleOpReply->set_type(rubble::GET);
+      singleOpReply->set_status(s.ToString());
+      if (s.ok()) {
+        singleOpReply->set_ok(true);
+        singleOpReply->set_value(value);
+      } else {
+        singleOpReply->set_ok(false);
+      }
+      break;
+
+    case rubble::PUT:
+      s = db_->Put(rocksdb::WriteOptions(), singleOp->key(), singleOp->value());
+      assert(s.get_target_mem_id() != 0);
+      w_op_counter_.fetch_add(1);
+      if (!s.ok()) {
+        RUBBLE_LOG_ERROR(logger_, "Put Failed : %s \n", s.ToString().c_str());
+        assert(false);
+      }
+
+      if (is_head_) {
+        assert(singleOp->target_mem_id() == 0);
+        singleOp->set_target_mem_id(s.get_target_mem_id());
+        histogram[singleOp->target_mem_id()].fetch_add(1);
+        // std::cout << "id: " << singleOp->target_mem_id() << std::endl;
+        if (rocksdb::g_mem_op_cnt != 0 && s.get_target_mem_id() == rocksdb::g_mem_id) {
+          rocksdb::g_mem_op_cnt_mtx.lock();
+          if (rocksdb::g_mem_op_cnt != 0 && s.get_target_mem_id() == rocksdb::g_mem_id) {
+            std::cout << "set " << s.get_target_mem_id() - 1 << " 's mem_op_cnt " << rocksdb::g_mem_op_cnt << std::endl;
+            singleOp->set_mem_op_cnt(rocksdb::g_mem_op_cnt);
+            rocksdb::g_mem_op_cnt = 0;
+            rocksdb::g_mem_id = 0;
+          }
+          rocksdb::g_mem_op_cnt_mtx.unlock();
+        }
+      }
+
+      if (is_tail_) { 
+        assert(s.get_target_mem_id() == get_mem_id() || s.get_target_mem_id() == get_mem_id() - 1);
+        assert(singleOp->target_mem_id() == get_mem_id());
+        histogram[singleOp->target_mem_id()].fetch_add(1);
+        singleOpReply = reply->add_replies();
+        singleOpReply->set_id(singleOp->id());
+        singleOpReply->set_type(rubble::PUT);
+        singleOpReply->set_key(singleOp->key());
+        singleOpReply->set_status(s.ToString());
+        if (s.ok()) { 
+          singleOpReply->set_ok(true);
+        } else {
+          singleOpReply->set_ok(false);
+        }  
+      }
+      break;
+
+    case rubble::UPDATE:
+      s = db_->Get(rocksdb::ReadOptions(), singleOp->key(), &value);
+      r_op_counter_.fetch_add(1);
+      if (!s.ok()) {
+        RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
+        // assert(false);
+      }
+
+      s = db_->Put(rocksdb::WriteOptions(), singleOp->key(), singleOp->value());
+      w_op_counter_.fetch_add(1);
+      if (!s.ok()) {
+        RUBBLE_LOG_ERROR(logger_, "Put Failed : %s \n", s.ToString().c_str());
+        assert(false);
+      }
+
+      if (is_head_) {
+        singleOp->set_target_mem_id(s.get_target_mem_id());
+        // std::cout << "id: " << singleOp->target_mem_id() << std::endl;
+        if (rocksdb::g_mem_op_cnt != 0) {
+          rocksdb::g_mem_op_cnt_mtx.lock();
+          if (rocksdb::g_mem_op_cnt != 0) {
+            std::cout << "set mem_op_cnt " << rocksdb::g_mem_op_cnt << std::endl;
+            singleOp->set_mem_op_cnt(rocksdb::g_mem_op_cnt);
+            rocksdb::g_mem_op_cnt = 0;
+          }
+          rocksdb::g_mem_op_cnt_mtx.unlock();
+        }
+      }
+
+      if (is_tail_) {
+        singleOpReply = reply->add_replies();
+        singleOpReply->set_id(singleOp->id());
+        singleOpReply->set_key(singleOp->key());
+        singleOpReply->set_type(rubble::UPDATE);
+        singleOpReply->set_status(s.ToString());
+        if (s.ok()) {
+          singleOpReply->set_ok(true);
+          singleOpReply->set_value(value);
+        } else {
+          singleOpReply->set_ok(false);
+        }
+      }
+      break;
+
+    default:
+      std::cerr << "Unsupported Operation \n";
+      break;
+  }
 }
 
 // a streaming RPC used by the non-tail node to sync Version(view of sst files) states to the downstream node 

@@ -668,6 +668,8 @@ class SingleOp PROTOBUF_FINAL :
     kKeyFieldNumber = 1,
     kValueFieldNumber = 2,
     kIdFieldNumber = 3,
+    kTargetMemIdFieldNumber = 5,
+    kMemOpCntFieldNumber = 6,
     kTypeFieldNumber = 4,
   };
   // string key = 1;
@@ -711,6 +713,24 @@ class SingleOp PROTOBUF_FINAL :
   void _internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
+  // uint64 target_mem_id = 5;
+  void clear_target_mem_id();
+  ::PROTOBUF_NAMESPACE_ID::uint64 target_mem_id() const;
+  void set_target_mem_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_target_mem_id() const;
+  void _internal_set_target_mem_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
+  public:
+
+  // uint64 mem_op_cnt = 6;
+  void clear_mem_op_cnt();
+  ::PROTOBUF_NAMESPACE_ID::uint64 mem_op_cnt() const;
+  void set_mem_op_cnt(::PROTOBUF_NAMESPACE_ID::uint64 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_mem_op_cnt() const;
+  void _internal_set_mem_op_cnt(::PROTOBUF_NAMESPACE_ID::uint64 value);
+  public:
+
   // .rubble.OpType type = 4;
   void clear_type();
   ::rubble::OpType type() const;
@@ -730,6 +750,8 @@ class SingleOp PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr key_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr value_;
   ::PROTOBUF_NAMESPACE_ID::uint64 id_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 target_mem_id_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 mem_op_cnt_;
   int type_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
@@ -2087,6 +2109,46 @@ inline void SingleOp::_internal_set_type(::rubble::OpType value) {
 inline void SingleOp::set_type(::rubble::OpType value) {
   _internal_set_type(value);
   // @@protoc_insertion_point(field_set:rubble.SingleOp.type)
+}
+
+// uint64 target_mem_id = 5;
+inline void SingleOp::clear_target_mem_id() {
+  target_mem_id_ = PROTOBUF_ULONGLONG(0);
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint64 SingleOp::_internal_target_mem_id() const {
+  return target_mem_id_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint64 SingleOp::target_mem_id() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOp.target_mem_id)
+  return _internal_target_mem_id();
+}
+inline void SingleOp::_internal_set_target_mem_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
+  
+  target_mem_id_ = value;
+}
+inline void SingleOp::set_target_mem_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
+  _internal_set_target_mem_id(value);
+  // @@protoc_insertion_point(field_set:rubble.SingleOp.target_mem_id)
+}
+
+// uint64 mem_op_cnt = 6;
+inline void SingleOp::clear_mem_op_cnt() {
+  mem_op_cnt_ = PROTOBUF_ULONGLONG(0);
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint64 SingleOp::_internal_mem_op_cnt() const {
+  return mem_op_cnt_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint64 SingleOp::mem_op_cnt() const {
+  // @@protoc_insertion_point(field_get:rubble.SingleOp.mem_op_cnt)
+  return _internal_mem_op_cnt();
+}
+inline void SingleOp::_internal_set_mem_op_cnt(::PROTOBUF_NAMESPACE_ID::uint64 value) {
+  
+  mem_op_cnt_ = value;
+}
+inline void SingleOp::set_mem_op_cnt(::PROTOBUF_NAMESPACE_ID::uint64 value) {
+  _internal_set_mem_op_cnt(value);
+  // @@protoc_insertion_point(field_set:rubble.SingleOp.mem_op_cnt)
 }
 
 // -------------------------------------------------------------------

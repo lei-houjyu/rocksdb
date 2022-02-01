@@ -200,6 +200,8 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_rubble_5fkv_5fstore_2eproto::o
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, value_),
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, id_),
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, type_),
+  PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, target_mem_id_),
+  PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, mem_op_cnt_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOpReply, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -240,11 +242,11 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOB
   { 0, -1, sizeof(::rubble::Op)},
   { 11, -1, sizeof(::rubble::OpReply)},
   { 20, -1, sizeof(::rubble::SingleOp)},
-  { 29, -1, sizeof(::rubble::SingleOpReply)},
-  { 40, -1, sizeof(::rubble::OpReplies)},
-  { 46, -1, sizeof(::rubble::Reply)},
-  { 52, -1, sizeof(::rubble::SyncRequest)},
-  { 58, -1, sizeof(::rubble::SyncReply)},
+  { 31, -1, sizeof(::rubble::SingleOpReply)},
+  { 42, -1, sizeof(::rubble::OpReplies)},
+  { 48, -1, sizeof(::rubble::Reply)},
+  { 54, -1, sizeof(::rubble::SyncRequest)},
+  { 60, -1, sizeof(::rubble::SyncReply)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -265,22 +267,23 @@ const char descriptor_table_protodef_rubble_5fkv_5fstore_2eproto[] PROTOBUF_SECT
   "\003(\0132\020.rubble.SingleOp\022\014\n\004time\030\006 \003(\003\"g\n\007O"
   "pReply\022\022\n\nsync_reply\030\001 \001(\t\022\022\n\nclient_idx"
   "\030\002 \001(\005\022&\n\007replies\030\003 \003(\0132\025.rubble.SingleO"
-  "pReply\022\014\n\004time\030\004 \003(\003\"P\n\010SingleOp\022\013\n\003key\030"
+  "pReply\022\014\n\004time\030\004 \003(\003\"{\n\010SingleOp\022\013\n\003key\030"
   "\001 \001(\t\022\r\n\005value\030\002 \001(\t\022\n\n\002Id\030\003 \001(\004\022\034\n\004type"
-  "\030\004 \001(\0162\016.rubble.OpType\"q\n\rSingleOpReply\022"
-  "\n\n\002ok\030\001 \001(\010\022\013\n\003key\030\002 \001(\t\022\r\n\005value\030\003 \001(\t\022"
-  "\016\n\006status\030\004 \001(\t\022\n\n\002Id\030\005 \001(\003\022\034\n\004type\030\006 \001("
-  "\0162\016.rubble.OpType\"+\n\tOpReplies\022\036\n\005reply\030"
-  "\001 \003(\0132\017.rubble.OpReply\"\023\n\005Reply\022\n\n\002ok\030\001 "
-  "\001(\010\"\033\n\013SyncRequest\022\014\n\004args\030\001 \001(\t\"\034\n\tSync"
-  "Reply\022\017\n\007message\030\001 \001(\t*2\n\006OpType\022\007\n\003GET\020"
-  "\000\022\007\n\003PUT\020\001\022\n\n\006DELETE\020\002\022\n\n\006UPDATE\020\0032\252\001\n\024R"
-  "ubbleKvStoreService\0224\n\004Sync\022\023.rubble.Syn"
-  "cRequest\032\021.rubble.SyncReply\"\000(\0010\001\022)\n\004DoO"
-  "p\022\n.rubble.Op\032\017.rubble.OpReply\"\000(\0010\001\0221\n\t"
-  "SendReply\022\017.rubble.OpReply\032\r.rubble.Repl"
-  "y\"\000(\0010\001B\033\n\tsite.ycsbB\006RubbleP\001\242\002\003Rubb\006pr"
-  "oto3"
+  "\030\004 \001(\0162\016.rubble.OpType\022\025\n\rtarget_mem_id\030"
+  "\005 \001(\004\022\022\n\nmem_op_cnt\030\006 \001(\004\"q\n\rSingleOpRep"
+  "ly\022\n\n\002ok\030\001 \001(\010\022\013\n\003key\030\002 \001(\t\022\r\n\005value\030\003 \001"
+  "(\t\022\016\n\006status\030\004 \001(\t\022\n\n\002Id\030\005 \001(\003\022\034\n\004type\030\006"
+  " \001(\0162\016.rubble.OpType\"+\n\tOpReplies\022\036\n\005rep"
+  "ly\030\001 \003(\0132\017.rubble.OpReply\"\023\n\005Reply\022\n\n\002ok"
+  "\030\001 \001(\010\"\033\n\013SyncRequest\022\014\n\004args\030\001 \001(\t\"\034\n\tS"
+  "yncReply\022\017\n\007message\030\001 \001(\t*2\n\006OpType\022\007\n\003G"
+  "ET\020\000\022\007\n\003PUT\020\001\022\n\n\006DELETE\020\002\022\n\n\006UPDATE\020\0032\252\001"
+  "\n\024RubbleKvStoreService\0224\n\004Sync\022\023.rubble."
+  "SyncRequest\032\021.rubble.SyncReply\"\000(\0010\001\022)\n\004"
+  "DoOp\022\n.rubble.Op\032\017.rubble.OpReply\"\000(\0010\001\022"
+  "1\n\tSendReply\022\017.rubble.OpReply\032\r.rubble.R"
+  "eply\"\000(\0010\001B\033\n\tsite.ycsbB\006RubbleP\001\242\002\003Rubb"
+  "\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_rubble_5fkv_5fstore_2eproto_deps[1] = {
 };
@@ -296,7 +299,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_rub
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_rubble_5fkv_5fstore_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_rubble_5fkv_5fstore_2eproto = {
-  false, false, descriptor_table_protodef_rubble_5fkv_5fstore_2eproto, "rubble_kv_store.proto", 844,
+  false, false, descriptor_table_protodef_rubble_5fkv_5fstore_2eproto, "rubble_kv_store.proto", 887,
   &descriptor_table_rubble_5fkv_5fstore_2eproto_once, descriptor_table_rubble_5fkv_5fstore_2eproto_sccs, descriptor_table_rubble_5fkv_5fstore_2eproto_deps, 8, 0,
   schemas, file_default_instances, TableStruct_rubble_5fkv_5fstore_2eproto::offsets,
   file_level_metadata_rubble_5fkv_5fstore_2eproto, 8, file_level_enum_descriptors_rubble_5fkv_5fstore_2eproto, file_level_service_descriptors_rubble_5fkv_5fstore_2eproto,
@@ -1114,6 +1117,20 @@ const char* SingleOp::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::i
           _internal_set_type(static_cast<::rubble::OpType>(val));
         } else goto handle_unusual;
         continue;
+      // uint64 target_mem_id = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 40)) {
+          target_mem_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // uint64 mem_op_cnt = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 48)) {
+          mem_op_cnt_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
         if ((tag & 7) == 4 || tag == 0) {
@@ -1175,6 +1192,18 @@ failure:
       4, this->_internal_type(), target);
   }
 
+  // uint64 target_mem_id = 5;
+  if (this->target_mem_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(5, this->_internal_target_mem_id(), target);
+  }
+
+  // uint64 mem_op_cnt = 6;
+  if (this->mem_op_cnt() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(6, this->_internal_mem_op_cnt(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1210,6 +1239,20 @@ size_t SingleOp::ByteSizeLong() const {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_id());
+  }
+
+  // uint64 target_mem_id = 5;
+  if (this->target_mem_id() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
+        this->_internal_target_mem_id());
+  }
+
+  // uint64 mem_op_cnt = 6;
+  if (this->mem_op_cnt() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
+        this->_internal_mem_op_cnt());
   }
 
   // .rubble.OpType type = 4;
@@ -1257,6 +1300,12 @@ void SingleOp::MergeFrom(const SingleOp& from) {
   }
   if (from.id() != 0) {
     _internal_set_id(from._internal_id());
+  }
+  if (from.target_mem_id() != 0) {
+    _internal_set_target_mem_id(from._internal_target_mem_id());
+  }
+  if (from.mem_op_cnt() != 0) {
+    _internal_set_mem_op_cnt(from._internal_mem_op_cnt());
   }
   if (from.type() != 0) {
     _internal_set_type(from._internal_type());

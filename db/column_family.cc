@@ -1548,6 +1548,7 @@ void ColumnFamilySet::RemoveColumnFamily(ColumnFamilyData* cfd) {
 
 // under a DB mutex OR from a write thread
 bool ColumnFamilyMemTablesImpl::Seek(uint32_t column_family_id) {
+  assert(column_family_id == 0);
   if (column_family_id == 0) {
     // optimization for common case
     current_ = column_family_set_->GetDefault();

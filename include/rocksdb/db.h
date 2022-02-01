@@ -38,6 +38,12 @@
 #endif
 
 namespace ROCKSDB_NAMESPACE {
+#define G_MEM_ARR_LEN 1024
+extern uint64_t g_mem_op_cnt;
+extern uint64_t g_mem_id;
+extern std::mutex g_mem_op_cnt_mtx;
+extern uint64_t g_mem_id_arr[G_MEM_ARR_LEN];
+extern uint64_t g_mem_op_cnt_arr[G_MEM_ARR_LEN];
 
 struct Options;
 struct DBOptions;

@@ -164,6 +164,7 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
 
   write_thread_.JoinBatchGroup(&w);
   Status status;
+  uint64_t target_mem_id = 0;
   if (w.state == WriteThread::STATE_PARALLEL_MEMTABLE_WRITER) {
     // we are a non-leader in a parallel group
 
@@ -179,6 +180,7 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
           write_options.ignore_missing_column_families, 0 /*log_number*/, this,
           true /*concurrent_memtable_writes*/, seq_per_batch_, w.batch_cnt,
           batch_per_txn_, write_options.memtable_insert_hint_per_batch);
+      target_mem_id = w.status.get_target_mem_id();
 
       PERF_TIMER_START(write_pre_and_post_process_time);
     }
@@ -206,7 +208,10 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
     // write is complete and leader has updated sequence
     // Should we handle it?
     status.PermitUncheckedError();
-    return w.FinalStatus();
+    Status s = w.FinalStatus();
+    s.set_target_mem_id(target_mem_id);
+    assert(s.get_target_mem_id() != 0);
+    return s;
   }
   // else we are the leader of the write batch group
   assert(w.state == WriteThread::STATE_GROUP_LEADER);
@@ -409,6 +414,7 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
               write_options.memtable_insert_hint_per_batch);
         }
       }
+      target_mem_id = w.status.get_target_mem_id();
       if (seq_used != nullptr) {
         *seq_used = w.sequence;
       }
@@ -458,6 +464,8 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
   if (status.ok()) {
     status = w.FinalStatus();
   }
+  status.set_target_mem_id(target_mem_id);
+  assert(status.get_target_mem_id() != 0);
   return status;
 }
 
@@ -924,6 +932,28 @@ Status DBImpl::PreprocessWrite(const WriteOptions& write_options,
 
   if (UNLIKELY(status.ok() && !trim_history_scheduler_.Empty())) {
     status = TrimMemtableHistory(write_context);
+  }
+
+  // [Rubble] add the cfd to flush_scheduler
+  if (immutable_db_options_.is_rubble && !immutable_db_options_.is_primary) {
+    ColumnFamilyMemTablesImpl cf_mems(
+      versions_->GetColumnFamilySet());
+    cf_mems.Seek(0);
+    auto* cfd = cf_mems.current();
+    assert(cfd != nullptr);
+    MemTable* mem = cfd->mem();
+    mem->UpdateFlushState();
+    std::cout << "[Preprocess] mem_id " << mem->GetID() << " op " << mem->num_operations() 
+              << " target_op " << mem->num_target_op() << " state " << mem->ShouldScheduleFlush() << std::endl;
+
+    if (mem->num_operations() == mem->num_target_op() &&
+        mem->num_target_op() != 0 &&
+        mem->ShouldScheduleFlush() &&
+        mem->MarkFlushScheduled()) {
+      // MarkFlushScheduled only returns true if we are the one that
+      // should take action, so no need to dedup further
+      flush_scheduler_.ScheduleWork(cfd);
+    }
   }
 
   if (UNLIKELY(status.ok() && !flush_scheduler_.Empty())) {
@@ -1815,7 +1845,31 @@ Status DBImpl::SwitchMemtable(ColumnFamilyData* cfd, WriteContext* context) {
   
   cfd->imm()->Add(cfd->mem(), &context->memtables_to_free_);
   new_mem->Ref();
+  ROCKS_LOG_INFO(immutable_db_options_.info_log,
+                "[%s] Old memtable #%" PRIu64
+                " data_size %" PRIu64 " entries %" PRIu64
+                " is replaced\n",
+                cfd->GetName().c_str(), 
+                cfd->mem()->GetID(), cfd->mem()->get_data_size(), cfd->mem()->num_entries());
+  assert(cfd->mem()->num_operations() == cfd->mem()->num_entries());
+  uint64_t num_operations = cfd->mem()->num_operations();
   cfd->SetMemtable(new_mem);
+  std::cout << "[rocksdb] switch to memtable " << new_mem->GetID() << std::endl;
+
+  if (immutable_db_options_.is_rubble && immutable_db_options_.is_primary) {
+    assert(g_mem_op_cnt == 0);
+    assert(g_mem_id == 0);
+    g_mem_op_cnt = num_operations;
+    g_mem_id = new_mem->GetID();
+    std::cout << "[rocksdb] set " << new_mem->GetID() - 1 << " 's g_mem_op_cnt " << num_operations << std::endl;
+  }
+  if (immutable_db_options_.is_rubble && !immutable_db_options_.is_primary) {
+    uint64_t mem_id = cfd->mem()->GetID();
+    uint64_t idx = mem_id % G_MEM_ARR_LEN;
+    if (g_mem_id_arr[idx] == mem_id) {
+      cfd->mem()->set_num_target_op(g_mem_op_cnt_arr[idx]);
+    }
+  }
   InstallSuperVersionAndScheduleWork(cfd, &context->superversion_context,
                                      mutable_cf_options);
 #ifndef ROCKSDB_LITE

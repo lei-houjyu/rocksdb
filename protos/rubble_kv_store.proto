@@ -50,6 +50,8 @@ message SingleOp{
     string value = 2;
     uint64 Id = 3;
     OpType type = 4;
+    uint64 target_mem_id = 5;
+    uint64 mem_op_cnt = 6;
 }
 
 message SingleOpReply{

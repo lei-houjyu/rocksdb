@@ -88,6 +88,7 @@ MemTable::MemTable(const InternalKeyComparator& cmp,
       data_size_(0),
       num_entries_(0),
       num_deletes_(0),
+      num_operations_(0),
       write_buffer_size_(mutable_cf_options.write_buffer_size),
       flush_in_progress_(false),
       flush_completed_(false),
@@ -107,7 +108,9 @@ MemTable::MemTable(const InternalKeyComparator& cmp,
           ioptions.memtable_insert_with_hint_prefix_extractor),
       oldest_key_time_(std::numeric_limits<uint64_t>::max()),
       atomic_flush_seqno_(kMaxSequenceNumber),
-      approximate_memory_usage_(0) {
+      approximate_memory_usage_(0),
+      num_target_op_(0),
+      db_options(ioptions.db_options_) {
   UpdateFlushState();
   // something went wrong if we need to flush before inserting anything
   assert(!ShouldScheduleFlush());
@@ -147,6 +150,10 @@ size_t MemTable::ApproximateMemoryUsage() {
 }
 
 bool MemTable::ShouldFlushNow() {
+  if (db_options->is_rubble && !db_options->is_primary) {
+    return num_target_op_ != 0 && num_target_op_ == num_operations_.load();
+  }
+
   size_t write_buffer_size = write_buffer_size_.load(std::memory_order_relaxed);
   // In a lot of times, we cannot allocate arena blocks that exactly matches the
   // buffer size. Thus we have to decide if we should over-allocate or
@@ -530,6 +537,8 @@ bool MemTable::Add(SequenceNumber s, ValueType type,
 
     // this is a bit ugly, but is the way to avoid locked instructions
     // when incrementing an atomic
+    num_operations_.store(num_operations_.load(std::memory_order_relaxed) + 1,
+                       std::memory_order_relaxed);
     num_entries_.store(num_entries_.load(std::memory_order_relaxed) + 1,
                        std::memory_order_relaxed);
     data_size_.store(data_size_.load(std::memory_order_relaxed) + encoded_len,

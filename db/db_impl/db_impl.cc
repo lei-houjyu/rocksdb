@@ -104,6 +104,11 @@
 #include "util/string_util.h"
 
 namespace ROCKSDB_NAMESPACE {
+uint64_t g_mem_op_cnt = 0;
+uint64_t g_mem_id = 0;
+std::mutex g_mem_op_cnt_mtx;
+uint64_t g_mem_id_arr[G_MEM_ARR_LEN];
+uint64_t g_mem_op_cnt_arr[G_MEM_ARR_LEN];
 
 const std::string kDefaultColumnFamilyName("default");
 const std::string kPersistentStatsColumnFamilyName(

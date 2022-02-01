@@ -728,7 +728,9 @@ Status WriteBatchInternal::Iterate(const WriteBatch* wb,
       found != WriteBatchInternal::Count(wb)) {
     return Status::Corruption("WriteBatch has wrong count");
   } else {
-    return Status::OK();
+    Status status = Status::OK();
+    status.set_target_mem_id(s.get_target_mem_id());
+    return status;
   }
 }
 
@@ -1440,6 +1442,7 @@ class MemTableInserter : public WriteBatch::Handler {
     }
 
     MemTable* mem = cf_mems_->GetMemTable();
+    uint64_t mem_id = mem->GetID();
     auto* moptions = mem->GetImmutableMemTableOptions();
     // inplace_update_support is inconsistent with snapshots, and therefore with
     // any kind of transactions including the ones that use seq_per_batch
@@ -1519,6 +1522,8 @@ class MemTableInserter : public WriteBatch::Handler {
     // in memtable add/update.
     MaybeAdvanceSeq();
     CheckMemtableFull();
+    ret_status.set_target_mem_id(mem_id);
+    assert(ret_status.get_target_mem_id() != 0);
     return ret_status;
   }
 
@@ -2020,6 +2025,7 @@ Status WriteBatchInternal::InsertInto(
       ignore_missing_column_families, recovery_log_number, db,
       concurrent_memtable_writes, nullptr /*has_valid_writes*/, seq_per_batch,
       batch_per_txn);
+  uint64_t target_mem_id = 0;
   for (auto w : write_group) {
     if (w->CallbackFailed()) {
       continue;
@@ -2033,13 +2039,19 @@ Status WriteBatchInternal::InsertInto(
     SetSequence(w->batch, inserter.sequence());
     inserter.set_log_number_ref(w->log_ref);
     w->status = w->batch->Iterate(&inserter);
+    target_mem_id = w->status.get_target_mem_id();
     if (!w->status.ok()) {
       return w->status;
     }
     assert(!seq_per_batch || w->batch_cnt != 0);
     assert(!seq_per_batch || inserter.sequence() - w->sequence == w->batch_cnt);
   }
-  return Status::OK();
+  // This is called in WriteImpl when parallel is false, which means that the
+  // write_group only contains one single writer
+  Status status = Status::OK();
+  status.set_target_mem_id(target_mem_id);
+  assert(status.get_target_mem_id() != 0);
+  return status;
 }
 
 Status WriteBatchInternal::InsertInto(
@@ -2066,6 +2078,7 @@ Status WriteBatchInternal::InsertInto(
   if (concurrent_memtable_writes) {
     inserter.PostProcess();
   }
+  assert(s.get_target_mem_id() != 0);
   return s;
 }
 

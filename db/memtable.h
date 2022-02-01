@@ -277,6 +277,7 @@ class MemTable {
   // Update counters and flush status after inserting a whole write batch
   // Used in concurrent memtable inserts.
   void BatchPostProcess(const MemTablePostProcessInfo& update_counters) {
+    num_operations_.fetch_add(1, std::memory_order_relaxed);
     num_entries_.fetch_add(update_counters.num_entries,
                            std::memory_order_relaxed);
     data_size_.fetch_add(update_counters.data_size, std::memory_order_relaxed);
@@ -292,6 +293,18 @@ class MemTable {
   // operations on the same MemTable (unless this Memtable is immutable).
   uint64_t num_entries() const {
     return num_entries_.load(std::memory_order_relaxed);
+  }
+
+  uint64_t num_operations() const {
+    return num_operations_.load(std::memory_order_relaxed);
+  }
+
+  uint64_t num_target_op() const {
+    return num_target_op_;
+  }
+
+  void set_num_target_op(uint64_t num) {
+    num_target_op_ = num;
   }
 
   // Get total number of deletes in the mem table.
@@ -481,6 +494,7 @@ class MemTable {
   std::atomic<uint64_t> data_size_;
   std::atomic<uint64_t> num_entries_;
   std::atomic<uint64_t> num_deletes_;
+  std::atomic<uint64_t> num_operations_;
 
   // Dynamically changeable memtable option
   std::atomic<size_t> write_buffer_size_;
@@ -547,11 +561,12 @@ class MemTable {
   std::unique_ptr<FlushJobInfo> flush_job_info_;
 #endif  // !ROCKSDB_LITE
 
+  uint64_t num_target_op_;
+
+  const ImmutableDBOptions *db_options; 
+
   // Returns a heuristic flush decision
   bool ShouldFlushNow();
-
-  // Updates flush_state_ using ShouldFlushNow()
-  void UpdateFlushState();
 
   void UpdateOldestKeyTime();
 
@@ -561,6 +576,9 @@ class MemTable {
                     std::string* value, std::string* timestamp, Status* s,
                     MergeContext* merge_context, SequenceNumber* seq,
                     bool* found_final_value, bool* merge_in_progress);
+ public:
+  // Updates flush_state_ using ShouldFlushNow()
+  void UpdateFlushState();
 };
 
 extern const char* EncodeKey(std::string* scratch, const Slice& target);

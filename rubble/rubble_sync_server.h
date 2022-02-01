@@ -7,6 +7,9 @@
 #include <nlohmann/json.hpp>
 #include <unordered_map>
 #include <chrono>
+#include <queue>
+#include <map>
+#include <thread>
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -60,12 +63,27 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
   Status Sync(ServerContext* context, 
               ServerReaderWriter<SyncReply, SyncRequest>* stream) override;
 
+  rocksdb::ColumnFamilyData* GetCFD();
+
+  int QueuedOpNum();
+
   volatile std::atomic<uint64_t> r_op_counter_{0};
   volatile std::atomic<uint64_t> w_op_counter_{0};
 
   private:
+    // get the id of the current memtable
+    uint64_t get_mem_id();
+
+    // check if it's an out-of-ordered write request
+    bool is_ooo_write(SingleOp* singleOp);
+
+    // check if it's OK to execute a buffered request
+    bool should_execute(uint64_t target_mem_id);
+
     // actually handle an op request
-    void HandleOp(const Op& op, OpReply* reply);
+    void HandleOp(Op* op, OpReply* reply, std::map<uint64_t, std::queue<SingleOp*>>& op_queue);
+
+    void HandleSingleOp(SingleOp* singleOp, OpReply* reply);
 
     // actually handle the SyncRequest
     void HandleSyncRequest(const SyncRequest* request, 
@@ -163,6 +181,5 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     time_point<high_resolution_clock> batch_start_time_;
     time_point<high_resolution_clock> batch_end_time_;
     std::thread status_thread_;
+    std::map< std::thread::id, std::map< uint64_t, std::queue<SingleOp*> >* > buffers_;
 };
-
-
