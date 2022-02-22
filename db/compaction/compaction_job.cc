@@ -1528,7 +1528,7 @@ Status CompactionJob::InstallCompactionResults(
   assert(compaction->output_level() != 0);
   // RUBBLE: ship new sst file to the remote dir and delete the input sst file at the remote sst dir
   // Only the primary node will get here, non-primary nodes' flush and compaction are disabled
-  if(db_options_.is_rubble && db_options_.is_primary){
+  if(db_options_.is_rubble && db_options_.is_primary && !db_options_.is_tail){
     assert(db_options_.remote_sst_dir != "");
     IOStatus ios;
     std::string remote_sst_dir = db_options_.remote_sst_dir;

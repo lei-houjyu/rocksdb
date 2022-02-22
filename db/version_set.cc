@@ -4340,7 +4340,7 @@ Status VersionSet::LogAndApply(
 
   mu->AssertHeld();
   // RUBBLE: trigger RPC calls to downstream node to sync RocksDB states.
-  if(db_options_->is_rubble && db_options_->is_primary){
+  if(db_options_->is_rubble && db_options_->is_primary && !db_options_->is_tail){
     log_and_apply_counter++;
     auto default_cf = GetColumnFamilySet()->GetDefault();
     auto vstorage = default_cf->current()->storage_info();
