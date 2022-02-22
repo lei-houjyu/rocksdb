@@ -162,7 +162,7 @@ link_libraries("${ROCKSDB_DIR}/librocksdb.a")
 foreach(_target
   # rocksdb_server
   primary_node
-  # secondary_node
+  secondary_node
   tail_node
   # sync_kvstore_client
   # rocksdb_load_test
