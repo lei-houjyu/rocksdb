@@ -1189,7 +1189,7 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
   std::chrono::time_point<std::chrono::high_resolution_clock> r_start_time;
   std::chrono::time_point<std::chrono::high_resolution_clock> r_end_time;
   // rubble : also write the sst to remote sst dir using the same buffer when we write to the local sst dir
-  if(db_options_ != nullptr && db_options_->is_rubble && db_options_->is_primary){
+  if(db_options_ != nullptr && db_options_->is_rubble && db_options_->is_primary && !db_options_->is_tail){
    // basic workflow is as follows : block contents(which are 4KB chunks) are continously copied into the WritableFileWriter.buf_
    // and when the buffer is full, A WritableFileWriter::Flush call is triggered, then it calls WriteBuffered since 
    // DirectIO is not enabled for rocksdb, then a FSWritable::Append is called, which in our case is PosixWritableFile::Append
