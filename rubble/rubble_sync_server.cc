@@ -203,7 +203,8 @@ void RubbleKvServiceImpl::HandleOp(const Op& op, OpReply* reply) {
     std::string value;
     SingleOpReply* singleOpReply;
     rocksdb::Status s;
-    // std::cout << "thread: " << map[std::this_thread::get_id()] << " op_counter: " << op_counter_ << std::endl;
+    std::cout << "thread: " << map[std::this_thread::get_id()] << " op_counter: " 
+	    << w_op_counter_.load() << std::endl;
     //  <<  "first key in batch: " << op.ops(0).key() << " size: " << op.ops_size() << "\n";
     batch_counter_.fetch_add(1);
     uint64_t batch_counter = batch_counter_.load(std::memory_order_relaxed);
