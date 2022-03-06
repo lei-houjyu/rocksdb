@@ -1183,6 +1183,33 @@ void BlockBasedTableBuilder::WriteRawBlock(const Slice& block_contents,
         // Extend to cover compression type
         crc = crc32c::Extend(crc, trailer, 1);
         checksum = crc32c::Mask(crc);
+        // char buffer[17];
+        // buffer[16] = 0;
+        // for(int j = 0; j < 8; ++j) {
+        //   sprintf(&buffer[2*j], "%02hhX", *(block_contents.data() + j));
+        // }
+        // char endBuf[17];
+        // endBuf[16] = 0;
+        // const char *endOffset = block_contents.data() + block_contents.size() - 8;
+        // for(int j = 0; j < 8; ++j) {
+        //   sprintf(&endBuf[2*j], "%02hhX", *(endOffset + j));
+        // }
+        char blockBuff[block_contents.size() * 2 + 1];
+        blockBuff[block_contents.size()] = 0;
+        for(auto j = 0; j < int(block_contents.size()); ++j) {
+          sprintf(&blockBuff[2*j], "%02hhX", *(block_contents.data() + j));
+        }
+
+        ROCKS_LOG_INFO(r->ioptions.info_log,
+                        "filename: %s, filesize: %lu, full_block: %s\n",
+                        r->file->file_name().c_str(), r->file->GetFileSize(),
+                        blockBuff);
+        // ROCKS_LOG_INFO(r->ioptions.info_log,
+        //                 "[checksum] crc: %u, filename: %s, filesize: %lu, datasize: %lu,
+        //                 start: %s, isData: %d, lastBytes: %s, \n ", // [block]: %s\n",
+        //                 crc, r->file->file_name().c_str(), r->file->GetFileSize(),
+        //                 block_contents.size(), buffer, is_data_block, endBuf /*,
+        //                 blockBuff */);
         break;
       }
       case kxxHash: {
