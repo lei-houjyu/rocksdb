@@ -480,6 +480,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
 #endif  // !ROCKSDB_LITE
       }
       batch_count++;
+      edit_list.back()->mem_ids.push_back(m->GetID());
     }
 
     //rubble
@@ -543,6 +544,11 @@ Status MemTableList::TryInstallMemtableFlushResults(
 
           assert(m->file_number_ > 0);
           current_->Remove(m, to_delete);
+          std::cout << "[TryInstallMemtableFlushResults] imm ";
+          for (MemTable* mt : current_->GetMemlist()) {
+            std::cout << mt->GetID() << " ";
+          }
+          std::cout << std::endl;
           UpdateCachedValuesFromMemTableListVersion();
           ResetTrimHistoryNeeded();
           ++mem_id;

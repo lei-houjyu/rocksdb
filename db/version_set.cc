@@ -4365,6 +4365,16 @@ Status VersionSet::LogAndApply(
         type = "flush";
         j_args["IsFlush"] = true;
         j_args["BatchCount"] = edit_lists.back().back()->GetBatchCount();
+        std::vector<uint64_t> ids;
+        for (VersionEdit* v : edit_lists.back()) {
+          for (uint64_t id : v->mem_ids) {
+            ids.push_back(id);
+          }
+        }
+        assert((int)ids.size() == edit_lists.back().back()->GetBatchCount());
+        json mems(ids);
+        std::cout << "[LogAndApply] imm " << mems << " " << sync_counter.load() << std::endl;
+        j_args["MemID"] = mems;
       }
       if(edit_lists.back().back()->IsTrivialMove()){
         type = "trivial";

@@ -943,8 +943,8 @@ Status DBImpl::PreprocessWrite(const WriteOptions& write_options,
     assert(cfd != nullptr);
     MemTable* mem = cfd->mem();
     mem->UpdateFlushState();
-    std::cout << "[Preprocess] mem_id " << mem->GetID() << " op " << mem->num_operations() 
-              << " target_op " << mem->num_target_op() << " state " << mem->ShouldScheduleFlush() << std::endl;
+    // std::cout << "[Preprocess] mem_id " << mem->GetID() << " op " << mem->num_operations() 
+    //           << " target_op " << mem->num_target_op() << " state " << mem->ShouldScheduleFlush() << std::endl;
 
     if (mem->num_operations() == mem->num_target_op() &&
         mem->num_target_op() != 0 &&
@@ -1844,6 +1844,11 @@ Status DBImpl::SwitchMemtable(ColumnFamilyData* cfd, WriteContext* context) {
   cfd->mem()->SetNextLogNumber(logfile_number_);
   
   cfd->imm()->Add(cfd->mem(), &context->memtables_to_free_);
+  std::cout << "[SwitchMemtable] imm ";
+  for (MemTable* mt : cfd->imm()->current()->GetMemlist()) {
+    std::cout << mt->GetID() << " ";
+  }
+  std::cout << std::endl;
   new_mem->Ref();
   ROCKS_LOG_INFO(immutable_db_options_.info_log,
                 "[%s] Old memtable #%" PRIu64

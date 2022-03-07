@@ -241,6 +241,7 @@ class Op PROTOBUF_FINAL :
     kHasEditsFieldNumber = 1,
     kShardIdxFieldNumber = 2,
     kClientIdxFieldNumber = 3,
+    kIdFieldNumber = 7,
   };
   // repeated string edits = 4;
   int edits_size() const;
@@ -333,6 +334,15 @@ class Op PROTOBUF_FINAL :
   void _internal_set_client_idx(::PROTOBUF_NAMESPACE_ID::int32 value);
   public:
 
+  // int32 id = 7;
+  void clear_id();
+  ::PROTOBUF_NAMESPACE_ID::int32 id() const;
+  void set_id(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_id() const;
+  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
   // @@protoc_insertion_point(class_scope:rubble.Op)
  private:
   class _Internal;
@@ -347,6 +357,7 @@ class Op PROTOBUF_FINAL :
   bool has_edits_;
   ::PROTOBUF_NAMESPACE_ID::int32 shard_idx_;
   ::PROTOBUF_NAMESPACE_ID::int32 client_idx_;
+  ::PROTOBUF_NAMESPACE_ID::int32 id_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_rubble_5fkv_5fstore_2eproto;
 };
@@ -1769,6 +1780,26 @@ inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int64 >*
 Op::mutable_time() {
   // @@protoc_insertion_point(field_mutable_list:rubble.Op.time)
   return _internal_mutable_time();
+}
+
+// int32 id = 7;
+inline void Op::clear_id() {
+  id_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 Op::_internal_id() const {
+  return id_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 Op::id() const {
+  // @@protoc_insertion_point(field_get:rubble.Op.id)
+  return _internal_id();
+}
+inline void Op::_internal_set_id(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  id_ = value;
+}
+inline void Op::set_id(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_id(value);
+  // @@protoc_insertion_point(field_set:rubble.Op.id)
 }
 
 // -------------------------------------------------------------------

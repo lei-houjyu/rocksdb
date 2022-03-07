@@ -81,7 +81,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     bool should_execute(uint64_t target_mem_id);
 
     // actually handle an op request
-    void HandleOp(Op* op, OpReply* reply, std::map<uint64_t, std::queue<SingleOp*>>& op_queue);
+    void HandleOp(Op* op, OpReply* reply, std::map<uint64_t, std::queue<SingleOp*>>* op_queue);
 
     void HandleSingleOp(SingleOp* singleOp, OpReply* reply);
 
@@ -93,6 +93,16 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     std::string ApplyVersionEdits(const std::string& args);
     
     std::string ApplyOneVersionEdit(std::vector<rocksdb::VersionEdit>& edits);
+
+    void ApplyBufferedVersionEdits();
+    
+    bool IsReady(const rocksdb::VersionEdit& edit);
+
+    bool IsTermination(Op* op);
+
+    void CleanBufferedOps(std::shared_ptr<Forwarder> forwarder,
+                          std::shared_ptr<ReplyClient> reply_client,
+                          std::map<uint64_t, std::queue<SingleOp *>> *op_buffer);
 
     // parse the version edit json string to rocksdb::VersionEdit 
     rocksdb::VersionEdit ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */);

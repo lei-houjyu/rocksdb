@@ -33,7 +33,7 @@ message Op {
     repeated string edits = 4;
     repeated SingleOp ops = 5;
     repeated int64 time = 6;
-    // int32 id = 6;
+    int32 id = 7;
     // repeated string status = 7;
     // repeated string value = 8;
 }

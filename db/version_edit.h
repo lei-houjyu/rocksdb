@@ -569,6 +569,8 @@ class VersionEdit {
     return batch_count_;
   }
 
+  std::vector<uint64_t> mem_ids;
+
  private:
   friend class ReactiveVersionSet;
   friend class VersionEditHandler;
@@ -631,6 +633,7 @@ class VersionEdit {
   bool is_trivial_move_compaction_ = false;
   // how many memtables gets flushed in a batch in a flush job
   int batch_count_ = 0;
+  // the memtable ids for debug purpose
 };
 
 }  // namespace ROCKSDB_NAMESPACE
