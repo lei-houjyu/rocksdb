@@ -56,6 +56,7 @@ for key in ['read', 'write']:
     plt.plot(data['time'], data[key], label=key)
 plt.xlabel('Second')
 plt.ylabel('Throughput (MB/s)')
+plt.ylim([0, 500])
 plt.legend()
 plt.savefig(figure_name + '-disk.jpg')
 plt.close()

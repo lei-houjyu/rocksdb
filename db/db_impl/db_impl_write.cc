@@ -181,6 +181,7 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
           true /*concurrent_memtable_writes*/, seq_per_batch_, w.batch_cnt,
           batch_per_txn_, write_options.memtable_insert_hint_per_batch);
       target_mem_id = w.status.get_target_mem_id();
+      assert(target_mem_id != 0);
 
       PERF_TIMER_START(write_pre_and_post_process_time);
     }
@@ -415,6 +416,7 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
         }
       }
       target_mem_id = w.status.get_target_mem_id();
+      assert(target_mem_id != 0);
       if (seq_used != nullptr) {
         *seq_used = w.sequence;
       }
@@ -465,6 +467,9 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
     status = w.FinalStatus();
   }
   status.set_target_mem_id(target_mem_id);
+  if (target_mem_id == 0) {
+    std::cout << "status " << status.ToString() << std::endl;
+  }
   assert(status.get_target_mem_id() != 0);
   return status;
 }
