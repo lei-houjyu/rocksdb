@@ -45,6 +45,8 @@ data['time'] = [i * agg_num for i in range(len(data['user']))]
 plt.figure()
 for key in ['user', 'system', 'idle', 'wait', 'steal']:
     plt.plot(data['time'], data[key], label=key)
+    print(key, sum(data[key]) / len(data[key]))
+
 plt.xlabel('Second')
 plt.ylabel('Utilization (%)')
 plt.legend()
@@ -54,6 +56,7 @@ plt.close()
 plt.figure()
 for key in ['read', 'write']:
     plt.plot(data['time'], data[key], label=key)
+    print(key, sum(data[key]))
 plt.xlabel('Second')
 plt.ylabel('Throughput (MB/s)')
 plt.ylim([0, 500])
