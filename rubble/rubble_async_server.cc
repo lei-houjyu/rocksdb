@@ -104,7 +104,6 @@ void CallData::HandleOp(){
       case rubble::GET:
         for(const auto& request: request_.ops()) {
           reply = reply_.add_replies();
-          reply->set_id(request.id());
           s_ = db_->Get(rocksdb::ReadOptions(), request.key(), &value);
           reply->set_key(request.key());
           reply->set_type(rubble::GET);
@@ -129,7 +128,6 @@ void CallData::HandleOp(){
           // return to replicator if tail
           if(db_options_->is_tail){
             reply = reply_.add_replies();
-            reply->set_id(request.id());
             reply->set_type(rubble::PUT);
             reply->set_key(request.key());
             if(s_.ok()){
@@ -156,7 +154,6 @@ void CallData::HandleOp(){
         // std::cout << "in UPDATE " << request_.ops(0).key() << "\n"; 
         for(const auto& request: request_.ops()) {
           reply = reply_.add_replies();
-          reply->set_id(request.id());
           s_ = db_->Get(rocksdb::ReadOptions(), request.key(), &value);
           s_ = db_->Put(rocksdb::WriteOptions(), request.key(), request.value());
           reply->set_key(request.key());

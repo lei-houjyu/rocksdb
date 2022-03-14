@@ -102,44 +102,16 @@ static std::atomic<uint64_t> histogram[G_MEM_ARR_LEN];
 
 Status RubbleKvServiceImpl::DoOp(ServerContext* context, 
               ServerReaderWriter<OpReply, Op>* stream) {
-    // if(!op_counter_.load()){
-    //     start_time_ = high_resolution_clock::now();
-    // }
-
-    // if(op_counter_.load() && op_counter_.load()%100000 == 0){
-    //     end_time_ = high_resolution_clock::now();
-    //     auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_ - start_time_);
-    //     // why this doesn't print anything?
-    //     std::cout << "Throughput : handle 100000  in " << millisecs.count() << " milisecs\n";
-    //     start_time_ = end_time_;
-    // }
-
-    /* chain replication */
-    // Forward the request to the downstream node in the chain if it's not a tail node
-
-    std::shared_ptr<Forwarder> forwarder = nullptr;
-    // client for sending the reply back to the replicator
-    std::shared_ptr<ReplyClient> reply_client = nullptr;
+    // initialize the forwarder and reply client
+    Forwarder* forwarder = nullptr;
+    ReplyClient* reply_client = nullptr;
     if(!db_options_->is_tail) {
       std::cout << "init the forwarder" << "\n";
-      forwarder = std::make_shared<Forwarder>(channel_);
-      // std::cout << "thread: " << map[std::this_thread::get_id()] << " Forwarded " << op_counter_ << " ops" << std::endl;
-    } else {
-      // tail node should be responsible for sending the reply back to replicator
-      // use the sync stream to write the reply back
-      if(channel_ != nullptr) {
-        std::cout << "init the reply client" << "\n";
-        reply_client = std::make_shared<ReplyClient>(channel_);
-      }
+      forwarder = new Forwarder(channel_);
+    } else if (channel_ != nullptr) {
+      std::cout << "init the reply client" << "\n";
+      reply_client = new ReplyClient(channel_);
     }
-
-    std::thread::id this_id = std::this_thread::get_id();
-    // mu.lock();
-    // if(map.find(this_id) == map.end()){
-    //   map[this_id] = thread_counter.load();
-    //   thread_counter.fetch_add(1);
-    // }
-    // mu.unlock();
 
     Op tmp_op;
     // op_buffer[mem_id, op_queue]
@@ -152,6 +124,8 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       }
 
       Op* request = new Op(tmp_op);
+      OpReply* reply = new OpReply();
+
       if (IsTermination(request)) {
         std::cout << "Received termination msg\n";
         if (forwarder != nullptr) {
@@ -163,57 +137,8 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
         continue;
       }
 
-      // handle DoOp requestbt
-      OpReply reply;
       RUBBLE_LOG_INFO(logger_ , "[Request] Got %u\n", static_cast<uint32_t>(request->id()));
-      HandleOp(request, &reply, op_buffer);
-
-      // if there is version edits piggybacked in the DoOp request, apply those edits
-      if (request->has_edits()) {
-        size_t size = request->edits_size();
-        RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits\n", static_cast<uint32_t>(size));
-        // fprintf(stdout , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
-        debug_mu.lock();
-        rocksdb::InstrumentedMutexLock l(mu_);
-        for(int i = 0; i < size; i++){
-          ApplyVersionEdits(request->edits(i));
-        }
-        debug_mu.unlock();
-        RUBBLE_LOG_INFO(logger_ , "[Tail] finishes version edits\n");
-      }
-
-      if(forwarder == nullptr) { /* tail */
-        // RUBBLE_LOG_INFO(logger_, "[Tail] received %lu ops\n", op_counter_.load());
-        // fprintf(stdout, "[Tail] received %lu ops\n", op_counter_.load());
-        if(reply_client != nullptr) {
-          // reply_counter.fetch_add(1);
-          // std::cout << "Sent out " << reply_counter.load() << " opreplies \n";
-          reply_client->SendReply(reply);
-        }
-      } else { /* non-tail */
-        // RUBBLE_LOG_INFO(logger_, "[Primary] thread %u Forwarded %lu ops\n", map[this_id], op_counter_.load());
-        // fprintf(stdout, "[Primary] thread %u Forwarded %lu ops\n", map[this_id], op_counter_.load());
-        if(piggyback_edits_ && is_rubble_ && is_head_) {
-          std::vector<std::string> edits;
-          edits_->GetEdits(edits);
-          // for (std::string e : edits) {
-          //   std::cout << "[Primary] Edit " << e << std::endl;
-          // }
-          if(edits.size() != 0) {
-            size_t size = edits.size();
-            // RUBBLE_LOG_INFO(logger_, "[primary] Got %u new version edits, op counter : %lu \n", static_cast<uint32_t>(size) ,op_counter_.load()); 
-            request->set_has_edits(true);
-            for(const auto& edit : edits) {
-              RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
-              request->add_edits(edit);
-            }
-            assert(request->edits_size() == size);
-          } else {
-            request->set_has_edits(false);
-          }
-        }
-        forwarder->Forward(*request);
-      }
+      HandleOp(request, reply, forwarder, reply_client, op_buffer);
     }
     
     std::cout << "end while loop with " << r_op_counter_.load() << " read and " << w_op_counter_.load() << " write ops done\n";
@@ -234,36 +159,32 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       forwarder->WritesDone();
       time_t t = time(0);
       std::cout << "forwarder->WritesDone " << ctime(&t) << std::endl;
+      delete forwarder;
     }
 
     if (reply_client != nullptr) {
       // reply_client->WritesDone();
       time_t t = time(0);
       std::cout << "reply_client->WritesDone " << ctime(&t) << std::endl;
+      delete reply_client;
     }
 
     return Status::OK;
 }
 
-void RubbleKvServiceImpl::CleanBufferedOps(std::shared_ptr<Forwarder> forwarder,
-                                           std::shared_ptr<ReplyClient> reply_client,
+void RubbleKvServiceImpl::CleanBufferedOps(Forwarder* forwarder,
+                                           ReplyClient* reply_client,
                                            std::map<uint64_t, std::queue<SingleOp *>> *op_buffer) {
   while (!op_buffer->empty()) {
     for (std::map<uint64_t, std::queue<SingleOp*>>::iterator it = op_buffer->begin();
       it != op_buffer->end(); it++) {
         uint64_t id = it->first;
         if (should_execute(id)) {
-          OpReply reply;
           while (!(*op_buffer)[id].empty()) {
-            HandleSingleOp((*op_buffer)[id].front(), &reply);
+            HandleSingleOp((*op_buffer)[id].front(), forwarder, reply_client);
             (*op_buffer)[id].pop();
           }
 
-          if(forwarder == nullptr) {
-            if(reply_client != nullptr) {
-              reply_client->SendReply(reply);
-            }
-          }
           op_buffer->erase(id);
         }
       }
@@ -314,7 +235,9 @@ bool RubbleKvServiceImpl::should_execute(uint64_t target_mem_id) {
   return false;
 }
 
-void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply, std::map<uint64_t, std::queue<SingleOp*>>* op_buffer) {
+void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
+                                   Forwarder* forwarder, ReplyClient* reply_client,
+                                   std::map<uint64_t, std::queue<SingleOp*>>* op_buffer) {
   assert(op->ops_size() > 0);
   assert(reply->replies_size() == 0);
 
@@ -324,9 +247,22 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply, std::map<uint64_t, st
   batch_counter_.fetch_add(1);
   for (int i = 0; i < op->ops_size(); i++) {
     SingleOp* singleOp = op->mutable_ops(i);
+    
+    // track the Op or OpReply object
+    if (i == op->ops_size() - 1) {
+      singleOp->set_op_ptr((uint64_t)op);
+      assert((uint64_t)op == singleOp->op_ptr());
+    } else {
+      singleOp->set_op_ptr((uint64_t)nullptr);
+    }
+
+    // we need to update the OpReply object after every SingleOp
+    singleOp->set_reply_ptr((uint64_t)reply);
+    assert((uint64_t)reply == singleOp->reply_ptr());
+
     uint64_t id = singleOp->target_mem_id();
     if (!is_ooo_write(singleOp)) {
-      HandleSingleOp(singleOp, reply);
+      HandleSingleOp(singleOp, forwarder, reply_client);
     } else {
       rocksdb::MemTable* mem = default_cf_->mem();
       
@@ -354,7 +290,7 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply, std::map<uint64_t, st
         id = it->first;
         if (should_execute(id)) {
           while (!(*op_buffer)[id].empty()) {
-            HandleSingleOp((*op_buffer)[id].front(), reply);
+            HandleSingleOp((*op_buffer)[id].front(), forwarder, reply_client);
             (*op_buffer)[id].pop();
           }
           op_buffer->erase(id);
@@ -363,10 +299,11 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply, std::map<uint64_t, st
   }
 }
 
-void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, OpReply* reply) {
+void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarder, ReplyClient* reply_client) {
   rocksdb::Status s;
   std::string value;
   SingleOpReply* singleOpReply;
+  OpReply* reply = (OpReply*)singleOp->reply_ptr();
 
   switch (singleOp->type()) {
     case rubble::GET:
@@ -379,7 +316,6 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, OpReply* reply) {
       }
       
       singleOpReply = reply->add_replies();
-      singleOpReply->set_id(singleOp->id());
       singleOpReply->set_key(singleOp->key());
       singleOpReply->set_type(rubble::GET);
       singleOpReply->set_status(s.ToString());
@@ -422,7 +358,6 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, OpReply* reply) {
         assert(!is_rubble_ || singleOp->target_mem_id() == get_mem_id());
         histogram[singleOp->target_mem_id()].fetch_add(1);
         singleOpReply = reply->add_replies();
-        singleOpReply->set_id(singleOp->id());
         singleOpReply->set_type(rubble::PUT);
         singleOpReply->set_key(singleOp->key());
         singleOpReply->set_status(s.ToString());
@@ -465,7 +400,6 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, OpReply* reply) {
 
       if (is_tail_) {
         singleOpReply = reply->add_replies();
-        singleOpReply->set_id(singleOp->id());
         singleOpReply->set_key(singleOp->key());
         singleOpReply->set_type(rubble::UPDATE);
         singleOpReply->set_status(s.ToString());
@@ -482,6 +416,57 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, OpReply* reply) {
       std::cerr << "Unsupported Operation \n";
       break;
   }
+
+  PostProcessing(singleOp, forwarder, reply_client);
+}
+
+void RubbleKvServiceImpl::PostProcessing(SingleOp* singleOp, Forwarder* forwarder, ReplyClient* reply_client) {
+  Op* request = (Op*)singleOp->op_ptr();
+  OpReply* reply = (OpReply*)singleOp->reply_ptr();
+
+  // only the last SingleOp has the op_ptr field set, 
+  // which means we have finished the current batch
+  if (request == nullptr) {
+    return;
+  }
+
+  // if there is version edits piggybacked in the DoOp request, apply those edits
+  if (request->has_edits()) {
+    size_t size = request->edits_size();
+    RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits\n", static_cast<uint32_t>(size));
+    // fprintf(stdout , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
+    debug_mu.lock();
+    rocksdb::InstrumentedMutexLock l(mu_);
+    for(int i = 0; i < size; i++){
+      ApplyVersionEdits(request->edits(i));
+    }
+    debug_mu.unlock();
+    RUBBLE_LOG_INFO(logger_ , "[Tail] finishes version edits\n");
+  }
+
+  if (db_options_->is_tail) {
+    reply_client->SendReply(*reply);
+  } else {
+    if(piggyback_edits_ && is_rubble_ && is_head_) {
+      std::vector<std::string> edits;
+      edits_->GetEdits(edits);
+      if(edits.size() != 0) {
+        size_t size = edits.size();
+        request->set_has_edits(true);
+        for(const auto& edit : edits) {
+          RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
+          request->add_edits(edit);
+        }
+        assert(request->edits_size() == size);
+      } else {
+        request->set_has_edits(false);
+      }
+    }
+    forwarder->Forward(*request);
+  }
+
+  delete request;
+  delete reply;
 }
 
 // a streaming RPC used by the non-tail node to sync Version(view of sst files) states to the downstream node 

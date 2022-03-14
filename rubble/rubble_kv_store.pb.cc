@@ -199,10 +199,11 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_rubble_5fkv_5fstore_2eproto::o
   ~0u,  // no _weak_field_map_
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, key_),
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, value_),
-  PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, id_),
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, type_),
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, target_mem_id_),
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, mem_op_cnt_),
+  PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, op_ptr_),
+  PROTOBUF_FIELD_OFFSET(::rubble::SingleOp, reply_ptr_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::rubble::SingleOpReply, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -243,11 +244,11 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOB
   { 0, -1, sizeof(::rubble::Op)},
   { 12, -1, sizeof(::rubble::OpReply)},
   { 21, -1, sizeof(::rubble::SingleOp)},
-  { 32, -1, sizeof(::rubble::SingleOpReply)},
-  { 43, -1, sizeof(::rubble::OpReplies)},
-  { 49, -1, sizeof(::rubble::Reply)},
-  { 55, -1, sizeof(::rubble::SyncRequest)},
-  { 61, -1, sizeof(::rubble::SyncReply)},
+  { 33, -1, sizeof(::rubble::SingleOpReply)},
+  { 44, -1, sizeof(::rubble::OpReplies)},
+  { 50, -1, sizeof(::rubble::Reply)},
+  { 56, -1, sizeof(::rubble::SyncRequest)},
+  { 62, -1, sizeof(::rubble::SyncReply)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -268,23 +269,24 @@ const char descriptor_table_protodef_rubble_5fkv_5fstore_2eproto[] PROTOBUF_SECT
   " \003(\0132\020.rubble.SingleOp\022\014\n\004time\030\006 \003(\003\022\n\n\002"
   "id\030\007 \001(\005\"g\n\007OpReply\022\022\n\nsync_reply\030\001 \001(\t\022"
   "\022\n\nclient_idx\030\002 \001(\005\022&\n\007replies\030\003 \003(\0132\025.r"
-  "ubble.SingleOpReply\022\014\n\004time\030\004 \003(\003\"{\n\010Sin"
-  "gleOp\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\022\n\n\002Id\030"
-  "\003 \001(\004\022\034\n\004type\030\004 \001(\0162\016.rubble.OpType\022\025\n\rt"
-  "arget_mem_id\030\005 \001(\004\022\022\n\nmem_op_cnt\030\006 \001(\004\"q"
-  "\n\rSingleOpReply\022\n\n\002ok\030\001 \001(\010\022\013\n\003key\030\002 \001(\t"
-  "\022\r\n\005value\030\003 \001(\t\022\016\n\006status\030\004 \001(\t\022\n\n\002Id\030\005 "
-  "\001(\003\022\034\n\004type\030\006 \001(\0162\016.rubble.OpType\"+\n\tOpR"
-  "eplies\022\036\n\005reply\030\001 \003(\0132\017.rubble.OpReply\"\023"
-  "\n\005Reply\022\n\n\002ok\030\001 \001(\010\"\033\n\013SyncRequest\022\014\n\004ar"
-  "gs\030\001 \001(\t\"\034\n\tSyncReply\022\017\n\007message\030\001 \001(\t*2"
-  "\n\006OpType\022\007\n\003GET\020\000\022\007\n\003PUT\020\001\022\n\n\006DELETE\020\002\022\n"
-  "\n\006UPDATE\020\0032\252\001\n\024RubbleKvStoreService\0224\n\004S"
-  "ync\022\023.rubble.SyncRequest\032\021.rubble.SyncRe"
-  "ply\"\000(\0010\001\022)\n\004DoOp\022\n.rubble.Op\032\017.rubble.O"
-  "pReply\"\000(\0010\001\0221\n\tSendReply\022\017.rubble.OpRep"
-  "ly\032\r.rubble.Reply\"\000(\0010\001B\033\n\tsite.ycsbB\006Ru"
-  "bbleP\001\242\002\003Rubb\006proto3"
+  "ubble.SingleOpReply\022\014\n\004time\030\004 \003(\003\"\222\001\n\010Si"
+  "ngleOp\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\022\034\n\004ty"
+  "pe\030\003 \001(\0162\016.rubble.OpType\022\025\n\rtarget_mem_i"
+  "d\030\004 \001(\004\022\022\n\nmem_op_cnt\030\005 \001(\004\022\016\n\006op_ptr\030\006 "
+  "\001(\004\022\021\n\treply_ptr\030\007 \001(\004\"q\n\rSingleOpReply\022"
+  "\n\n\002ok\030\001 \001(\010\022\013\n\003key\030\002 \001(\t\022\r\n\005value\030\003 \001(\t\022"
+  "\016\n\006status\030\004 \001(\t\022\n\n\002Id\030\005 \001(\003\022\034\n\004type\030\006 \001("
+  "\0162\016.rubble.OpType\"+\n\tOpReplies\022\036\n\005reply\030"
+  "\001 \003(\0132\017.rubble.OpReply\"\023\n\005Reply\022\n\n\002ok\030\001 "
+  "\001(\010\"\033\n\013SyncRequest\022\014\n\004args\030\001 \001(\t\"\034\n\tSync"
+  "Reply\022\017\n\007message\030\001 \001(\t*2\n\006OpType\022\007\n\003GET\020"
+  "\000\022\007\n\003PUT\020\001\022\n\n\006DELETE\020\002\022\n\n\006UPDATE\020\0032\252\001\n\024R"
+  "ubbleKvStoreService\0224\n\004Sync\022\023.rubble.Syn"
+  "cRequest\032\021.rubble.SyncReply\"\000(\0010\001\022)\n\004DoO"
+  "p\022\n.rubble.Op\032\017.rubble.OpReply\"\000(\0010\001\0221\n\t"
+  "SendReply\022\017.rubble.OpReply\032\r.rubble.Repl"
+  "y\"\000(\0010\001B\033\n\tsite.ycsbB\006RubbleP\001\242\002\003Rubb\006pr"
+  "oto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_rubble_5fkv_5fstore_2eproto_deps[1] = {
 };
@@ -300,7 +302,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_rub
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_rubble_5fkv_5fstore_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_rubble_5fkv_5fstore_2eproto = {
-  false, false, descriptor_table_protodef_rubble_5fkv_5fstore_2eproto, "rubble_kv_store.proto", 900,
+  false, false, descriptor_table_protodef_rubble_5fkv_5fstore_2eproto, "rubble_kv_store.proto", 924,
   &descriptor_table_rubble_5fkv_5fstore_2eproto_once, descriptor_table_rubble_5fkv_5fstore_2eproto_sccs, descriptor_table_rubble_5fkv_5fstore_2eproto_deps, 8, 0,
   schemas, file_default_instances, TableStruct_rubble_5fkv_5fstore_2eproto::offsets,
   file_level_metadata_rubble_5fkv_5fstore_2eproto, 8, file_level_enum_descriptors_rubble_5fkv_5fstore_2eproto, file_level_service_descriptors_rubble_5fkv_5fstore_2eproto,
@@ -1044,9 +1046,9 @@ SingleOp::SingleOp(const SingleOp& from)
     value_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_value(),
       GetArena());
   }
-  ::memcpy(&id_, &from.id_,
+  ::memcpy(&target_mem_id_, &from.target_mem_id_,
     static_cast<size_t>(reinterpret_cast<char*>(&type_) -
-    reinterpret_cast<char*>(&id_)) + sizeof(type_));
+    reinterpret_cast<char*>(&target_mem_id_)) + sizeof(type_));
   // @@protoc_insertion_point(copy_constructor:rubble.SingleOp)
 }
 
@@ -1054,9 +1056,9 @@ void SingleOp::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_SingleOp_rubble_5fkv_5fstore_2eproto.base);
   key_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   value_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(&id_, 0, static_cast<size_t>(
+  ::memset(&target_mem_id_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&type_) -
-      reinterpret_cast<char*>(&id_)) + sizeof(type_));
+      reinterpret_cast<char*>(&target_mem_id_)) + sizeof(type_));
 }
 
 SingleOp::~SingleOp() {
@@ -1094,9 +1096,9 @@ void SingleOp::Clear() {
 
   key_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   value_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  ::memset(&id_, 0, static_cast<size_t>(
+  ::memset(&target_mem_id_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&type_) -
-      reinterpret_cast<char*>(&id_)) + sizeof(type_));
+      reinterpret_cast<char*>(&target_mem_id_)) + sizeof(type_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1126,32 +1128,39 @@ const char* SingleOp::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::i
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // uint64 Id = 3;
+      // .rubble.OpType type = 3;
       case 3:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
-          id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      // .rubble.OpType type = 4;
-      case 4:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32)) {
           ::PROTOBUF_NAMESPACE_ID::uint64 val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
           _internal_set_type(static_cast<::rubble::OpType>(val));
         } else goto handle_unusual;
         continue;
-      // uint64 target_mem_id = 5;
-      case 5:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 40)) {
+      // uint64 target_mem_id = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32)) {
           target_mem_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // uint64 mem_op_cnt = 6;
+      // uint64 mem_op_cnt = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 40)) {
+          mem_op_cnt_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // uint64 op_ptr = 6;
       case 6:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 48)) {
-          mem_op_cnt_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          op_ptr_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // uint64 reply_ptr = 7;
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 56)) {
+          reply_ptr_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -1203,29 +1212,35 @@ failure:
         2, this->_internal_value(), target);
   }
 
-  // uint64 Id = 3;
-  if (this->id() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(3, this->_internal_id(), target);
-  }
-
-  // .rubble.OpType type = 4;
+  // .rubble.OpType type = 3;
   if (this->type() != 0) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumToArray(
-      4, this->_internal_type(), target);
+      3, this->_internal_type(), target);
   }
 
-  // uint64 target_mem_id = 5;
+  // uint64 target_mem_id = 4;
   if (this->target_mem_id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(5, this->_internal_target_mem_id(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(4, this->_internal_target_mem_id(), target);
   }
 
-  // uint64 mem_op_cnt = 6;
+  // uint64 mem_op_cnt = 5;
   if (this->mem_op_cnt() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(6, this->_internal_mem_op_cnt(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(5, this->_internal_mem_op_cnt(), target);
+  }
+
+  // uint64 op_ptr = 6;
+  if (this->op_ptr() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(6, this->_internal_op_ptr(), target);
+  }
+
+  // uint64 reply_ptr = 7;
+  if (this->reply_ptr() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(7, this->_internal_reply_ptr(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -1258,28 +1273,35 @@ size_t SingleOp::ByteSizeLong() const {
         this->_internal_value());
   }
 
-  // uint64 Id = 3;
-  if (this->id() != 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
-        this->_internal_id());
-  }
-
-  // uint64 target_mem_id = 5;
+  // uint64 target_mem_id = 4;
   if (this->target_mem_id() != 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_target_mem_id());
   }
 
-  // uint64 mem_op_cnt = 6;
+  // uint64 mem_op_cnt = 5;
   if (this->mem_op_cnt() != 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_mem_op_cnt());
   }
 
-  // .rubble.OpType type = 4;
+  // uint64 op_ptr = 6;
+  if (this->op_ptr() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
+        this->_internal_op_ptr());
+  }
+
+  // uint64 reply_ptr = 7;
+  if (this->reply_ptr() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
+        this->_internal_reply_ptr());
+  }
+
+  // .rubble.OpType type = 3;
   if (this->type() != 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->_internal_type());
@@ -1322,14 +1344,17 @@ void SingleOp::MergeFrom(const SingleOp& from) {
   if (from.value().size() > 0) {
     _internal_set_value(from._internal_value());
   }
-  if (from.id() != 0) {
-    _internal_set_id(from._internal_id());
-  }
   if (from.target_mem_id() != 0) {
     _internal_set_target_mem_id(from._internal_target_mem_id());
   }
   if (from.mem_op_cnt() != 0) {
     _internal_set_mem_op_cnt(from._internal_mem_op_cnt());
+  }
+  if (from.op_ptr() != 0) {
+    _internal_set_op_ptr(from._internal_op_ptr());
+  }
+  if (from.reply_ptr() != 0) {
+    _internal_set_reply_ptr(from._internal_reply_ptr());
   }
   if (from.type() != 0) {
     _internal_set_type(from._internal_type());
@@ -1362,9 +1387,9 @@ void SingleOp::InternalSwap(SingleOp* other) {
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(SingleOp, type_)
       + sizeof(SingleOp::type_)
-      - PROTOBUF_FIELD_OFFSET(SingleOp, id_)>(
-          reinterpret_cast<char*>(&id_),
-          reinterpret_cast<char*>(&other->id_));
+      - PROTOBUF_FIELD_OFFSET(SingleOp, target_mem_id_)>(
+          reinterpret_cast<char*>(&target_mem_id_),
+          reinterpret_cast<char*>(&other->target_mem_id_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata SingleOp::GetMetadata() const {

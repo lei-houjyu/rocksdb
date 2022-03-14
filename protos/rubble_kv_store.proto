@@ -48,10 +48,11 @@ message OpReply {
 message SingleOp{
     string key = 1;
     string value = 2;
-    uint64 Id = 3;
-    OpType type = 4;
-    uint64 target_mem_id = 5;
-    uint64 mem_op_cnt = 6;
+    OpType type = 3;
+    uint64 target_mem_id = 4;
+    uint64 mem_op_cnt = 5;
+    uint64 op_ptr = 6;
+    uint64 reply_ptr = 7;
 }
 
 message SingleOpReply{

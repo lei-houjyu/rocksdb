@@ -91,6 +91,8 @@ clang-format-diff.py
 .py3/
 
 build_version.cc
+rubble_kv_store.pb.cc
+rubble_kv_store.pb.h
 
 *.csv
 *.jpg
