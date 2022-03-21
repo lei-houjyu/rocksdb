@@ -20,20 +20,20 @@ int main(int argc, char * argv[])
         perror("posix_memalign failed");
         exit(1);
     }
-    memset(buf, 'c', BUF_SIZE);
  
-    fd = open(argv[1], O_WRONLY | O_DIRECT | O_CREAT, 0755);
+    fd = open(argv[1], O_RDONLY | O_DIRECT, 0755);
     if (fd < 0){
         perror("open ./direct_io.data failed");
         exit(1);
     }
 
-    for (int i = 0; i < 17825792; i += BUF_SIZE) {
-        ret = write(fd, buf, BUF_SIZE);
+    do {
+        ret = read(fd, buf, BUF_SIZE);
+        printf("%s", buf);
         if (ret < 0) {
             perror("write ./direct_io.data failed");
         }
-    }
+    } while (ret > 0);
  
     free(buf);
     close(fd);
