@@ -338,7 +338,8 @@ Status ReadFooterFromFile(const IOOptions& opts, RandomAccessFileReader* file,
     return Status::Corruption(
         "Bad table magic number: expected " +
         ToString(enforce_table_magic_number) + ", found " +
-        ToString(footer->table_magic_number()) + " in " + file->file_name());
+        ToString(footer->table_magic_number()) + " in " + file->file_name() +
+        " use_direct_io: " + ToString((uint64_t)file->use_direct_io()));
   }
   return Status::OK();
 }
