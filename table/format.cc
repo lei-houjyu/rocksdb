@@ -325,8 +325,9 @@ Status ReadFooterFromFile(const IOOptions& opts, RandomAccessFileReader* file,
   if (footer_input.size() < Footer::kMinEncodedLength) {
     return Status::Corruption("file is too short (" + ToString(file_size) +
                               " bytes) to be an "
-                              "sstable" +
-                              file->file_name());
+                              "sstable " +
+                              file->file_name() +
+                              " footer_input.size() " + ToString(footer_input.size()));
   }
 
   s = footer->DecodeFrom(&footer_input);
