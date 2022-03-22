@@ -98,6 +98,7 @@ static std::mutex mu;
 static std::mutex debug_mu;
 static std::map<uint64_t, uint64_t> primary_op_cnt_map;
 #define G_MEM_ARR_LEN 1024
+#define BATCH_SIZE 1000
 static std::atomic<uint64_t> histogram[G_MEM_ARR_LEN];
 
 Status RubbleKvServiceImpl::DoOp(ServerContext* context, 
@@ -239,6 +240,7 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
                                    Forwarder* forwarder, ReplyClient* reply_client,
                                    std::map<uint64_t, std::queue<SingleOp*>>* op_buffer) {
   assert(op->ops_size() > 0);
+  assert(op->ops_size() <= BATCH_SIZE);
   assert(reply->replies_size() == 0);
 
   reply->set_client_idx(op->client_idx());
