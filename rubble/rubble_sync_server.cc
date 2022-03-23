@@ -247,12 +247,11 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
   reply->add_time(op->time(0));
 
   batch_counter_.fetch_add(1);
-  int old_ops_size = op->ops_size();
-  for (int i = 0; i < op->ops_size(); i++) {
-    int new_ops_size = op->ops_size();
-    if (new_ops_size != old_ops_size) {
-      std::cout << "new_ops_size = " << new_ops_size << "old_ops_size = " << old_ops_size << std::endl;
-    }
+  // There is a bug that op->ops_size() might change to a very large number,
+  // so we preserve the ops_size as the loop condition
+  // TODO: fix the bug
+  int ops_size = op->ops_size();
+  for (int i = 0; i < ops_size; i++) {
     SingleOp* singleOp = op->mutable_ops(i);
     
     // track the Op or OpReply object
