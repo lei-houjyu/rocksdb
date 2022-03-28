@@ -187,6 +187,9 @@ void RubbleKvServiceImpl::CleanBufferedOps(Forwarder* forwarder,
           }
 
           op_buffer->erase(id);
+          if (op_buffer->size() == 0) {
+            break;
+          }
         }
       }
   }
@@ -300,6 +303,9 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
             (*op_buffer)[id].pop();
           }
           op_buffer->erase(id);
+          if (op_buffer->size() == 0) {
+            break;
+          }
         }
       }
   }
