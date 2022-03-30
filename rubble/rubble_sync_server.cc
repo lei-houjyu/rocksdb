@@ -747,7 +747,10 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
         // std::cout << "[Secondary] Full compaction LogAndApply status : " << s.ToString() << std::endl;
       }
     }
-
+    
+    if (!s.ok()) {
+      std::cout << s.ToString() << std::endl;
+    }
     assert(s.ok());
     std::string ret = "ok";
     return ret;
