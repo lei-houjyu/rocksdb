@@ -1,5 +1,5 @@
 /**
- * gcc direct_io_write_file.c -o direct_io_write_file -D_GNU_SOURCE
+ * gcc direct_io_read_file.c -o direct_io_read_file -D_GNU_SOURCE
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +14,7 @@ int main(int argc, char * argv[])
 {
     int fd;
     int ret;
+    int checksum = 0;
     unsigned char *buf;
     ret = posix_memalign((void **)&buf, 512, BUF_SIZE);
     if (ret) {
@@ -29,12 +30,16 @@ int main(int argc, char * argv[])
 
     do {
         ret = read(fd, buf, BUF_SIZE);
-        printf("%s", buf);
+        //printf("%s", buf);
         if (ret < 0) {
             perror("write ./direct_io.data failed");
         }
+        for (int i = 0; i < BUF_SIZE; i++) {
+            checksum += (int)buf[i];
+        }
     } while (ret > 0);
- 
+    printf("checksum = %d\n", checksum);
+
     free(buf);
     close(fd);
 }
