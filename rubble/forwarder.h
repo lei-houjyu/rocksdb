@@ -34,6 +34,7 @@ class Forwarder{
     void Forward(const Op& op){
         if (!stream_->Write(op)) {
           std::cout << "forward fail!\n";
+          assert(false);
         }
     }
 
