@@ -177,19 +177,16 @@ void RubbleKvServiceImpl::CleanBufferedOps(Forwarder* forwarder,
                                            ReplyClient* reply_client,
                                            std::map<uint64_t, std::queue<SingleOp *>> *op_buffer) {
   while (!op_buffer->empty()) {
-    for (std::map<uint64_t, std::queue<SingleOp*>>::iterator it = op_buffer->begin();
-      it != op_buffer->end(); it++) {
+    for (std::map<uint64_t, std::queue<SingleOp*>>::iterator it = op_buffer->begin(); it != op_buffer->end();) {
         uint64_t id = it->first;
         if (should_execute(id)) {
           while (!(*op_buffer)[id].empty()) {
             HandleSingleOp((*op_buffer)[id].front(), forwarder, reply_client);
             (*op_buffer)[id].pop();
           }
-
-          op_buffer->erase(id);
-          if (op_buffer->size() == 0) {
-            break;
-          }
+          it == op_buffer->erase(it);
+        } else {
+          ++it;
         }
       }
   }
@@ -294,18 +291,16 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
       assert(id == singleOp->target_mem_id());
     }
 
-    for (std::map<uint64_t, std::queue<SingleOp*>>::iterator it = op_buffer->begin();
-      it != op_buffer->end(); it++) {
+    for (std::map<uint64_t, std::queue<SingleOp*>>::iterator it = op_buffer->begin(); it != op_buffer->end();) {
         id = it->first;
         if (should_execute(id)) {
           while (!(*op_buffer)[id].empty()) {
             HandleSingleOp((*op_buffer)[id].front(), forwarder, reply_client);
             (*op_buffer)[id].pop();
           }
-          op_buffer->erase(id);
-          if (op_buffer->size() == 0) {
-            break;
-          }
+          it = op_buffer->erase(it);
+        } else {
+          ++it;
         }
       }
   }
