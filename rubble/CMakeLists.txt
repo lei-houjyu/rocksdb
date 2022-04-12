@@ -142,7 +142,7 @@ endif()
 
 set(CMAKE_BUILD_TYPE Debug)
 
-set(ROCKSDB_DIR "/mnt/sdb/my_rocksdb")
+set(ROCKSDB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 # set(ROCKSDB_DIR "{CMAKE_CURRENT_BINARY_DIR}/..")
 set(rubble_server "${ROCKSDB_DIR}/rubble/rubble_sync_server.cc")
 set(async_kv_server "${ROCKSDB_DIR}/rubble/rubble_async_server.cc")
