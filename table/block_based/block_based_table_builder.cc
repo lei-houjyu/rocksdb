@@ -1194,7 +1194,7 @@ void BlockBasedTableBuilder::WriteRawBlock(const Slice& block_contents,
         // for(int j = 0; j < 8; ++j) {
         //   sprintf(&endBuf[2*j], "%02hhX", *(endOffset + j));
         // }
-        char blockBuff[block_contents.size() * 2 + 1];
+        /* char blockBuff[block_contents.size() * 2 + 1];
         blockBuff[block_contents.size()] = 0;
         for(auto j = 0; j < int(block_contents.size()); ++j) {
           sprintf(&blockBuff[2*j], "%02hhX", *(block_contents.data() + j));
@@ -1203,7 +1203,7 @@ void BlockBasedTableBuilder::WriteRawBlock(const Slice& block_contents,
         ROCKS_LOG_INFO(r->ioptions.info_log,
                         "filename: %s, filesize: %lu, full_block: %s\n",
                         r->file->file_name().c_str(), r->file->GetFileSize(),
-                        blockBuff);
+                        blockBuff); */
         // ROCKS_LOG_INFO(r->ioptions.info_log,
         //                 "[checksum] crc: %u, filename: %s, filesize: %lu, datasize: %lu,
         //                 start: %s, isData: %d, lastBytes: %s, \n ", // [block]: %s\n",
