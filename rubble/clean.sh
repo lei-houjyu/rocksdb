@@ -1,4 +1,4 @@
-DB_DIR="/mnt/sdb/archive_dbs"
+DB_DIR="/mnt/db"
 PRIMARY_DIR=${DB_DIR}/primary
 TAIL_DIR=${DB_DIR}/tail
 
