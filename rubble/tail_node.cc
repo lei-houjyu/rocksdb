@@ -8,8 +8,8 @@ int main(int argc, char** argv) {
       target_addr = argv[1];
   }
   const std::string server_addr = "0.0.0.0:50052";
-  std::string db_path = "/mnt/sdb/archive_dbs/tail/db";
-  std::string sst_path = "/mnt/sdb/archive_dbs/tail/sst_dir"; 
+  std::string db_path = "/mnt/db/tail/db";
+  std::string sst_path = "/mnt/sst"; 
   rocksdb::DB* db = GetDBInstance(db_path, sst_path, "", target_addr, false, false, true);
   
   bool is_async = false;

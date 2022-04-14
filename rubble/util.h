@@ -172,7 +172,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    std::vector<rocksdb::ColumnFamilyDescriptor> loaded_cf_descs;
    rocksdb::Status s = LoadOptionsFromFile(
       /*config_options=*/config_options,
-      /*options_file_name=*/is_primary ? "/mnt/sdb/my_rocksdb/rubble/rubble_16gb_config.ini" : "/mnt/sdb/my_rocksdb/rubble/rubble_16gb_config_tail.ini",
+      /*options_file_name=*/is_primary ? "/mnt/code/my_rocksdb/rubble/rubble_16gb_config.ini" : "/mnt/code/my_rocksdb/rubble/rubble_16gb_config_tail.ini",
       /*db_options=*/&db_options,
       /*cf_descs=*/&loaded_cf_descs
    );
@@ -214,10 +214,10 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    // add logger for rubble
    std::string rubble_info_log_fname;
    // the default path for the sst bit map log file, will try to reconstruct map from this file
-   std::string rubble_log_path {"/mnt/sdb/my_rocksdb/rubble/log"}; 
-   std::string map_log_fname {"/mnt/sdb/my_rocksdb/rubble/log/sst_bit_map_log"}; // this is the path of the old sst_bit_map log
+   std::string rubble_log_path {"/mnt/code/my_rocksdb/rubble/log"}; 
+   std::string map_log_fname {"/mnt/code/my_rocksdb/rubble/log/sst_bit_map_log"}; // this is the path of the old sst_bit_map log
 
-   // std::string new_map_log_fname {"/mnt/sdb/my_rocksdb/rubble/log/sst_bit_map_new"}; 
+   // std::string new_map_log_fname {"/mnt/code/my_rocksdb/rubble/log/sst_bit_map_new"}; 
    
    bool recover_mode = false;
    std::string current_fname = rocksdb::CurrentFileName(db_path);
@@ -252,7 +252,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       //ignore this flag for now, always set to true.
       db_options.disallow_flush_on_secondary = true;
 
-      db_options.max_num_mems_in_flush = 12;
+      db_options.max_num_mems_in_flush = 4;
       db_options.sst_pad_len = 1 << 20;
       db_options.piggyback_version_edits = true;
       db_options.edits = std::make_shared<Edits>();

@@ -67,10 +67,10 @@ RM = /usr/local/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /mnt/sdb/my_rocksdb
+CMAKE_SOURCE_DIR = /mnt/code/my_rocksdb
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /mnt/sdb/my_rocksdb
+CMAKE_BINARY_DIR = /mnt/code/my_rocksdb
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -145,14 +145,14 @@ install/fast: preinstall/fast
 
 # The main all target
 all: cmake_check_build_system
-	cd /mnt/sdb/my_rocksdb && $(CMAKE_COMMAND) -E cmake_progress_start /mnt/sdb/my_rocksdb/CMakeFiles /mnt/sdb/my_rocksdb/nlohmann_json/json//CMakeFiles/progress.marks
-	cd /mnt/sdb/my_rocksdb && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 nlohmann_json/json/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/sdb/my_rocksdb/CMakeFiles 0
+	cd /mnt/code/my_rocksdb && $(CMAKE_COMMAND) -E cmake_progress_start /mnt/code/my_rocksdb/CMakeFiles /mnt/code/my_rocksdb/nlohmann_json/json//CMakeFiles/progress.marks
+	cd /mnt/code/my_rocksdb && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 nlohmann_json/json/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/code/my_rocksdb/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /mnt/sdb/my_rocksdb && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 nlohmann_json/json/clean
+	cd /mnt/code/my_rocksdb && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 nlohmann_json/json/clean
 .PHONY : clean
 
 # The main clean target
@@ -162,17 +162,17 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /mnt/sdb/my_rocksdb && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 nlohmann_json/json/preinstall
+	cd /mnt/code/my_rocksdb && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 nlohmann_json/json/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /mnt/sdb/my_rocksdb && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 nlohmann_json/json/preinstall
+	cd /mnt/code/my_rocksdb && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 nlohmann_json/json/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /mnt/sdb/my_rocksdb && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /mnt/code/my_rocksdb && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Help Target
@@ -198,6 +198,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /mnt/sdb/my_rocksdb && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /mnt/code/my_rocksdb && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 
