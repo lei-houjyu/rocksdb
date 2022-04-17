@@ -1226,6 +1226,9 @@ struct DBOptions {
   //upstream's remote sst directory, not "" for all nodes except tail
   std::string remote_sst_dir = "";
 
+  // directory that holds pre-allocated SST files
+  std::string sst_pool_dir = "";
+
   //secondary node's number of preallocated sst files 
   //right now just set to a static number, should change to 
   //be set dynamically to DbPath.target_size/write_buffer_size

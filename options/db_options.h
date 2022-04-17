@@ -101,6 +101,7 @@ struct ImmutableDBOptions {
   bool disallow_flush_on_secondary;
   std::string target_address;
   std::string remote_sst_dir;
+  std::string sst_pool_dir;
   int preallocated_sst_pool_size;
   uint64_t sst_pad_len;
   int max_num_mems_in_flush;

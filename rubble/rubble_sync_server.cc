@@ -3,6 +3,9 @@
 #include <thread>
 #include "db/memtable.h"
 #include <ctime>
+#include <unistd.h>
+#include <error.h>
+#include <string.h>
 
 void PrintStatus(RubbleKvServiceImpl *srv) {
   uint64_t r_now = 0, r_old = srv->r_op_counter_.load();
@@ -47,19 +50,20 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
        ioptions_(default_cf_->ioptions()),
        cf_options_(default_cf_->GetCurrentMutableCFOptions()),
        fs_(ioptions_->fs),
-       status_thread_(PrintStatus, this){
+       status_thread_(PrintStatus, this) {
         status_thread_.detach();
-        if(is_rubble_ && !is_head_){
+        if(is_rubble_ && !is_head_) {
           std::cout << "init sync_service --- is_rubble: " << is_rubble_ << "; is_head: " << is_head_ << std::endl;
+          std::cout << "db_option_->sst_pool_dir: " << db_options_->sst_pool_dir << std::endl;
           ios_ = CreateSstPool();
-          if(!ios_.ok()){
+          if(!ios_.ok()) {
             std::cout << "allocate sst pool failed :" << ios_.ToString() << std::endl;
             assert(false);
           }
           std::cout << "[secondary] sst pool allocation finished" << std::endl;
         }
         std::cout << "target address : " << db_options_->target_address << std::endl;
-        if(db_options_->target_address != ""){
+        if(db_options_->target_address != "") {
           channel_ = db_options_->channel;
           assert(channel_ != nullptr);
         }
@@ -835,8 +839,8 @@ rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const jso
 
 //called by secondary nodes to create a pool of preallocated ssts in rubble mode
 rocksdb::IOStatus RubbleKvServiceImpl::CreateSstPool(){
-    const std::string sst_dir = db_path_.path;
-    uint64_t target_size = db_path_.target_size;
+    const std::string sst_dir = db_options_->sst_pool_dir;
+    uint64_t target_size = 10000000000;
     // size_t write_buffer_size = cf_options_->write_buffer_size;
     uint64_t target_file_size_base = cf_options_->target_file_size_base;
     assert((target_file_size_base % (1 << 20)) == 0);
@@ -859,6 +863,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::CreateSstPool(){
         std::string sst_name = sst_dir + "/" + sst_num;
         s = fs_->FileExists(sst_name, rocksdb::IOOptions(), nullptr);
         if(!s.ok()) {
+            std::cout << "Create " << sst_name << " " << s.ToString() << std::endl;
             std::unique_ptr<rocksdb::FSWritableFile> file;
             rocksdb::EnvOptions soptions;
             soptions.use_direct_writes = true;
@@ -909,25 +914,17 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
     }
     rocksdb::IOStatus ios;
     for(const auto& new_file: edit.GetNewFiles()){
-        const rocksdb::FileMetaData& meta = new_file.second;
-        uint64_t file_num = meta.fd.GetNumber();
-        // int sst_real = TakeOneAvailableSstSlot(new_file.first, meta);
-        int sst_real = edit.GetSlot(file_num);
+        uint64_t sst_num = new_file.second.fd.GetNumber();
+        int slot = edit.GetSlot(sst_num);
+        std::string slot_fname = db_options_->sst_pool_dir + "/" + std::to_string(slot);
         
-        // rocksdb::DirectReadKBytes(fs_, sst_real, 32, db_path_.path + "/");
+        int len = std::to_string(sst_num).length();
+        std::string sst = std::string("000000").replace(6 - len, len, std::to_string(sst_num)) + ".sst";
+        std::string sst_fname = db_path_.path + "/" + sst;
 
-        int len = std::to_string(file_num).length();
-        std::string sst_file_name = std::string("000000").replace(6 - len, len, std::to_string(file_num)) + ".sst";
-        std::string fname = rocksdb::TableFileName(ioptions_->cf_paths, file_num, meta.fd.GetPathId());
         // update secondary's view of sst files
-        // std::cout << " Link " << sst_real << " to " << fname << std::endl;
-        ios = fs_->LinkFile(db_path_.path + "/" + std::to_string(sst_real), fname, rocksdb::IOOptions(), nullptr);
-        if(!ios.ok()){
-            std::cout << ios.ToString() << std::endl;
-            return ios;
-        }else{
-          RUBBLE_LOG_INFO(logger_, "[create new sst]: %s , linking to %d \n", sst_file_name.c_str(), sst_real);
-          // std::cout << "[create new sst]: "  << sst_file_name << " , linking to " << sst_real << std::endl;
+        if (symlink(slot_fname.c_str(), sst_fname.c_str()) != 0) {
+          std::cout << "Error when linking " << slot_fname << " to " << sst_fname << ": " << strerror(errno) << std::endl;  
         }
         
         // tail node doesn't need to ship sst files
@@ -937,13 +934,13 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
             if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
                 remote_sst_dir = remote_sst_dir + '/';
             }
-            std::string remote_sst_fname = remote_sst_dir + std::to_string(sst_real);
+            std::string remote_sst_fname = remote_sst_dir + std::to_string(slot);
             // maybe not ship the sst file here, instead ship after we finish the logAndApply..
-            ios = rocksdb::CopySstFile(fs_, fname, remote_sst_fname, 0,  true);
+            ios = rocksdb::CopySstFile(fs_, sst_fname, remote_sst_fname, 0,  true);
             if (!ios.ok()){
-                std::cerr << "[ File Ship Failed ] : " << meta.fd.GetNumber() << std::endl;
+                std::cerr << "[ File Ship Failed ] : " << sst_num << std::endl;
             }else {
-                std::cout << "[ File Shipped ] : " << meta.fd.GetNumber() << std::endl;
+                std::cout << "[ File Shipped ] : " << sst_num << std::endl;
             }
         }
     }

@@ -9,8 +9,9 @@ int main(int argc, char** argv) {
   }
   const std::string server_addr = "0.0.0.0:50052";
   std::string db_path = "/mnt/db/tail/db";
-  std::string sst_path = "/mnt/sst"; 
-  rocksdb::DB* db = GetDBInstance(db_path, sst_path, "", target_addr, false, false, true);
+  std::string sst_path = "/mnt/db/tail/sst_dir";
+  std::string sst_pool_path = "/mnt/sst"; 
+  rocksdb::DB* db = GetDBInstance(db_path, sst_path, "", sst_pool_path, target_addr, false, false, true);
   
   bool is_async = false;
   if(is_async){

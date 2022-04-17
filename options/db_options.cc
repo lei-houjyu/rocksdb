@@ -599,6 +599,7 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       disallow_flush_on_secondary(options.disallow_flush_on_secondary),
       target_address(options.target_address),
       remote_sst_dir(options.remote_sst_dir),
+      sst_pool_dir(options.sst_pool_dir),
       preallocated_sst_pool_size(options.preallocated_sst_pool_size),
       sst_pad_len(options.sst_pad_len),
       max_num_mems_in_flush(options.max_num_mems_in_flush),

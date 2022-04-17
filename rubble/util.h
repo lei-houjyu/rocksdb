@@ -163,6 +163,7 @@ void ReconstructSstBitMap(const std::string& map_log_fname, std::shared_ptr<SstB
  */
 rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir, 
                                 const string& remote_sst_dir,
+                                const string& sst_pool_dir,
                                 const string& target_addr, 
                                 bool is_rubble, bool is_primary, bool is_tail){
 
@@ -195,9 +196,14 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    db_options.target_address=target_addr; //TODO(add target_addr, remote_sst_dir and preallocated_sst_pool_size to option file)
 
    // for non-tail nodes in rubble mode, it's shipping sst file to the remote_sst_dir;
-   if(db_options.is_rubble && !is_tail){
-         db_options.remote_sst_dir=remote_sst_dir;
-         std::cout << "remote sst dir: " << db_options.remote_sst_dir << std::endl;
+   if (db_options.is_rubble && !is_tail) {
+       db_options.remote_sst_dir = remote_sst_dir;
+       std::cout << "remote sst dir: " << db_options.remote_sst_dir << std::endl;
+   }
+
+   if (db_options.is_rubble && !is_primary) {
+       db_options.sst_pool_dir = sst_pool_dir;
+       std::cout << "sst pool dir: " << db_options.sst_pool_dir << std::endl;
    }
    
    uint64_t target_size = 10000000000;
