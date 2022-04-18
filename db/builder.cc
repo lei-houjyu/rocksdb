@@ -104,7 +104,11 @@ Status BuildTable(
       mutable_cf_options.check_flush_compaction_key_order,
       /*enable_hash=*/paranoid_file_checks);
   Status s;
-  size_t num_mems_to_flush = meta->fd.GetFileSize();
+  //[RUBBLE] extract # of memtables to flush and make sure number
+  //         within bound of slot size
+  size_t num_mems_to_flush = meta->fd.GetFileSize(); 
+  assert((int)num_mems_to_flush <= mutable_cf_options.max_write_buffer_number);
+  // [END RUBBLE]
   meta->fd.file_size = 0;
   iter->SeekToFirst();
   std::unique_ptr<CompactionRangeDelAggregator> range_del_agg(
@@ -114,11 +118,11 @@ Status BuildTable(
   }
 
   std::string fname = TableFileName(ioptions.cf_paths, meta->fd.GetNumber(),
-                                    meta->fd.GetPathId());
+                                    meta->fd.GetPathId());             
   auto db_options = versions->db_options();
   RUBBLE_LOG_INFO(db_options->rubble_info_log, 
-      " Flush Job [%d] : WriteLevel0Table [%lu] \n", 
-      job_id, meta->fd.GetNumber());
+      " Flush Job [%d] : WriteLevel0Table [%lu] times: [%lu] \n", 
+      job_id, meta->fd.GetNumber(), num_mems_to_flush);
   std::vector<std::string> blob_file_paths;
   std::string file_checksum = kUnknownFileChecksum;
   std::string file_checksum_func_name = kUnknownFileChecksumFuncName;
@@ -142,15 +146,18 @@ Status BuildTable(
       TEST_SYNC_POINT_CALLBACK("BuildTable:create_file", &use_direct_writes);
 #endif  // !NDEBUG
       IOStatus io_s = NewWritableFile(fs, fname, &file, file_options);
+      // [RUBBLE]
       if(db_options->is_primary && db_options->is_rubble && db_options->disallow_flush_on_secondary){
+        // we need to ship sst files over
+        // RUBBLE_LOG_INFO(db_options->rubble_info_log, "[times]: %lu", num_mems_to_flush);
         int sst_real = db_options->sst_bit_map->TakeOneAvailableSlot(meta->fd.GetNumber(), num_mems_to_flush);
-        // int sst_real = GetAvailableSstSlot(db_options->preallocated_sst_pool_size, meta->fd.GetNumber());
         std::string r_fname = db_options->remote_sst_dir + std::to_string(sst_real);
         //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
         ((PosixWritableFile*)(file.get()))->SetRemoteFileInfo(
             r_fname, db_options, true, false, 
             mutable_cf_options.target_file_size_base + db_options->sst_pad_len);
       }
+      // [RUBBLE END]
       assert(s.ok());
       s = io_s;
       if (io_status->ok()) {
@@ -171,6 +178,7 @@ Status BuildTable(
           ioptions.statistics, ioptions.listeners,
           ioptions.file_checksum_gen_factory));
 
+      // [RUBBLE]
       if(db_options->is_rubble && db_options->is_primary && db_options->disallow_flush_on_secondary){
         // allocate an aligned buffer whose size is equal to the sst file size 
         // so we can accumulate small block chunks into this buffer 
@@ -181,6 +189,7 @@ Status BuildTable(
         file_writer->SetBufferAlignment(file_writer->writable_file()->GetRequiredBufferAlignment());
         file_writer->AllocateNewBuffer(buffer_size);
       }   
+      // [RUBBLE END]
 
       builder = NewTableBuilder(
           ioptions, mutable_cf_options, internal_comparator,

@@ -14,6 +14,7 @@
 #include "util/hash.h"
 #include "util/string_util.h"
 #include "util/xxhash.h"
+#include <iostream>
 
 namespace ROCKSDB_NAMESPACE {
 void ForceReleaseCachedEntry(void* arg, void* h) {
@@ -59,6 +60,29 @@ Status VerifyBlockChecksum(ChecksumType type, const char* data,
         ", computed = " + ToString(computed) + "  in " + file_name +
         " offset " + ToString(offset) + " size " + ToString(block_size));
   }
+    /* char buffer[17];
+    buffer[16] = 0;
+    for(int j = 0; j < 8; ++j) {
+      sprintf(&buffer[2*j], "%02hhX", *(data + j));
+    }
+    char endBuf[17];
+    endBuf[16] = 0;
+    const char* endOffset = data + block_size - 8;
+    for(int j = 0; j < 8; ++j) {
+      sprintf(&endBuf[2*j], "%02hhX", *(endOffset + j));
+    }
+    
+    char blockBuff[2 * block_size+1];
+    blockBuff[block_size] = 0;
+    for(int j = 0; j < int(block_size); ++j) {
+      sprintf(&blockBuff[2*j], "%02hhX", *(data + j));
+    }
+   
+    std::cout << "stored: " << stored << ", computed: " << computed
+	  << ", filename: " << file_name << ", offset: " << offset
+          << ", [block]: " << blockBuff << "\n";
+    */
+  
   return s;
 }
 }  // namespace ROCKSDB_NAMESPACE

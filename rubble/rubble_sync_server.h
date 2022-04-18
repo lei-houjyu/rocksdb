@@ -42,6 +42,8 @@ using rubble::OpReply;
 using rubble::SingleOp;
 using rubble::SingleOpReply;
 using rubble::OpType_Name;
+using rubble::PingRequest;
+using rubble::Empty;
 
 using json = nlohmann::json;
 using std::chrono::time_point;
@@ -62,6 +64,9 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
   // a streaming RPC used by the non-tail node to sync Version(view of sst files) states to the downstream node 
   Status Sync(ServerContext* context, 
               ServerReaderWriter<SyncReply, SyncRequest>* stream) override;
+  
+  // heartbeat between Replicator and db servers
+  Status Pulse(ServerContext* context, const PingRequest* request, Empty* reply) override;
 
   rocksdb::ColumnFamilyData* GetCFD();
 
@@ -123,7 +128,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
      * 
      */
     rocksdb::IOStatus UpdateSstViewAndShipSstFiles(const rocksdb::VersionEdit& edit);
-
+    rocksdb::IOStatus DeleteSstFiles(const rocksdb::VersionEdit& edit);
     // set the reply message according to the status
     void SetReplyMessage(SyncReply* reply, const rocksdb::Status& s, bool is_flush, bool is_trivial_move);
 

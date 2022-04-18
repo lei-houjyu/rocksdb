@@ -67,6 +67,14 @@ class RubbleKvStoreService final {
     std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::OpReply, ::rubble::Reply>> PrepareAsyncSendReply(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::rubble::OpReply, ::rubble::Reply>>(PrepareAsyncSendReplyRaw(context, cq));
     }
+    // heartbeat
+    virtual ::grpc::Status Pulse(::grpc::ClientContext* context, const ::rubble::PingRequest& request, ::rubble::Empty* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::rubble::Empty>> AsyncPulse(::grpc::ClientContext* context, const ::rubble::PingRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::rubble::Empty>>(AsyncPulseRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::rubble::Empty>> PrepareAsyncPulse(::grpc::ClientContext* context, const ::rubble::PingRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::rubble::Empty>>(PrepareAsyncPulseRaw(context, request, cq));
+    }
     class experimental_async_interface {
      public:
       virtual ~experimental_async_interface() {}
@@ -89,6 +97,13 @@ class RubbleKvStoreService final {
       #else
       virtual void SendReply(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::OpReply,::rubble::Reply>* reactor) = 0;
       #endif
+      // heartbeat
+      virtual void Pulse(::grpc::ClientContext* context, const ::rubble::PingRequest* request, ::rubble::Empty* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void Pulse(::grpc::ClientContext* context, const ::rubble::PingRequest* request, ::rubble::Empty* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
+      virtual void Pulse(::grpc::ClientContext* context, const ::rubble::PingRequest* request, ::rubble::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
     };
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     typedef class experimental_async_interface async_interface;
@@ -107,6 +122,8 @@ class RubbleKvStoreService final {
     virtual ::grpc::ClientReaderWriterInterface< ::rubble::OpReply, ::rubble::Reply>* SendReplyRaw(::grpc::ClientContext* context) = 0;
     virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::OpReply, ::rubble::Reply>* AsyncSendReplyRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) = 0;
     virtual ::grpc::ClientAsyncReaderWriterInterface< ::rubble::OpReply, ::rubble::Reply>* PrepareAsyncSendReplyRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::rubble::Empty>* AsyncPulseRaw(::grpc::ClientContext* context, const ::rubble::PingRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::rubble::Empty>* PrepareAsyncPulseRaw(::grpc::ClientContext* context, const ::rubble::PingRequest& request, ::grpc::CompletionQueue* cq) = 0;
   };
   class Stub final : public StubInterface {
    public:
@@ -138,6 +155,13 @@ class RubbleKvStoreService final {
     std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::rubble::OpReply, ::rubble::Reply>> PrepareAsyncSendReply(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::rubble::OpReply, ::rubble::Reply>>(PrepareAsyncSendReplyRaw(context, cq));
     }
+    ::grpc::Status Pulse(::grpc::ClientContext* context, const ::rubble::PingRequest& request, ::rubble::Empty* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::rubble::Empty>> AsyncPulse(::grpc::ClientContext* context, const ::rubble::PingRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::rubble::Empty>>(AsyncPulseRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::rubble::Empty>> PrepareAsyncPulse(::grpc::ClientContext* context, const ::rubble::PingRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::rubble::Empty>>(PrepareAsyncPulseRaw(context, request, cq));
+    }
     class experimental_async final :
       public StubInterface::experimental_async_interface {
      public:
@@ -155,6 +179,12 @@ class RubbleKvStoreService final {
       void SendReply(::grpc::ClientContext* context, ::grpc::ClientBidiReactor< ::rubble::OpReply,::rubble::Reply>* reactor) override;
       #else
       void SendReply(::grpc::ClientContext* context, ::grpc::experimental::ClientBidiReactor< ::rubble::OpReply,::rubble::Reply>* reactor) override;
+      #endif
+      void Pulse(::grpc::ClientContext* context, const ::rubble::PingRequest* request, ::rubble::Empty* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void Pulse(::grpc::ClientContext* context, const ::rubble::PingRequest* request, ::rubble::Empty* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
+      void Pulse(::grpc::ClientContext* context, const ::rubble::PingRequest* request, ::rubble::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
      private:
       friend class Stub;
@@ -176,9 +206,12 @@ class RubbleKvStoreService final {
     ::grpc::ClientReaderWriter< ::rubble::OpReply, ::rubble::Reply>* SendReplyRaw(::grpc::ClientContext* context) override;
     ::grpc::ClientAsyncReaderWriter< ::rubble::OpReply, ::rubble::Reply>* AsyncSendReplyRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) override;
     ::grpc::ClientAsyncReaderWriter< ::rubble::OpReply, ::rubble::Reply>* PrepareAsyncSendReplyRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::rubble::Empty>* AsyncPulseRaw(::grpc::ClientContext* context, const ::rubble::PingRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::rubble::Empty>* PrepareAsyncPulseRaw(::grpc::ClientContext* context, const ::rubble::PingRequest& request, ::grpc::CompletionQueue* cq) override;
     const ::grpc::internal::RpcMethod rpcmethod_Sync_;
     const ::grpc::internal::RpcMethod rpcmethod_DoOp_;
     const ::grpc::internal::RpcMethod rpcmethod_SendReply_;
+    const ::grpc::internal::RpcMethod rpcmethod_Pulse_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
 
@@ -193,6 +226,8 @@ class RubbleKvStoreService final {
     virtual ::grpc::Status DoOp(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::OpReply, ::rubble::Op>* stream);
     // used by the tail node to send the true rely to the replicator
     virtual ::grpc::Status SendReply(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rubble::Reply, ::rubble::OpReply>* stream);
+    // heartbeat
+    virtual ::grpc::Status Pulse(::grpc::ServerContext* context, const ::rubble::PingRequest* request, ::rubble::Empty* response);
   };
   template <class BaseClass>
   class WithAsyncMethod_Sync : public BaseClass {
@@ -254,7 +289,27 @@ class RubbleKvStoreService final {
       ::grpc::Service::RequestAsyncBidiStreaming(2, context, stream, new_call_cq, notification_cq, tag);
     }
   };
-  typedef WithAsyncMethod_Sync<WithAsyncMethod_DoOp<WithAsyncMethod_SendReply<Service > > > AsyncService;
+  template <class BaseClass>
+  class WithAsyncMethod_Pulse : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_Pulse() {
+      ::grpc::Service::MarkMethodAsync(3);
+    }
+    ~WithAsyncMethod_Pulse() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Pulse(::grpc::ServerContext* /*context*/, const ::rubble::PingRequest* /*request*/, ::rubble::Empty* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestPulse(::grpc::ServerContext* context, ::rubble::PingRequest* request, ::grpc::ServerAsyncResponseWriter< ::rubble::Empty>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  typedef WithAsyncMethod_Sync<WithAsyncMethod_DoOp<WithAsyncMethod_SendReply<WithAsyncMethod_Pulse<Service > > > > AsyncService;
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_Sync : public BaseClass {
    private:
@@ -369,11 +424,58 @@ class RubbleKvStoreService final {
     #endif
       { return nullptr; }
   };
+  template <class BaseClass>
+  class ExperimentalWithCallbackMethod_Pulse : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithCallbackMethod_Pulse() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(3,
+          new ::grpc::internal::CallbackUnaryHandler< ::rubble::PingRequest, ::rubble::Empty>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::rubble::PingRequest* request, ::rubble::Empty* response) { return this->Pulse(context, request, response); }));}
+    void SetMessageAllocatorFor_Pulse(
+        ::grpc::experimental::MessageAllocator< ::rubble::PingRequest, ::rubble::Empty>* allocator) {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(3);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(3);
+    #endif
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::rubble::PingRequest, ::rubble::Empty>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~ExperimentalWithCallbackMethod_Pulse() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Pulse(::grpc::ServerContext* /*context*/, const ::rubble::PingRequest* /*request*/, ::rubble::Empty* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* Pulse(
+      ::grpc::CallbackServerContext* /*context*/, const ::rubble::PingRequest* /*request*/, ::rubble::Empty* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* Pulse(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::rubble::PingRequest* /*request*/, ::rubble::Empty* /*response*/)
+    #endif
+      { return nullptr; }
+  };
   #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_DoOp<ExperimentalWithCallbackMethod_SendReply<Service > > > CallbackService;
+  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_DoOp<ExperimentalWithCallbackMethod_SendReply<ExperimentalWithCallbackMethod_Pulse<Service > > > > CallbackService;
   #endif
 
-  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_DoOp<ExperimentalWithCallbackMethod_SendReply<Service > > > ExperimentalCallbackService;
+  typedef ExperimentalWithCallbackMethod_Sync<ExperimentalWithCallbackMethod_DoOp<ExperimentalWithCallbackMethod_SendReply<ExperimentalWithCallbackMethod_Pulse<Service > > > > ExperimentalCallbackService;
   template <class BaseClass>
   class WithGenericMethod_Sync : public BaseClass {
    private:
@@ -421,6 +523,23 @@ class RubbleKvStoreService final {
     }
     // disable synchronous version of this method
     ::grpc::Status SendReply(::grpc::ServerContext* /*context*/, ::grpc::ServerReaderWriter< ::rubble::Reply, ::rubble::OpReply>* /*stream*/)  override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_Pulse : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_Pulse() {
+      ::grpc::Service::MarkMethodGeneric(3);
+    }
+    ~WithGenericMethod_Pulse() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Pulse(::grpc::ServerContext* /*context*/, const ::rubble::PingRequest* /*request*/, ::rubble::Empty* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -483,6 +602,26 @@ class RubbleKvStoreService final {
     }
     void RequestSendReply(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncBidiStreaming(2, context, stream, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_Pulse : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_Pulse() {
+      ::grpc::Service::MarkMethodRaw(3);
+    }
+    ~WithRawMethod_Pulse() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Pulse(::grpc::ServerContext* /*context*/, const ::rubble::PingRequest* /*request*/, ::rubble::Empty* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestPulse(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -599,9 +738,74 @@ class RubbleKvStoreService final {
     #endif
       { return nullptr; }
   };
-  typedef Service StreamedUnaryService;
+  template <class BaseClass>
+  class ExperimentalWithRawCallbackMethod_Pulse : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithRawCallbackMethod_Pulse() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(3,
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->Pulse(context, request, response); }));
+    }
+    ~ExperimentalWithRawCallbackMethod_Pulse() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Pulse(::grpc::ServerContext* /*context*/, const ::rubble::PingRequest* /*request*/, ::rubble::Empty* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* Pulse(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* Pulse(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_Pulse : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_Pulse() {
+      ::grpc::Service::MarkMethodStreamed(3,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::rubble::PingRequest, ::rubble::Empty>(
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
+                     ::rubble::PingRequest, ::rubble::Empty>* streamer) {
+                       return this->StreamedPulse(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_Pulse() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status Pulse(::grpc::ServerContext* /*context*/, const ::rubble::PingRequest* /*request*/, ::rubble::Empty* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedPulse(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::rubble::PingRequest,::rubble::Empty>* server_unary_streamer) = 0;
+  };
+  typedef WithStreamedUnaryMethod_Pulse<Service > StreamedUnaryService;
   typedef Service SplitStreamedService;
-  typedef Service StreamedService;
+  typedef WithStreamedUnaryMethod_Pulse<Service > StreamedService;
 };
 
 }  // namespace rubble

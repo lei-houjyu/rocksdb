@@ -1,11 +1,15 @@
 #include "rubble_sync_server.h"
 #include <atomic>
 #include <thread>
+#include <chrono>
+#include <inttypes.h>
 #include "db/memtable.h"
 #include <ctime>
 #include <unistd.h>
 #include <error.h>
 #include <string.h>
+#include "util/coding.h"
+
 
 void PrintStatus(RubbleKvServiceImpl *srv) {
   uint64_t r_now = 0, r_old = srv->r_op_counter_.load();
@@ -518,6 +522,26 @@ bool RubbleKvServiceImpl::IsTermination(Op* op) {
   return op->id() == -1;
 }
 
+// heartbeat between Replicator and db servers
+Status RubbleKvServiceImpl::Pulse(ServerContext* context, const PingRequest* request, Empty* reply) {
+  std::cout << "Checking...\n";
+  // while(true) {}
+  if (request->isaction()) {
+    if (request->isprimary()) {
+      std::cout << "becoming primary\n";
+      if (impl_!= nullptr) {
+        std::cout << "restarting compaction..." << "\n";
+        impl_->restartCompaction();
+        is_head_ = true;
+        std::cout << "flush enabled." << "\n";
+      }
+    } else { 
+      std::cout << "middle node or tail node failure\n";     
+    }
+  }
+  return Status::OK;
+}
+
 // Update the secondary's states by applying the version edits
 // and ship sst to the downstream node if necessary
 std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
@@ -648,6 +672,8 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
     rocksdb::FSDirectory* db_directory = impl_->directories_.GetDbDir();
     rocksdb::MemTableList* imm = default_cf_->imm();
     
+    std::cout << "memtable list size: " << imm->current()->GetMemlist().size() << "\n";
+    
     uint64_t current_next_file_num = version_set_->current_next_file_number();
     // set secondary version set's next file num according to the primary's next_file_num_
     version_set_->FetchAddFileNumber(next_file_num - current_next_file_num);
@@ -664,7 +690,11 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
       RUBBLE_LOG_ERROR(logger_, "[Secondary] logAndApply failed : %s \n" , s.ToString().c_str());
       std::cerr << "[Secondary] logAndApply failed : " << s.ToString() << std::endl;
     }
-
+    // CHANGE: delete file
+    for(const auto& edit: edits){
+      ios = DeleteSstFiles(edit);
+      assert(ios.ok());
+    }
     //Drop The corresponding MemTables in the Immutable MemTable List
     //If this version edit corresponds to a flush job
     if(is_flush){
@@ -760,7 +790,7 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
 // parse the version edit json string to rocksdb::VersionEdit 
 rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const json& j_edit /* json version edit */){
     rocksdb::VersionEdit edit;
-
+    // std::cout << j_edit.dump(4) << std::endl;
     assert(j_edit.contains("AddedFiles"));
     if(j_edit.contains("IsFlush")){ // means edit corresponds to a flush job
         edit.MarkFlush();
@@ -778,7 +808,6 @@ rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const jso
 
     assert(j_edit.contains("EditNumber"));
     edit.SetEditNumber(j_edit["EditNumber"].get<uint64_t>());
-    
     for(const auto& j_added_file : j_edit["AddedFiles"].get<std::vector<json>>()){
         // std::cout << j_added_file.dump(4) << std::endl;
         assert(!j_added_file["SmallestUserKey"].is_null());
@@ -804,12 +833,12 @@ rocksdb::VersionEdit RubbleKvServiceImpl::ParseJsonStringToVersionEdit(const jso
         uint64_t largest_seqno = j_added_file["LargestSeqno"].get<uint64_t>();
         int level = j_added_file["Level"].get<int>();
         uint64_t file_num = j_added_file["FileNumber"].get<uint64_t>();
+        uint64_t file_size = j_added_file["FileSize"].get<uint64_t>();
 
         if(j_added_file.contains("Slot")){
           edit.TrackSlot(file_num, j_added_file["Slot"].get<int>());
         }
-        uint64_t file_size = j_added_file["FileSize"].get<uint64_t>();
-
+        
         std::string file_checksum = j_added_file["FileChecksum"].get<std::string>();
         std::string file_checksum_func_name = j_added_file["FileChecksumFuncName"].get<std::string>();
         uint64_t file_creation_time = j_added_file["FileCreationTime"].get<uint64_t>();
@@ -844,6 +873,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::CreateSstPool(){
     // size_t write_buffer_size = cf_options_->write_buffer_size;
     uint64_t target_file_size_base = cf_options_->target_file_size_base;
     assert((target_file_size_base % (1 << 20)) == 0);
+    std::cout << "target file size: " << target_file_size_base << "\n";
     //assume the target_file_size_base is an integer multiple of 1MB
     // use one more MB because of the footer, and pad to the buffer_size
     uint64_t buffer_size = target_file_size_base + db_options_->sst_pad_len;
@@ -922,6 +952,10 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
         std::string sst = std::string("000000").replace(6 - len, len, std::to_string(sst_num)) + ".sst";
         std::string sst_fname = db_path_.path + "/" + sst;
 
+        uint64_t file_size = new_file.second.fd.GetFileSize();
+        // printf("filesize: %" PRIu64 " | target file base: %" PRIu64 "\n", file_size, cf_options_->target_file_size_base);
+        db_options_->sst_bit_map->TakeSlot(sst_num, slot, file_size/16777216);
+
         // update secondary's view of sst files
         if (symlink(slot_fname.c_str(), sst_fname.c_str()) != 0) {
           std::cout << "Error when linking " << slot_fname << " to " << sst_fname << ": " << strerror(errno) << std::endl;  
@@ -936,24 +970,36 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
             }
             std::string remote_sst_fname = remote_sst_dir + std::to_string(slot);
             // maybe not ship the sst file here, instead ship after we finish the logAndApply..
-            ios = rocksdb::CopySstFile(fs_, sst_fname, remote_sst_fname, 0,  true);
-            if (!ios.ok()){
-                std::cerr << "[ File Ship Failed ] : " << sst_num << std::endl;
+            // ios = rocksdb::CopySstFile(fs_, fname, remote_sst_fname, 0,  true);
+            auto ret =  rocksdb::copy_sst(sst_fname, remote_sst_fname);
+	          if (ret){
+                 std::cerr << "[ File Ship Failed ] : " << sst_num << std::endl;
             }else {
-                std::cout << "[ File Shipped ] : " << sst_num << std::endl;
+                 std::cout << "[ File Shipped ] : " << sst_num << std::endl;
             }
         }
     }
     
+    return ios;
+}
+
+rocksdb::IOStatus RubbleKvServiceImpl::DeleteSstFiles(const rocksdb::VersionEdit& edit) {
+    if(edit.IsTrivialMove()){
+      return rocksdb::IOStatus::OK();
+    }
+    rocksdb::IOStatus ios;
     // TODO: should delete file after logAndApply finishes and invalidated the block cache for the deleted files
     // delete the ssts(the hard link) that get deleted in a non-trivial compaction
     for(const auto& delete_file : edit.GetDeletedFiles()){
+        
         uint64_t file_number = delete_file.second;
         std::string file_path = rocksdb::MakeTableFileName(ioptions_->cf_paths[0].path, file_number);
-
         std::string sst_file_name = file_path.substr((file_path.find_last_of("/") + 1));
         // std::string fname = db_path_.path + "/" + sst_file_name;
         ios = fs_->FileExists(file_path, rocksdb::IOOptions(), nullptr);
+
+        db_options_->sst_bit_map->FreeSlot(file_number);
+
         if (ios.ok()){
             // Evict cache entry for the deleted file
             rocksdb::TableCache::Evict(table_cache_, file_number);

@@ -1522,11 +1522,13 @@ Status CompactionJob::InstallCompactionResults(
       edit->AddFile(compaction->output_level(), out.meta);
     }
   }
+  
+  // [RUBBLE]
   // IntraL0 compaction is diasbled, so shouldn't exist compaction whose output sst file is in Level 0
   assert(compaction->output_level() != 0);
   // RUBBLE: ship new sst file to the remote dir and delete the input sst file at the remote sst dir
   // Only the primary node will get here, non-primary nodes' flush and compaction are disabled
-  if(db_options_.is_rubble && db_options_.is_primary){
+  if(db_options_.is_rubble && db_options_.is_primary && !db_options_.is_tail){
     assert(db_options_.remote_sst_dir != "");
     IOStatus ios;
     std::string remote_sst_dir = db_options_.remote_sst_dir;
@@ -1552,6 +1554,7 @@ Status CompactionJob::InstallCompactionResults(
     }
     db_options_.sst_bit_map->FreeSlot(slots_to_free);
   }
+  // [RUBBLE END]
   
   return versions_->LogAndApply(compaction->column_family_data(),
                                 mutable_cf_options, compaction->edit(),
@@ -1607,15 +1610,16 @@ Status CompactionJob::OpenCompactionOutputFile(
   Status s;
   IOStatus io_s =
       NewWritableFile(fs_.get(), fname, &writable_file, file_options_);
+
   //[RUBBLE]
   if(db_options_.is_primary && db_options_.is_rubble){
     int sst_real = db_options_.sst_bit_map->TakeOneAvailableSlot(file_number, 1);
-    // int sst_real = GetAvailableSstSlot(db_options_.preallocated_sst_pool_size, file_number);
     std::string r_fname = db_options_.remote_sst_dir + std::to_string(sst_real);
     //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
     uint64_t buffer_size = sub_compact->compaction->mutable_cf_options()->target_file_size_base  + db_options_.sst_pad_len;
     ((PosixWritableFile*)(writable_file.get()))->SetRemoteFileInfo(r_fname, &db_options_, false, true, buffer_size);
   }
+  // [RUBBLE END]
 
   s = io_s;
   if (sub_compact->io_status.ok()) {
@@ -1681,12 +1685,14 @@ Status CompactionJob::OpenCompactionOutputFile(
       std::move(writable_file), fname, file_options_, env_, io_tracer_,
       db_options_.statistics.get(), listeners,
       db_options_.file_checksum_gen_factory.get()));
+
   //[RUBBLE]
   if(db_options_.is_rubble && db_options_.is_primary){
     size_t buffer_size = sub_compact->compaction->mutable_cf_options()->target_file_size_base  + db_options_.sst_pad_len;
     sub_compact->outfile->SetBufferAlignment(sub_compact->outfile->writable_file()->GetRequiredBufferAlignment());
     sub_compact->outfile->AllocateNewBuffer(buffer_size);
-  }   
+  }
+  // [RUBBLE END]   
 
   // If the Column family flag is to only optimize filters for hits,
   // we can skip creating filters if this is the bottommost_level where

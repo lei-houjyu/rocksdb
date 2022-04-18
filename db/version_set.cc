@@ -4340,7 +4340,7 @@ Status VersionSet::LogAndApply(
 
   mu->AssertHeld();
   // RUBBLE: trigger RPC calls to downstream node to sync RocksDB states.
-  if(db_options_->is_rubble && db_options_->is_primary){
+  if(db_options_->is_rubble && db_options_->is_primary && !db_options_->is_tail){
     log_and_apply_counter++;
     auto default_cf = GetColumnFamilySet()->GetDefault();
     auto vstorage = default_cf->current()->storage_info();
@@ -4427,6 +4427,7 @@ Status VersionSet::LogAndApply(
       log_and_apply_counter.fetch_add(1);
       ROCKS_LOG_INFO(db_options_->rubble_info_log, "[secondary] calling logAndApply， version edit: %s \n", 
                       edit->DebugJSON(edit->GetEditNumber(), false).c_str());
+      sync_counter.fetch_add(1);
     }
   }
   // RUBBLE END

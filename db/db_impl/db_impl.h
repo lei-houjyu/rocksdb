@@ -1020,6 +1020,11 @@ class DBImpl : public DB {
 
   Directories directories_;
 
+  void restartCompaction() {
+    immutable_db_options_.is_primary = true;
+    RUBBLE_LOG_INFO(immutable_db_options_.rubble_info_log, "Becoming primary\n");
+  }
+
  protected:
   const std::string dbname_;
   std::string db_id_;
@@ -1032,7 +1037,8 @@ class DBImpl : public DB {
   const DBOptions initial_db_options_;
   Env* const env_;
   std::shared_ptr<IOTracer> io_tracer_;
-  const ImmutableDBOptions immutable_db_options_;
+  // const ImmutableDBOptions immutable_db_options_;
+  ImmutableDBOptions immutable_db_options_;
   FileSystemPtr fs_;
   MutableDBOptions mutable_db_options_;
   Statistics* stats_;
