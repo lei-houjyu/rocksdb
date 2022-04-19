@@ -62,7 +62,7 @@ $ sudo mkfs.ext4 /dev/mapper/node--1--vg-db; sudo mkdir /mnt/db; sudo mount /dev
 $ sudo mkfs.ext4 /dev/mapper/node--1--vg-sst; sudo mkdir /mnt/sst; sudo mount /dev/mapper/node--1--vg-sst /mnt/sst
 ```
 
-After create the SST pool under /mnt/sst, make sure to re-mount `/dev/mapper/node--1--vg-sst` as read-only and no-load, so secondary will not modify the filesystem. But the corresponding primary still mount this partition with both read and write permissions by NVMeoF, because it need to ship SST files to this partition.
+After creating the SST pool under /mnt/sst, make sure to re-mount `/dev/mapper/node--1--vg-sst` as read-only and no-load, so secondary will not modify the filesystem. But the corresponding primary still mount this partition with both read and write permissions by NVMeoF, because it need to ship SST files to this partition.
 
 ```
 $ sudo umount /dev/mapper/node--1--vg-sst
