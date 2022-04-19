@@ -1,6 +1,6 @@
 # Overview
 
-In this document, we introduce how to use partition the disk with `fdisk` and `LVM`. We will partition m510's disk into:
+In this document, we introduce how to partition the disk with `fdisk` and `LVM`. We will partition m510's disk into:
 
 - /dev/mapper/node--1--vg-code: where the code sits
 - /dev/mapper/node--1--vg-db: where the primary's data (including both DB and SST files) and secondary's DB and SST symlinks locate.
@@ -62,7 +62,7 @@ $ sudo mkfs.ext4 /dev/mapper/node--1--vg-db; sudo mkdir /mnt/db; sudo mount /dev
 $ sudo mkfs.ext4 /dev/mapper/node--1--vg-sst; sudo mkdir /mnt/sst; sudo mount /dev/mapper/node--1--vg-sst /mnt/sst
 ```
 
-After creating the SST pool under /mnt/sst, make sure to re-mount `/dev/mapper/node--1--vg-sst` as read-only and no-load, so secondary will not modify the filesystem. But the corresponding primary still mount this partition with both read and write permissions by NVMeoF, because it need to ship SST files to this partition.
+After creating the SST pool under /mnt/sst, make sure to re-mount `/dev/mapper/node--1--vg-sst` as read-only and no-load, so secondary will not modify the filesystem. But the corresponding primary still mounts this partition with both read and write permissions by NVMeoF, because it need to ship SST files to this partition.
 
 ```
 $ sudo umount /dev/mapper/node--1--vg-sst
