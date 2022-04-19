@@ -74,9 +74,11 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
     };
 
 RubbleKvServiceImpl::~RubbleKvServiceImpl(){
+  std::cout << "Deconstruct RubbleKvServiceImpl\n";
   delete db_;
   for (std::map< std::thread::id, std::map< uint64_t, std::queue<SingleOp*> >* >::iterator it = buffers_.begin();
     it != buffers_.end(); it++) {
+      assert(it->second->size() == 0);
       delete it->second;
     }
 }
@@ -87,10 +89,10 @@ rocksdb::ColumnFamilyData* RubbleKvServiceImpl::GetCFD() {
 
 int RubbleKvServiceImpl::QueuedOpNum() {
   int num = 0;
-  for (std::map< std::thread::id, std::map< uint64_t, std::queue<SingleOp*> >* >::iterator it = buffers_.begin();
+  for (auto it = buffers_.begin();
     it != buffers_.end(); it++) {
       try {
-        for (std::map<uint64_t, std::queue<SingleOp*>>::iterator itt = it->second->begin();
+        for (auto itt = it->second->begin();
           itt != it->second->end(); itt++) {
             num += itt->second.size();
           }
@@ -131,6 +133,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     std::map<uint64_t, std::queue<SingleOp *>> *op_buffer = 
       new std::map<uint64_t, std::queue<SingleOp *>>();
     buffers_[std::this_thread::get_id()] = op_buffer;
+
     while (stream->Read(&tmp_op)) {
       if (is_rubble_ && !is_head_) {
         ApplyBufferedVersionEdits();
@@ -189,18 +192,19 @@ void RubbleKvServiceImpl::CleanBufferedOps(Forwarder* forwarder,
                                            ReplyClient* reply_client,
                                            std::map<uint64_t, std::queue<SingleOp *>> *op_buffer) {
   while (!op_buffer->empty()) {
-    for (std::map<uint64_t, std::queue<SingleOp*>>::iterator it = op_buffer->begin(); it != op_buffer->end();) {
+    for (auto it = op_buffer->begin(); it != op_buffer->end();) {
         uint64_t id = it->first;
         if (should_execute(id)) {
           while (!(*op_buffer)[id].empty()) {
             HandleSingleOp((*op_buffer)[id].front(), forwarder, reply_client);
             (*op_buffer)[id].pop();
           }
-          it == op_buffer->erase(it);
+        
+          op_buffer->erase(it++);
         } else {
           ++it;
         }
-      }
+    }
   }
 }
 
@@ -303,7 +307,7 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
       assert(id == singleOp->target_mem_id());
     }
 
-    for (std::map<uint64_t, std::queue<SingleOp*>>::iterator it = op_buffer->begin(); it != op_buffer->end();) {
+    for (auto it = op_buffer->begin(); it != op_buffer->end();) {
         id = it->first;
         if (should_execute(id)) {
           while (!(*op_buffer)[id].empty()) {
