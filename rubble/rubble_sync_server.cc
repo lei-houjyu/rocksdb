@@ -110,6 +110,7 @@ static std::atomic<uint32_t> thread_counter{0};
 static std::unordered_map<std::thread::id, uint32_t> map;
 static std::mutex mu;
 static std::mutex debug_mu;
+static std::mutex buffers_mu;
 static std::map<uint64_t, uint64_t> primary_op_cnt_map;
 #define G_MEM_ARR_LEN 1024
 #define BATCH_SIZE 1000
@@ -132,7 +133,10 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     // op_buffer[mem_id, op_queue]
     std::map<uint64_t, std::queue<SingleOp *>> *op_buffer = 
       new std::map<uint64_t, std::queue<SingleOp *>>();
+
+    buffers_mu.lock();
     buffers_[std::this_thread::get_id()] = op_buffer;
+    buffers_mu.unlock();
 
     while (stream->Read(&tmp_op)) {
       if (is_rubble_ && !is_head_) {
