@@ -89,10 +89,14 @@ int RubbleKvServiceImpl::QueuedOpNum() {
   int num = 0;
   for (std::map< std::thread::id, std::map< uint64_t, std::queue<SingleOp*> >* >::iterator it = buffers_.begin();
     it != buffers_.end(); it++) {
-      for (std::map<uint64_t, std::queue<SingleOp*>>::iterator itt = it->second->begin();
-        itt != it->second->end(); itt++) {
-          num += itt->second.size();
-        }
+      try {
+        for (std::map<uint64_t, std::queue<SingleOp*>>::iterator itt = it->second->begin();
+          itt != it->second->end(); itt++) {
+            num += itt->second.size();
+          }
+      } catch (std::exception& e) {
+          std::cerr << "Exception caught : " << e.what() << std::endl;
+      }
     }
   return num;
 }
