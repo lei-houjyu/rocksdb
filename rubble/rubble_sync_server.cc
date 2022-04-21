@@ -405,6 +405,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       }
 
       s = db_->Put(rocksdb::WriteOptions(), singleOp->key(), singleOp->value());
+      assert(s.get_target_mem_id() != 0);
       w_op_counter_.fetch_add(1);
       if (!s.ok()) {
         RUBBLE_LOG_ERROR(logger_, "Put Failed : %s \n", s.ToString().c_str());
@@ -412,31 +413,37 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       }
 
       if (is_head_) {
+        assert(singleOp->target_mem_id() == 0);
         singleOp->set_target_mem_id(s.get_target_mem_id());
+        histogram[singleOp->target_mem_id()].fetch_add(1);
         // std::cout << "id: " << singleOp->target_mem_id() << std::endl;
-        if (rocksdb::g_mem_op_cnt != 0) {
+        if (rocksdb::g_mem_op_cnt != 0 && s.get_target_mem_id() == rocksdb::g_mem_id) {
           rocksdb::g_mem_op_cnt_mtx.lock();
-          if (rocksdb::g_mem_op_cnt != 0) {
-            std::cout << "set mem_op_cnt " << rocksdb::g_mem_op_cnt << std::endl;
+          if (rocksdb::g_mem_op_cnt != 0 && s.get_target_mem_id() == rocksdb::g_mem_id) {
+            std::cout << "set " << s.get_target_mem_id() - 1 << " 's mem_op_cnt " << rocksdb::g_mem_op_cnt << std::endl;
             singleOp->set_mem_op_cnt(rocksdb::g_mem_op_cnt);
             rocksdb::g_mem_op_cnt = 0;
+            rocksdb::g_mem_id = 0;
           }
           rocksdb::g_mem_op_cnt_mtx.unlock();
         }
       }
 
-      if (is_tail_) {
+      if (is_tail_) { 
+        assert(s.get_target_mem_id() == get_mem_id() || s.get_target_mem_id() == get_mem_id() - 1);
+        assert(!is_rubble_ || singleOp->target_mem_id() == get_mem_id());
+        histogram[singleOp->target_mem_id()].fetch_add(1);
         singleOpReply = reply->add_replies();
+        singleOpReply->set_type(rubble::PUT);
         singleOpReply->set_key(singleOp->key());
-        singleOpReply->set_type(rubble::UPDATE);
         singleOpReply->set_status(s.ToString());
-        if (s.ok()) {
+        if (s.ok()) { 
           singleOpReply->set_ok(true);
-          singleOpReply->set_value(value);
         } else {
           singleOpReply->set_ok(false);
-        }
+        }  
       }
+
       break;
 
     default:
