@@ -19,8 +19,8 @@ int main(int argc, char** argv) {
   const std::string primary_server_address = std::string("0.0.0.0:") +  argv[1];
   const std::string secondary_server_address = argv[2];
   const std::string remote_sst_dir = std::string("/mnt/remote-sst/") + argv[3];
-  const std::string db_path = "/mnt/db/primary/db";
-  const std::string sst_path = "/mnt/db/primary/sst_dir";
+  const std::string db_path = std::string("/mnt/db/") + argv[3] + "/primary/db";
+  const std::string sst_path = std::string("/mnt/db/") + argv[3] + "/primary/sst_dir";
   rocksdb::DB* primary = GetDBInstance(db_path, sst_path, remote_sst_dir, 
     "", secondary_server_address, false, true, false);
   bool is_async = false;
