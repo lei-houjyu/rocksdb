@@ -10,18 +10,19 @@
 
 int main(int argc, char** argv) {
   
-  const std::string primary_server_address = "0.0.0.0:50051";
-  if(argc != 2){
-    std::cout << "Usage: ./program secondary_addr(example: 10.10.1.2:50050)\n";
+
+  if(argc != 4){
+    std::cout << "Usage: ./program primary_server_port secondary_addr shard_num \n";
     return 0;
   }
 
-  // const std::string remote_sst_dir= "/mnt/nvme1n1p4/archive_dbs/tail/sst_dir";
-  const std::string remote_sst_dir= "/mnt/remote-sst";
-  const std::string secondary_server_address= argv[1];
-  const std::string db_path = "/mnt/db/primary/db";
-  const std::string sst_path = "/mnt/db/primary/sst_dir";
-  rocksdb::DB* primary = GetDBInstance(db_path, sst_path, remote_sst_dir, "", secondary_server_address, false, true, false);
+  const std::string primary_server_address = std::string("0.0.0.0:") +  argv[1];
+  const std::string secondary_server_address = argv[2];
+  const std::string remote_sst_dir = std::string("/mnt/remote-sst/") + argv[3];
+  const std::string db_path = std::string("/mnt/db/") + argv[3] + "/primary/db";
+  const std::string sst_path = std::string("/mnt/db/") + argv[3] + "/primary/sst_dir";
+  rocksdb::DB* primary = GetDBInstance(db_path, sst_path, remote_sst_dir, 
+    "", secondary_server_address, false, true, false);
   bool is_async = false;
   if(is_async){
     RunAsyncServer(primary, primary_server_address);
