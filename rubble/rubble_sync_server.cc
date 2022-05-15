@@ -312,17 +312,17 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
     }
 
     for (auto it = op_buffer->begin(); it != op_buffer->end();) {
-        id = it->first;
-        if (should_execute(id)) {
-          while (!(*op_buffer)[id].empty()) {
-            HandleSingleOp((*op_buffer)[id].front(), forwarder, reply_client);
-            (*op_buffer)[id].pop();
-          }
-          it = op_buffer->erase(it);
-        } else {
-          ++it;
+      id = it->first;
+      if (should_execute(id)) {
+        while (!(*op_buffer)[id].empty()) {
+          HandleSingleOp((*op_buffer)[id].front(), forwarder, reply_client);
+          (*op_buffer)[id].pop();
         }
+        op_buffer->erase(it++);
+      } else {
+        ++it;
       }
+    }
   }
 }
 
