@@ -160,12 +160,14 @@ void ReconstructSstBitMap(const std::string& map_log_fname, std::shared_ptr<SstB
  *                   when disabled, all nodes are running flush/compaction
  * @param is_primary set to true for first/primary node in the chain 
  * @param is_tail    set to true for tail node in the chain
+ * @param shard_id   used as the unique identifier of logs
  */
 rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir, 
                                 const string& remote_sst_dir,
                                 const string& sst_pool_dir,
                                 const string& target_addr, 
-                                bool is_rubble, bool is_primary, bool is_tail){
+                                bool is_rubble, bool is_primary, bool is_tail,
+                                const std::string shard_id){
 
    rocksdb::DB* db;
    rocksdb::DBOptions db_options;
@@ -218,7 +220,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    db_options.env = rocksdb::Env::Default();
 
    // add logger for rubble
-   std::string rubble_info_log_fname;
+   std::string rubble_info_log_fname = std::string("/") + shard_id;
    // the default path for the sst bit map log file, will try to reconstruct map from this file
    std::string rubble_log_path {"/mnt/code/my_rocksdb/rubble/log"}; 
    std::string map_log_fname {"/mnt/code/my_rocksdb/rubble/log/sst_bit_map_log"}; // this is the path of the old sst_bit_map log
@@ -239,11 +241,11 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    std::shared_ptr<rocksdb::Logger> map_logger = nullptr;
    db_options.env->CreateDirIfMissing(rubble_log_path).PermitUncheckedError(); 
    if(db_options.is_primary){
-      rubble_info_log_fname = rubble_log_path.append("/primary");
+      rubble_info_log_fname = rubble_log_path.append("_primary_log");
    }else if(db_options.is_tail){
-      rubble_info_log_fname = rubble_log_path.append("/tail");
+      rubble_info_log_fname = rubble_log_path.append("_tail_log");
    }else{
-      rubble_info_log_fname = rubble_log_path.append("/secondary");
+      rubble_info_log_fname = rubble_log_path.append("_secondary_log");
    }
 
   // create rubble info logger
@@ -269,7 +271,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       }
       // the sst pool size should be set to size_of_your_data/sst_file_size
       // set to 450 for 5GB db and 16MB sst_file_size
-      db_options.preallocated_sst_pool_size = 1000;
+      db_options.preallocated_sst_pool_size = 500;
       // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);
       db_options.sst_bit_map = std::make_shared<SstBitMap>(
             db_options.preallocated_sst_pool_size, 
