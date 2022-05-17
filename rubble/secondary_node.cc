@@ -19,7 +19,8 @@ int main(int argc, char** argv) {
   const std::string db_path = "/mnt/db/secondary";
   const std::string sst_path = "/mnt/db/secondary/sst_dir";
   const std::string sst_pool_path = "/mnt/sst";
-  rocksdb::DB* primary = GetDBInstance(db_path, sst_path, remote_sst_dir, sst_pool_path, secondary_server_address, false, false, false);
+  rocksdb::DB* primary = GetDBInstance(db_path, sst_path, remote_sst_dir, 
+    sst_pool_path, secondary_server_address, false, false, false, "shard-null");
   bool is_async = false;
   if(is_async){
     RunAsyncServer(primary, primary_server_address);
