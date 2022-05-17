@@ -1237,12 +1237,12 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
     uint32_t local_write_latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
     uint32_t remote_write_latency = std::chrono::duration_cast<std::chrono::milliseconds>(r_end_time - r_start_time).count();
 
-    RUBBLE_LOG_INFO(
-        db_options_->rubble_info_log,
-        "%s write %lu MB to [local] %s ( %u ms), to [remote] %s (%u ms) \n",
-        type.c_str(), (nbytes >> 20), 
-        filename_.substr((filename_.find_last_of("/") + 1)).c_str(),local_write_latency, 
-        r_fname_.substr((r_fname_.find_last_of("/") + 1)).c_str(), remote_write_latency);
+    // RUBBLE_LOG_INFO(
+    //     db_options_->rubble_info_log,
+    //     "%s write %lu MB to [local] %s ( %u ms), to [remote] %s (%u ms) \n",
+    //     type.c_str(), (nbytes >> 20), 
+    //     filename_.substr((filename_.find_last_of("/") + 1)).c_str(),local_write_latency, 
+    //     r_fname_.substr((r_fname_.find_last_of("/") + 1)).c_str(), remote_write_latency);
   }
 
   filesize_ += nbytes;

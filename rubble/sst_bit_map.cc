@@ -57,7 +57,7 @@ int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
             }
             // if still couldn't find it
             if(cur > end){
-                std::cerr << "total " << num_slots_taken_[times - 1] << " taken\n";
+                std::cerr << "times: " << times << ", total " << num_slots_taken_[times - 1] << " taken\n";
                 assert(false);
             }
         }
