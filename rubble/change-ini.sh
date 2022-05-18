@@ -9,4 +9,4 @@ file=$1
 key=$2
 val=$3
 
-sed -i "s/${key}=.*/${key}=${value}/g" $file
+sed -i "s/${key}=.*/${key}=${val}/g" $file
