@@ -83,6 +83,7 @@ Status VerifyBlockChecksum(ChecksumType type, const char* data,
           << ", [block]: " << blockBuff << "\n";
     */
   
+  assert(s.ok());
   return s;
 }
 }  // namespace ROCKSDB_NAMESPACE

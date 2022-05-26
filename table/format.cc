@@ -287,6 +287,7 @@ Status ReadFooterFromFile(const IOOptions& opts, RandomAccessFileReader* file,
                           uint64_t file_size, Footer* footer,
                           uint64_t enforce_table_magic_number) {
   if (file_size < Footer::kMinEncodedLength) {
+    assert(false);
     return Status::Corruption("file is too short (" + ToString(file_size) +
                               " bytes) to be an "
                               "sstable: " +
@@ -323,6 +324,7 @@ Status ReadFooterFromFile(const IOOptions& opts, RandomAccessFileReader* file,
   // Check that we actually read the whole footer from the file. It may be
   // that size isn't correct.
   if (footer_input.size() < Footer::kMinEncodedLength) {
+    assert(false);
     return Status::Corruption("file is too short (" + ToString(file_size) +
                               " bytes) to be an "
                               "sstable " +
@@ -336,6 +338,7 @@ Status ReadFooterFromFile(const IOOptions& opts, RandomAccessFileReader* file,
   }
   if (enforce_table_magic_number != 0 &&
       enforce_table_magic_number != footer->table_magic_number()) {
+    assert(false);
     return Status::Corruption(
         "Bad table magic number: expected " +
         ToString(enforce_table_magic_number) + ", found " +
