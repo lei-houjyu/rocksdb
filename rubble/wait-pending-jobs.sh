@@ -1,19 +1,17 @@
 #!/bin/bash
 
 if [ $# != 1 ]; then
-    echo "Usage bash wait-pending-jobs.sh name"
+    echo "Usage bash wait-pending-jobs.sh log_path"
     exit
 fi
 
-name=$1
+log=$1
 
 a=-1
-b=`grep JOB /mnt/sdb/archive_dbs/${name}/db/LOG | wc -l`
+b=`grep JOB $log | wc -l`
 
 while [ $a != $b ]; do
     a=$b
-    b=`grep JOB /mnt/sdb/archive_dbs/${name}/db/LOG | wc -l`
-    sleep 10
+    b=`grep JOB $log | wc -l`
+    sleep 15
 done
-
-sudo killall ${name}_node 
