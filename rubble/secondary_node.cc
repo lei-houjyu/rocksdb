@@ -7,25 +7,32 @@
  */
 int main(int argc, char** argv) {
 
-  const std::string primary_server_address = "0.0.0.0:50053";
-  if(argc != 2){
-    std::cout << "Usage: ./program secondary_addr(example: 10.10.1.2:50050)\n";
-    return 0;
+  std::string target_addr = "";
+  std::string server_port = "50151";
+  std::string shard_num = "shard-0";
+  std::string role_tag = "secondary-1";
+
+  if (argc == 5) {
+    server_port = argv[1];
+    target_addr = argv[2];
+    shard_num = argv[3];
+    role_tag = argv[4];
   }
 
-  // const std::string remote_sst_dir= "/mnt/nvme1n1p4/archive_dbs/tail/sst_dir";
-  const std::string remote_sst_dir = "/mnt/remote-sst";
-  const std::string secondary_server_address= argv[1];
-  const std::string db_path = "/mnt/db/secondary";
-  const std::string sst_path = "/mnt/db/secondary/sst_dir";
-  const std::string sst_pool_path = "/mnt/sst";
-  rocksdb::DB* primary = GetDBInstance(db_path, sst_path, remote_sst_dir, 
-    sst_pool_path, secondary_server_address, false, false, false, "shard-null");
+  const std::string server_addr = std::string("0.0.0.0:") + server_port;
+  std::string db_path = std::string("/mnt/db/") + shard_num + "/" + role_tag + "/db";
+  std::string sst_path = std::string("/mnt/db/") + shard_num + "/" + role_tag + "/sst_dir";
+  std::string remote_sst_path = std::string("/mnt/remote-sst/") + shard_num;
+  std::string sst_pool_path = std::string("/mnt/sst/") + shard_num; 
+  rocksdb::DB* db = GetDBInstance(db_path, sst_path, remote_sst_path, sst_pool_path, 
+    target_addr, false, false, false, shard_num);
+  
   bool is_async = false;
   if(is_async){
-    RunAsyncServer(primary, primary_server_address);
+    RunAsyncServer(db, server_addr);
   }else{
-    RunServer(primary, primary_server_address);
+    RunServer(db, server_addr);
   }
+
   return 0;
 }
