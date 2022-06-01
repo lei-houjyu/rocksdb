@@ -374,6 +374,9 @@ enum Tickers : uint32_t {
   // # of files deleted immediately by sst file manger through delete scheduler.
   FILES_DELETED_IMMEDIATELY,
 
+  // times that GetNextFile is called
+  NO_FILE_TOUCHED,
+
   TICKER_ENUM_MAX
 };
 
