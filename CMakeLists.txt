@@ -1101,8 +1101,8 @@ option(WITH_JNI "build with JNI" OFF)
 CMAKE_DEPENDENT_OPTION(WITH_TESTS "build with tests" OFF
   "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 option(WITH_BENCHMARK_TOOLS "build with benchmarks" OFF)
-option(WITH_CORE_TOOLS "build with ldb and sst_dump" OFF)
-option(WITH_TOOLS "build with tools" OFF)
+option(WITH_CORE_TOOLS "build with ldb and sst_dump" ON)
+option(WITH_TOOLS "build with tools" ON)
 
 if(WITH_TESTS OR WITH_BENCHMARK_TOOLS OR WITH_TOOLS OR WITH_JNI OR JNI)
   include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/third-party/gtest-1.8.1/fused-src)

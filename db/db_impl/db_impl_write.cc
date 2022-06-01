@@ -15,6 +15,7 @@
 #include "options/options_helper.h"
 #include "test_util/sync_point.h"
 #include "util/cast_util.h"
+#include <iostream>
 
 namespace ROCKSDB_NAMESPACE {
 // Convenience methods

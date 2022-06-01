@@ -13,6 +13,7 @@
 #include "file/sst_file_manager_impl.h"
 #include "file/writable_file_writer.h"
 #include "rocksdb/env.h"
+#include <iostream>
 
 namespace ROCKSDB_NAMESPACE {
 

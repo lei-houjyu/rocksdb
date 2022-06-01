@@ -21,6 +21,7 @@
 #include "table/merging_iterator.h"
 #include "test_util/sync_point.h"
 #include "util/coding.h"
+#include <iostream>
 
 namespace ROCKSDB_NAMESPACE {
 

@@ -22,6 +22,7 @@
 #include <vector>
 #include <iomanip>
 #include <chrono>
+#include <iostream>
 
 #include "compaction/compaction.h"
 #include "db/blob/blob_file_cache.h"
@@ -1886,6 +1887,7 @@ void Version::Get(const ReadOptions& read_options, const LookupKey& k,
       storage_info_.num_non_empty_levels_, &storage_info_.file_indexer_,
       user_comparator(), internal_comparator());
   FdWithKeyRange* f = fp.GetNextFile();
+  RecordTick(db_statistics_, NO_FILE_TOUCHED);
 
   while (f != nullptr) {
     if (*max_covering_tombstone_seq > 0) {
@@ -1968,6 +1970,7 @@ void Version::Get(const ReadOptions& read_options, const LookupKey& k,
         return;
     }
     f = fp.GetNextFile();
+    RecordTick(db_statistics_, NO_FILE_TOUCHED);
   }
   if (db_statistics_ != nullptr) {
     get_context.ReportCounters();
@@ -4404,13 +4407,15 @@ Status VersionSet::LogAndApply(
       }
     
       if(!db_options_->piggyback_version_edits){
-        auto start_time = std::chrono::high_resolution_clock::now();
-        assert(db_options_->sync_client != nullptr);
-        std::cout << "[Primary] calling Sync [" << sync_counter << "] times, ";
-        db_options_->sync_client->Sync(j_args.dump());
-        auto end_time = std::chrono::high_resolution_clock::now();
-        auto latency = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-        std::cout <<  "latency : " << latency << " us, type: " << type << std::endl;
+        // we always do piggybacking
+        assert(false);
+        // auto start_time = std::chrono::high_resolution_clock::now();
+        // assert(db_options_->sync_client != nullptr);
+        // std::cout << "[Primary] calling Sync [" << sync_counter << "] times, ";
+        // db_options_->sync_client->Sync(j_args.dump());
+        // auto end_time = std::chrono::high_resolution_clock::now();
+        // auto latency = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+        // std::cout <<  "latency : " << latency << " us, type: " << type << std::endl;
       }else{
         ROCKS_LOG_INFO(db_options_->rubble_info_log, "[Primary] : %s \n", j_args.dump(4).c_str());
         db_options_->edits->AddEdit(std::move(j_args.dump()));

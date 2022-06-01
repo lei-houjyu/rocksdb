@@ -29,7 +29,6 @@
 #include "rocksdb/version.h"
 #include "rocksdb/write_buffer_manager.h"
 //RUBBLE 
-#include "rubble/sync_client.h"
 #include "rubble/sst_bit_map.h"
 #include "rubble/edits.h"
 
@@ -1239,12 +1238,6 @@ struct DBOptions {
 
   // the max size of memtables possibly appearing in a flush
   int max_num_mems_in_flush = 10;
-
-  // grpc channel 
-  std::shared_ptr<grpc::Channel> channel = nullptr;
-
-  // a client used to do Sync rpc to downstream node by the non-tail node
-  std::shared_ptr<SyncClient> sync_client = nullptr;
 
   // primary's view of secondary's slots, maintains a mapping between slot and sst file
   std::shared_ptr<SstBitMap> sst_bit_map = nullptr; 

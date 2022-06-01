@@ -603,8 +603,6 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       preallocated_sst_pool_size(options.preallocated_sst_pool_size),
       sst_pad_len(options.sst_pad_len),
       max_num_mems_in_flush(options.max_num_mems_in_flush),
-      channel(options.channel),
-      sync_client(options.sync_client),
       sst_bit_map(options.sst_bit_map),
       piggyback_version_edits(options.piggyback_version_edits),
       edits(options.edits)
