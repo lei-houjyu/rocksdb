@@ -213,9 +213,9 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    
    rocksdb::ColumnFamilyOptions cf_options = loaded_cf_descs[0].options;
 
-   if(db_options.target_address != ""){
-      db_options.channel = grpc::CreateChannel(db_options.target_address, grpc::InsecureChannelCredentials());
-   }
+   // if(db_options.target_address != ""){
+   //    db_options.channel = grpc::CreateChannel(db_options.target_address, grpc::InsecureChannelCredentials());
+   // }
 
    db_options.env = rocksdb::Env::Default();
 
@@ -266,10 +266,10 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       db_options.piggyback_version_edits = true;
       db_options.edits = std::make_shared<Edits>();
 
-      if(!db_options.is_tail && !db_options.piggyback_version_edits){
-         assert(db_options.target_address != "");
-         db_options.sync_client = std::make_shared<SyncClient>(db_options.channel);
-      }
+      // if(!db_options.is_tail && !db_options.piggyback_version_edits){
+      //    assert(db_options.target_address != "");
+      //    db_options.sync_client = std::make_shared<SyncClient>(db_options.channel);
+      // }
       // the sst pool size should be set to size_of_your_data/sst_file_size
       // set to 450 for 5GB db and 16MB sst_file_size
       db_options.preallocated_sst_pool_size = 1000;

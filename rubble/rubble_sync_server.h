@@ -175,9 +175,6 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     std::atomic<uint64_t> log_apply_counter_{0};
 
-    // client for making Sync rpc call to downstream node
-    std::shared_ptr<SyncClient> sync_client_;
-
     std::shared_ptr<Edits> edits_;
 
     // is rubble mode? If set to false, server runs a vanilla rocksdb

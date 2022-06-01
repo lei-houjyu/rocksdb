@@ -48,7 +48,6 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
        piggyback_edits_(db_options_->piggyback_version_edits),
        edits_(db_options_->edits),
        db_path_(db_options_->db_paths.front()),
-       sync_client_(db_options_->sync_client),
        column_family_set_(version_set_->GetColumnFamilySet()),
        default_cf_(column_family_set_->GetDefault()),
        ioptions_(default_cf_->ioptions()),
@@ -68,7 +67,8 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
         }
         std::cout << "target address : " << db_options_->target_address << std::endl;
         if(db_options_->target_address != "") {
-          channel_ = db_options_->channel;
+          // channel_ = db_options_->channel;
+          channel_ = grpc::CreateChannel(db_options_->target_address, grpc::InsecureChannelCredentials());
           assert(channel_ != nullptr);
         }
     };
@@ -335,7 +335,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
   switch (singleOp->type()) {
     case rubble::GET:
       assert(is_tail_);
-      s = db_->Get(rocksdb::ReadOptions(), singleOp->key(), &value);
+      s = db_->Get(rocksdb::ReadOptions(/*verify_checksums*/false, /*fill_cache*/true), singleOp->key(), &value);
       r_op_counter_.fetch_add(1);
       if (!s.ok()){
         RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
@@ -399,7 +399,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       break;
 
     case rubble::UPDATE:
-      s = db_->Get(rocksdb::ReadOptions(), singleOp->key(), &value);
+      s = db_->Get(rocksdb::ReadOptions(/*verify_checksums*/false, /*fill_cache*/true), singleOp->key(), &value);
       r_op_counter_.fetch_add(1);
       if (!s.ok()) {
         RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
