@@ -290,16 +290,28 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
     if (!is_ooo_write(singleOp)) {
       HandleSingleOp(singleOp, forwarder, reply_client);
     } else {
-      rocksdb::MemTable* mem = default_cf_->mem();
-      
+      // The order of setting g_mem_op_cnt_arr/g_mem_id_arr and check if mem->GetID() == switched_mem is important.
+      // To switch a memtable in Rubble secondaries, we have to make sure its num_operations equals to num_target_op,
+      // which means we should set the num_target_op field for every memtable. The set_num_target_op() only happens in
+      // two places, i.e., here and DBImpl::SwitchMemTable(). We made the following ordering to guarantee at least one
+      // check will succeed.
+      //
+      // Time
+      // | Thread 1 (SwitchMemtable)               Thread 2 (HandleOp)
+      // | cfd->SetMemtable(new_mem)               set g_mem_op_cnt_arr[id]
+      // | check if (g_mem_id_arr[id] == mem_id)   set g_mem_id_arr[id]
+      // |                                         mem = default_cf_->mem()
+      // |                                         check if (mem->GetID() == switched_mem)
+      // v
       if (singleOp->mem_op_cnt() != 0) {
         uint64_t target_mem = singleOp->target_mem_id();
         uint64_t switched_mem = target_mem - 1;
         uint64_t target_op_cnt = singleOp->mem_op_cnt();
         std::cout << "received mem_op_cnt for mem " << switched_mem << " target_op_cnt " << target_op_cnt << std::endl;
 
-        rocksdb::g_mem_id_arr[switched_mem % G_MEM_ARR_LEN] = switched_mem;
         rocksdb::g_mem_op_cnt_arr[switched_mem % G_MEM_ARR_LEN] = target_op_cnt;
+        rocksdb::g_mem_id_arr[switched_mem % G_MEM_ARR_LEN] = switched_mem;
+        rocksdb::MemTable* mem = default_cf_->mem();
 
         if (mem->GetID() == switched_mem) {
           std::cout << "set " << mem->GetID() << " 's target_op to " << target_op_cnt << std::endl;
@@ -335,7 +347,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
   switch (singleOp->type()) {
     case rubble::GET:
       assert(is_tail_);
-      s = db_->Get(rocksdb::ReadOptions(/*verify_checksums*/false, /*fill_cache*/true), singleOp->key(), &value);
+      s = db_->Get(rocksdb::ReadOptions(/*verify_checksums*/true, /*fill_cache*/true), singleOp->key(), &value);
       r_op_counter_.fetch_add(1);
       if (!s.ok()){
         RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
@@ -399,7 +411,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       break;
 
     case rubble::UPDATE:
-      s = db_->Get(rocksdb::ReadOptions(/*verify_checksums*/false, /*fill_cache*/true), singleOp->key(), &value);
+      s = db_->Get(rocksdb::ReadOptions(/*verify_checksums*/true, /*fill_cache*/true), singleOp->key(), &value);
       r_op_counter_.fetch_add(1);
       if (!s.ok()) {
         RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
