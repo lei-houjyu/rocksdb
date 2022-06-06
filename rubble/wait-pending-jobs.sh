@@ -12,6 +12,6 @@ b=`grep JOB $log | wc -l`
 
 while [ $a != $b ]; do
     a=$b
-    b=`grep JOB $log | wc -l`
     sleep 15
+    b=`grep JOB $log | wc -l`
 done
