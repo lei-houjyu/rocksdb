@@ -43,9 +43,10 @@ message Op {
 
 message OpReply {
     string sync_reply = 1;
-    int32 client_idx = 2;
-    repeated SingleOpReply replies = 3;
-    repeated int64 time = 4;
+    int32 shard_idx = 2;
+    int32 client_idx = 3;
+    repeated SingleOpReply replies = 4;
+    repeated int64 time = 5;
 }
 
 message SingleOp{

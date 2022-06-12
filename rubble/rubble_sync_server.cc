@@ -145,6 +145,11 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
 
       Op* request = new Op(tmp_op);
       OpReply* reply = new OpReply();
+      // if (request->ops(0).type() == rubble::PUT) {
+      //   for (int i = 0; i < request->ops_size(); i++) {
+      //     std::cout << "Check key: " << request->ops(i).key() << " value: " << request->ops(i).value() << std::endl;
+      //   }
+      // }
 
       if (IsTermination(request)) {
         std::cout << "Received termination msg\n";
@@ -263,6 +268,7 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
   assert(op->ops_size() <= BATCH_SIZE);
   assert(reply->replies_size() == 0);
 
+  reply->set_shard_idx(op->shard_idx());
   reply->set_client_idx(op->client_idx());
   reply->add_time(op->time(0));
 
@@ -340,6 +346,7 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
 
 void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarder, ReplyClient* reply_client) {
   rocksdb::Status s;
+  // rocksdb::Status ss;
   std::string value;
   SingleOpReply* singleOpReply;
   OpReply* reply = (OpReply*)singleOp->reply_ptr();
@@ -348,10 +355,11 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
     case rubble::GET:
       assert(is_tail_);
       s = db_->Get(rocksdb::ReadOptions(/*verify_checksums*/true, /*fill_cache*/true), singleOp->key(), &value);
+      // std::cout << "Get status: " << s.ToString() << " key: " << singleOp->key() << " value: " << value << std::endl;
       r_op_counter_.fetch_add(1);
       if (!s.ok()){
         RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
-        // assert(false);
+        assert(false);
       }
       
       singleOpReply = reply->add_replies();
@@ -374,6 +382,12 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
         RUBBLE_LOG_ERROR(logger_, "Put Failed : %s \n", s.ToString().c_str());
         assert(false);
       }
+
+      // sanity check
+      // ss = db_->Get(rocksdb::ReadOptions(), singleOp->key(), &value);
+      // std::cout << "Put status: " << ss.ToString() << " key: " << singleOp->key() 
+      //           << " value: " << singleOp->value() << " Get value: " << value << std::endl;
+      // assert(ss.ok());
 
       if (is_head_) {
         assert(singleOp->target_mem_id() == 0);
