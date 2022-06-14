@@ -37,7 +37,12 @@ class ReplyClient{
     void SendReply(const OpReply& reply){
       // std::cout << "Sent reply, size : "  << reply.reply_size() << std::endl;
       if (!stream_->Write(reply)) {
-        std::cout << "sendReply fail!\n";
+        stream_->WritesDone();
+        Status s = stream_->Finish();
+        std::cout << "sendReply fail!"
+                  << " msg: " << s.error_message() 
+                  << " detail: " << s.error_details() << " debug: " << context_.debug_error_string() << std::endl;
+        assert(false);
       }
       //  std::cout << "sendReply client on reply: " << reply.ok() << "\n";
     }

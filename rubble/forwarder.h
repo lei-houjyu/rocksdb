@@ -32,10 +32,14 @@ class Forwarder{
 
     // forward the op to the next node
     void Forward(const Op& op){
-        if (!stream_->Write(op)) {
-          std::cout << "forward fail!\n";
-          assert(false);
-        }
+      if (!stream_->Write(op)) {
+        stream_->WritesDone();
+        Status s = stream_->Finish();
+        std::cout << "Forward fail!"
+                << " msg: " << s.error_message() 
+                << " detail: " << s.error_details() << " debug: " << context.debug_error_string() << std::endl;
+        assert(false);
+      }
     }
 
     // forward the op to the next node
