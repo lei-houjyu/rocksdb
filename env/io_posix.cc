@@ -1226,7 +1226,8 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
   if (!PosixWrite(fd_, src, nbytes)) {
     return IOError("While appending to file", filename_, errno);
   }
-  if(nbytes == buffer_size_){
+  
+  if(db_options_ != nullptr && db_options_->is_rubble && db_options_->is_primary && !db_options_->is_tail && nbytes == buffer_size_){
     end_time = std::chrono::high_resolution_clock::now();
     std::string type;
     if (is_flush_output_file_){
