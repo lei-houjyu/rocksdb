@@ -497,13 +497,16 @@ void RubbleKvServiceImpl::PostProcessing(SingleOp* singleOp, Forwarder* forwarde
     size_t size = request->edits_size();
     RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits\n", static_cast<uint32_t>(size));
     // fprintf(stdout , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
-    debug_mu.lock();
-    rocksdb::InstrumentedMutexLock l(mu_);
-    for(int i = 0; i < size; i++){
-      ApplyVersionEdits(request->edits(i));
+    {
+      debug_mu.lock();
+      rocksdb::InstrumentedMutexLock l(mu_);
+      for(int i = 0; i < size; i++){
+        ApplyVersionEdits(request->edits(i));
+      }
+      debug_mu.unlock();
     }
-    debug_mu.unlock();
     RUBBLE_LOG_INFO(logger_ , "[Tail] finishes version edits\n");
+    ApplyBufferedVersionEdits();
   }
 
   if (db_options_->is_tail) {
@@ -633,13 +636,12 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
       for (const auto& edit : edits) {
         cached_edits_.insert({edit.GetEditNumber(), edit});
       }
-      return "ok";
+    } else {
+      // 3. apply the version edit
+      version_edit_id_.store(version_edit_id);
+      ApplyOneVersionEdit(edits);
+      edits.clear();
     }
-
-    // 3. apply the version edit
-    version_edit_id_.store(version_edit_id);
-    ApplyOneVersionEdit(edits);
-    edits.clear();
 
     return "ok";
 }
