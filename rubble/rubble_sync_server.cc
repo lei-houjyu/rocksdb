@@ -119,6 +119,8 @@ static std::atomic<uint64_t> histogram[G_MEM_ARR_LEN];
 Status RubbleKvServiceImpl::DoOp(ServerContext* context, 
               ServerReaderWriter<OpReply, Op>* stream) {
     // initialize the forwarder and reply client
+    int shard_idx = -1;
+    int client_idx = -1;
     Forwarder* forwarder = nullptr;
     ReplyClient* reply_client = nullptr;
     if(!db_options_->is_tail) {
@@ -139,6 +141,19 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     buffers_mu.unlock();
 
     while (stream->Read(&tmp_op)) {
+      if (shard_idx == -1) {
+        shard_idx = tmp_op.shard_idx();
+        client_idx = tmp_op.client_idx();
+        if (forwarder != nullptr) {
+          forwarder->set_idx(shard_idx, client_idx);
+        }
+        if (reply_client_ != nullptr) {
+          reply_client->set_idx(shard_idx, client_idx);
+        }
+      }
+      assert(shard_idx == tmp_op.shard_idx());
+      assert(client_idx == tmp_op.client_idx());
+
       if (is_rubble_ && !is_head_) {
         ApplyBufferedVersionEdits();
       }
@@ -166,7 +181,9 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       HandleOp(request, reply, forwarder, reply_client, op_buffer);
     }
     
-    std::cout << "end while loop with " << r_op_counter_.load() << " read and " << w_op_counter_.load() << " write ops done\n";
+    std::cout << "end while loop with " << r_op_counter_.load() << " read and " 
+              << w_op_counter_.load() << " write ops done. client "
+              << client_idx << " shard " << shard_idx << std::endl;
     for (int i = 1; i < G_MEM_ARR_LEN; i++) {
       if (histogram[i].load() == 0) {
         break;

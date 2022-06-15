@@ -23,7 +23,7 @@ using rubble::OpReply;
 class Forwarder{
   public:
     Forwarder(std::shared_ptr<Channel> channel)
-        : stub_(RubbleKvStoreService::NewStub(channel)), stream_(stub_->DoOp(&context)) {
+        : stub_(RubbleKvStoreService::NewStub(channel)), stream_(stub_->DoOp(&context_)) {
     };
 
     ~Forwarder(){
@@ -37,7 +37,9 @@ class Forwarder{
         Status s = stream_->Finish();
         std::cout << "Forward fail!"
                 << " msg: " << s.error_message() 
-                << " detail: " << s.error_details() << " debug: " << context.debug_error_string() << std::endl;
+                << " detail: " << s.error_details() 
+                << " debug: " << context_.debug_error_string()
+                << " shard: " << shard_idx << " client: " << client_idx << std::endl;
         assert(false);
       }
     }
@@ -47,11 +49,18 @@ class Forwarder{
         stream_->WritesDone();
         stream_->Finish();
     }
+
+    void set_idx(int s, int c) {
+      shard_idx = s;
+      client_idx = c;
+    }
   
   private:
     // Out of the passed in Channel comes the stub, stored here, our view of the
     // server's exposed services.
-    ClientContext context;
+    int shard_idx = -1;
+    int client_idx = -1;
+    ClientContext context_;
     std::unique_ptr<RubbleKvStoreService::Stub> stub_;
     std::shared_ptr<ClientReaderWriter<Op, OpReply> > stream_;
 };

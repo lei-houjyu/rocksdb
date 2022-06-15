@@ -41,7 +41,9 @@ class ReplyClient{
         Status s = stream_->Finish();
         std::cout << "sendReply fail!"
                   << " msg: " << s.error_message() 
-                  << " detail: " << s.error_details() << " debug: " << context_.debug_error_string() << std::endl;
+                  << " detail: " << s.error_details() 
+                  << " debug: " << context_.debug_error_string()
+                  << " shard: " << shard_idx << " client: " << client_idx << std::endl;
         assert(false);
       }
       //  std::cout << "sendReply client on reply: " << reply.ok() << "\n";
@@ -51,22 +53,23 @@ class ReplyClient{
       stream_->WritesDone();
       stream_->Finish();
     }
+
+    void set_idx(int s, int c) {
+      shard_idx = s;
+      client_idx = c;
+    }
   
   private:
-    OpReply reply_;
+    int shard_idx = -1;
+    int client_idx = -1;
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
     ClientContext context_;
-
-    // Storage for the status of the RPC upon completion.
-    Status status_;
 
     // The bidirectional,synchronous stream for sending/receiving messages.
     std::unique_ptr<ClientReaderWriter<OpReply, Reply>> stream_;
     // Out of the passed in Channel comes the stub, stored here, our view of the
     // server's exposed services.
     std::unique_ptr<RubbleKvStoreService::Stub> stub_ = nullptr;
-
-    std::atomic<uint64_t> op_counter_{0};
 };
