@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 #include <iostream>
+#include <chrono>
 
 #include "db/arena_wrapped_db_iter.h"
 #include "db/builder.h"
@@ -1598,11 +1599,17 @@ class GetWithTimestampReadCallback : public ReadCallback {
 
 std::atomic<uint64_t> num_get_called = {0};
 
+//RUBBLE:
+std::atomic<uint64_t> total_memt_read_time{0};
+std::atomic<uint64_t> total_disk_read_time{0};
+
 Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
                        GetImplOptions& get_impl_options) {
-// changxu: hack to call DumpStats() manually
+  using nano = std::chrono::nanoseconds;
+  // changxu: hack to call DumpStats() manually
   if (num_get_called%100000 == 0) {
       DBImpl::DumpStats();
+      ROCKS_LOG_INFO(immutable_db_options_.info_log, "RUBBLE: Get stats num_gets %llu avg_memt_read_time(ns) %d avg_disk_read_time(ns) %d", num_get_called.load(std::memory_order_relaxed), total_memt_read_time.load(std::memory_order_relaxed)/num_get_called.load(std::memory_order_relaxed), total_disk_read_time.load(std::memory_order_relaxed)/num_get_called.load(std::memory_order_relaxed));
   }
   num_get_called++;
   assert(get_impl_options.value != nullptr ||
@@ -1711,6 +1718,7 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
   bool done = false;
   std::string* timestamp = ts_sz > 0 ? get_impl_options.timestamp : nullptr;
   if (!skip_memtable) {
+    auto start = std::chrono::high_resolution_clock::now();
     // Get value associated with key
     if (get_impl_options.get_value) {
       if (sv->mem->Get(lkey, get_impl_options.value->GetSelf(), timestamp, &s,
@@ -1746,6 +1754,8 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
         RecordTick(stats_, MEMTABLE_HIT);
       }
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    total_memt_read_time += std::chrono::duration_cast<nano>(end - start).count();
     if (!done && !s.ok() && !s.IsMergeInProgress()) {
       ReturnAndCleanupSuperVersion(cfd, sv);
       return s;
@@ -1753,6 +1763,7 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
   }
   if (!done) {
     PERF_TIMER_GUARD(get_from_output_files_time);
+    auto start = std::chrono::high_resolution_clock::now();
     sv->current->Get(
         read_options, lkey, get_impl_options.value, timestamp, &s,
         &merge_context, &max_covering_tombstone_seq,
@@ -1762,6 +1773,8 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
         get_impl_options.get_value ? get_impl_options.is_blob_index : nullptr,
         get_impl_options.get_value);
     RecordTick(stats_, MEMTABLE_MISS);
+    auto end = std::chrono::high_resolution_clock::now();
+    total_disk_read_time += std::chrono::duration_cast<nano>(end - start).count();
   }
 
   {
