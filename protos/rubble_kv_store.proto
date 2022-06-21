@@ -17,8 +17,7 @@ service RubbleKvStoreService {
 
     // used by the tail node to send the true rely to the replicator
     rpc SendReply(stream OpReply) returns (stream Reply){}
-    
-    // heartbeat
+
     rpc Pulse(PingRequest)  returns (Empty){}
 }
 
@@ -57,6 +56,7 @@ message SingleOp{
     uint64 mem_op_cnt = 5;
     uint64 op_ptr = 6;
     uint64 reply_ptr = 7;
+    int64  keynum = 8;
 }
 
 message SingleOpReply{
@@ -66,6 +66,7 @@ message SingleOpReply{
     string status = 4;
     int64  Id = 5;
     OpType type = 6;
+    int64  keynum = 8;
 }
 
 message OpReplies{

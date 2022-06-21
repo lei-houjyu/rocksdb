@@ -372,7 +372,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
     case rubble::GET:
       assert(is_tail_);
       s = db_->Get(rocksdb::ReadOptions(/*verify_checksums*/true, /*fill_cache*/true), singleOp->key(), &value);
-      // std::cout << "Get status: " << s.ToString() << " key: " << singleOp->key() << " value: " << value << std::endl;
+      // std::cout << "Get status: " << s.ToString() << " key: " << singleOp->key() << std::endl;
       r_op_counter_.fetch_add(1);
       if (!s.ok()){
         RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
@@ -402,8 +402,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
 
       // sanity check
       // ss = db_->Get(rocksdb::ReadOptions(), singleOp->key(), &value);
-      // std::cout << "Put status: " << ss.ToString() << " key: " << singleOp->key() 
-      //           << " value: " << singleOp->value() << " Get value: " << value << std::endl;
+      // std::cout << "Put key: " << singleOp->key() << std::endl;
       // assert(ss.ok());
 
       if (is_head_) {
@@ -432,6 +431,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
         singleOpReply = reply->add_replies();
         singleOpReply->set_type(rubble::PUT);
         singleOpReply->set_key(singleOp->key());
+        singleOpReply->set_keynum(singleOp->keynum());
         singleOpReply->set_status(s.ToString());
         if (s.ok()) { 
           singleOpReply->set_ok(true);
@@ -446,7 +446,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       r_op_counter_.fetch_add(1);
       if (!s.ok()) {
         RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
-        // assert(false);
+        assert(false);
       }
 
       s = db_->Put(rocksdb::WriteOptions(), singleOp->key(), singleOp->value());
