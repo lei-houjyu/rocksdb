@@ -25,6 +25,8 @@ SstBitMap::SstBitMap(int pool_size, int max_num_mems_in_flush,
 
 
 int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
+    assert(times > 0);
+
     std::unique_lock<std::mutex> lk{mu_};
 
     if(num_slots_taken_[0] == size_ || (times >= 2 && num_slots_taken_[times - 1] == num_big_slots_)){
@@ -67,6 +69,8 @@ int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
     slots_[slot_num] = file_num;
     RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, times);
     RUBBLE_LOG_INFO(logger_, "Take Slot (%lu , %d)\n", file_num, slot_num);
+    printf("Take Slot (%lu , %d)\n", file_num, slot_num);
+    
     file_slots_.emplace(file_num, slot_num);
     // std::cout << "file " << file_num << " took slot " << next_available_slot_ << std::endl;
     num_slots_taken_[times - 1]++;
@@ -88,7 +92,7 @@ void SstBitMap::CheckNumSlotsTaken(){
         total_slots_taken += count;
     }
     int total_file_slots = static_cast<int>(file_slots_.size()); //initialization
-    std::vector<int> slot_taken;
+    std::vector<int> slot_taken(num_slots_taken_.capacity(), 0);
     
     // TODO: for debugging purposes only I think...
     if(total_file_slots != total_slots_taken){
@@ -149,7 +153,13 @@ int SstBitMap::GetFileSlotNum(uint64_t file_num){
 }
 
 void SstBitMap::TakeSlot(uint64_t file_num, int slot_num, int times) {
+    assert(times > 0);
     std::unique_lock<std::mutex> lk{mu_};
+
+    RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, times);
+    RUBBLE_LOG_INFO(logger_, "Take Slot (%lu , %d)\n", file_num, slot_num);
+    printf("Take Slot (%lu , %d)\n", file_num, slot_num);
+
     slots_[slot_num] = file_num;
     file_slots_[file_num] = slot_num;
     num_slots_taken_[times-1]++;

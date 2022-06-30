@@ -50,6 +50,9 @@
 #include "util/string_util.h"
 #include "util/work_queue.h"
 #include "util/xxhash.h"
+#include <iostream>
+#include <math.h>
+#include <algorithm>
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -1647,10 +1650,18 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
 
   uint64_t target_file_size = target_file_size_base + r->ioptions.sst_pad_len;
   
-  int times = (size - r->ioptions.sst_pad_len) / target_file_size_base;
-  pad_len = (times + 1)*target_file_size_base + r->ioptions.sst_pad_len - size;
+  // We always pad the SST file to the closest times * target_file_size_base + sst_pad_len,
+  // i.e., size <= times * target_file_size_base + sst_pad_len. But, there is a corner
+  // case that size < sst_pad_len, which only pads the SST file to sst_pad_len since the
+  // times will be 0. So, we need to make sure times >= 1.
+  int times = ceil(float(size - r->ioptions.sst_pad_len) / target_file_size_base);
+  times = std::max(times, 1);
+  pad_len = times * target_file_size_base + r->ioptions.sst_pad_len - size;
 
-  // std::cout << "current size : " << size <<", [padding] pad_len: " << pad_len << std::endl;
+  std::cout << "[WriteFooter] fname: " << r->file->file_name()
+            << " size: " << size << " times: " << times 
+            << " pad_len: " << pad_len << std::endl;
+
   assert(pad_len >= 0);
   
   std::string pad_str((size_t)pad_len, '.');
