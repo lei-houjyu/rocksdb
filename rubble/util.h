@@ -220,13 +220,26 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    db_options.env = rocksdb::Env::Default();
 
    // add logger for rubble
-   std::string rubble_info_log_fname = std::string("/") + shard_id;
    // the default path for the sst bit map log file, will try to reconstruct map from this file
-   std::string rubble_log_path {"/mnt/code/my_rocksdb/rubble/log/"}; 
-   std::string map_log_fname {"/mnt/code/my_rocksdb/rubble/log/sst_bit_map_log"}; // this is the path of the old sst_bit_map log
+   std::string rubble_log_path = "/mnt/code/my_rocksdb/rubble/log/"; 
+   std::string rubble_info_log_fname;
+   std::string map_log_fname;
 
-   // std::string new_map_log_fname {"/mnt/code/my_rocksdb/rubble/log/sst_bit_map_new"}; 
-   
+   std::shared_ptr<rocksdb::Logger> logger = nullptr;
+   std::shared_ptr<rocksdb::Logger> map_logger = nullptr;
+
+   db_options.env->CreateDirIfMissing(rubble_log_path).PermitUncheckedError(); 
+   if(db_options.is_primary) {
+      rubble_info_log_fname = rubble_log_path + shard_id + "_primary_log";
+      map_log_fname = rubble_log_path + shard_id + "_primary_sst_map_log";
+   } else if (db_options.is_tail) {
+      rubble_info_log_fname = rubble_log_path + shard_id + "_tail_log";
+      map_log_fname = rubble_log_path + shard_id + "_tail_sst_map_log";
+   } else {
+      rubble_info_log_fname = rubble_log_path + shard_id + "_secondary_log";
+      map_log_fname = rubble_log_path + shard_id + "_secondary_sst_map_log";
+   }
+
    bool recover_mode = false;
    std::string current_fname = rocksdb::CurrentFileName(db_path);
    s = db_options.env->FileExists(current_fname);
@@ -237,18 +250,9 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       recover_mode = true;
    }
 
-   std::shared_ptr<rocksdb::Logger> logger = nullptr;
-   std::shared_ptr<rocksdb::Logger> map_logger = nullptr;
-   db_options.env->CreateDirIfMissing(rubble_log_path).PermitUncheckedError(); 
-   if(db_options.is_primary){
-      rubble_info_log_fname = rubble_log_path.append(shard_id + "_primary_log");
-   }else if(db_options.is_tail){
-      rubble_info_log_fname = rubble_log_path.append(shard_id + "_tail_log");
-   }else{
-      rubble_info_log_fname = rubble_log_path.append(shard_id + "_secondary_log");
-   }
-
   std::cout << "[info log fname] " << rubble_info_log_fname << "\n";
+  std::cout << "[sst map log fname] " << map_log_fname << "\n";
+
   // create rubble info logger
    NewLogger(rubble_info_log_fname, db_options.env, logger);
    db_options.rubble_info_log = logger;
