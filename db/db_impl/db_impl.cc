@@ -1607,9 +1607,13 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
                        GetImplOptions& get_impl_options) {
   using nano = std::chrono::nanoseconds;
   // changxu: hack to call DumpStats() manually
-  if (num_get_called%100000 == 0) {
-      DBImpl::DumpStats();
-      ROCKS_LOG_INFO(immutable_db_options_.info_log, "RUBBLE: Get stats num_gets %llu avg_memt_read_time(ns) %d avg_disk_read_time(ns) %d", num_get_called.load(std::memory_order_relaxed), total_memt_read_time.load(std::memory_order_relaxed)/num_get_called.load(std::memory_order_relaxed), total_disk_read_time.load(std::memory_order_relaxed)/num_get_called.load(std::memory_order_relaxed));
+  if (num_get_called % 100000 == 0) {
+    DBImpl::DumpStats();
+    ROCKS_LOG_INFO(immutable_db_options_.info_log, 
+      "RUBBLE: Get stats num_gets %lu avg_memt_read_time(ns) %lu avg_disk_read_time(ns) %lu", 
+      num_get_called.load(std::memory_order_relaxed), 
+      total_memt_read_time.load(std::memory_order_relaxed)/num_get_called.load(std::memory_order_relaxed), 
+      total_disk_read_time.load(std::memory_order_relaxed)/num_get_called.load(std::memory_order_relaxed));
   }
   num_get_called++;
   assert(get_impl_options.value != nullptr ||
