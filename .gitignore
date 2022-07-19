@@ -101,4 +101,4 @@ rubble_kv_store.grpc.pb.h
 Makefile
 rubble/log
 rubble/core*
-rubble/deps
+rubble/_deps
