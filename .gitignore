@@ -102,3 +102,4 @@ Makefile
 rubble/log
 rubble/core*
 rubble/_deps
+nlohmann_json/json/nlohmann_json.pc
