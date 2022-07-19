@@ -93,6 +93,10 @@ clang-format-diff.py
 build_version.cc
 rubble_kv_store.pb.cc
 rubble_kv_store.pb.h
+rubble_kv_store.grpc.pb.h
 
 *.csv
 *.jpg
+
+Makefile
+rubble/log
