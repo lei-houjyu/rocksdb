@@ -105,6 +105,8 @@ struct ImmutableDBOptions {
   int preallocated_sst_pool_size;
   uint64_t sst_pad_len;
   int max_num_mems_in_flush;
+  std::shared_ptr<grpc::Channel> channel;
+  std::shared_ptr<SyncClient> sync_client;
   std::shared_ptr<SstBitMap> sst_bit_map;
   bool piggyback_version_edits;
   std::shared_ptr<Edits> edits;

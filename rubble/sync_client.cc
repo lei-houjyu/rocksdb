@@ -25,10 +25,10 @@ void SyncClient::Sync(const std::string& args){
     request.set_args(args);
     sync_stream_->Write(request);
 
-    SyncReply reply;
-    sync_stream_->Read(&reply);
+    // SyncReply reply;
+    // sync_stream_->Read(&reply);
     // std::cout << "[Sync Reply] " << reply.message() << std::endl;
-    assert(CheckReply(reply));
+    // assert(CheckReply(reply));
     // std::cout << "thread : " << std::this_thread::get_id() << ", Ready : " << ready_.load() << std::endl;
     // if(!ready_.load()){ 
     //     std::unique_lock<std::mutex> lk{mu_};

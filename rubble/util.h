@@ -213,10 +213,6 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    
    rocksdb::ColumnFamilyOptions cf_options = loaded_cf_descs[0].options;
 
-   // if(db_options.target_address != ""){
-   //    db_options.channel = grpc::CreateChannel(db_options.target_address, grpc::InsecureChannelCredentials());
-   // }
-
    db_options.env = rocksdb::Env::Default();
 
    // add logger for rubble
@@ -261,19 +257,23 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       NewLogger(map_log_fname, db_options.env, map_logger);
    }
 
-   if(db_options.is_rubble){
+   if(db_options.target_address != "") {
+      db_options.channel = grpc::CreateChannel(db_options.target_address, grpc::InsecureChannelCredentials());
+   }
+
+   if(db_options.is_rubble) {
       //ignore this flag for now, always set to true.
       db_options.disallow_flush_on_secondary = true;
 
       db_options.max_num_mems_in_flush = 4;
       db_options.sst_pad_len = 1 << 20;
-      db_options.piggyback_version_edits = true;
+      db_options.piggyback_version_edits = false;
       db_options.edits = std::make_shared<Edits>();
 
-      // if(!db_options.is_tail && !db_options.piggyback_version_edits){
-      //    assert(db_options.target_address != "");
-      //    db_options.sync_client = std::make_shared<SyncClient>(db_options.channel);
-      // }
+      if(!db_options.is_tail && !db_options.piggyback_version_edits) {
+         assert(db_options.target_address != "");
+         db_options.sync_client = std::make_shared<SyncClient>(db_options.channel);
+      }
       // the sst pool size should be set to size_of_your_data/sst_file_size
       // set to 450 for 5GB db and 16MB sst_file_size
       db_options.preallocated_sst_pool_size = 5000;

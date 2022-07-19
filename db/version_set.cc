@@ -4406,17 +4406,15 @@ Status VersionSet::LogAndApply(
         // std::cout << j_args.dump(4) << std::endl;
       }
     
-      if(!db_options_->piggyback_version_edits){
-        // we always do piggybacking
-        assert(false);
-        // auto start_time = std::chrono::high_resolution_clock::now();
-        // assert(db_options_->sync_client != nullptr);
-        // std::cout << "[Primary] calling Sync [" << sync_counter << "] times, ";
-        // db_options_->sync_client->Sync(j_args.dump());
-        // auto end_time = std::chrono::high_resolution_clock::now();
-        // auto latency = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-        // std::cout <<  "latency : " << latency << " us, type: " << type << std::endl;
-      }else{
+      if (!db_options_->piggyback_version_edits) {
+        std::cout << "Calling Sync\n";
+        auto start_time = std::chrono::high_resolution_clock::now();
+        assert(db_options_->sync_client != nullptr);
+        db_options_->sync_client->Sync(j_args.dump());
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto latency = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+        std::cout << "Sync " << sync_counter << " times latency " << latency << " us type: " << type << std::endl;
+      } else {
         ROCKS_LOG_INFO(db_options_->rubble_info_log, "[Primary] : %s \n", j_args.dump(4).c_str());
         db_options_->edits->AddEdit(std::move(j_args.dump()));
       }
@@ -4430,7 +4428,7 @@ Status VersionSet::LogAndApply(
     ROCKS_LOG_INFO(db_options_->rubble_info_log, "[Secondary] num of edits : %" PRId32 "\n", num_edits);
     for(const auto& edit : edit_lists[0]){
       log_and_apply_counter.fetch_add(1);
-      ROCKS_LOG_INFO(db_options_->rubble_info_log, "[secondary] calling logAndApply， version edit: %s \n", 
+      ROCKS_LOG_INFO(db_options_->rubble_info_log, "[secondary] calling logAndApply, version edit: %s \n", 
                       edit->DebugJSON(edit->GetEditNumber(), false).c_str());
       sync_counter.fetch_add(1);
     }
@@ -4503,8 +4501,15 @@ Status VersionSet::LogAndApply(
     return Status::ColumnFamilyDropped();
   }
 
-  return ProcessManifestWrites(writers, mu, db_directory, new_descriptor_log,
+  Status s = ProcessManifestWrites(writers, mu, db_directory, new_descriptor_log,
                                new_cf_options);
+  printf("[LogAndApply] %lu %lu\nLSM Tree\n", edit_lists.back().back()->GetEditNumber(), sync_counter.load());
+  VersionStorageInfo* vs_info = column_family_datas.back()->current()->storage_info();
+  for (int i = 0; i < vs_info->num_levels(); i++) {
+    printf("%d: %d\n", i, vs_info->NumLevelFiles(i));
+  }
+
+  return s;
 }
 
 void VersionSet::LogAndApplyCFHelper(VersionEdit* edit) {

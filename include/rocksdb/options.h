@@ -29,6 +29,7 @@
 #include "rocksdb/version.h"
 #include "rocksdb/write_buffer_manager.h"
 //RUBBLE 
+#include "rubble/sync_client.h"
 #include "rubble/sst_bit_map.h"
 #include "rubble/edits.h"
 
@@ -1254,6 +1255,12 @@ struct DBOptions {
   // and gets forwarded to the secondary node together, then secondary will apply
   // the version edits and server normal doOp requests
   std::shared_ptr<Edits> edits = nullptr;
+  
+  // grpc channel to send requests and version edits
+  std::shared_ptr<grpc::Channel> channel = nullptr;
+
+  // a client used to send version edits
+  std::shared_ptr<SyncClient> sync_client = nullptr;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)
