@@ -103,3 +103,6 @@ rubble/log
 rubble/core*
 rubble/_deps
 nlohmann_json/json/nlohmann_json.pc
+rubble/primary_node
+rubble/secondary_node
+rubble/tail_node
