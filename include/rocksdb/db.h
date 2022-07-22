@@ -44,6 +44,7 @@ extern uint64_t g_mem_id;
 extern std::mutex g_mem_op_cnt_mtx;
 extern uint64_t g_mem_id_arr[G_MEM_ARR_LEN];
 extern uint64_t g_mem_op_cnt_arr[G_MEM_ARR_LEN];
+extern SyncClient* sync_client;
 
 struct Options;
 struct DBOptions;

@@ -4409,8 +4409,10 @@ Status VersionSet::LogAndApply(
       if (!db_options_->piggyback_version_edits) {
         std::cout << "Calling Sync\n";
         auto start_time = std::chrono::high_resolution_clock::now();
-        assert(db_options_->sync_client != nullptr);
-        db_options_->sync_client->Sync(j_args.dump());
+        if (sync_client == nullptr) {
+          sync_client = new SyncClient(db_options_->channel);
+        }
+        sync_client->Sync(j_args.dump());
         auto end_time = std::chrono::high_resolution_clock::now();
         auto latency = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
         std::cout << "Sync " << sync_counter << " times latency " << latency << " us type: " << type << std::endl;

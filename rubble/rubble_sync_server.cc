@@ -548,9 +548,8 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
     SyncRequest request;
     std::cout << "enter Sync loop\n";
     while (stream->Read(&request)) {
-      // SyncReply reply;
-      // HandleSyncRequest(&request, &reply);
       std::string args = request.args();
+      std::cout << "[Sync] get " << args << std::endl;
       {
         debug_mu.lock();
         rocksdb::InstrumentedMutexLock l(mu_);
@@ -558,8 +557,6 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
         debug_mu.unlock();
       }
       ApplyBufferedVersionEdits();
-      // reply.set_message(message);
-      // stream->Write(reply);
     }
     std::cout << "exit Sync loop\n";
     return Status::OK;

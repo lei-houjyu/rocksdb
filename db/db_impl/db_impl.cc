@@ -110,6 +110,7 @@ uint64_t g_mem_id = 0;
 std::mutex g_mem_op_cnt_mtx;
 uint64_t g_mem_id_arr[G_MEM_ARR_LEN];
 uint64_t g_mem_op_cnt_arr[G_MEM_ARR_LEN];
+SyncClient* sync_client = nullptr;
 
 const std::string kDefaultColumnFamilyName("default");
 const std::string kPersistentStatsColumnFamilyName(
