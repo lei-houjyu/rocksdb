@@ -1,12 +1,13 @@
 #!/bin/bash
 
-if [ $# != 1 ]; then
-  echo "Usage: bash perf.sh pid_fname"
+if [ $# != 2 ]; then
+  echo "Usage: bash perf.sh name port"
   exit
 fi
 
-fname=$1
-pid=`cat ${fname}`
+name=$1
+port=$2
+pid=`ps aux | grep "$name $port" | awk '{print $2}' | head -n 1`
 
 perf record -p $pid -F 499 -C 0-3 -g
-perf script > ${fname}.perf
+perf script > ${name}.perf
