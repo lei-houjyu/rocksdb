@@ -11,3 +11,5 @@ pid=`ps aux | grep "$name $port" | awk '{print $2}' | head -n 1`
 
 perf record -p $pid -F 499 -C 0-3 -g
 perf script > ${name}.perf
+/mnt/code/FlameGraph/stackcollapse-perf.pl ${name}.perf > ${name}.folded
+/mnt/code/FlameGraph/flamegraph.pl ${name}.folded > ${name}.svg
