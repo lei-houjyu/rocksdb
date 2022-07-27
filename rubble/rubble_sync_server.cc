@@ -402,10 +402,11 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
         if (rocksdb::g_mem_op_cnt != 0 && s.get_target_mem_id() == rocksdb::g_mem_id) {
           rocksdb::g_mem_op_cnt_mtx.lock();
           if (rocksdb::g_mem_op_cnt != 0 && s.get_target_mem_id() == rocksdb::g_mem_id) {
-            std::cout << "set " << s.get_target_mem_id() - 1 << " 's mem_op_cnt " << rocksdb::g_mem_op_cnt << std::endl;
+            std::cout << "[rubble_sync_server] set " << s.get_target_mem_id() - 1 << " 's mem_op_cnt " << rocksdb::g_mem_op_cnt << std::endl;
             singleOp->set_mem_op_cnt(rocksdb::g_mem_op_cnt);
             rocksdb::g_mem_op_cnt = 0;
             rocksdb::g_mem_id = 0;
+            std::cout << "[rubble_sync_server] set g_mem_op_cnt to 0\n";
           }
           rocksdb::g_mem_op_cnt_mtx.unlock();
         }
@@ -513,6 +514,9 @@ void RubbleKvServiceImpl::PostProcessing(SingleOp* singleOp, Forwarder* forwarde
       debug_mu.unlock();
     }
     RUBBLE_LOG_INFO(logger_ , "[Tail] finishes version edits\n");
+  }
+  
+  if (is_rubble_ && !is_head_) {
     ApplyBufferedVersionEdits();
   }
 
