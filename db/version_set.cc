@@ -4343,6 +4343,7 @@ Status VersionSet::LogAndApply(
 
   mu->AssertHeld();
   // RUBBLE: trigger RPC calls to downstream node to sync RocksDB states.
+  ROCKS_LOG_INFO(db_options_->info_log, "LogAndApply called\n");
   if(db_options_->is_rubble && db_options_->is_primary && !db_options_->is_tail){
     log_and_apply_counter++;
     auto default_cf = GetColumnFamilySet()->GetDefault();
