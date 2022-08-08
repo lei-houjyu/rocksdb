@@ -1658,9 +1658,9 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
   times = std::max(times, 1);
   pad_len = times * target_file_size_base + r->ioptions.sst_pad_len - size;
 
-  std::cout << "[WriteFooter] fname: " << r->file->file_name()
-            << " size: " << size << " times: " << times 
-            << " pad_len: " << pad_len << std::endl;
+  // std::cout << "[WriteFooter] fname: " << r->file->file_name()
+  //           << " size: " << size << " times: " << times 
+  //           << " pad_len: " << pad_len << std::endl;
 
   assert(pad_len >= 0);
   

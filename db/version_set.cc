@@ -4506,11 +4506,11 @@ Status VersionSet::LogAndApply(
 
   Status s = ProcessManifestWrites(writers, mu, db_directory, new_descriptor_log,
                                new_cf_options);
-  printf("[LogAndApply] %lu %lu\nLSM Tree\n", edit_lists.back().back()->GetEditNumber(), sync_counter.load());
-  VersionStorageInfo* vs_info = column_family_datas.back()->current()->storage_info();
-  for (int i = 0; i < vs_info->num_levels(); i++) {
-    printf("%d: %d\n", i, vs_info->NumLevelFiles(i));
-  }
+  // printf("[LogAndApply] %lu %lu\nLSM Tree\n", edit_lists.back().back()->GetEditNumber(), sync_counter.load());
+  // VersionStorageInfo* vs_info = column_family_datas.back()->current()->storage_info();
+  // for (int i = 0; i < vs_info->num_levels(); i++) {
+  //   printf("%d: %d\n", i, vs_info->NumLevelFiles(i));
+  // }
 
   return s;
 }
