@@ -843,6 +843,11 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
         // std::cout << "[Secondary] Full compaction LogAndApply status : " << s.ToString() << std::endl;
       }
     }
+
+    rocksdb::ColumnFamilyData* cfd = default_cf_;
+    rocksdb::MutableCFOptions mutable_cf_options = *cfd->GetLatestMutableCFOptions();
+    rocksdb::SuperVersionContext* sv_ctx = new rocksdb::SuperVersionContext(true);
+    impl_->InstallSuperVersionAndScheduleWorkPublic(cfd, sv_ctx, mutable_cf_options);
     
     if (!s.ok()) {
       std::cout << s.ToString() << std::endl;

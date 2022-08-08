@@ -1025,6 +1025,13 @@ class DBImpl : public DB {
     RUBBLE_LOG_INFO(immutable_db_options_.rubble_info_log, "Becoming primary\n");
   }
 
+  // A public wrapper used in Rubble
+  void InstallSuperVersionAndScheduleWorkPublic(
+    ColumnFamilyData* cfd, SuperVersionContext* sv_context,
+    const MutableCFOptions& mutable_cf_options) {
+    InstallSuperVersionAndScheduleWork(cfd, sv_context, mutable_cf_options);
+  }
+
  protected:
   const std::string dbname_;
   std::string db_id_;
