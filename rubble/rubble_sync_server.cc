@@ -393,7 +393,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       // std::cout << "Put key: " << singleOp->key() << std::endl;
       // assert(ss.ok());
 
-      if (is_head_) {
+      if (is_rubble_ && is_head_) {
         assert(singleOp->target_mem_id() == 0);
         singleOp->set_target_mem_id(s.get_target_mem_id());
         // std::cout << "id: " << singleOp->target_mem_id() << std::endl;
@@ -442,7 +442,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
         assert(false);
       }
 
-      if (is_head_) {
+      if (is_rubble_ && is_head_) {
         assert(singleOp->target_mem_id() == 0);
         singleOp->set_target_mem_id(s.get_target_mem_id());
         // std::cout << "id: " << singleOp->target_mem_id() << std::endl;
