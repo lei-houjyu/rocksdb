@@ -469,7 +469,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
         assert(!is_rubble_ || singleOp->target_mem_id() == s.get_target_mem_id());
         histogram[singleOp->target_mem_id()].fetch_add(1);
         singleOpReply = reply->add_replies();
-        singleOpReply->set_type(rubble::PUT);
+        singleOpReply->set_type(rubble::UPDATE);
         singleOpReply->set_key(singleOp->key());
         singleOpReply->set_status(s.ToString());
         if (s.ok()) { 
