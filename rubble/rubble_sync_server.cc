@@ -413,8 +413,6 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       }
 
       if (is_tail_) {
-        // the current mem id may be advanced by other threads 
-        assert(s.get_target_mem_id() == get_mem_id() || s.get_target_mem_id() == get_mem_id() - 1);
         // this assertion ensures that the tail put the kv pair into the same mem as the primary
         assert(!is_rubble_ || singleOp->target_mem_id() == s.get_target_mem_id());
         histogram[singleOp->target_mem_id()].fetch_add(1);
@@ -465,7 +463,6 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       }
 
       if (is_tail_) { 
-        assert(s.get_target_mem_id() == get_mem_id() || s.get_target_mem_id() == get_mem_id() - 1);
         assert(!is_rubble_ || singleOp->target_mem_id() == s.get_target_mem_id());
         histogram[singleOp->target_mem_id()].fetch_add(1);
         singleOpReply = reply->add_replies();
