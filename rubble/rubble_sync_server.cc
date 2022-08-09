@@ -112,7 +112,6 @@ static std::mutex buffers_mu;
 static std::map<uint64_t, uint64_t> primary_op_cnt_map;
 #define G_MEM_ARR_LEN 1024
 #define BATCH_SIZE 1000
-static std::atomic<uint64_t> histogram[G_MEM_ARR_LEN];
 
 Status RubbleKvServiceImpl::DoOp(ServerContext* context, 
               ServerReaderWriter<OpReply, Op>* stream) {
@@ -397,7 +396,6 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       if (is_head_) {
         assert(singleOp->target_mem_id() == 0);
         singleOp->set_target_mem_id(s.get_target_mem_id());
-        histogram[singleOp->target_mem_id()].fetch_add(1);
         // std::cout << "id: " << singleOp->target_mem_id() << std::endl;
         if (rocksdb::g_mem_op_cnt != 0 && s.get_target_mem_id() == rocksdb::g_mem_id) {
           rocksdb::g_mem_op_cnt_mtx.lock();
@@ -415,7 +413,6 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       if (is_tail_) {
         // this assertion ensures that the tail put the kv pair into the same mem as the primary
         assert(!is_rubble_ || singleOp->target_mem_id() == s.get_target_mem_id());
-        histogram[singleOp->target_mem_id()].fetch_add(1);
         singleOpReply = reply->add_replies();
         singleOpReply->set_type(rubble::PUT);
         singleOpReply->set_key(singleOp->key());
@@ -448,7 +445,6 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       if (is_head_) {
         assert(singleOp->target_mem_id() == 0);
         singleOp->set_target_mem_id(s.get_target_mem_id());
-        histogram[singleOp->target_mem_id()].fetch_add(1);
         // std::cout << "id: " << singleOp->target_mem_id() << std::endl;
         if (rocksdb::g_mem_op_cnt != 0 && s.get_target_mem_id() == rocksdb::g_mem_id) {
           rocksdb::g_mem_op_cnt_mtx.lock();
@@ -464,7 +460,6 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
 
       if (is_tail_) { 
         assert(!is_rubble_ || singleOp->target_mem_id() == s.get_target_mem_id());
-        histogram[singleOp->target_mem_id()].fetch_add(1);
         singleOpReply = reply->add_replies();
         singleOpReply->set_type(rubble::UPDATE);
         singleOpReply->set_key(singleOp->key());
