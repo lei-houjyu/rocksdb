@@ -145,7 +145,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
         if (forwarder != nullptr) {
           forwarder->set_idx(shard_idx, client_idx);
         }
-        if (reply_client_ != nullptr) {
+        if (reply_client != nullptr) {
           reply_client->set_idx(shard_idx, client_idx);
         }
       }

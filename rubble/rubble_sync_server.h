@@ -143,10 +143,6 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     std::shared_ptr<Channel> channel_ = nullptr;
 
-    std::shared_ptr<Forwarder> forwarder_ = nullptr;
-    // client for sending the reply back to the replicator
-    std::shared_ptr<ReplyClient> reply_client_ = nullptr;
-
     // rocksdb's version set
     rocksdb::VersionSet* version_set_;
 
