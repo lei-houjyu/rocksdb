@@ -70,6 +70,8 @@ int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
     RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, times);
     RUBBLE_LOG_INFO(logger_, "Take Slot (%lu , %d)\n", file_num, slot_num);
     printf("Take Slot (%lu , %d)\n", file_num, slot_num);
+    map_logger_->Flush();
+    logger_->Flush();
     
     file_slots_.emplace(file_num, slot_num);
     // std::cout << "file " << file_num << " took slot " << next_available_slot_ << std::endl;
@@ -120,6 +122,8 @@ int SstBitMap::FreeSlot(uint64_t file_num){
     RUBBLE_LOG_INFO(map_logger_, "%lu\n", file_num);
     RUBBLE_LOG_INFO(logger_, "Free Slot (%d , %lu) \n", slot_num, slots_[slot_num]);
     printf("Free Slot (%d , %lu) \n", slot_num, slots_[slot_num]);
+    map_logger_->Flush();
+    logger_->Flush();
     int idx = slot_num <= size_ ? 0 : ((slot_num - size_ - 1) /num_big_slots_  + 1 );
     num_slots_taken_[idx]--; 
     file_slots_.erase(file_num);
@@ -134,6 +138,8 @@ void SstBitMap::FreeSlot(std::set<uint64_t> file_nums){
         RUBBLE_LOG_INFO(map_logger_, "%lu\n", file_num);
         RUBBLE_LOG_INFO(logger_, "Free Slot (%d , %lu) \n", slot_num, slots_[slot_num]);
         printf("Free Slot (%d , %lu) \n", slot_num, slots_[slot_num]);
+        map_logger_->Flush();
+        logger_->Flush();
         int idx = slot_num <= size_ ? 0 : ((slot_num - size_ - 1) /num_big_slots_  + 1 );
         num_slots_taken_[idx]--; 
         slots_[slot_num] = 0;
@@ -162,6 +168,8 @@ void SstBitMap::TakeSlot(uint64_t file_num, int slot_num, int times) {
     RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, times);
     RUBBLE_LOG_INFO(logger_, "Take Slot (%lu , %d)\n", file_num, slot_num);
     printf("Take Slot (%lu , %d)\n", file_num, slot_num);
+    map_logger_->Flush();
+    logger_->Flush();
 
     slots_[slot_num] = file_num;
     file_slots_[file_num] = slot_num;
