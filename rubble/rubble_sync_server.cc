@@ -622,7 +622,7 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
 
     uint64_t version_edit_id = j_args["Id"].get<uint64_t>();
     uint64_t log_and_apply_counter = version_set_->LogAndApplyCounter();
-    uint64_t expected = log_and_apply_counter;
+    uint64_t expected = log_and_apply_counter + 1;
     
     uint64_t next_file_num = j_args["NextFileNum"].get<uint64_t>();
     rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
@@ -661,7 +661,7 @@ void RubbleKvServiceImpl::ApplyBufferedVersionEdits() {
     rocksdb::InstrumentedMutexLock l(mu_);
     if (cached_edits_.size() != 0) {
       uint64_t log_and_apply_counter = version_set_->LogAndApplyCounter();
-      uint64_t expected = log_and_apply_counter;
+      uint64_t expected = log_and_apply_counter + 1;
       int count = cached_edits_.count(expected);
       while (count != 0) {
         auto edit = cached_edits_.cbegin()->second;
