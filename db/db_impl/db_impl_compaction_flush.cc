@@ -3299,6 +3299,11 @@ void DBImpl::InstallSuperVersionAndScheduleWork(
   max_total_in_memory_state_ = max_total_in_memory_state_ - old_memtable_size +
                                mutable_cf_options.write_buffer_size *
                                    mutable_cf_options.max_write_buffer_number;
+
+  // Rubble: sanity check
+  // std::cout << "[InstallSuperVersionAndScheduleWork]\n"
+  //           << cfd->current()->BriefDebugString()
+  //           << std::endl;
 }
 
 // ShouldPurge is called by FindObsoleteFiles when doing a full scan,

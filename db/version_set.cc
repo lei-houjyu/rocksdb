@@ -3666,6 +3666,29 @@ std::string Version::DebugString(bool hex, bool print_stats) const {
   return r;
 }
 
+std::string Version::BriefDebugString(bool hex, bool print_stats) const {
+  std::string r;
+  for (int level = 0; level < storage_info_.num_levels_; level++) {
+    // E.g.,
+    //   --- level 1 ---
+    //   17:123[1 .. 124]['a' .. 'd']
+    //   20:43[124 .. 128]['e' .. 'g']
+    //
+    // if print_stats=true:
+    //   17:123[1 .. 124]['a' .. 'd'](4096)
+    r.append("--- level ");
+    AppendNumberTo(&r, level);
+    r.append(" (");
+    const std::vector<FileMetaData*>& files = storage_info_.files_[level];
+    AppendNumberTo(&r, files.size());
+    r.append(") --- version# ");
+    AppendNumberTo(&r, version_number_);
+    r.append(" ---\n");
+  }
+
+  return r;
+}
+
 // this is used to batch writes to the manifest file
 struct VersionSet::ManifestWriter {
   Status status;

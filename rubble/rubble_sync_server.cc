@@ -69,6 +69,10 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
           channel_ = db_options_->channel;
           assert(channel_ != nullptr);
         }
+        // Rubble: sanity check
+        // std::cout << "[RubbleKvServiceImpl]\n"
+        //     << default_cf_->current()->BriefDebugString()
+        //     << std::endl;
     };
 
 RubbleKvServiceImpl::~RubbleKvServiceImpl(){

@@ -703,6 +703,9 @@ class Version {
   // Return a human readable string that describes this version's contents.
   std::string DebugString(bool hex = false, bool print_stats = false) const;
 
+  // Return a human readable string that describes this version's contents briefly.
+  std::string BriefDebugString(bool hex = false, bool print_stats = false) const;
+
   // Returns the version number of this version
   uint64_t GetVersionNumber() const { return version_number_; }
 
