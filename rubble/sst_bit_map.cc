@@ -126,24 +126,15 @@ int SstBitMap::FreeSlot(uint64_t file_num){
     LogFlush(logger_);
     int idx = slot_num <= size_ ? 0 : ((slot_num - size_ - 1) /num_big_slots_  + 1 );
     num_slots_taken_[idx]--; 
+    slots_[slot_num] = 0;
     file_slots_.erase(file_num);
     return slot_num;
 }
 
 void SstBitMap::FreeSlot(std::set<uint64_t> file_nums){
     std::unique_lock<std::mutex> lk{mu_};
-    for(uint64_t file_num : file_nums){
-        assert(file_slots_.find(file_num) != file_slots_.end());
-        int slot_num = file_slots_[file_num];
-        RUBBLE_LOG_INFO(map_logger_, "%lu\n", file_num);
-        RUBBLE_LOG_INFO(logger_, "Free Slot (%d , %lu) \n", slot_num, slots_[slot_num]);
-        printf("Free Slot (%d , %lu) \n", slot_num, slots_[slot_num]);
-        LogFlush(map_logger_);
-        LogFlush(logger_);
-        int idx = slot_num <= size_ ? 0 : ((slot_num - size_ - 1) /num_big_slots_  + 1 );
-        num_slots_taken_[idx]--; 
-        slots_[slot_num] = 0;
-        file_slots_.erase(file_num);
+    for (uint64_t file_num : file_nums) {
+        FreeSlot(file_num);
     }
     CheckNumSlotsTaken();
 }
