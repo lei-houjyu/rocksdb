@@ -132,7 +132,6 @@ int SstBitMap::FreeSlot(uint64_t file_num){
 }
 
 void SstBitMap::FreeSlot(std::set<uint64_t> file_nums){
-    std::unique_lock<std::mutex> lk{mu_};
     for (uint64_t file_num : file_nums) {
         FreeSlot(file_num);
     }
