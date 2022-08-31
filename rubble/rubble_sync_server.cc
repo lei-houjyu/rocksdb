@@ -10,6 +10,19 @@
 #include <string.h>
 #include "util/coding.h"
 
+static volatile std::atomic<uint64_t> flushed_mem{0};
+static std::atomic<uint32_t> op_counter{0};
+static std::atomic<uint32_t> reply_counter{0};
+static std::atomic<uint32_t> thread_counter{0};
+static std::atomic<int> num_stream{0};
+static std::unordered_map<std::thread::id, uint32_t> map;
+static std::mutex exit_mu;
+static std::mutex debug_mu;
+static std::mutex buffers_mu;
+static std::map<uint64_t, uint64_t> primary_op_cnt_map;
+#define G_MEM_ARR_LEN 1024
+#define BATCH_SIZE 1000
+
 void PrintStatus(RubbleKvServiceImpl *srv) {
   uint64_t r_now = 0, r_old = srv->r_op_counter_.load();
   uint64_t w_now = 0, w_old = srv->w_op_counter_.load();
@@ -105,18 +118,6 @@ int RubbleKvServiceImpl::QueuedOpNum() {
   return num;
 }
 
-static volatile std::atomic<uint64_t> flushed_mem{0};
-static std::atomic<uint32_t> op_counter{0};
-static std::atomic<uint32_t> reply_counter{0};
-static std::atomic<uint32_t> thread_counter{0};
-static std::unordered_map<std::thread::id, uint32_t> map;
-static std::mutex mu;
-static std::mutex debug_mu;
-static std::mutex buffers_mu;
-static std::map<uint64_t, uint64_t> primary_op_cnt_map;
-#define G_MEM_ARR_LEN 1024
-#define BATCH_SIZE 1000
-
 Status RubbleKvServiceImpl::DoOp(ServerContext* context, 
               ServerReaderWriter<OpReply, Op>* stream) {
     // initialize the forwarder and reply client
@@ -140,6 +141,9 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     buffers_mu.lock();
     buffers_[std::this_thread::get_id()] = op_buffer;
     buffers_mu.unlock();
+
+    num_stream.fetch_add(1);
+    std::cout << "num_stream: " << num_stream.load() << std::endl;
 
     while (stream->Read(&tmp_op)) {
       if (shard_idx == -1) {
@@ -181,6 +185,26 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       RUBBLE_LOG_INFO(logger_ , "[Request] Got %u\n", static_cast<uint32_t>(request->id()));
       printf("[Request] Got %u\n", static_cast<uint32_t>(request->id()));
       HandleOp(request, reply, forwarder, reply_client, op_buffer);
+    }
+
+    num_stream.fetch_add(-1);
+    std::cout << "num_stream: " << num_stream.load() << std::endl;
+    if (num_stream.load() == 0) {
+        exit_mu.lock();
+        if (num_stream.load() == 0) {
+            std::cout << "Flushing memtables\n";
+            rocksdb::FlushOptions opt;
+            impl_->Flush(opt);
+
+            int mem_num = default_cf_->imm()->current()->GetMemlist().size();
+            uint64_t mem_id = default_cf_->mem()->GetID();
+            uint64_t num_entries = default_cf_->mem()->num_entries();
+            
+            std::cout << "Flushed memtables mem_num: " << mem_num
+                      << " mem_id: " << mem_id 
+                      << " num_entries: " << num_entries << std::endl;
+        }
+        exit_mu.unlock();
     }
     
     std::cout << "end while loop with " << r_op_counter_.load() << " read and " 
