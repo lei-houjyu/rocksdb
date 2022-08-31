@@ -512,6 +512,9 @@ class ColumnFamilyData {
 
   ThreadLocalPtr* TEST_GetLocalSV() { return local_sv_.get(); }
 
+  // Rubble: print the memtable and SST file numbers
+  std::string BriefDebugString();
+
  private:
   friend class ColumnFamilySet;
   static const uint32_t kDummyColumnFamilyDataId;

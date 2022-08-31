@@ -1421,6 +1421,15 @@ FSDirectory* ColumnFamilyData::GetDataDir(size_t path_id) const {
   return data_dirs_[path_id].get();
 }
 
+std::string ColumnFamilyData::BriefDebugString() {
+  return "----- current mem -----\n" + 
+         mem_->DebugJson() + "\n" +
+         "----- immutable mem -----\n" +
+         imm_.DebugJson() + "\n" +
+         "----- SST -----\n" +
+         current_->BriefDebugString();
+}
+
 ColumnFamilySet::ColumnFamilySet(const std::string& dbname,
                                  const ImmutableDBOptions* db_options,
                                  const FileOptions& file_options,
