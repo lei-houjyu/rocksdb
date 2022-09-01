@@ -136,7 +136,7 @@ class MemTableListVersion {
     return refs_;
   }
 
-  std::list<MemTable*> GetMemlist(){
+  std::list<MemTable*>& GetMemlist(){
     return memlist_;
   }
 
