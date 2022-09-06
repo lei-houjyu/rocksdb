@@ -70,7 +70,9 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
   rocksdb::ColumnFamilyData* GetCFD();
 
-  int QueuedOpNum();
+  size_t QueuedOpNum();
+
+  size_t QueuedEditNum();
 
   volatile std::atomic<uint64_t> r_op_counter_{0};
   volatile std::atomic<uint64_t> w_op_counter_{0};
@@ -131,6 +133,8 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     rocksdb::IOStatus DeleteSstFiles(const rocksdb::VersionEdit& edit);
     // set the reply message according to the status
     void SetReplyMessage(SyncReply* reply, const rocksdb::Status& s, bool is_flush, bool is_trivial_move);
+
+    void PersistData();
 
     // db instance
     rocksdb::DB* db_ = nullptr;

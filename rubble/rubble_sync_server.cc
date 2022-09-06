@@ -32,15 +32,16 @@ void PrintStatus(RubbleKvServiceImpl *srv) {
     r_now = srv->r_op_counter_.load();
     w_now = srv->w_op_counter_.load();
     int mem_num = srv->GetCFD()->imm()->current()->GetMemlist().size();
-    int queued_op = srv->QueuedOpNum();
+    size_t queued_op = srv->QueuedOpNum();
+    size_t queued_edit = srv->QueuedEditNum();
     uint64_t mem_id = srv->GetCFD()->mem()->GetID();
     uint64_t num_entries = srv->GetCFD()->mem()->num_entries();
     uint64_t ops = srv->GetCFD()->mem()->num_operations();
     uint64_t data_size = srv->GetCFD()->mem()->get_data_size();
     std::cout << "[READ] " << r_now << " op " << (r_now- r_old) << " op/s "
               << "[WRITE] " << w_now << " op " << (w_now- w_old) << " op/s "
-              << "mem_num " << mem_num << " queued_op " << queued_op << " "
-              << "mem_id " << mem_id << " entries " << num_entries << " ops " << ops << " data " << data_size << " "
+              << "mem_num " << mem_num << " queued_op " << queued_op << " queued_edit " << queued_edit
+              << " mem_id " << mem_id << " entries " << num_entries << " ops " << ops << " data " << data_size << " "
               << ctime(&t);
     r_old = r_now;
     w_old = w_now;
@@ -83,9 +84,11 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
           assert(channel_ != nullptr);
         }
         // Rubble: sanity check
-        // std::cout << "[RubbleKvServiceImpl]\n"
-        //     << default_cf_->current()->BriefDebugString()
-        //     << std::endl;
+        std::cout << "[RubbleKvServiceImpl] cfd->current\n"
+            << default_cf_->BriefDebugString()
+            << "\nsv->current\n"
+            << default_cf_->GetSuperVersion()->BriefDebugString()
+            << std::endl;
     };
 
 RubbleKvServiceImpl::~RubbleKvServiceImpl(){
@@ -102,8 +105,8 @@ rocksdb::ColumnFamilyData* RubbleKvServiceImpl::GetCFD() {
   return default_cf_;
 }
 
-int RubbleKvServiceImpl::QueuedOpNum() {
-  int num = 0;
+size_t RubbleKvServiceImpl::QueuedOpNum() {
+  size_t num = 0;
   for (auto it = buffers_.begin();
     it != buffers_.end(); it++) {
       try {
@@ -116,6 +119,10 @@ int RubbleKvServiceImpl::QueuedOpNum() {
       }
     }
   return num;
+}
+
+size_t RubbleKvServiceImpl::QueuedEditNum() {
+  return cached_edits_.size();
 }
 
 Status RubbleKvServiceImpl::DoOp(ServerContext* context, 
@@ -189,23 +196,8 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
 
     num_stream.fetch_add(-1);
     std::cout << "num_stream: " << num_stream.load() << std::endl;
-    if (num_stream.load() == 0) {
-        exit_mu.lock();
-        if (num_stream.load() == 0) {
-            std::cout << "Flushing memtables\n";
-            rocksdb::FlushOptions opt;
-            impl_->Flush(opt);
 
-            int mem_num = default_cf_->imm()->current()->GetMemlist().size();
-            uint64_t mem_id = default_cf_->mem()->GetID();
-            uint64_t num_entries = default_cf_->mem()->num_entries();
-            
-            std::cout << "Flushed memtables mem_num: " << mem_num
-                      << " mem_id: " << mem_id 
-                      << " num_entries: " << num_entries << std::endl;
-        }
-        exit_mu.unlock();
-    }
+    PersistData();
     
     std::cout << "end while loop with " << r_op_counter_.load() << " read and " 
               << w_op_counter_.load() << " write ops done. client "
@@ -226,6 +218,28 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     }
 
     return Status::OK;
+}
+
+void RubbleKvServiceImpl::PersistData() {
+    if (num_stream.load() == 0) {
+        exit_mu.lock();
+        if (num_stream.load() == 0) {
+            num_stream.fetch_add(-1);
+            std::cout << "Flushing DB\n";
+            rocksdb::FlushOptions opt;
+            opt.wait = false;
+            impl_->Flush(opt);
+
+            int mem_num = default_cf_->imm()->current()->GetMemlist().size();
+            uint64_t mem_id = default_cf_->mem()->GetID();
+            uint64_t num_entries = default_cf_->mem()->num_entries();
+
+            std::cout << "Flushed DB mem_num: " << mem_num
+                      << " mem_id: " << mem_id 
+                      << " num_entries: " << num_entries << std::endl;
+        }
+        exit_mu.unlock();
+    }
 }
 
 void RubbleKvServiceImpl::CleanBufferedOps(Forwarder* forwarder,
@@ -691,6 +705,8 @@ void RubbleKvServiceImpl::ApplyBufferedVersionEdits() {
       uint64_t log_and_apply_counter = version_set_->LogAndApplyCounter();
       uint64_t expected = log_and_apply_counter + 1;
       int count = cached_edits_.count(expected);
+      std::cout << "[ApplyBufferedVersionEdits] expected: " 
+                << expected << " count: " << count << std::endl;
       while (count != 0) {
         auto edit = cached_edits_.cbegin()->second;
         if (!IsReady(edit)) {
