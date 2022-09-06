@@ -228,6 +228,8 @@ struct SuperVersion {
   void Init(ColumnFamilyData* new_cfd, MemTable* new_mem,
             MemTableListVersion* new_imm, Version* new_current);
 
+  std::string BriefDebugString();
+
   // The value of dummy is not actually used. kSVInUse takes its address as a
   // mark in the thread local storage to indicate the SuperVersion is in use
   // by thread. This way, the value of kSVInUse is guaranteed to have no

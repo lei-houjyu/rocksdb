@@ -468,6 +468,15 @@ void SuperVersion::Init(ColumnFamilyData* new_cfd, MemTable* new_mem,
   refs.store(1, std::memory_order_relaxed);
 }
 
+std::string SuperVersion::BriefDebugString() {
+  return "----- current mem -----\n" + 
+         mem->DebugJson() + "\n" +
+         "----- immutable mem -----\n" +
+         imm->DebugJson() + "\n" +
+         "----- SST -----\n" +
+         current->BriefDebugString();
+}
+
 namespace {
 void SuperVersionUnrefHandle(void* ptr) {
   // UnrefHandle is called when a thread exists or a ThreadLocalPtr gets
