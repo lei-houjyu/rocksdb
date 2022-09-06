@@ -282,6 +282,33 @@ void MemTableListVersion::Remove(MemTable* m,
   }
 }
 
+std::string MemTableListVersion::DebugJson() const{
+  JSONWriter jw;
+
+  jw << "Immutable MemtableList";
+  // jw << "Size" << current_->memlist_.size();
+  jw.StartArray();
+  // const ReadOptions read_options = ReadOptions();
+  for(auto m : memlist_){
+    jw.StartArrayedObject();
+    // jw << "SmallestKey" << smallest;
+    // jw << "LargestKey" << largest;
+    jw << "ID" << m->GetID();
+    jw << "NumDeletes" << m->num_deletes();
+    jw << "NumEntries" << m->num_entries();
+    jw << "ApproximateMemoryUsage" << m->ApproximateMemoryUsage();
+    jw << "DataSize" << m->get_data_size();
+    jw << "FirstSequenceNum" << m->GetFirstSequenceNumber();
+    jw << "EarliestSequenceNum" << m->GetEarliestSequenceNumber();
+    jw.EndArrayedObject();
+  }
+  
+  jw.EndArray();
+
+  jw.EndObject();
+  return jw.Get();
+}
+
 // return the total memory usage assuming the oldest flushed memtable is dropped
 size_t MemTableListVersion::ApproximateMemoryUsageExcludingLast() const {
   size_t total_memtable_size = 0;

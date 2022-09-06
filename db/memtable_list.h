@@ -130,7 +130,7 @@ class MemTableListVersion {
   // History.
   SequenceNumber GetEarliestSequenceNumber(bool include_history = false) const;
 
-  void DebugJson();
+  std::string DebugJson() const;
 
   int GetRefsCount (){
     return refs_;
