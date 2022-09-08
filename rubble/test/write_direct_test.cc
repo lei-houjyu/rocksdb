@@ -8,10 +8,16 @@
 #include <assert.h>
 #include <iostream>
 
-int main(){
-    std::string file{"/mnt/sdb/archive_dbs/primary/sst_dir/000030.sst"};
-    size_t size = 512;
-	int fd;
+int main(int argc, char* argv[]) {
+    if (argc < 3) {
+        std::cout << "Usage: ./write_direct src_fname dst_fname\n";
+        return 0;
+    }
+
+    char* src_fname = argv[1];
+    char* dst_fname = argv[2];
+    size_t size = 17825792;
+	int src_fd, dst_fd;
     char *buf = NULL;
     // 1. read primary's sst to buf
     // auto time_point_1 = std::chrono::high_resolution_clock::now();
@@ -22,38 +28,33 @@ int main(){
         perror("posix_memalign failed");
         exit(1);
     }
-  // memset(buf, 0, size);
-  // auto time_point_3 = std::chrono::high_resolution_clock::now();
-  // std::cout << "Memset time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_3 - time_point_2).count() << " microsecs\n";
-  fd = open(file.c_str(), O_RDONLY | O_DIRECT, 0755);
-  if (fd < 0) {
-      perror("open sst failed");
-      exit(1);
-  }
-  // auto time_point_4 = std::chrono::high_resolution_clock::now();
-  // std::cout << "open file time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_4 - time_point_3).count() << " microsecs\n";
- 
-	ret = read(fd, buf, size);
-  // auto time_point_5 = std::chrono::high_resolution_clock::now();
-  // std::cout << "read file time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_5 - time_point_4).count() << " microsecs\n";
+
+    // memset(buf, 0, size);
+    // auto time_point_3 = std::chrono::high_resolution_clock::now();
+    // std::cout << "Memset time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_3 - time_point_2).count() << " microsecs\n";
+    src_fd = open(src_fname, O_RDONLY, 0755);
+    if (src_fd < 0) {
+        perror("open local sst failed");
+        exit(1);
+    }
+    // auto time_point_4 = std::chrono::high_resolution_clock::now();
+    // std::cout << "open file time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_4 - time_point_3).count() << " microsecs\n";
+    
+	ret = read(src_fd, buf, size);
+    // auto time_point_5 = std::chrono::high_resolution_clock::now();
+    // std::cout << "read file time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_5 - time_point_4).count() << " microsecs\n";
 	if (ret < 0) {
 		perror("read sst failed");
 	}
-    close(fd);
 
-    for(int i = 0 ; i < 512; i++){
-        std::cout << buf[i];
-    }
     // std::cout << buf << std::endl;
     // Slice s(&buf[size - 53] , 53);
     // std::cout << "size : " << size <<  ", magic number : " << s.ToString() << std::endl;
         
    // 2. write buf to secondary's sst   
-    std::string to{"/mnt/remote/archive_dbs/tail/sst_dir/1"};
-    printf("write to %s\n", to.c_str());
-    fd = open(to.c_str(), O_WRONLY | O_DIRECT | O_DSYNC , 0755);
-    if (fd < 0){
-        perror("open sst failed");
+    dst_fd = open(dst_fname, O_WRONLY | O_DIRECT | O_DSYNC , 0755);
+    if (dst_fd < 0){
+        perror("open remote sst failed");
         exit(1);
     }
 
@@ -63,14 +64,14 @@ int main(){
     // assert(f_size == size);
 
     // auto time_point_6 = std::chrono::high_resolution_clock::now();
-	ret = write(fd, buf, size);
+	ret = write(dst_fd, buf, size);
     // auto time_point_7 = std::chrono::high_resolution_clock::now();
 	if (ret < 0) {
 		perror("write sst failed");
 	}
 
-    std::cout << "wrote " << ret << " bytes to " << to << std::endl;
-    close(fd);
+    close(src_fd);
+    close(dst_fd);
     free(buf);
 	return 0;
 }
