@@ -35,6 +35,7 @@ int main(int argc, char* argv[]) {
     src_fd = open(src_fname, O_RDONLY, 0755);
     if (src_fd < 0) {
         perror("open local sst failed");
+        std::cout << "src_fname: " << src_fname << std::endl;
         exit(1);
     }
     // auto time_point_4 = std::chrono::high_resolution_clock::now();
@@ -45,6 +46,7 @@ int main(int argc, char* argv[]) {
     // std::cout << "read file time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_5 - time_point_4).count() << " microsecs\n";
 	if (ret < 0) {
 		perror("read sst failed");
+        std::cout << "src_fname: " << src_fname << std::endl;
 	}
 
     // std::cout << buf << std::endl;
@@ -55,6 +57,7 @@ int main(int argc, char* argv[]) {
     dst_fd = open(dst_fname, O_WRONLY | O_DIRECT | O_DSYNC , 0755);
     if (dst_fd < 0){
         perror("open remote sst failed");
+        std::cout << "dst_fname: " << dst_fname << std::endl;
         exit(1);
     }
 
@@ -68,6 +71,7 @@ int main(int argc, char* argv[]) {
     // auto time_point_7 = std::chrono::high_resolution_clock::now();
 	if (ret < 0) {
 		perror("write sst failed");
+        std::cout << "dst_fname: " << dst_fname << std::endl;
 	}
 
     close(src_fd);
