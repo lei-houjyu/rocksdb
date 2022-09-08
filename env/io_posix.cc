@@ -1168,6 +1168,9 @@ void PosixWritableFile::SetRemoteFileInfo(const std::string& r_fname,
   r_fname_ = r_fname;
   db_options_ = db_options;
   buffer_size_ = buffer_size;
+  ROCKS_LOG_INFO(db_options->info_log,
+    "local_fname: %s remote_fname: %s\n",
+    filename_.c_str(), r_fname_.c_str());
 }
 
 PosixWritableFile::~PosixWritableFile() {
