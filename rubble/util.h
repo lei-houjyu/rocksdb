@@ -217,7 +217,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
 
    // add logger for rubble
    // the default path for the sst bit map log file, will try to reconstruct map from this file
-   std::string rubble_log_path = "/mnt/code/my_rocksdb/rubble/log/"; 
+   std::string rubble_log_path = db_path + "/"; 
    std::string rubble_info_log_fname;
    std::string map_log_fname;
 
