@@ -8,9 +8,14 @@
 #include <assert.h>
 #include <iostream>
 
-int main(){
-    std::string file{"/mnt/sdb/archive_dbs/tail/sst_dir/1"};
-    size_t size = 512;
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cout << "Usage: ./read_direct fname\n";
+        return 0;
+    }
+
+    char* file = argv[1];
+    size_t size = 17825792;
 	int fd;
     char *buf = NULL;
     // 1. read primary's sst to buf
@@ -25,7 +30,7 @@ int main(){
   // memset(buf, 0, size);
   // auto time_point_3 = std::chrono::high_resolution_clock::now();
   // std::cout << "Memset time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_3 - time_point_2).count() << " microsecs\n";
-  fd = open(file.c_str(), O_RDONLY | O_DIRECT, 0755);
+  fd = open(file, O_RDONLY | O_DIRECT, 0755);
   if (fd < 0) {
       perror("open sst failed");
       exit(1);
@@ -33,17 +38,20 @@ int main(){
   // auto time_point_4 = std::chrono::high_resolution_clock::now();
   // std::cout << "open file time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_4 - time_point_3).count() << " microsecs\n";
     
-    std::cout << "read " << file << std::endl;
 	ret = read(fd, buf, size);
   // auto time_point_5 = std::chrono::high_resolution_clock::now();
   // std::cout << "read file time : " << std::chrono::duration_cast<std::chrono::microseconds>(time_point_5 - time_point_4).count() << " microsecs\n";
 	if (ret < 0) {
 		perror("read sst failed");
 	}
-    std::cout << "read " << ret << "bytes\n"; 
     close(fd);
 
-    std::cout << buf << std::endl;
+    int checksum = 0;
+    for (int i = 0; i < size; i++) {
+        checksum += buf[i];
+    }
+    std::cout << file << " checksum: " << checksum << std::endl;
+
     // Slice s(&buf[size - 53] , 53);
     // std::cout << "size : " << size <<  ", magic number : " << s.ToString() << std::endl;
         
