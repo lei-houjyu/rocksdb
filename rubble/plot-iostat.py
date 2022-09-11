@@ -71,7 +71,7 @@ for key in data:
         print(key, 'sum', sum(data[key]), 'avg', sum(data[key]) / len(data['user']))
 plt.xlabel('Second')
 plt.ylabel('Throughput (MB/s)')
-plt.ylim([0, 200])
+plt.ylim([0, 1000])
 plt.legend()
 # plt.show()
 plt.savefig(figure_name + '-disk.jpg')

@@ -2,4 +2,4 @@
 
 mv iostat.out old-iostat.out
 
-iostat -yt 1 > iostat.out
+iostat -ytN 1 > iostat.out

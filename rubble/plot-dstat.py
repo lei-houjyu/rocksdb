@@ -1,10 +1,9 @@
 import sys
 import matplotlib.pyplot as plt
 
-cpu_num = 8
-
 file_name = sys.argv[1]
 agg_num = int(sys.argv[2])
+cpu_num = int(sys.argv[3])
 figure_name = file_name[:-4]
 data = {'user':[], 'system':[], 'idle':[], 'wait':[], 'steal':[], 'read':[], 'write':[]}
 
@@ -59,7 +58,7 @@ for key in ['read', 'write']:
     print(key, sum(data[key]))
 plt.xlabel('Second')
 plt.ylabel('Throughput (MB/s)')
-plt.ylim([0, 500])
+plt.ylim([0, 1000])
 plt.legend()
 plt.savefig(figure_name + '-disk.jpg')
 plt.close()
