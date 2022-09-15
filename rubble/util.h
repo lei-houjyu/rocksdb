@@ -285,7 +285,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
             map_logger);
    }
 
-   if(recover_mode){
+   if(recover_mode && is_rubble){
       ReconstructSstBitMap(map_log_fname, db_options.sst_bit_map);
    }
 
