@@ -12,6 +12,9 @@ cp tail-1.out tail-1-${suffix}.out
 cp tail-2.out tail-2-${suffix}.out
 cp dstat.csv dstat-${suffix}.csv
 cp iostat.out iostat-${suffix}.out
+cp pids.out pids-${suffix}.out
+cp top.out top-${suffix}.out
+
 cp /mnt/db/1/primary/db/LOG LOG-primary-1-${suffix}
 cp /mnt/db/2/primary/db/LOG LOG-primary-2-${suffix}
 cp /mnt/db/1/tail/db/LOG LOG-tail-1-${suffix}
