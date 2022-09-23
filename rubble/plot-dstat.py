@@ -48,6 +48,7 @@ for key in ['user', 'system', 'idle', 'wait', 'steal']:
 
 plt.xlabel('Second')
 plt.ylabel('Utilization (%)')
+plt.ylim([0, cpu_num * 100])
 plt.legend()
 plt.savefig(figure_name + '-cpu.jpg')
 plt.close()
