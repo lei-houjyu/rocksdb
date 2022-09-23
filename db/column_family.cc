@@ -472,7 +472,7 @@ std::string SuperVersion::BriefDebugString() {
   return "----- current mem -----\n" + 
          mem->DebugJson() + "\n" +
          "----- immutable mem -----\n" +
-         imm->DebugJson() + "\n" +
+         std::to_string(imm->GetMemlist().size()) + "\n" +
          "----- SST -----\n" +
          current->BriefDebugString();
 }
@@ -1434,7 +1434,7 @@ std::string ColumnFamilyData::BriefDebugString() {
   return "----- current mem -----\n" + 
          mem_->DebugJson() + "\n" +
          "----- immutable mem -----\n" +
-         imm_.DebugJson() + "\n" +
+         std::to_string(imm_.current()->GetMemlist().size()) + "\n" +
          "----- SST -----\n" +
          current_->BriefDebugString();
 }

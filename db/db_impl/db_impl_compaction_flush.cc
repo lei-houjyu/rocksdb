@@ -3306,6 +3306,9 @@ void DBImpl::InstallSuperVersionAndScheduleWork(
             << "\nsv->current\n"
             << cfd->GetSuperVersion()->BriefDebugString()
             << std::endl;
+  ROCKS_LOG_INFO(immutable_db_options_.info_log,
+                 "[InstallSuperVersionAndScheduleWork] cfd->current\n%s",
+                  cfd->BriefDebugString().c_str());
 }
 
 // ShouldPurge is called by FindObsoleteFiles when doing a full scan,

@@ -3678,10 +3678,10 @@ std::string Version::BriefDebugString(bool hex, bool print_stats) const {
     //   17:123[1 .. 124]['a' .. 'd'](4096)
     r.append("--- level ");
     AppendNumberTo(&r, level);
-    r.append(" (");
+    r.append(" ( ");
     const std::vector<FileMetaData*>& files = storage_info_.files_[level];
     AppendNumberTo(&r, files.size());
-    r.append(") --- version# ");
+    r.append(" ) --- version# ");
     AppendNumberTo(&r, version_number_);
     r.append(" ---\n");
   }
