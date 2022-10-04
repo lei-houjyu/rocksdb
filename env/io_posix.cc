@@ -1212,12 +1212,42 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
         return IOError("While open a file for appending", r_fname_ , errno);
       }
       // std::cout << "data : " << Slice(data.data(), 32).ToString()  << " , size : " << nbytes << std::endl;
+      int checksum_1 = 0;
+      for (size_t i = 0; i < nbytes; i++) {
+        checksum_1 += (int)src[i];
+      }
+      
       ssize_t done = write(r_fd, src, nbytes);
       if(done < 0){
         return IOError("while appending to file" , r_fname_, errno);
       }
       close(r_fd);
+
+      // sanity check
+      do {
+        r_fd = open(r_fname_.c_str(), O_RDONLY | O_DIRECT, 0755);
+      } while (r_fd < 0 && errno == EINTR);
+      if (r_fd < 0) {
+        return IOError("While open a file for sanity checking", r_fname_ , errno);
+      }
+      
+      char* buf;
+      if (posix_memalign((void **)&buf, 512, nbytes) != 0) {
+        return IOError("While open a file for aligning buf", r_fname_ , errno);
+      }
+      
+      ssize_t n_read = read(r_fd, buf, nbytes);
+      int checksum_2 = 0;
+      for (ssize_t i = 0; i < n_read; i++) {
+        checksum_2 += (int)buf[i];
+      }
+      free(buf);
+      close(r_fd);
       r_end_time = std::chrono::high_resolution_clock::now();
+      std::cout << "[Append] fname: " << r_fname_.c_str() 
+                << " write_size: " << nbytes << " read_size: " << n_read
+                << " checksum_1: " << checksum_1 << " checksum_2: " << checksum_2 <<std::endl;
+      assert(checksum_1 == checksum_2);
     }
     // std::cout << "write " << nbytes << " bytes to "  <<  r_fname_ << ", latency : "  <<  std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count()  << " micros\n";
   }
