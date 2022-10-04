@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h> 
 #include <string.h>
-#define BUF_SIZE 4096
+#define BUF_SIZE 17 * 1024 * 1024
  
 int main(int argc, char * argv[])
 {
@@ -28,7 +28,7 @@ int main(int argc, char * argv[])
         exit(1);
     }
 
-    do {
+//    do {
         ret = read(fd, buf, BUF_SIZE);
         //printf("%s", buf);
         if (ret < 0) {
@@ -37,7 +37,7 @@ int main(int argc, char * argv[])
         for (int i = 0; i < BUF_SIZE; i++) {
             checksum += (int)buf[i];
         }
-    } while (ret > 0);
+//    } while (ret > 0);
     printf("checksum = %d\n", checksum);
 
     free(buf);
