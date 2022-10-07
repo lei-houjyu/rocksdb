@@ -11,37 +11,55 @@
 #include <time.h>
 #include <assert.h>
 #define BUF_SIZE 17 * 1024 * 1024
+#define BLK_SIZE 512
  
 int main(int argc, char * argv[])
 {
     int fd;
     int ret;
+    int io_size;
     unsigned char *w_buf, *r_buf;
     unsigned int w_sum = 0, r_sum = 0;
 
-    ret = posix_memalign((void **)&w_buf, 512, BUF_SIZE);
+    if (argc < 3) {
+        printf("Usage: ./simulator file_name io_size\n");
+        return 0;
+    }
+    sscanf(argv[2], "%d", &io_size);
+
+    ret = posix_memalign((void **)&w_buf, BLK_SIZE, BUF_SIZE);
     if (ret) {
         perror("write posix_memalign failed");
         exit(1);
     }
 
+    for (int i = 0; i < BUF_SIZE / BLK_SIZE; i++) {
+        for (int j = 0; j < BLK_SIZE; j += 8) {
+            int pos = i * BLK_SIZE + j;
+            sprintf(w_buf + pos, "blk%05d", i);
+        }
+    }
+
     for (int i = 0; i < BUF_SIZE; i++) {
-        w_buf[i] = i % 255;
-        w_sum += (unsigned int)w_buf[i];
+        w_sum += w_buf[i];
     }
  
-    fd = open(argv[1], O_WRONLY | O_DIRECT | O_CREAT | O_DSYNC, 0755);
+    fd = open(argv[1], O_WRONLY | O_DIRECT | O_CREAT | O_SYNC, 0755);
     if (fd < 0){
         perror("write open failed");
         exit(1);
     }
 
-    ssize_t w_bytes = write(fd, w_buf, BUF_SIZE);
+    // ssize_t w_bytes = write(fd, w_buf, BUF_SIZE);
+    ssize_t w_bytes = 0;
+    while (w_bytes < BUF_SIZE) {
+        w_bytes += write(fd, w_buf + w_bytes, io_size);
+    }
 
     free(w_buf);
     close(fd);
 
-    ret = posix_memalign((void **)&r_buf, 512, BUF_SIZE);
+    ret = posix_memalign((void **)&r_buf, BLK_SIZE, BUF_SIZE);
     if (ret) {
         perror("read posix_memalign failed");
         exit(1);
@@ -53,10 +71,35 @@ int main(int argc, char * argv[])
         exit(1);
     }
 
-    ssize_t r_bytes = read(fd, r_buf, BUF_SIZE);
+    // ssize_t r_bytes = read(fd, r_buf, BUF_SIZE);
+    ssize_t r_bytes = 0;
+    while (r_bytes < BUF_SIZE) {
+        r_bytes += read(fd, r_buf + r_bytes, io_size);
+    }
 
     for (int i = 0; i < BUF_SIZE; i++) {
         r_sum += (unsigned int)r_buf[i];
+    }
+
+    int wrong = 0;
+    char blk_id[9];
+    for (int i = 0; i < BUF_SIZE / BLK_SIZE; i++) {
+        sprintf(blk_id, "blk%05d", i);
+        for (int j = 0; j < BLK_SIZE; j += 8) {
+            int pos = i * BLK_SIZE + j;
+            for (int k = 0; k < 8; k++) {
+                printf("%c", r_buf[pos + k]);
+                if (blk_id[k] != r_buf[pos + k]) {
+                    wrong = 1;
+                }
+            }
+        }
+        if (wrong) {
+            printf("\twrong! should be %s\n", blk_id);
+            wrong = 0;
+        } else {
+            printf("\n");
+        }
     }
 
     free(r_buf);

@@ -9,14 +9,23 @@
 #include <sys/stat.h> 
 #include <string.h>
 #define BUF_SIZE 17 * 1024 * 1024
+#define BLK_SIZE 512
  
 int main(int argc, char * argv[])
 {
     int fd;
     int ret;
-    int checksum = 0;
+    int io_size;
+    unsigned int checksum = 0;
     unsigned char *buf;
-    ret = posix_memalign((void **)&buf, 512, BUF_SIZE);
+
+    if (argc < 3) {
+        printf("Usage: ./direct_io_read_file file_name io_size\n");
+        return 0;
+    }
+    sscanf(argv[2], "%d", &io_size);
+
+    ret = posix_memalign((void **)&buf, BLK_SIZE, BUF_SIZE);
     if (ret) {
         perror("posix_memalign failed");
         exit(1);
@@ -28,17 +37,35 @@ int main(int argc, char * argv[])
         exit(1);
     }
 
-//    do {
-        ret = read(fd, buf, BUF_SIZE);
-        //printf("%s", buf);
-        if (ret < 0) {
-            perror("write ./direct_io.data failed");
+    while (ret < BUF_SIZE) {
+        ret += read(fd, buf + ret, io_size);
+    }
+
+    if (ret < 0) {
+        perror("write ./direct_io.data failed");
+    }
+    int wrong = 0;
+    char blk_id[9];
+    for (int i = 0; i < BUF_SIZE / BLK_SIZE; i++) {
+        sprintf(blk_id, "blk%05d", i);
+        for (int j = 0; j < BLK_SIZE; j += 8) {
+            int pos = i * BLK_SIZE + j;
+            for (int k = 0; k < 8; k++) {
+                checksum += (unsigned int)buf[pos + k];
+                printf("%c", buf[pos + k]);
+                if (blk_id[k] != buf[pos + k]) {
+                    wrong = 1;
+                }
+            }
         }
-        for (int i = 0; i < BUF_SIZE; i++) {
-            checksum += (int)buf[i];
+        if (wrong) {
+            printf("\twrong! should be %s\n", blk_id);
+            wrong = 0;
+        } else {
+            printf("\n");
         }
-//    } while (ret > 0);
-    printf("checksum = %d\n", checksum);
+    }
+    printf("checksum = %u\n", checksum);
 
     free(buf);
     close(fd);
