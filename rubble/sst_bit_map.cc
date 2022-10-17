@@ -6,7 +6,7 @@
 SstBitMap::SstBitMap(int pool_size, int max_num_mems_in_flush,
         std::shared_ptr<rocksdb::Logger> logger, 
         std::shared_ptr<rocksdb::Logger> map_logger)
-    :size_(pool_size), num_big_slots_(size_ / 50),
+    :size_(pool_size), num_big_slots_(10),
     max_num_mems_in_flush_(max_num_mems_in_flush),
     logger_(logger),
     map_logger_(map_logger){
