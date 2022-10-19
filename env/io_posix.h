@@ -279,6 +279,7 @@ class PosixWritableFile : public FSWritableFile {
   virtual size_t GetRequiredBufferAlignment() const override {
     return logical_sector_size_;
   }
+  void ShipSST(const Slice& data);
 #ifdef ROCKSDB_FALLOCATE_PRESENT
   virtual IOStatus Allocate(uint64_t offset, uint64_t len,
                             const IOOptions& opts,

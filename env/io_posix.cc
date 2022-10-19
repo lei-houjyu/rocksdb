@@ -43,6 +43,7 @@
 #include "util/string_util.h"
 #include "options/db_options.h"
 #include "logging/logging.h"
+#include "liburing.h"
 
 #if defined(OS_LINUX) && !defined(F_SET_RW_HINT)
 #define F_LINUX_SPECIFIC_BASE 1024
@@ -1180,6 +1181,44 @@ PosixWritableFile::~PosixWritableFile() {
   }
 }
 
+void PosixWritableFile::ShipSST(const Slice& data) {
+  // rubble : also write the sst to remote sst dir using the same buffer when we write to the local sst dir
+  if(db_options_ != nullptr && db_options_->is_rubble && db_options_->is_primary && !db_options_->is_tail){
+    const char* src = data.data();
+    size_t nbytes = data.size();
+
+    // basic workflow is as follows : block contents(which are 4KB chunks) are continously copied into the WritableFileWriter.buf_
+    // and when the buffer is full, A WritableFileWriter::Flush call is triggered, then it calls WriteBuffered since 
+    // DirectIO is not enabled for rocksdb, then a FSWritable::Append is called, which in our case is PosixWritableFile::Append
+    // for rubble mode, the buffer size allocated is set to the sst file size,  
+    // so basically we're only inside this function call when all block contents get copied and the buffer is full 
+    // so we just write the sst to the remote dir as well to the local dir using the same buf
+    if(db_options_->disallow_flush_on_secondary || is_compact_output_file_){
+      assert(IsSectorAligned(data.size(), GetRequiredBufferAlignment()));
+      assert(IsSectorAligned(data.data(), GetRequiredBufferAlignment()));
+      assert(r_fname_ != "");
+      int r_fd;
+      do {
+        r_fd = open(r_fname_.c_str(), O_WRONLY | O_DIRECT | O_DSYNC, 0755);
+      } while (r_fd < 0 && errno == EINTR);
+      if (r_fd < 0) {
+        std::cout << "While open a file for appending" << r_fname_ << errno << std::endl;
+        assert(false);
+      }
+      // std::cout << "data : " << Slice(data.data(), 32).ToString()  << " , size : " << nbytes << std::endl;
+
+      ssize_t done = write(r_fd, src, nbytes);
+      if (done != (ssize_t)nbytes) {
+        std::cout << "while appending to file" << r_fname_ << errno << std::endl;
+        assert(false);
+      }
+
+      close(r_fd);
+    }
+    std::string type;
+  }
+}
+
 IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
                                    IODebugContext* /*dbg*/) {
   if (use_direct_io()) {
@@ -1189,95 +1228,11 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
   const char* src = data.data();
   size_t nbytes = data.size();
 
-  std::chrono::time_point<std::chrono::high_resolution_clock> r_start_time;
-  std::chrono::time_point<std::chrono::high_resolution_clock> r_end_time;
-  // rubble : also write the sst to remote sst dir using the same buffer when we write to the local sst dir
-  if(db_options_ != nullptr && db_options_->is_rubble && db_options_->is_primary && !db_options_->is_tail){
-   // basic workflow is as follows : block contents(which are 4KB chunks) are continously copied into the WritableFileWriter.buf_
-   // and when the buffer is full, A WritableFileWriter::Flush call is triggered, then it calls WriteBuffered since 
-   // DirectIO is not enabled for rocksdb, then a FSWritable::Append is called, which in our case is PosixWritableFile::Append
-   // for rubble mode, the buffer size allocated is set to the sst file size,  
-   // so basically we're only inside this function call when all block contents get copied and the buffer is full 
-   // so we just write the sst to the remote dir as well to the local dir using the same buf
-    if(db_options_->disallow_flush_on_secondary || is_compact_output_file_){
-      assert(IsSectorAligned(data.size(), GetRequiredBufferAlignment()));
-      assert(IsSectorAligned(data.data(), GetRequiredBufferAlignment()));
-      r_start_time = std::chrono::high_resolution_clock::now();
-      assert(r_fname_ != "");
-      int r_fd;
-      do {
-        r_fd = open(r_fname_.c_str(), O_WRONLY | O_DIRECT | O_DSYNC, 0755);
-      } while (r_fd < 0 && errno == EINTR);
-      if (r_fd < 0) {
-        return IOError("While open a file for appending", r_fname_ , errno);
-      }
-      // std::cout << "data : " << Slice(data.data(), 32).ToString()  << " , size : " << nbytes << std::endl;
-      int checksum_1 = 0;
-      for (size_t i = 0; i < nbytes; i++) {
-        checksum_1 += (int)src[i];
-      }
-      
-      ssize_t done = write(r_fd, src, nbytes);
-      if(done < 0){
-        return IOError("while appending to file" , r_fname_, errno);
-      }
-      close(r_fd);
-
-      // sanity check
-      do {
-        r_fd = open(r_fname_.c_str(), O_RDONLY | O_DIRECT, 0755);
-      } while (r_fd < 0 && errno == EINTR);
-      if (r_fd < 0) {
-        return IOError("While open a file for sanity checking", r_fname_ , errno);
-      }
-      
-      char* buf;
-      if (posix_memalign((void **)&buf, 512, nbytes) != 0) {
-        return IOError("While open a file for aligning buf", r_fname_ , errno);
-      }
-      
-      ssize_t n_read = read(r_fd, buf, nbytes);
-      int checksum_2 = 0;
-      for (ssize_t i = 0; i < n_read; i++) {
-        checksum_2 += (int)buf[i];
-      }
-      free(buf);
-      close(r_fd);
-      r_end_time = std::chrono::high_resolution_clock::now();
-      std::cout << "[Append] fname: " << r_fname_.c_str() 
-                << " write_size: " << nbytes << " read_size: " << n_read
-                << " checksum_1: " << checksum_1 << " checksum_2: " << checksum_2 <<std::endl;
-      assert(checksum_1 == checksum_2);
-    }
-    // std::cout << "write " << nbytes << " bytes to "  <<  r_fname_ << ", latency : "  <<  std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count()  << " micros\n";
-  }
-  std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
-  std::chrono::time_point<std::chrono::high_resolution_clock> end_time;
-  if(nbytes == buffer_size_){
-    start_time = std::chrono::high_resolution_clock::now();
-  }
   if (!PosixWrite(fd_, src, nbytes)) {
     return IOError("While appending to file", filename_, errno);
   }
-  
-  if(db_options_ != nullptr && db_options_->is_rubble && db_options_->is_primary && !db_options_->is_tail && nbytes == buffer_size_){
-    end_time = std::chrono::high_resolution_clock::now();
-    std::string type;
-    if (is_flush_output_file_){
-      type.append("[ flush ]");
-    }else if(is_compact_output_file_){
-      type.append("[compact]");
-    }
-    uint32_t local_write_latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-    uint32_t remote_write_latency = std::chrono::duration_cast<std::chrono::milliseconds>(r_end_time - r_start_time).count();
 
-    RUBBLE_LOG_INFO(
-        db_options_->rubble_info_log,
-        "%s write %lu MB to [local] %s ( %u ms), to [remote] %s (%u ms) \n",
-        type.c_str(), (nbytes >> 20), 
-        filename_.substr((filename_.find_last_of("/") + 1)).c_str(),local_write_latency, 
-        r_fname_.substr((r_fname_.find_last_of("/") + 1)).c_str(), remote_write_latency);
-  }
+  ShipSST(data);
 
   filesize_ += nbytes;
   return IOStatus::OK();
