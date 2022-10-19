@@ -172,6 +172,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
 
       Op* request = new Op(tmp_op);
       OpReply* reply = new OpReply();
+      reply->set_time(request->time());
       // if (request->ops(0).type() == rubble::PUT) {
       //   for (int i = 0; i < request->ops_size(); i++) {
       //     std::cout << "Check key: " << request->ops(i).key() << " value: " << request->ops(i).value() << std::endl;
@@ -315,7 +316,6 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
 
   reply->set_shard_idx(op->shard_idx());
   reply->set_client_idx(op->client_idx());
-  reply->add_time(op->time(0));
 
   batch_counter_.fetch_add(1);
   // There is a bug that op->ops_size() might change to a very large number,
