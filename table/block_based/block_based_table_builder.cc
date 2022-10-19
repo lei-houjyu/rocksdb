@@ -1640,42 +1640,46 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
   footer.set_checksum(r->table_options.checksum);
   std::string footer_encoding;
   footer.EncodeTo(&footer_encoding);
+  IOStatus ios;
 
-  auto mutable_cf_options = r->moptions;
-  int pad_len = 0;
-  uint64_t target_file_size_base = mutable_cf_options.target_file_size_base;
-  uint64_t offset = r->get_offset();
-  uint64_t footer_size = static_cast<uint64_t>(footer_encoding.size());
-  uint64_t size = offset + footer_size;
+  if (r->ioptions.db_options_->is_rubble) {
+    auto mutable_cf_options = r->moptions;
+    int pad_len = 0;
+    uint64_t target_file_size_base = mutable_cf_options.target_file_size_base;
+    uint64_t offset = r->get_offset();
+    uint64_t footer_size = static_cast<uint64_t>(footer_encoding.size());
+    uint64_t size = offset + footer_size;
 
-  uint64_t target_file_size = target_file_size_base + r->ioptions.sst_pad_len;
-  
-  // We always pad the SST file to the closest times * target_file_size_base + sst_pad_len,
-  // i.e., size <= times * target_file_size_base + sst_pad_len. But, there is a corner
-  // case that size < sst_pad_len, which only pads the SST file to sst_pad_len since the
-  // times will be 0. So, we need to make sure times >= 1.
-  int times = ceil(float(size - r->ioptions.sst_pad_len) / target_file_size_base);
-  times = std::max(times, 1);
-  pad_len = times * target_file_size_base + r->ioptions.sst_pad_len - size;
+    uint64_t target_file_size = target_file_size_base + r->ioptions.sst_pad_len;
+    
+    // We always pad the SST file to the closest times * target_file_size_base + sst_pad_len,
+    // i.e., size <= times * target_file_size_base + sst_pad_len. But, there is a corner
+    // case that size < sst_pad_len, which only pads the SST file to sst_pad_len since the
+    // times will be 0. So, we need to make sure times >= 1.
+    int times = ceil(float(size - r->ioptions.sst_pad_len) / target_file_size_base);
+    times = std::max(times, 1);
+    pad_len = times * target_file_size_base + r->ioptions.sst_pad_len - size;
 
-  // std::cout << "[WriteFooter] fname: " << r->file->file_name()
-  //           << " size: " << size << " times: " << times 
-  //           << " pad_len: " << pad_len << std::endl;
+    // std::cout << "[WriteFooter] fname: " << r->file->file_name()
+    //           << " size: " << size << " times: " << times 
+    //           << " pad_len: " << pad_len << std::endl;
 
-  assert(pad_len >= 0);
-  
-  std::string pad_str((size_t)pad_len, '.');
-  Slice pad_slice(pad_str);
-  assert(pad_slice.size() == (size_t)pad_len);
-  IOStatus ios = r->file->Append(pad_slice);
-  if (ios.ok()) {
-    r->set_offset(r->get_offset() + pad_slice.size());
-  } else {
-    r->SetIOStatus(ios);
-    r->SetStatus(ios);
+    assert(pad_len >= 0);
+    
+    std::string pad_str((size_t)pad_len, '.');
+    Slice pad_slice(pad_str);
+    assert(pad_slice.size() == (size_t)pad_len);
+    ios = r->file->Append(pad_slice);
+    if (ios.ok()) {
+      r->set_offset(r->get_offset() + pad_slice.size());
+    } else {
+      r->SetIOStatus(ios);
+      r->SetStatus(ios);
+    }
+
+    assert(ok());
   }
-
-  assert(ok());
+  
   ios = r->file->Append(footer_encoding);
   if (ios.ok()) {
     r->set_offset(r->get_offset() + footer_encoding.size());
