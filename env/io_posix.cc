@@ -43,7 +43,6 @@
 #include "util/string_util.h"
 #include "options/db_options.h"
 #include "logging/logging.h"
-#include "liburing.h"
 
 #if defined(OS_LINUX) && !defined(F_SET_RW_HINT)
 #define F_LINUX_SPECIFIC_BASE 1024
