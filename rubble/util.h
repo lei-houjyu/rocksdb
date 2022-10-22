@@ -295,6 +295,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    //    db_options.use_direct_reads = false;
    // }
    db_options.use_direct_reads = true;
+   db_options.use_direct_io_for_flush_and_compaction = true;
 
    std::cout << "write_buffer_size: " << cf_options.write_buffer_size << '\n';
    std::cout << "target_file_size_base: " << cf_options.target_file_size_base << '\n';
