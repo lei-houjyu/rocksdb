@@ -1,25 +1,25 @@
+# top, press f, chose to display PPID, press q, press W (upper case)
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
 workload_num = 5
-config_num = 4
+config_num = 2
 
-idx = {'load':0, 'a':1, 'b':2, 'c':3, 'd':4, \
-       'baseline-primary':0, 'baseline-secondary':1, \
-       'rubble-primary':2, 'rubble-secondary':3}
+idx = {'test':0, 'a':1, 'b':2, 'c':3, 'd':4, \
+       'baseline':0, 'rubble':1}
 
-labels = ['Load', 'A', 'B', 'C', 'D']
+labels = ['test', 'A', 'B', 'C', 'D']
 
-config = ['baseline-primary', 'baseline-secondary', \
-          'rubble-primary', 'rubble-secondary']
+config = ['baseline-primary-flush', 'baseline-primary-compaction', \
+       'baseline-secondary-flush',  'baseline-secondary-compaction', \
+       'rubble-primary-flush'    ,  'rubble-primary-compaction'    , \
+       'rubble-secondary-flush'  ,  'rubble-secondary-compaction']
 
 data = [[0.0, 0.0, 0.0, 0.0, 0.0],\
-        [0.0, 0.0, 0.0, 0.0, 0.0],\
-        [0.0, 0.0, 0.0, 0.0, 0.0],\
         [0.0, 0.0, 0.0, 0.0, 0.0]]
 
-for workload in ['load', 'a', 'b', 'c', 'd']:
+for workload in ['test']:
     for mode in ['baseline', 'rubble']:
         top_fname = 'top-' + mode + '-' + workload + '.out'
         pid_fname = 'pids-' + mode + '-' + workload + '.out'
@@ -45,25 +45,31 @@ for workload in ['load', 'a', 'b', 'c', 'd']:
             time = 0
             while line:
                 word = line.split()
-                if len(word) == 14:
+                if len(word) == 13:
                     cmd = word[-1]
                     if cmd == 'COMMAND':
                         time += 1
                     elif cmd.startswith('rocksdb'):
                         ppid = word[1]
                         cpu = float(word[9])
-                        match = False
-                        for role in pid_map.keys():
-                            if ppid in pid_map[role]:
-                                tok = mode + '-' + role
-                                data[idx[tok]][idx[workload]] += cpu
-                                match = True
-                                break
-                        if not match:
-                            sys.exit('Parse Error in TOP!')
+                        data[idx[mode]][idx[workload]] += cpu
+                        # match = False
+                        # for role in pid_map.keys():
+                        #     if ppid in pid_map[role]:
+                        #         if "low" in cmd:
+                        #             tok = mode + '-' + role + '-compaction'
+                        #         else:
+                        #             tok = mode + '-' + role + '-flush'
+                        #         data[idx[tok]][idx[workload]] += cpu
+                        #         match = True
+                        #         break
+                        # if not match:
+                        #     sys.exit('Parse Error in TOP!')
                 line = f.readline()
-            data[idx[mode+'-primary']][idx[workload]] /= time
-            data[idx[mode+'-secondary']][idx[workload]] /= time
+            data[idx[mode]][idx[workload]] /= time
+            # for role in ['primary', 'secondary']:
+            #     for job in ['flush', 'compaction']:
+            #         data[idx[mode+'-'+role+'-'+job]][idx[workload]] /= time
 
 print(data)
 
