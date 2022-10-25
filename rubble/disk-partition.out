@@ -1,0 +1,7 @@
+label: dos
+label-id: 0x13dd4555
+device: /dev/nvme0n1
+unit: sectors
+
+/dev/nvme0n1p1 : start=        2048, size=  1048576000, type=83
+/dev/nvme0n1p2 : start=  1048578048, size=  2077049520, type=83
