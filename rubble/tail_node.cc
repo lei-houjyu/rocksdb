@@ -13,8 +13,8 @@ int main(int argc, char** argv) {
     shard_num = argv[3];
   }
   const std::string server_addr = std::string("0.0.0.0:") + server_port;
-  std::string db_path = std::string("/mnt/db/") + shard_num + "/tail/db";
-  std::string sst_path = std::string("/mnt/db/") + shard_num + "/tail/sst_dir";
+  std::string db_path = std::string("/mnt/data/db/") + shard_num + "/tail/db";
+  std::string sst_path = std::string("/mnt/data/db/") + shard_num + "/tail/sst_dir";
   std::string sst_pool_path = std::string("/mnt/sst/") + shard_num; 
   rocksdb::DB* db = GetDBInstance(db_path, sst_path, "", sst_pool_path, 
     target_addr, false, false, true, shard_num);

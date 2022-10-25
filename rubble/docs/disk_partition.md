@@ -58,7 +58,7 @@ Finally, we make filesystems on these logical volumes and mount them.
 
 ```
 $ sudo mkfs.ext4 /dev/mapper/node--1--vg-code; sudo mkdir /mnt/code; sudo mount /dev/mapper/node--1--vg-code /mnt/code
-$ sudo mkfs.ext4 /dev/mapper/node--1--vg-db; sudo mkdir /mnt/db; sudo mount /dev/mapper/node--1--vg-db /mnt/db
+$ sudo mkfs.ext4 /dev/mapper/node--1--vg-db; sudo mkdir /mnt/data/db; sudo mount /dev/mapper/node--1--vg-db /mnt/data/db
 $ sudo mkfs.ext4 /dev/mapper/node--1--vg-sst; sudo mkdir /mnt/sst; sudo mount /dev/mapper/node--1--vg-sst /mnt/sst
 ```
 

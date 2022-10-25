@@ -1,4 +1,4 @@
-ROCKSDB_DIR=/mnt/code/my_rocksdb
+ROCKSDB_DIR=/mnt/data/my_rocksdb
 
 cd ${ROCKSDB_DIR}
 rm -rf cmake-build-debug CMakeCache.txt CMakeFiles cmake_install.cmake

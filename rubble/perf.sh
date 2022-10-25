@@ -13,5 +13,5 @@ time=$3
 
 perf record -F 99 -C ${cpu} -g -- sleep ${time}
 perf script > ${name}.perf
-/mnt/code/FlameGraph/stackcollapse-perf.pl ${name}.perf > ${name}.folded
-/mnt/code/FlameGraph/flamegraph.pl ${name}.folded > ${name}.svg
+/mnt/data/FlameGraph/stackcollapse-perf.pl ${name}.perf > ${name}.folded
+/mnt/data/FlameGraph/flamegraph.pl ${name}.folded > ${name}.svg

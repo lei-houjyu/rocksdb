@@ -20,8 +20,8 @@ int main(int argc, char** argv) {
   }
 
   const std::string server_addr = std::string("0.0.0.0:") + server_port;
-  std::string db_path = std::string("/mnt/db/") + shard_num + "/" + role_tag + "/db";
-  std::string sst_path = std::string("/mnt/db/") + shard_num + "/" + role_tag + "/sst_dir";
+  std::string db_path = std::string("/mnt/data/db/") + shard_num + "/" + role_tag + "/db";
+  std::string sst_path = std::string("/mnt/data/db/") + shard_num + "/" + role_tag + "/sst_dir";
   std::string remote_sst_path = std::string("/mnt/remote-sst/") + shard_num;
   std::string sst_pool_path = std::string("/mnt/sst/") + shard_num; 
   rocksdb::DB* db = GetDBInstance(db_path, sst_path, remote_sst_path, sst_pool_path, 
