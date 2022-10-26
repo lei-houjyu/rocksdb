@@ -2,9 +2,6 @@
 
 # From http://docs.cloudlab.us/advanced-topics.html#%28part._geni-get-key%29
 setup_key() {
-  # Create the user SSH directory, just in case.
-  mkdir $HOME/.ssh && chmod 700 $HOME/.ssh
-
   # Retrieve the server-generated RSA private key.
   geni-get key > $HOME/.ssh/id_rsa
   chmod 600 $HOME/.ssh/id_rsa
