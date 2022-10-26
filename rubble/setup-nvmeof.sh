@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 setup_as_target() {
     /etc/init.d/openibd restart
 

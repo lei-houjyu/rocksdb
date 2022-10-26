@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 parameter="iommu=off"
 grub_file="/etc/default/grub"
 

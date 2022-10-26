@@ -84,6 +84,7 @@ do
 done
 wait
 
+rubble_node=( "$@" )
 for (( i=0; i<$shard_num; i++))
 do
     j=$((($i+1)%$shard_num))

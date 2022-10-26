@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # DATA_PATH holds code repo, RocksDB files
 DATA_PATH="/mnt/data"
 # SST_PATH holds the SST pool used by Rubble
@@ -36,9 +38,7 @@ setup_grpc() {
 
     cd ${DATA_PATH}
 
-    if [ ! -d './grpc' ]; then
-        git clone --recurse-submodules -b v${GPRC_VERSION} https://github.com/grpc/grpc
-    fi
+    git clone --recurse-submodules -b v${GPRC_VERSION} https://github.com/grpc/grpc
 
     cd grpc
     mkdir -p cmake/build
@@ -73,6 +73,8 @@ setup_rocksdb() {
     cd my_rocksdb
 
     bash build.sh
+
+    cd rubble
 
     for (( i=1; i<=2; i++ ));
     do
