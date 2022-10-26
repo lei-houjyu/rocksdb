@@ -16,7 +16,6 @@ check_connectivity() {
     shift 1
     for ip in $@
     do
-        echo $ip
         while true
         do
             ssh $ssh_arg -q $username@$ip exit
@@ -53,6 +52,7 @@ shard_num=$#
 
 for ip in $rubble_node
 do
+    ssh $ssh_arg $username@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/partition.dump ${log}"
     ssh $ssh_arg $username@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-rubble.sh ${log}; sudo bash setup-rubble.sh ${log}" &
 done
 wait

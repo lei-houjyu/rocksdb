@@ -6,6 +6,7 @@ DATA_PATH="/mnt/data"
 SST_PATH="/mnt/sst"
 
 install_dependencies() {
+    apt update
     apt install -y build-essential autoconf libtool pkg-config libgflags-dev \
                    dstat sysstat cgroup-tools cmake python3-pip nvme-cli numactl \
                    linux-tools-generic linux-tools-`uname -r`
