@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # From http://docs.cloudlab.us/advanced-topics.html#%28part._geni-get-key%29
 setup_key() {
