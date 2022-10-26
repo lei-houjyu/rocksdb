@@ -5,39 +5,6 @@ DATA_PATH="/mnt/data"
 # SST_PATH holds the SST pool used by Rubble
 SST_PATH="/mnt/sst"
 
-setup_nvmeof_offloading() {
-    /etc/init.d/openibd restart
-
-    /usr/local/etc/emulab/rc/rc.ifconfig shutdown
-    /usr/local/etc/emulab/rc/rc.ifconfig boot
-
-    modprobe -r nvme
-    modprobe nvme num_p2p_queues=2
-    modprobe nvmet
-    modprobe nvmet-rdma
-
-    mkdir /sys/kernel/config/nvmet/subsystems/testsubsystem
-
-    echo 1 > /sys/kernel/config/nvmet/subsystems/testsubsystem/attr_allow_any_host
-    echo 1 > /sys/kernel/config/nvmet/subsystems/testsubsystem/attr_offload
-
-    mkdir /sys/kernel/config/nvmet/subsystems/testsubsystem/namespaces/1
-
-    echo -n /dev/nvme0n1 > /sys/kernel/config/nvmet/subsystems/testsubsystem/namespaces/1/device_path
-    sleep 5
-    echo 1 > /sys/kernel/config/nvmet/subsystems/testsubsystem/namespaces/1/enable
-
-    mkdir /sys/kernel/config/nvmet/ports/1
-
-    ips=($`hostname -I`)
-    echo 4420 > /sys/kernel/config/nvmet/ports/1/addr_trsvcid
-    echo ${ips[1]} > /sys/kernel/config/nvmet/ports/1/addr_traddr
-    echo "rdma" > /sys/kernel/config/nvmet/ports/1/addr_trtype
-    echo "ipv4" > /sys/kernel/config/nvmet/ports/1/addr_adrfam
-
-    ln -s /sys/kernel/config/nvmet/subsystems/testsubsystem/ /sys/kernel/config/nvmet/ports/1/subsystems/testsubsystem
-}
-
 install_dependencies() {
     apt install -y build-essential autoconf libtool pkg-config libgflags-dev \
                    dstat sysstat cgroup-tools cmake python3-pip nvme-cli numactl \
@@ -123,7 +90,6 @@ setup_rocksdb() {
     mount -o ro,noload /dev/nvme0n1p2 $SST_PATH
 }
 
-setup_nvmeof_offloading
 install_dependencies
 partition_disk
 setup_grpc
