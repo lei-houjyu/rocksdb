@@ -25,6 +25,8 @@ partition_disk() {
 
     mount /dev/nvme0n1p1 $DATA_PATH
     mount /dev/nvme0n1p2 $SST_PATH
+
+    lsblk
 }
 
 setup_grpc() {
