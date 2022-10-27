@@ -38,3 +38,4 @@ for t in $(seq 2 $max_num_mems_in_flush); do
     n=`expr $m + 1`
 done
 
+wait
