@@ -95,4 +95,11 @@ do
 done
 wait
 
+# Step 5: misc
+for ip in $rubble_node
+do
+    ssh $ssh_arg $username@$ip "sudo mkswap /dev/sda4; sudo swapon /dev/sda4;"
+    ssh $ssh_arg $username@$ip "sudo bash -c 'echo core.%e.%p > /proc/sys/kernel/core_pattern'"
+done
+
 echo "Done!"
