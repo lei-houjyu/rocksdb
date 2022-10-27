@@ -36,6 +36,9 @@ setup_as_target() {
 
     ln -s /sys/kernel/config/nvmet/subsystems/testsubsystem/ /sys/kernel/config/nvmet/ports/1/subsystems/testsubsystem
 
+    mount /dev/nvme0n1p1 /mnt/data
+    mount -o ro,noload /dev/nvme0n1p2 /mnt/sst
+
     lsblk
 }
 
@@ -50,7 +53,7 @@ setup_as_host() {
 
     mkdir /mnt/remote-sst
     mount /dev/nvme1n1p2 /mnt/remote-sst
-    
+
     lsblk
 }
 

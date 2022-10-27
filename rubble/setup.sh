@@ -80,7 +80,6 @@ check_connectivity $ssh_up   $rubble_node
 log=">> nvmeof.log 2>&1"
 for ip in $rubble_node
 do
-    ssh $ssh_arg $username@$ip "sudo mount /dev/nvme0n1p1 /mnt/data ${log}; sudo mount -o ro,noload /dev/nvme0n1p2 /mnt/sst ${log}"
     ssh $ssh_arg $username@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-nvmeof.sh ${log}; sudo bash setup-nvmeof.sh target ${log}" &
 done
 wait
