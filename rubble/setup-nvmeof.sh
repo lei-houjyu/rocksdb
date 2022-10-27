@@ -54,8 +54,8 @@ fi
 
 if [ $1 == "target" ]
 then
-    setup_as_host
+    setup_as_target
 else
-    setup_as_target $2
+    setup_as_host $2
 fi
 
