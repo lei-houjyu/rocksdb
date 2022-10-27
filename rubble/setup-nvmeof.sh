@@ -3,6 +3,10 @@
 set -x
 
 setup_as_target() {
+    lsblk
+
+    /etc/init.d/openibd restart
+
     /usr/local/etc/emulab/rc/rc.ifconfig shutdown
     /usr/local/etc/emulab/rc/rc.ifconfig boot
 
@@ -31,16 +35,23 @@ setup_as_target() {
     echo "ipv4" > /sys/kernel/config/nvmet/ports/1/addr_adrfam
 
     ln -s /sys/kernel/config/nvmet/subsystems/testsubsystem/ /sys/kernel/config/nvmet/ports/1/subsystems/testsubsystem
+
+    lsblk
 }
 
 setup_as_host() {
     target_ip=$1
+
     modprobe nvme-rdma
+
     nvme discover -t rdma -a $target_ip -s 4420
     nvme connect -t rdma -n testsubsystem -a $target_ip -s 4420
     nvme list
+
     mkdir /mnt/remote-sst
     mount /dev/nvme1n1p2 /mnt/remote-sst
+    
+    lsblk
 }
 
 if [ $# -lt 1 ]
