@@ -20,7 +20,7 @@ for i in $(seq 1 $pool_size); do
        continue
    fi
    rm $i
-   head -c $target_file_size /dev/zero > $i
+   head -c $target_file_size /dev/zero > $i &
 done
 
 n=`expr $pool_size + 1`
@@ -33,7 +33,7 @@ for t in $(seq 2 $max_num_mems_in_flush); do
             continue
         fi
         rm $i
-        head -c $target_file_size /dev/zero > $i
+        head -c $target_file_size /dev/zero > $i &
     done
     n=`expr $m + 1`
 done
