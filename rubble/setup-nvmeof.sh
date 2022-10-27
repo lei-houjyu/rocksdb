@@ -3,8 +3,6 @@
 set -x
 
 setup_as_target() {
-    /etc/init.d/openibd restart
-
     /usr/local/etc/emulab/rc/rc.ifconfig shutdown
     /usr/local/etc/emulab/rc/rc.ifconfig boot
 
