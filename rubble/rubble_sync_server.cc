@@ -884,6 +884,10 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
     rocksdb::MutableCFOptions mutable_cf_options = *cfd->GetLatestMutableCFOptions();
     rocksdb::SuperVersionContext* sv_ctx = new rocksdb::SuperVersionContext(true);
     impl_->InstallSuperVersionAndScheduleWorkPublic(cfd, sv_ctx, mutable_cf_options);
+    for (auto s : sv_ctx->superversions_to_free) {
+      delete s;
+    }
+    sv_ctx->superversions_to_free.clear();
     
     if (!s.ok()) {
       std::cout << s.ToString() << std::endl;
