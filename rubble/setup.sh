@@ -34,7 +34,7 @@ shift 1
 log=">> key_setup.log 2>&1"
 for ip in $@
 do
-    scp ~/.ssh/id_rsa.pub $ssh_arg $username@$ip:~/
+    scp $ssh_arg ~/.ssh/id_rsa.pub $username@$ip:~/
     ssh $ssh_arg $username@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-keys.sh ${log}; sudo bash setup-keys.sh ${log}" &
     ssh $ssh_arg $username@$ip "sudo bash -c \"cat ~/id_rsa.pub >> /root/.ssh/authorized_keys\"" &
 done
@@ -77,7 +77,6 @@ do
 done
 check_connectivity $ssh_down $rubble_node
 check_connectivity $ssh_up   $rubble_node
-sleep 120
 
 # Step 4c: each node nvme-connects to its successor
 log=">> nvmeof.log 2>&1"
