@@ -295,17 +295,12 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    //    db_options.use_direct_reads = false;
    // }
    db_options.use_direct_reads = true;
-   //db_options.use_direct_io_for_flush_and_compaction = true;
+   db_options.use_direct_io_for_flush_and_compaction = true;
 
    std::cout << "write_buffer_size: " << cf_options.write_buffer_size << '\n';
    std::cout << "target_file_size_base: " << cf_options.target_file_size_base << '\n';
    rocksdb::Options options(db_options, cf_options);
 
-   // size_t capacity = 17179869184; // 16 GB
-   // std::shared_ptr<rocksdb::Cache> cache = rocksdb::NewLRUCache(capacity);
-   // rocksdb::BlockBasedTableOptions table_options;
-   // table_options.block_cache = cache;
-   // table_options.cache_index_and_filter_blocks = true;
    
    // options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
 
