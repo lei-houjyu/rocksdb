@@ -1252,6 +1252,9 @@ IOStatus PosixWritableFile::PositionedAppend(const Slice& data, uint64_t offset,
     return IOError("While pwrite to file at offset " + ToString(offset),
                    filename_, errno);
   }
+
+  ShipSST(data);
+
   filesize_ = offset + nbytes;
   return IOStatus::OK();
 }
