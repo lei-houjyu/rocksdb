@@ -7,7 +7,7 @@ if [ $# -lt 4 ]; then
     exit
 fi
 
-ssh_arg="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+ssh_arg="-o ConnectTimeout=10 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 ssh_down=255
 ssh_up=0
 
@@ -77,9 +77,9 @@ do
 done
 check_connectivity $ssh_down $rubble_node
 check_connectivity $ssh_up   $rubble_node
-sleep 60
+sleep 120
 
-Step 4c: each node nvme-connects to its successor
+# Step 4c: each node nvme-connects to its successor
 log=">> nvmeof.log 2>&1"
 for ip in $rubble_node
 do
