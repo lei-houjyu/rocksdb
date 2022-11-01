@@ -35,10 +35,9 @@ log=">> key_setup.log 2>&1"
 for ip in $@
 do
     scp $ssh_arg ~/.ssh/id_rsa.pub $username@$ip:~/
-    ssh $ssh_arg $username@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-keys.sh ${log}; sudo bash setup-keys.sh ${log}" &
-    ssh $ssh_arg $username@$ip "sudo bash -c \"cat ~/id_rsa.pub >> /root/.ssh/authorized_keys\"" &
+    ssh $ssh_arg $username@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-keys.sh ${log}; sudo bash setup-keys.sh ${log}"
+    ssh $ssh_arg $username@$ip "sudo bash -c \"cat ~/id_rsa.pub >> /root/.ssh/authorized_keys\""
 done
-wait
 
 # Step 2: set up YCSB benchmark on IP-1
 log=">> ycsb_build.log 2>&1"
@@ -55,7 +54,7 @@ shard_num=$#
 for ip in $rubble_node
 do
     ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/partition.dump ${log}"
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-rubble.sh ${log}; bash setup-rubble.sh ${log}" &
+    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-rubble.sh ${log}; bash setup-rubble.sh ${shard_num} ${log}" &
 done
 wait
 

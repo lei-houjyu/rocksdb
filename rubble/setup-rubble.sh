@@ -2,9 +2,7 @@
 
 set -x
 
-# DATA_PATH holds code repo, RocksDB files
 DATA_PATH="/mnt/data"
-# SST_PATH holds the SST pool used by Rubble
 SST_PATH="/mnt/sst"
 
 install_dependencies() {
@@ -78,7 +76,7 @@ setup_rocksdb() {
 
     cd rubble
 
-    for (( i=1; i<=2; i++ ));
+    for (( i=1; i<=$1; i++ ));
     do
         for r in primary tail;
         do
@@ -88,8 +86,9 @@ setup_rocksdb() {
             done
         done
         mkdir -p ${SST_PATH}/${i}
-        bash create-sst-pool.sh 16777216 4 5000 ${SST_PATH}/${i}
+        bash create-sst-pool.sh 16777216 4 5000 ${SST_PATH}/${i} &
     done
+    wait
 
     umount ${SST_PATH}
     mount -o ro,noload /dev/nvme0n1p2 $SST_PATH
@@ -98,6 +97,6 @@ setup_rocksdb() {
 install_dependencies
 partition_disk
 setup_grpc
-setup_rocksdb
+setup_rocksdb $1
 
 echo "Done!"
