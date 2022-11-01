@@ -1850,11 +1850,11 @@ Status DBImpl::SwitchMemtable(ColumnFamilyData* cfd, WriteContext* context) {
   cfd->mem()->SetNextLogNumber(logfile_number_);
   
   cfd->imm()->Add(cfd->mem(), &context->memtables_to_free_);
-  std::cout << "[SwitchMemtable] imm ";
-  for (MemTable* mt : cfd->imm()->current()->GetMemlist()) {
-    std::cout << mt->GetID() << " ";
-  }
-  std::cout << std::endl;
+  // std::cout << "[SwitchMemtable] imm ";
+  // for (MemTable* mt : cfd->imm()->current()->GetMemlist()) {
+  //   std::cout << mt->GetID() << " ";
+  // }
+  // std::cout << std::endl;
   new_mem->Ref();
   ROCKS_LOG_INFO(immutable_db_options_.info_log,
                 "[%s] Old memtable #%" PRIu64
@@ -1865,14 +1865,14 @@ Status DBImpl::SwitchMemtable(ColumnFamilyData* cfd, WriteContext* context) {
   assert(cfd->mem()->num_operations() == cfd->mem()->num_entries());
   uint64_t num_operations = cfd->mem()->num_operations();
   cfd->SetMemtable(new_mem);
-  std::cout << "[rocksdb] switch to memtable " << new_mem->GetID() << std::endl;
+  // std::cout << "[rocksdb] switch to memtable " << new_mem->GetID() << std::endl;
 
   if (immutable_db_options_.is_rubble && immutable_db_options_.is_primary) {
     assert(g_mem_op_cnt == 0);
     assert(g_mem_id == 0);
     g_mem_op_cnt = num_operations;
     g_mem_id = new_mem->GetID();
-    std::cout << "[rocksdb] set " << new_mem->GetID() - 1 << " 's g_mem_op_cnt " << num_operations << std::endl;
+    // std::cout << "[rocksdb] set " << new_mem->GetID() - 1 << " 's g_mem_op_cnt " << num_operations << std::endl;
   }
   if (immutable_db_options_.is_rubble && !immutable_db_options_.is_primary) {
     uint64_t mem_id = cfd->mem()->GetID();
