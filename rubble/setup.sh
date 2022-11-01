@@ -100,6 +100,9 @@ for ip in $rubble_node
 do
     ssh $ssh_arg root@$ip "mkswap /dev/sda4; swapon /dev/sda4;"
     ssh $ssh_arg root@$ip "bash -c 'echo core.%e.%p > /proc/sys/kernel/core_pattern'"
+    ssh $ssh_arg root@$ip "mkdir ~/.config/procps"
+    scp $ssh_arg toprc root@$ip:~/.config/procps/
+    scp $ssh_arg dstat root@$ip:/usr/bin/dstat
 done
 
 echo "Done!"
