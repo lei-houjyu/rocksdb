@@ -88,9 +88,9 @@ wait
 rubble_node=( "$@" )
 for (( i=0; i<$shard_num; i++))
 do
-    j=$((($i+1)%$shard_num))
+    j=$((($i+1)%$shard_num+2))
     ip=${rubble_node[$i]}
-    next_ip=${rubble_node[$j]}
+    next_ip='10.10.1.'$j
     ssh $ssh_arg root@$ip "bash setup-nvmeof.sh host ${next_ip} ${log}" &
 done
 wait
