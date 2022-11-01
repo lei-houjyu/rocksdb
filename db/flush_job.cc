@@ -405,11 +405,11 @@ Status FlushJob::WriteLevel0Table() {
 
       IOStatus io_s;
       size_t num_mems_to_flush = mems_.size();
-      if(num_mems_to_flush > 1) {
-        std::cout << " Flush " << num_mems_to_flush 
-            << " memtables in flush job " << job_context_->job_id 
-            << " file number : " << meta_.fd.GetNumber()  << std::endl;
-      }
+      // if(num_mems_to_flush > 1) {
+      //   std::cout << " Flush " << num_mems_to_flush 
+      //       << " memtables in flush job " << job_context_->job_id 
+      //       << " file number : " << meta_.fd.GetNumber()  << std::endl;
+      // }
       assert(num_mems_to_flush <= static_cast<size_t>(db_options_.max_num_mems_in_flush));
       assert(meta_.fd.GetFileSize() == 0);
       meta_.fd.file_size = num_mems_to_flush;

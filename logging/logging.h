@@ -38,10 +38,7 @@ inline const char* RocksLogShorterFileName(const char* file)
                          ROCKS_LOG_PREPEND_FILE_LINE(FMT), \
                          RocksLogShorterFileName(__FILE__), ##__VA_ARGS__)
                          
-#define RUBBLE_LOG_INFO(LGR, FMT, ...)                      \
-ROCKSDB_NAMESPACE::Log(ROCKSDB_NAMESPACE::InfoLogLevel::INFO_LEVEL, LGR,    \
-                        ROCKS_LOG_PREPEND_FILE_LINE(FMT), \
-                        RocksLogShorterFileName(__FILE__), ##__VA_ARGS__)
+#define RUBBLE_LOG_INFO(LGR, FMT, ...) (void)0
 
 #define ROCKS_LOG_WARN(LGR, FMT, ...)                      \
   ROCKSDB_NAMESPACE::Log(InfoLogLevel::WARN_LEVEL, LGR,    \

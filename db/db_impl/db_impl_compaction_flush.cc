@@ -3301,14 +3301,14 @@ void DBImpl::InstallSuperVersionAndScheduleWork(
                                    mutable_cf_options.max_write_buffer_number;
 
   // Rubble: sanity check
-  std::cout << "[InstallSuperVersionAndScheduleWork] cfd->current\n"
-            << cfd->BriefDebugString()
-            << "\nsv->current\n"
-            << cfd->GetSuperVersion()->BriefDebugString()
-            << std::endl;
-  ROCKS_LOG_INFO(immutable_db_options_.info_log,
-                 "[InstallSuperVersionAndScheduleWork] cfd->current\n%s",
-                  cfd->BriefDebugString().c_str());
+  // std::cout << "[InstallSuperVersionAndScheduleWork] cfd->current\n"
+  //           << cfd->BriefDebugString()
+  //           << "\nsv->current\n"
+  //           << cfd->GetSuperVersion()->BriefDebugString()
+  //           << std::endl;
+  // ROCKS_LOG_INFO(immutable_db_options_.info_log,
+  //                "[InstallSuperVersionAndScheduleWork] cfd->current\n%s",
+  //                 cfd->BriefDebugString().c_str());
 }
 
 // ShouldPurge is called by FindObsoleteFiles when doing a full scan,

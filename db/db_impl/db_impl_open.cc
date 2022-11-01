@@ -1438,7 +1438,7 @@ Status DBImpl::WriteLevel0TableForRecovery(int job_id, ColumnFamilyData* cfd,
 
 Status DB::Open(const Options& options, const std::string& dbname, DB** dbptr) {
 
-  std::cout << " -------- db_name : " << dbname << "--------" << std::endl;
+  // std::cout << " -------- db_name : " << dbname << "--------" << std::endl;
   DBOptions db_options(options);
   ColumnFamilyOptions cf_options(options);
   std::vector<ColumnFamilyDescriptor> column_families;
@@ -1472,9 +1472,9 @@ Status DB::Open(const DBOptions& db_options, const std::string& dbname,
   const bool kSeqPerBatch = true;
   const bool kBatchPerTxn = true;
   // ASH: changes to add db_paths
-  if(!db_options.db_paths.empty()){
-    std::cout << " -------- sst directory : " << db_options.db_paths.back().path << "--------" << std::endl;
-  }
+  // if(!db_options.db_paths.empty()){
+  //   std::cout << " -------- sst directory : " << db_options.db_paths.back().path << "--------" << std::endl;
+  // }
   return DBImpl::Open(db_options, dbname, column_families, handles, dbptr, !kSeqPerBatch, kBatchPerTxn);
 }
 

@@ -527,7 +527,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
       }
 
       // this can release and reacquire the mutex.
-      ROCKS_LOG_INFO(vset->db_options()->rubble_info_log, "Calling logAndApply from flush\n");
+      // ROCKS_LOG_INFO(vset->db_options()->rubble_info_log, "Calling logAndApply from flush\n");
       s = vset->LogAndApply(cfd, mutable_cf_options, edit_list, mu,
                             db_directory);
       *io_s = vset->io_status();
@@ -574,11 +574,11 @@ Status MemTableList::TryInstallMemtableFlushResults(
 
           assert(m->file_number_ > 0);
           current_->Remove(m, to_delete);
-          std::cout << "[TryInstallMemtableFlushResults] imm ";
-          for (MemTable* mt : current_->GetMemlist()) {
-            std::cout << mt->GetID() << " ";
-          }
-          std::cout << std::endl;
+          // std::cout << "[TryInstallMemtableFlushResults] imm ";
+          // for (MemTable* mt : current_->GetMemlist()) {
+          //   std::cout << mt->GetID() << " ";
+          // }
+          // std::cout << std::endl;
           UpdateCachedValuesFromMemTableListVersion();
           ResetTrimHistoryNeeded();
           ++mem_id;
