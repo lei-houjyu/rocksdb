@@ -96,7 +96,7 @@ done
 wait
 
 # Step 5: misc
-for ip in $rubble_node
+for ip in ${rubble_node[@]}
 do
     ssh $ssh_arg root@$ip "mkswap /dev/sda4; swapon /dev/sda4;"
     ssh $ssh_arg root@$ip "bash -c 'echo core.%e.%p > /proc/sys/kernel/core_pattern'"
