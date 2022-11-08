@@ -2,8 +2,8 @@
 
 set -x
 
-if [ $# -lt 4 ]; then
-    echo "Usage: bash setup.sh username IP-1 IP-2 IP-3 ..."
+if [ $# -lt 5 ]; then
+    echo "Usage: bash setup.sh username shard_num IP-1 IP-2 IP-3 ..."
     exit
 fi
 
@@ -28,7 +28,8 @@ check_connectivity() {
 }
 
 username=$1
-shift 1
+shard_num=$2
+shift 2
 
 # Step 1: configure SSH keys on each node
 log=">> key_setup.log 2>&1"
@@ -49,12 +50,12 @@ ssh $ssh_arg root@$ycsb_node "git clone --branch single-thread https://github.co
 # Step 3: set up Rubble from IP-2 to IP-3
 log=">> rubble_build.log 2>&1"
 rubble_node=$@
-shard_num=$#
+rf=$#
 
 for ip in $rubble_node
 do
     ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/partition.dump ${log}"
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-rubble.sh ${log}; bash setup-rubble.sh ${shard_num} ${log}" &
+    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-rubble.sh ${log}; bash setup-rubble.sh ${shard_num} ${rf} ${log}" &
 done
 wait
 

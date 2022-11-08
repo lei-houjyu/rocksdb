@@ -65,7 +65,23 @@ setup_grpc() {
     echo "hello world example build success"
 }
 
+is_head()
+{
+    sid=$1
+    rf=$2
+    ip=$(hostname -I | awk '{print $2}' | tail -c 2)
+    idx=$(($ip - 2))
+    if [ $(($sid % $rf)) -eq $idx ]
+        echo "true"
+    else
+        echo "false"
+    fi
+}
+
 setup_rocksdb() {
+    shard_num=$1
+    rf=$2
+    
     cd ${DATA_PATH}
 
     git clone --branch lhy_dev https://github.com/camelboat/my_rocksdb.git
@@ -76,17 +92,18 @@ setup_rocksdb() {
 
     cd rubble
 
-    for (( i=1; i<=$1; i++ ));
+    for (( i=1; i<=${shard_num}; i++ ));
     do
-        for r in primary tail;
+        for f in db sst_dir;
         do
-            for f in db sst_dir;
-            do
-                mkdir -p ${DATA_PATH}/db/${i}/${r}/${f} 
-            done
+            mkdir -p ${DATA_PATH}/db/shard-${i}/${f} 
         done
-        mkdir -p ${SST_PATH}/${i}
-        bash create-sst-pool.sh 16777216 4 5000 ${SST_PATH}/${i} &
+        val=$( is_head $i $rf )
+        if [ "$val" == "false" ]
+        then
+            mkdir -p ${SST_PATH}/${i}
+            bash create-sst-pool.sh 16777216 4 5000 ${SST_PATH}/shard-${i} &
+        fi
     done
     wait
 
@@ -97,6 +114,6 @@ setup_rocksdb() {
 install_dependencies
 partition_disk
 setup_grpc
-setup_rocksdb $1
+setup_rocksdb $1 $2
 
 echo "Done!"

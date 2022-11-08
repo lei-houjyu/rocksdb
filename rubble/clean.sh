@@ -1,10 +1,10 @@
-if [ $# != 1 ]; then
-  echo "Usage: bash clean.sh shard_num"
+if [ $# != 2 ]; then
+  echo "Usage: bash clean.sh shard_num rf"
 fi
 
 rm -rf log/* core*
-for i in $(seq $1); do
-  rm -rf /mnt/data/db/$i/primary/*
-  rm -rf /mnt/data/db/$i/tail/*
-  rm -rf primary-$i.out tail-$i.out
+for (( i=0; i<$1; i++ )); do
+  for (( j=0; j<$2; j++ )); do
+    rm -rf /mnt/data/db/shard-$i-replica-$j.out
+  done
 done
