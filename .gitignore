@@ -107,3 +107,8 @@ rubble/primary_node
 rubble/secondary_node
 rubble/tail_node
 rubble/LOG*
+
+*.svg
+*.perf
+*.folded
+
