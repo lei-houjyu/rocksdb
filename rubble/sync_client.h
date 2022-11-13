@@ -40,6 +40,8 @@ class SyncClient {
 
   void Sync(const std::string& args);
 
+  void Sync(const SyncRequest& request);
+
   private:
     // read a reply back for a sync request
     void GetSyncReply();

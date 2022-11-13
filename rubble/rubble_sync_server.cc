@@ -182,11 +182,12 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
 
       if (IsTermination(request)) {
         // std::cout << "Received termination msg\n";
-        if (forwarder != nullptr) {
-          forwarder->Forward(*request);
-        }
         if (is_rubble_ && !is_head_) {
           CleanBufferedOps(forwarder, reply_client, op_buffer);
+        }
+        
+        if (forwarder != nullptr) {
+          forwarder->Forward(*request);
         }
         continue;
       }
@@ -594,6 +595,10 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
         rocksdb::InstrumentedMutexLock l(mu_);
         std::string message = ApplyVersionEdits(args);
         debug_mu.unlock();
+      }
+      if (!is_tail_) {
+        version_set_->CreateSyncClient();
+        version_set_->sync_client_->Sync(request);
       }
       ApplyBufferedVersionEdits();
     }

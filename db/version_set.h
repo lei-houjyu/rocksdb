@@ -1365,6 +1365,8 @@ class VersionSet {
   std::shared_ptr<IOTracer> io_tracer_;
 
   std::atomic<uint64_t> log_and_apply_counter_;
+  
+public:
 
   SyncClient* sync_client_;
 

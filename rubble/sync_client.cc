@@ -44,6 +44,10 @@ void SyncClient::Sync(const std::string& args){
     // stream_->Write(request_, reinterpret_cast<void*>(Type::WRITE));  
 }
 
+void SyncClient::Sync(const SyncRequest& request){
+    sync_stream_->Write(request);
+}
+
 // read a reply back for a sync request
 void SyncClient::GetSyncReply() {
     // The tag is the link between our thread (main thread) and the completion
