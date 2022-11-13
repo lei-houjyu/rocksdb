@@ -1,28 +1,42 @@
-# top, press f, chose to display PPID, press q, press W (upper case)
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
+if len(sys.argv) < 2:
+    sys.exit("Usage: python3 plot-compaction-cpu.py suffix")
+
+suffix = sys.argv[1]
+
 workload_num = 5
-config_num = 2
+config_num = 6
 
-idx = {'test':0, 'a':1, 'b':2, 'c':3, 'd':4, \
-       'baseline':0, 'rubble':1}
+idx = {'load':0, 'a':1, 'b':2, 'c':3, 'd':4, \
+       'baseline-primary':0, \
+       'baseline-secondary':1, \
+       'rubble-primary':2, \
+       'rubble-secondary':3, \
+       'rubble-offload-primary':4, \
+       'rubble-offload-secondary':5}
 
-labels = ['test', 'A', 'B', 'C', 'D']
+# labels = ['Load', 'A', 'B', 'C', 'D']
+labels = ['Load']
 
-config = ['baseline-primary-flush', 'baseline-primary-compaction', \
-       'baseline-secondary-flush',  'baseline-secondary-compaction', \
-       'rubble-primary-flush'    ,  'rubble-primary-compaction'    , \
-       'rubble-secondary-flush'  ,  'rubble-secondary-compaction']
+config = ['baseline-primary', 'baseline-secondary', \
+          'rubble-primary',   'rubble-secondary', \
+          'rubble-offload-primary', 'rubble-offload-secondary']
 
 data = [[0.0, 0.0, 0.0, 0.0, 0.0],\
+        [0.0, 0.0, 0.0, 0.0, 0.0],\
+        [0.0, 0.0, 0.0, 0.0, 0.0],\
+        [0.0, 0.0, 0.0, 0.0, 0.0],\
+        [0.0, 0.0, 0.0, 0.0, 0.0],\
         [0.0, 0.0, 0.0, 0.0, 0.0]]
 
-for workload in ['test']:
+for workload in labels:
     for mode in ['baseline', 'rubble']:
-        top_fname = 'top-' + mode + '-' + workload + '.out'
-        pid_fname = 'pids-' + mode + '-' + workload + '.out'
+        workload = workload.lower()
+        top_fname = 'top-' + mode + '-' + workload + '-' + suffix + '.out'
+        pid_fname = 'pids-' + mode + '-' + workload + '-' + suffix + '.out'
         pid_map  = {'primary':[], 'secondary':[]}
 
         # 1. get pids of primary and secondary
@@ -45,31 +59,26 @@ for workload in ['test']:
             time = 0
             while line:
                 word = line.split()
-                if len(word) == 13:
+                if len(word) == 14:
                     cmd = word[-1]
                     if cmd == 'COMMAND':
                         time += 1
                     elif cmd.startswith('rocksdb'):
                         ppid = word[1]
-                        cpu = float(word[9])
-                        data[idx[mode]][idx[workload]] += cpu
-                        # match = False
-                        # for role in pid_map.keys():
-                        #     if ppid in pid_map[role]:
-                        #         if "low" in cmd:
-                        #             tok = mode + '-' + role + '-compaction'
-                        #         else:
-                        #             tok = mode + '-' + role + '-flush'
-                        #         data[idx[tok]][idx[workload]] += cpu
-                        #         match = True
-                        #         break
-                        # if not match:
-                        #     sys.exit('Parse Error in TOP!')
+                        cpu = float(word[10])
+                        match = False
+                        for role in pid_map.keys():
+                            if ppid in pid_map[role]:
+                                tok = mode + '-' + role
+                                data[idx[tok]][idx[workload]] += cpu
+                                match = True
+                                break
+                        if not match:
+                            sys.exit('Parse Error in TOP!')
                 line = f.readline()
-            data[idx[mode]][idx[workload]] /= time
-            # for role in ['primary', 'secondary']:
-            #     for job in ['flush', 'compaction']:
-            #         data[idx[mode+'-'+role+'-'+job]][idx[workload]] /= time
+            for role in ['primary', 'secondary']:
+                data[idx[mode+'-'+role]][idx[workload]] /= 100
+            print(mode, workload, time * 4, data[idx[mode+'-primary']][idx[workload]] + data[idx[mode+'-secondary']][idx[workload]])
 
 print(data)
 
@@ -83,7 +92,8 @@ for i in range(config_num):
     center = x + (i - (config_num - 1) / 2.0) * width
     rects.append(ax.bar(center, data[i], width, label=config[i]))
 
-ax.set_ylabel('CPU Consumption (%)')
+# ax.set_ylabel('CPU Consumption (%)')
+ax.set_ylabel('CPU Time (s)')
 ax.set_xticks(x, labels)
 ax.legend()
 
@@ -92,5 +102,5 @@ for r in rects:
 
 fig.tight_layout()
 
-plt.savefig('top-cpu.jpg')
+plt.savefig('top-cpu-' + suffix + '.jpg')
 plt.close()
