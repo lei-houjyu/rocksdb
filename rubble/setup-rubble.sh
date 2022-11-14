@@ -71,7 +71,7 @@ is_head()
     rf=$2
     ip=$(hostname -I | awk '{print $2}' | tail -c 2)
     idx=$(($ip - 2))
-    if [ $(($sid % $rf)) -eq $idx ]
+    if [ $(($sid % $rf)) -eq $idx ]; then
         echo "true"
     else
         echo "false"
