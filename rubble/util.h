@@ -265,7 +265,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       //ignore this flag for now, always set to true.
       db_options.disallow_flush_on_secondary = true;
 
-      db_options.max_num_mems_in_flush = 4;
+      db_options.max_num_mems_in_flush = 1;
       db_options.sst_pad_len = 1 << 20;
       db_options.piggyback_version_edits = false;
       db_options.edits = std::make_shared<Edits>();

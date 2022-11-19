@@ -1238,7 +1238,7 @@ struct DBOptions {
   uint64_t sst_pad_len = 0;
 
   // the max size of memtables possibly appearing in a flush
-  int max_num_mems_in_flush = 10;
+  int max_num_mems_in_flush = 1;
 
   // primary's view of secondary's slots, maintains a mapping between slot and sst file
   std::shared_ptr<SstBitMap> sst_bit_map = nullptr; 
