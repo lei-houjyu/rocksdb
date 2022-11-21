@@ -1072,7 +1072,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
 
         uint64_t file_size = new_file.second.fd.GetFileSize();
         // printf("filesize: %" PRIu64 " | target file base: %" PRIu64 "\n", file_size, cf_options_->target_file_size_base);
-        db_options_->sst_bit_map->TakeSlot(sst_num, slot, file_size/16777216);
+        db_options_->sst_bit_map->TakeSlot(sst_num, slot, 1);
 
         // update secondary's view of sst files
         if (symlink(slot_fname.c_str(), sst_fname.c_str()) != 0) {

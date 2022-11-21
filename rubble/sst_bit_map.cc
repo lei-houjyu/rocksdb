@@ -25,7 +25,9 @@ SstBitMap::SstBitMap(int pool_size, int max_num_mems_in_flush,
 
 
 int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
-    assert(times > 0);
+    // by default RocksDB sets max_write_buffer_number to 2,
+    // so flushes only 1 memtable each time
+    assert(times == 1);
 
     std::unique_lock<std::mutex> lk{mu_};
 
@@ -152,7 +154,7 @@ int SstBitMap::GetFileSlotNum(uint64_t file_num){
 }
 
 void SstBitMap::TakeSlot(uint64_t file_num, int slot_num, int times) {
-    assert(times > 0);
+    assert(times == 1);
     std::unique_lock<std::mutex> lk{mu_};
 
     RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, times);
