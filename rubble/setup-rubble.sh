@@ -102,7 +102,7 @@ setup_rocksdb() {
         if [ "$val" == "false" ]
         then
             mkdir -p ${SST_PATH}/shard-${i}
-            bash create-sst-pool.sh 16777216 4 5000 ${SST_PATH}/shard-${i} &
+            bash create-sst-pool.sh 16777216 1 1448 ${SST_PATH}/shard-${i} &
         fi
     done
     wait
