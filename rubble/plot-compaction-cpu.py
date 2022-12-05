@@ -18,8 +18,7 @@ idx = {'load':0, 'a':1, 'b':2, 'c':3, 'd':4, \
        'rubble-offload-primary':4, \
        'rubble-offload-secondary':5}
 
-# labels = ['Load', 'A', 'B', 'C', 'D']
-labels = ['Load']
+labels = ['Load', 'A', 'B', 'C', 'D']
 
 config = ['baseline-primary', 'baseline-secondary', \
           'rubble-primary',   'rubble-secondary', \
@@ -33,7 +32,7 @@ data = [[0.0, 0.0, 0.0, 0.0, 0.0],\
         [0.0, 0.0, 0.0, 0.0, 0.0]]
 
 for workload in labels:
-    for mode in ['baseline', 'rubble']:
+    for mode in ['baseline', 'rubble-offload']:
         workload = workload.lower()
         top_fname = 'top-' + mode + '-' + workload + '-' + suffix + '.out'
         pid_fname = 'pids-' + mode + '-' + workload + '-' + suffix + '.out'
@@ -45,12 +44,11 @@ for workload in labels:
             while line:
                 word = line.split()
                 pid = word[1]
-                if word[16] == './primary_node':
-                    pid_map['primary'].append(pid)
-                elif word[16] == './tail_node':
-                    pid_map['secondary'].append(pid)
-                else:
-                    sys.exit('Parse Error in PID!')
+                if len(word) > 16 and word[16] == './db_node':
+                    if int(word[20] == 0):
+                        pid_map['primary'].append(pid)
+                    else:
+                        pid_map['secondary'].append(pid)
                 line = f.readline()
 
         # 2. get the CPU utilization data
