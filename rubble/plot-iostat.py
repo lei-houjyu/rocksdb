@@ -5,7 +5,7 @@ file_name = sys.argv[1]
 agg_num = int(sys.argv[2])
 figure_name = file_name[:-4]
 data = {'user':[0], 'nice':[0], 'system':[0], 'iowait':[0], 'steal':[0], 'idle':[0]}
-ignore_key = ['code', 'swap', 'nvme']
+ignore_key = ['code', 'swap']
 
 def should_ignore(key):
     for i in ignore_key:
@@ -33,6 +33,7 @@ with open(file_name, 'r') as f:
             line = f.readline()
             while len(line) > 0 and line[0] == 'n':
                 nums = line.split()
+                print(nums[0], should_ignore(nums[0]))
                 if not should_ignore(nums[0]):
                     read_key  = nums[0] + '-read'
                     write_key = nums[0] + '-write'
@@ -82,5 +83,5 @@ plt.ylabel('Throughput (MB/s)')
 plt.ylim([0, 1000])
 plt.legend()
 # plt.show()
-plt.savefig(figure_name + '-disk.jpg')
+plt.savefig(figure_name + '-disk.pdf')
 plt.close()
