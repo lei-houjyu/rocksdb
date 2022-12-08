@@ -3,20 +3,27 @@
 set -x
 
 setup_as_target() {
+    offload=$1
+
     lsblk
 
     /usr/local/etc/emulab/rc/rc.ifconfig shutdown
     /usr/local/etc/emulab/rc/rc.ifconfig boot
 
-    modprobe -r nvme
-    modprobe nvme num_p2p_queues=2
+    if [ $offload -eq 1 ]; then
+        modprobe -r nvme
+        modprobe nvme num_p2p_queues=2
+    fi
     modprobe nvmet
     modprobe nvmet-rdma
 
     mkdir /sys/kernel/config/nvmet/subsystems/testsubsystem
 
     echo 1 > /sys/kernel/config/nvmet/subsystems/testsubsystem/attr_allow_any_host
-    echo 1 > /sys/kernel/config/nvmet/subsystems/testsubsystem/attr_offload
+    
+    if [ $offload -eq 1 ]; then
+        echo 1 > /sys/kernel/config/nvmet/subsystems/testsubsystem/attr_offload
+    fi
 
     mkdir /sys/kernel/config/nvmet/subsystems/testsubsystem/namespaces/1
 
@@ -55,16 +62,16 @@ setup_as_host() {
     lsblk
 }
 
-if [ $# -lt 1 ]
+if [ $# -ne 2 ]
 then
-    echo "Usage: bash setup-nvmeof.sh target"
+    echo "Usage: bash setup-nvmeof.sh target offload(0/1)"
     echo "Usage: bash setup-nvmeof.sh host successor-IP"
     exit
 fi
 
 if [ $1 == "target" ]
 then
-    setup_as_target
+    setup_as_target $2
 else
     setup_as_host $2
 fi

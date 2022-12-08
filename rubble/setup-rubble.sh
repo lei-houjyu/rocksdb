@@ -14,6 +14,7 @@ install_dependencies() {
 }
 
 partition_disk() {
+    # get partition.dump by 'sfdisk -d /dev/nvme0n1'
     sfdisk /dev/nvme0n1 < partition.dump
 
     yes | mkfs.ext4 /dev/nvme0n1p1
@@ -92,7 +93,7 @@ setup_rocksdb() {
 
     cd rubble
 
-    for (( i=1; i<=${shard_num}; i++ ));
+    for (( i=0; i<${shard_num}; i++ ));
     do
         for f in db sst_dir;
         do

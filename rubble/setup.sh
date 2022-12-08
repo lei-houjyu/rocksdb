@@ -2,8 +2,8 @@
 
 set -x
 
-if [ $# -lt 5 ]; then
-    echo "Usage: bash setup.sh username shard_num IP-1 IP-2 IP-3 ..."
+if [ $# -lt 6 ]; then
+    echo "Usage: bash setup.sh username is_mlnx(0/1) shard_num IP-1 IP-2 IP-3 ..."
     exit
 fi
 
@@ -28,8 +28,10 @@ check_connectivity() {
 }
 
 username=$1
-shard_num=$2
-shift 2
+is_mlnx=$2
+shard_num=$3
+
+shift 3
 
 # Step 1: configure SSH keys on each node
 log=">> key_setup.log 2>&1"
@@ -54,42 +56,64 @@ rf=$#
 
 for ip in $rubble_node
 do
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/partition.dump ${log}"
+    if [ $is_mlnx -eq 1 ]; then
+        ssh $ssh_arg root@$ip "wget -O partition.dump https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/partition-large.dump ${log}"
+    else
+        ssh $ssh_arg root@$ip "wget -O partition.dump https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/partition-small.dump ${log}"
+    fi
     ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-rubble.sh ${log}; bash setup-rubble.sh ${shard_num} ${rf} ${log}" &
 done
 wait
 
 # Step 4: set up NVMeoF
-# Step 4a: disable iommu and reboot each node
+# Step 4a: adjust iommu
 log=">> iommu.log 2>&1"
 for ip in $rubble_node
 do
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/disable-iommu.sh ${log}; bash disable-iommu.sh ${log}" &
+    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/set-iommu.sh ${log}"
+    if [ $is_mlnx -eq 1 ]; then
+        ssh $ssh_arg root@$ip "bash set-iommu.sh on ${log}" &
+    else
+        ssh $ssh_arg root@$ip "bash set-iommu.sh off ${log}" &
+    fi
 done
 wait
 check_connectivity $ssh_up $rubble_node
 
-# Step 4b: install MLNX_OFED driver and reboot
-log=">> mlnx.log 2>&1"
+# Step 4b: install MLNX_OFED/Broadcom driver
+log=">> driver.log 2>&1"
 for ip in $rubble_node
 do
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/install-mlnx-ofed.sh ${log}; nohup bash install-mlnx-ofed.sh ${log} &"
+    if [ $is_mlnx -eq 1 ]; then
+        param=""
+        script_name="install-mlnx-ofed.sh"
+    else
+        param="1"
+        script_name="install-broadcom-driver.sh"
+    fi
+    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/${script_name} ${log}; nohup bash ${script_name} ${param} ${log} &"
 done
 check_connectivity $ssh_down $rubble_node
 check_connectivity $ssh_up   $rubble_node
+if [ $is_mlnx -eq 0 ]; then
+    param="2"
+    for ip in $rubble_node; do
+        ssh $ssh_arg root@$ip "nohup bash ${script_name} ${param} ${log} &"
+    done
+fi
 
 # Step 4c: each node nvme-connects to its successor
 log=">> nvmeof.log 2>&1"
 for ip in $rubble_node
 do
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-nvmeof.sh ${log}; bash setup-nvmeof.sh target ${log}" &
+    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-nvmeof.sh ${log}; bash setup-nvmeof.sh target ${is_mlnx} ${log}" &
 done
 wait
 
 rubble_node=( "$@" )
-for (( i=0; i<$shard_num; i++))
+for (( i=0; i<$rf; i++))
 do
-    j=$((($i+1)%$shard_num+2))
+    j=$((($i+1)%$rf+2))
     ip=${rubble_node[$i]}
     next_ip='10.10.1.'$j
     ssh $ssh_arg root@$ip "bash setup-nvmeof.sh host ${next_ip} ${log}" &
