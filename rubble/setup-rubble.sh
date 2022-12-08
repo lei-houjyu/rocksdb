@@ -16,7 +16,9 @@ install_dependencies() {
 partition_disk() {
     # get partition.dump by 'sfdisk -d /dev/nvme0n1'
     sfdisk /dev/nvme0n1 < partition.dump
-    lsblk
+    while [[ -z $(lsblk | grep nvme0n1p2) ]]; do
+        sleep 1
+    done
 
     yes | mkfs.ext4 /dev/nvme0n1p1
     yes | mkfs.ext4 /dev/nvme0n1p2
