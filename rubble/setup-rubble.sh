@@ -16,6 +16,7 @@ install_dependencies() {
 partition_disk() {
     # get partition.dump by 'sfdisk -d /dev/nvme0n1'
     sfdisk /dev/nvme0n1 < partition.dump
+    lsblk
 
     yes | mkfs.ext4 /dev/nvme0n1p1
     yes | mkfs.ext4 /dev/nvme0n1p2
@@ -24,8 +25,6 @@ partition_disk() {
 
     mount /dev/nvme0n1p1 $DATA_PATH
     mount /dev/nvme0n1p2 $SST_PATH
-
-    lsblk
 }
 
 setup_grpc() {
