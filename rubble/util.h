@@ -265,7 +265,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       //ignore this flag for now, always set to true.
       db_options.disallow_flush_on_secondary = true;
 
-      db_options.max_num_mems_in_flush = 1;
+      db_options.max_num_mems_in_flush = 4;
       db_options.sst_pad_len = 1 << 20;
       db_options.piggyback_version_edits = false;
       db_options.edits = std::make_shared<Edits>();
@@ -276,7 +276,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       // }
       // a default LSM tree has up to 4448 SST files (4 L0, 4 L1, 40 L2, 400 L3, 4000 L4 files)
       // but we target 16GB per instance, so only need 1000 files at L4
-      db_options.preallocated_sst_pool_size = 1448;
+      db_options.preallocated_sst_pool_size = 5000;
       // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);
       db_options.sst_bit_map = std::make_shared<SstBitMap>(
             db_options.preallocated_sst_pool_size, 

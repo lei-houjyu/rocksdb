@@ -25,7 +25,7 @@ done
 
 n=`expr $pool_size + 1`
 for t in $(seq 2 $max_num_mems_in_flush); do
-    m=`expr $n + 999`
+    m=`expr $n + 99`
     target_file_size=`expr $target_file_size_base \* $t + $padding`
     for i in $(seq $n $m); do
         echo $i

@@ -1004,7 +1004,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::CreateSstPool(){
     
     int max_num_mems_to_flush = db_options_->max_num_mems_in_flush;
     int pool_size = db_options_->preallocated_sst_pool_size;
-    int big_sst_pool_size = 10;
+    int big_sst_pool_size = 100;
     for (int i = 1; i <= pool_size + (max_num_mems_to_flush - 1)* big_sst_pool_size; i++) {
         std::string sst_num = std::to_string(i);
         // rocksdb::WriteStringToFile(fs_, rocksdb::Slice(std::string(buffer_size, 'c')), sst_dir + "/" + fname, true);
@@ -1072,7 +1072,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
 
         uint64_t file_size = new_file.second.fd.GetFileSize();
         // printf("filesize: %" PRIu64 " | target file base: %" PRIu64 "\n", file_size, cf_options_->target_file_size_base);
-        db_options_->sst_bit_map->TakeSlot(sst_num, slot, 1);
+        db_options_->sst_bit_map->TakeSlot(sst_num, slot, file_size/16777216);
 
         // update secondary's view of sst files
         if (symlink(slot_fname.c_str(), sst_fname.c_str()) != 0) {
