@@ -1225,6 +1225,7 @@ struct DBOptions {
 
   //upstream's remote sst directory, not "" for all nodes except tail
   std::string remote_sst_dir = "";
+  std::vector<std::string> remote_sst_dirs;
 
   // directory that holds pre-allocated SST files
   std::string sst_pool_dir = "";

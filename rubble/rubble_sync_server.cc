@@ -1080,22 +1080,22 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
         }
         
         // tail node doesn't need to ship sst files
-        if(!is_tail_){
-            assert(db_options_->remote_sst_dir != "");
-            std::string remote_sst_dir = db_options_->remote_sst_dir;
-            if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
-                remote_sst_dir = remote_sst_dir + '/';
-            }
-            std::string remote_sst_fname = remote_sst_dir + std::to_string(slot);
-            // maybe not ship the sst file here, instead ship after we finish the logAndApply..
-            // ios = rocksdb::CopySstFile(fs_, fname, remote_sst_fname, 0,  true);
-            auto ret =  rocksdb::copy_sst(sst_fname, remote_sst_fname);
-	          if (ret){
-                 std::cerr << "[ File Ship Failed ] : " << sst_num << std::endl;
-            }else {
-                //  std::cout << "[ File Shipped ] : " << sst_num << std::endl;
-            }
-        }
+        // if(!is_tail_){
+        //     assert(db_options_->remote_sst_dir != "");
+        //     std::string remote_sst_dir = db_options_->remote_sst_dir;
+        //     if(remote_sst_dir[remote_sst_dir.length() - 1] != '/'){
+        //         remote_sst_dir = remote_sst_dir + '/';
+        //     }
+        //     std::string remote_sst_fname = remote_sst_dir + std::to_string(slot);
+        //     // maybe not ship the sst file here, instead ship after we finish the logAndApply..
+        //     // ios = rocksdb::CopySstFile(fs_, fname, remote_sst_fname, 0,  true);
+        //     auto ret =  rocksdb::copy_sst(sst_fname, remote_sst_fname);
+	      //     if (ret){
+        //          std::cerr << "[ File Ship Failed ] : " << sst_num << std::endl;
+        //     }else {
+        //         //  std::cout << "[ File Shipped ] : " << sst_num << std::endl;
+        //     }
+        // }
     }
     
     return ios;

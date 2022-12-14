@@ -1529,9 +1529,7 @@ Status CompactionJob::InstallCompactionResults(
   // RUBBLE: ship new sst file to the remote dir and delete the input sst file at the remote sst dir
   // Only the primary node will get here, non-primary nodes' flush and compaction are disabled
   if(db_options_.is_rubble && db_options_.is_primary && !db_options_.is_tail){
-    assert(db_options_.remote_sst_dir != "");
     IOStatus ios;
-    std::string remote_sst_dir = db_options_.remote_sst_dir;
 
     for (const auto& sub_compact : compact_->sub_compact_states) {
       for (const auto& out : sub_compact.outputs) {
@@ -1614,10 +1612,9 @@ Status CompactionJob::OpenCompactionOutputFile(
   //[RUBBLE]
   if(db_options_.is_primary && db_options_.is_rubble){
     int sst_real = db_options_.sst_bit_map->TakeOneAvailableSlot(file_number, 1);
-    std::string r_fname = db_options_.remote_sst_dir + std::to_string(sst_real);
     //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
     uint64_t buffer_size = sub_compact->compaction->mutable_cf_options()->target_file_size_base  + db_options_.sst_pad_len;
-    ((PosixWritableFile*)(writable_file.get()))->SetRemoteFileInfo(r_fname, &db_options_, false, true, buffer_size);
+    ((PosixWritableFile*)(writable_file.get()))->SetRemoteFileInfo(sst_real, &db_options_, false, true, buffer_size);
   }
   // [RUBBLE END]
 

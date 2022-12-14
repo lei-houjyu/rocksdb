@@ -1158,19 +1158,20 @@ PosixWritableFile::PosixWritableFile(const std::string& fname, int fd,
   assert(!options.use_mmap_writes);
 }
 
-void PosixWritableFile::SetRemoteFileInfo(const std::string& r_fname, 
+void PosixWritableFile::SetRemoteFileInfo(int slot_num,
                                           const ImmutableDBOptions* db_options, 
                                           bool is_flush_output_file, 
                                           bool is_compact_output_file,
-                                          uint64_t buffer_size){
+                                          uint64_t buffer_size) {
+  slot_num_ = slot_num;
   is_compact_output_file_ = is_compact_output_file;
   is_flush_output_file_ = is_flush_output_file;
-  r_fname_ = r_fname;
   db_options_ = db_options;
   buffer_size_ = buffer_size;
+  printf("local_fname: %s remote_slot: %d\n", filename_.c_str(), slot_num_);
   ROCKS_LOG_INFO(db_options->info_log,
-    "local_fname: %s remote_fname: %s\n",
-    filename_.c_str(), r_fname_.c_str());
+    "local_fname: %s remote_slot: %d\n",
+    filename_.c_str(), slot_num_);
 }
 
 PosixWritableFile::~PosixWritableFile() {
@@ -1195,24 +1196,29 @@ void PosixWritableFile::ShipSST(const Slice& data) {
     if(db_options_->disallow_flush_on_secondary || is_compact_output_file_){
       assert(IsSectorAligned(data.size(), GetRequiredBufferAlignment()));
       assert(IsSectorAligned(data.data(), GetRequiredBufferAlignment()));
-      assert(r_fname_ != "");
-      int r_fd;
-      do {
-        r_fd = open(r_fname_.c_str(), O_WRONLY | O_DIRECT | O_DSYNC, 0755);
-      } while (r_fd < 0 && errno == EINTR);
-      if (r_fd < 0) {
-        std::cout << "While open a file for appending" << r_fname_ << errno << std::endl;
-        assert(false);
-      }
-      // std::cout << "data : " << Slice(data.data(), 32).ToString()  << " , size : " << nbytes << std::endl;
+      assert(!db_options_->remote_sst_dirs.empty());
 
-      ssize_t done = write(r_fd, src, nbytes);
-      if (done != (ssize_t)nbytes) {
-        std::cout << "while appending to file" << r_fname_ << errno << std::endl;
-        assert(false);
-      }
+      for (std::string dir : db_options_->remote_sst_dirs) {
+        std::string fname = dir + "/" + std::to_string(slot_num_);
+        std::cout << "[ShipSST] write " << filename_ << " to " << fname << std::endl;
+        int r_fd;
+        do {
+          r_fd = open(fname.c_str(), O_WRONLY | O_DIRECT | O_DSYNC, 0755);
+        } while (r_fd < 0 && errno == EINTR);
 
-      close(r_fd);
+        if (r_fd < 0) {
+          std::cout << "While open a file for appending" << fname << errno << std::endl;
+          assert(false);
+        }
+
+        ssize_t done = write(r_fd, src, nbytes);
+        if (done != (ssize_t)nbytes) {
+          std::cout << "while appending to file" << fname << errno << std::endl;
+          assert(false);
+        }
+
+        close(r_fd);
+      }
     }
     std::string type;
   }

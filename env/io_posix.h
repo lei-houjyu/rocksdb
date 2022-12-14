@@ -217,6 +217,7 @@ class PosixWritableFile : public FSWritableFile {
   const std::string filename_;
   const bool use_direct_io_;
   int fd_;
+  int slot_num_;
   std::string r_fname_;
   const ImmutableDBOptions* db_options_ = nullptr;
   bool is_compact_output_file_;
@@ -240,7 +241,7 @@ class PosixWritableFile : public FSWritableFile {
                              const EnvOptions& options);
   virtual ~PosixWritableFile();
 
-  virtual void SetRemoteFileInfo(const std::string& r_fname, 
+  virtual void SetRemoteFileInfo(const int slot_num, 
                                 const ImmutableDBOptions* db_options,
                                 bool is_flush_output_file ,
                                 bool is_compact_output_file,

@@ -23,6 +23,13 @@ int main(int argc, char** argv) {
 
     // SST shipping address
     const std::string remote_sst_dir = is_tail ? "" : "/mnt/remote-sst/shard-" + sid;
+    std::vector<std::string> remote_sst_dirs;
+    for (int i = 1; i <= rf; i++) {
+        if (i != rid) {
+            remote_sst_dirs.push_back("/mnt/remote-sst/node-" + std::to_string(i) + "/shard-" + sid);
+        }
+    }
+
     // SST pre-allocation address
     const std::string sst_pool_dir   = is_head ? "" : "/mnt/sst/shard-" + sid;
 

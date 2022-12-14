@@ -151,10 +151,8 @@ Status BuildTable(
         // we need to ship sst files over
         // RUBBLE_LOG_INFO(db_options->rubble_info_log, "[times]: %lu", num_mems_to_flush);
         int sst_real = db_options->sst_bit_map->TakeOneAvailableSlot(meta->fd.GetNumber(), num_mems_to_flush);
-        std::string r_fname = db_options->remote_sst_dir + std::to_string(sst_real);
         //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
-        ((PosixWritableFile*)(file.get()))->SetRemoteFileInfo(
-            r_fname, db_options, true, false, 
+        ((PosixWritableFile*)(file.get()))->SetRemoteFileInfo(sst_real, db_options, true, false,
             mutable_cf_options.target_file_size_base + db_options->sst_pad_len);
       }
       // [RUBBLE END]

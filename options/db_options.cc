@@ -599,6 +599,7 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       disallow_flush_on_secondary(options.disallow_flush_on_secondary),
       target_address(options.target_address),
       remote_sst_dir(options.remote_sst_dir),
+      remote_sst_dirs(options.remote_sst_dirs),
       sst_pool_dir(options.sst_pool_dir),
       preallocated_sst_pool_size(options.preallocated_sst_pool_size),
       sst_pad_len(options.sst_pad_len),
@@ -611,6 +612,11 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
         if(is_rubble && !is_tail){
           if(remote_sst_dir.back() != '/'){
             remote_sst_dir.append("/");
+          }
+          for (std::string dir : remote_sst_dirs) {
+            if (dir.back() != '/') {
+              dir.append("/");
+            }
           }
         }
 }

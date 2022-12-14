@@ -6,12 +6,14 @@
 #include <fstream>
 #include <random>
 #include <fcntl.h>
+#include <vector>
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
 #include "rocksdb/utilities/options_util.h"
 #include "rubble_sync_server.h"
 
 using std::string;
+using std::vector;
 using rocksdb::LoadOptionsFromFile;
 
 const char* ParseCmdPara( char* argv,const char* para) {
@@ -167,7 +169,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
                                 const string& sst_pool_dir,
                                 const string& target_addr, 
                                 bool is_rubble, bool is_primary, bool is_tail,
-                                const std::string shard_id){
+                                const string& shard_id, const vector<string>& remote_sst_dirs = vector<string>()) {
 
    rocksdb::DB* db;
    rocksdb::DBOptions db_options;
@@ -200,7 +202,11 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    // for non-tail nodes in rubble mode, it's shipping sst file to the remote_sst_dir;
    if (db_options.is_rubble && !is_tail) {
        db_options.remote_sst_dir = remote_sst_dir;
+       db_options.remote_sst_dirs = remote_sst_dirs;
        std::cout << "remote sst dir: " << db_options.remote_sst_dir << std::endl;
+       for (string dir : db_options.remote_sst_dirs) {
+            std::cout << "remote sst dirs: " << dir << std::endl;
+       }
    }
 
    if (db_options.is_rubble && !is_primary) {
