@@ -113,10 +113,15 @@ wait
 rubble_node=( "$@" )
 for (( i=0; i<$rf; i++))
 do
-    j=$((($i+1)%$rf+2))
-    ip=${rubble_node[$i]}
-    next_ip='10.10.1.'$j
-    ssh $ssh_arg root@$ip "bash setup-nvmeof.sh host ${next_ip} ${log}" &
+    for (( j=0; j<$rf; j++ ))
+    do
+        if [ $j -ne $i ]
+        then
+            ip=${rubble_node[$i]}
+            next_ip=${rubble_node[$j]}
+            ssh $ssh_arg root@$ip "bash setup-nvmeof.sh host ${next_ip} ${log}" &
+        fi
+    done
 done
 wait
 

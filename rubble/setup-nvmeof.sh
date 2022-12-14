@@ -3,7 +3,10 @@
 set -x
 
 setup_as_target() {
-    offload=$1
+    local offload=$1
+    local ips=($`hostname -I`)
+    local idx=$(( ${ips[1]::1} - 1))
+    local subsys='subsystem'$idx
 
     lsblk
 
@@ -17,29 +20,28 @@ setup_as_target() {
     modprobe nvmet
     modprobe nvmet-rdma
 
-    mkdir /sys/kernel/config/nvmet/subsystems/testsubsystem
+    mkdir /sys/kernel/config/nvmet/subsystems/${subsys}
 
-    echo 1 > /sys/kernel/config/nvmet/subsystems/testsubsystem/attr_allow_any_host
+    echo 1 > /sys/kernel/config/nvmet/subsystems/${subsys}/attr_allow_any_host
     
     if [ $offload -eq 1 ]; then
-        echo 1 > /sys/kernel/config/nvmet/subsystems/testsubsystem/attr_offload
+        echo 1 > /sys/kernel/config/nvmet/subsystems/${subsys}/attr_offload
     fi
 
-    mkdir /sys/kernel/config/nvmet/subsystems/testsubsystem/namespaces/1
+    mkdir /sys/kernel/config/nvmet/subsystems/${subsys}/namespaces/1
 
-    echo -n /dev/nvme0n1 > /sys/kernel/config/nvmet/subsystems/testsubsystem/namespaces/1/device_path
+    echo -n /dev/nvme0n1 > /sys/kernel/config/nvmet/subsystems/${subsys}/namespaces/1/device_path
     sleep 5
-    echo 1 > /sys/kernel/config/nvmet/subsystems/testsubsystem/namespaces/1/enable
+    echo 1 > /sys/kernel/config/nvmet/subsystems/${subsys}/namespaces/1/enable
 
     mkdir /sys/kernel/config/nvmet/ports/1
 
-    ips=($`hostname -I`)
     echo 4420 > /sys/kernel/config/nvmet/ports/1/addr_trsvcid
     echo ${ips[1]} > /sys/kernel/config/nvmet/ports/1/addr_traddr
     echo "rdma" > /sys/kernel/config/nvmet/ports/1/addr_trtype
     echo "ipv4" > /sys/kernel/config/nvmet/ports/1/addr_adrfam
 
-    ln -s /sys/kernel/config/nvmet/subsystems/testsubsystem/ /sys/kernel/config/nvmet/ports/1/subsystems/testsubsystem
+    ln -s /sys/kernel/config/nvmet/subsystems/${subsys}/ /sys/kernel/config/nvmet/ports/1/subsystems/${subsys}
 
     mount /dev/nvme0n1p1 /mnt/data
     mount -o ro,noload /dev/nvme0n1p2 /mnt/sst
@@ -48,16 +50,15 @@ setup_as_target() {
 }
 
 setup_as_host() {
-    target_ip=$1
+    local target_ip=$1
+    local idx=$(( ${target_ip::1} - 1))
+    local subsys='subsystem'$idx
 
     modprobe nvme-rdma
 
     nvme discover -t rdma -a $target_ip -s 4420
     nvme connect -t rdma -n testsubsystem -a $target_ip -s 4420
     nvme list
-
-    mkdir /mnt/remote-sst
-    mount /dev/nvme1n1p2 /mnt/remote-sst
 
     lsblk
 }
@@ -75,4 +76,3 @@ then
 else
     setup_as_host $2
 fi
-
