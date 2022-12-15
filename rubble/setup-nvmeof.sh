@@ -5,7 +5,8 @@ set -x
 setup_as_target() {
     local offload=$1
     local ips=($`hostname -I`)
-    local idx=$(( ${ips[1]::1} - 1))
+    local private_ip=${ips[1]}
+    local idx=$(( ${private_ip: -1} - 1 ))
     local subsys='subsystem'$idx
 
     lsblk
@@ -37,7 +38,7 @@ setup_as_target() {
     mkdir /sys/kernel/config/nvmet/ports/1
 
     echo 4420 > /sys/kernel/config/nvmet/ports/1/addr_trsvcid
-    echo ${ips[1]} > /sys/kernel/config/nvmet/ports/1/addr_traddr
+    echo $private_ip > /sys/kernel/config/nvmet/ports/1/addr_traddr
     echo "rdma" > /sys/kernel/config/nvmet/ports/1/addr_trtype
     echo "ipv4" > /sys/kernel/config/nvmet/ports/1/addr_adrfam
 
@@ -51,7 +52,7 @@ setup_as_target() {
 
 setup_as_host() {
     local target_ip=$1
-    local idx=$(( ${target_ip::1} - 1))
+    local idx=$(( ${target_ip: -1} - 1 ))
     local subsys='subsystem'$idx
 
     modprobe nvme-rdma
