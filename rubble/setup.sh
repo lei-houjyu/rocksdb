@@ -71,7 +71,7 @@ log=">> iommu.log 2>&1"
 for ip in $rubble_node
 do
     ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/set-iommu.sh ${log}"
-    if [ $is_mlnx -eq 1 ]; then
+    if [ $is_mlnx -eq 0 ]; then
         ssh $ssh_arg root@$ip "bash set-iommu.sh on ${log}" &
     else
         ssh $ssh_arg root@$ip "bash set-iommu.sh off ${log}" &

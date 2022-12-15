@@ -15,6 +15,8 @@ install_dependencies() {
 
 partition_disk() {
     # get partition.dump by 'sfdisk -d /dev/nvme0n1'
+    lsblk
+
     sfdisk /dev/nvme0n1 < partition.dump
     while [[ -z $(lsblk | grep nvme0n1p2) ]]; do
         sleep 1
@@ -28,6 +30,8 @@ partition_disk() {
     mkdir $DATA_PATH $SST_PATH
 
     mount /dev/nvme0n1p1 $DATA_PATH
+
+    lsblk
 }
 
 setup_grpc() {
@@ -82,6 +86,8 @@ is_head()
 }
 
 setup_rocksdb() {
+    lsblk
+
     local shard_num=$1
     local rf=$2
     
@@ -108,17 +114,17 @@ setup_rocksdb() {
             mkdir -p ${SST_PATH}/shard-${i}
             mount /dev/nvme0n1p${pnum} ${SST_PATH}/shard-${i}
             pnum=$(( pnum + 1 ))
-            bash create-sst-pool.sh 16777216 4 5000 ${SST_PATH}/shard-${i} &
+            bash create-sst-pool.sh 16777216 4 5000 ${SST_PATH}/shard-${i} > /dev/null 2>&1 &
         fi
     done
     wait
 
-    for dev in `ls /dev/nvme0n1p* | grep -v nvme0n1p1`
+    for dev in `ls /dev/nvme0n1p*`
     do
-        dir=`lsblk -o MOUNTPOINT -nr $dev`
         umount $dir
-        mount -o ro,noload $dev $dir
     done
+
+    lsblk
 }
 
 install_dependencies

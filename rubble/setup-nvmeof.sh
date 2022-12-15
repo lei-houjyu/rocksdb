@@ -2,6 +2,18 @@
 
 set -x
 
+mount_everything() {
+    mount /dev/nvme0n1p1 /mnt/data
+    local pnum=2
+    for dir in `ls /mnt/sst`
+    do
+        mount -o ro,noload /dev/nvme0n1p${pnum} $dir
+        pnum=$(( pnum + 1 ))
+    done
+
+    lsblk
+}
+
 setup_as_target() {
     local offload=$1
     local ips=($`hostname -I`)
@@ -44,10 +56,7 @@ setup_as_target() {
 
     ln -s /sys/kernel/config/nvmet/subsystems/${subsys}/ /sys/kernel/config/nvmet/ports/1/subsystems/${subsys}
 
-    mount /dev/nvme0n1p1 /mnt/data
-    mount -o ro,noload /dev/nvme0n1p2 /mnt/sst
-
-    lsblk
+    mount_everything
 }
 
 setup_as_host() {
@@ -58,7 +67,7 @@ setup_as_host() {
     modprobe nvme-rdma
 
     nvme discover -t rdma -a $target_ip -s 4420
-    nvme connect -t rdma -n testsubsystem -a $target_ip -s 4420
+    nvme connect -t rdma -n $subsys -a $target_ip -s 4420
     nvme list
 
     lsblk
