@@ -20,18 +20,19 @@ partition_disk() {
         sleep 1
     done
 
-    yes | mkfs.ext4 /dev/nvme0n1p1
-    yes | mkfs.ext4 /dev/nvme0n1p2
+    for dev in `ls /dev/nvme0n1p*`
+    do
+        yes | mkfs.ext4 $dev
+    done
 
     mkdir $DATA_PATH $SST_PATH
 
     mount /dev/nvme0n1p1 $DATA_PATH
-    mount /dev/nvme0n1p2 $SST_PATH
 }
 
 setup_grpc() {
-    GPRC_VERSION=1.34.0
-    NUM_JOBS=`nproc`
+    local GPRC_VERSION=1.34.0
+    local NUM_JOBS=`nproc`
 
     MY_INSTALL_DIR=/root
     mkdir -p $MY_INSTALL_DIR
@@ -69,10 +70,10 @@ setup_grpc() {
 
 is_head()
 {
-    sid=$1
-    rf=$2
-    ip=$(hostname -I | awk '{print $2}' | tail -c 2)
-    idx=$(($ip - 2))
+    local sid=$1
+    local rf=$2
+    local ip=$(hostname -I | awk '{print $2}' | tail -c 2)
+    local idx=$(($ip - 2))
     if [ $(($sid % $rf)) -eq $idx ]; then
         echo "true"
     else
@@ -81,8 +82,8 @@ is_head()
 }
 
 setup_rocksdb() {
-    shard_num=$1
-    rf=$2
+    local shard_num=$1
+    local rf=$2
     
     cd ${DATA_PATH}
 
@@ -94,23 +95,30 @@ setup_rocksdb() {
 
     cd rubble
 
+    local pnum=2
     for (( i=0; i<${shard_num}; i++ ));
     do
         for f in db sst_dir;
         do
             mkdir -p ${DATA_PATH}/db/shard-${i}/${f} 
         done
-        val=$( is_head $i $rf )
+        local val=$( is_head $i $rf )
         if [ "$val" == "false" ]
         then
             mkdir -p ${SST_PATH}/shard-${i}
+            mount /dev/nvme0n1p${pnum} ${SST_PATH}/shard-${i}
+            pnum=$(( pnum + 1 ))
             bash create-sst-pool.sh 16777216 4 5000 ${SST_PATH}/shard-${i} &
         fi
     done
     wait
 
-    umount ${SST_PATH}
-    mount -o ro,noload /dev/nvme0n1p2 $SST_PATH
+    for dev in `ls /dev/nvme0n1p* | grep -v nvme0n1p1`
+    do
+        dir=`lsblk -o MOUNTPOINT -nr $dev`
+        umount $dir
+        mount -o ro,noload $dev $dir
+    done
 }
 
 install_dependencies
