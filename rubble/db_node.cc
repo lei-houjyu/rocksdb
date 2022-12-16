@@ -24,17 +24,20 @@ int main(int argc, char** argv) {
     // SST shipping address
     const std::string remote_sst_dir = is_tail ? "" : "/mnt/remote-sst/shard-" + sid;
     std::vector<std::string> remote_sst_dirs;
-    for (int i = 1; i <= rf; i++) {
-        if (i != rid) {
-            remote_sst_dirs.push_back("/mnt/remote-sst/node-" + std::to_string(i) + "/shard-" + sid);
+    if (is_head) {
+        const int nid = std::stoi(sid) % rf + 1;
+        for (int i = 1; i <= rf; i++) {
+            if (i != nid) {
+                remote_sst_dirs.push_back("/mnt/remote-sst/node-" + std::to_string(i) + "/shard-" + sid);
+            }
         }
     }
 
     // SST pre-allocation address
     const std::string sst_pool_dir   = is_head ? "" : "/mnt/sst/shard-" + sid;
 
-    rocksdb::DB* db = GetDBInstance(db_path, sst_path,
-        remote_sst_dir, sst_pool_dir, dest_addr, is_rubble, is_head, is_tail, sid);
+    rocksdb::DB* db = GetDBInstance(db_path, sst_path, remote_sst_dir,
+        sst_pool_dir, dest_addr, is_rubble, is_head, is_tail, sid, remote_sst_dirs);
 
     RunServer(db, src_addr);
 
