@@ -117,8 +117,9 @@ do
     do
         if [ $j -ne $i ]
         then
+            k=$(( j + 2 ))
             ip=${rubble_node[$i]}
-            next_ip=${rubble_node[$j]}
+            next_ip='10.10.1.'$k
             ssh $ssh_arg root@$ip "bash setup-nvmeof.sh host ${next_ip} ${log}" &
         fi
     done

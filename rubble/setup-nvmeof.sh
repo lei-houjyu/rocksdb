@@ -7,7 +7,7 @@ mount_everything() {
     local pnum=2
     for dir in `ls /mnt/sst`
     do
-        mount -o ro,noload /dev/nvme0n1p${pnum} $dir
+        mount -o ro,noload /dev/nvme0n1p$pnum /mnt/sst/$dir
         pnum=$(( pnum + 1 ))
     done
 
