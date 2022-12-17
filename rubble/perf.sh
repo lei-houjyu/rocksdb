@@ -11,6 +11,7 @@ name=$1
 cpu=$2
 time=$3
 
+cp perf.data ${name}.perf.data
 perf record -F 99 -C ${cpu} -g -- sleep ${time}
 perf script > ${name}.perf
 /mnt/data/FlameGraph/stackcollapse-perf.pl ${name}.perf > ${name}.folded
