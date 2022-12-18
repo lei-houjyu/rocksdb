@@ -2,16 +2,37 @@
 
 set -x
 
-mount_everything() {
+mount_local_disk() {
     mount /dev/nvme0n1p1 /mnt/data
-    local pnum=2
+    local pid=2
     for dir in `ls /mnt/sst`
     do
-        mount -o ro,noload /dev/nvme0n1p$pnum /mnt/sst/$dir
-        pnum=$(( pnum + 1 ))
+        mount -o ro,noload /dev/nvme0n1p$pid /mnt/sst/$dir
+        pid=$(( pid + 1 ))
     done
 
     lsblk
+}
+
+mount_remote_disk() {
+    local remote_nid=$1
+    local nvme_id=$2
+    local shard_num=$3
+    local rf=$4
+
+    local private_ip=`hostname -I | awk '{print $2}'`
+    local local_nid=$( ip_to_nid $private_ip )
+
+    for (( sid=0; sid<$shard_num; sid++ ))
+    do
+        local val=$( is_head $local_nid $sid $rf )
+        if [ "$val" == "true" ]
+            local pid=$( sid_to_pid $remote_nid $sid $rf )
+            local mount_point=/mnt/remote-sst/node-${remote-nid}/shard-${sid}
+            mkdir -p $mount_point
+            mount /dev/nvme${nvme_id}n1p${pid} $mount_point
+        then
+    done
 }
 
 setup_as_target() {
@@ -56,13 +77,16 @@ setup_as_target() {
 
     ln -s /sys/kernel/config/nvmet/subsystems/${subsys}/ /sys/kernel/config/nvmet/ports/1/subsystems/${subsys}
 
-    mount_everything
+    mount_local_disk
 }
 
 setup_as_host() {
     local target_ip=$1
-    local idx=$(( ${target_ip: -1} - 1 ))
-    local subsys='subsystem'$idx
+    local shard_num=$2
+    local rf=$3
+    local nvme_id=$4
+    local nid=$( ip_to_nid $target_ip )
+    local subsys='subsystem'$nid
 
     modprobe nvme-rdma
 
@@ -70,19 +94,23 @@ setup_as_host() {
     nvme connect -t rdma -n $subsys -a $target_ip -s 4420
     nvme list
 
+    mount_remote_disk $nid $nvme_id $shard_num $rf
+
     lsblk
 }
 
-if [ $# -ne 2 ]
+if [ $# -lt 2 ]
 then
     echo "Usage: bash setup-nvmeof.sh target offload(0/1)"
-    echo "Usage: bash setup-nvmeof.sh host successor-IP"
+    echo "Usage: bash setup-nvmeof.sh host target-IP shard_num rf nvme_id"
     exit
 fi
+
+source helper.sh
 
 if [ $1 == "target" ]
 then
     setup_as_target $2
 else
-    setup_as_host $2
+    setup_as_host $2 $3 $4 $5
 fi

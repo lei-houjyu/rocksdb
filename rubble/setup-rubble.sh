@@ -2,6 +2,7 @@
 
 set -x
 
+nvme_dev='/dev/nvme0n1'
 DATA_PATH="/mnt/data"
 SST_PATH="/mnt/sst"
 
@@ -13,23 +14,59 @@ install_dependencies() {
     pip3 install matplotlib
 }
 
+# After this function, the disk will look like:
+# nvme0n1
+# ├─nvme0n1p1
+# ├─nvme0n1p2
+# └─nvme0n1p3
+# /dev/nvme0n1p1 will be mounted to /mnt/data, and /dev/nvme0n1p{2..N} will 
+# be mounted to /mnt/sst/shard-x, which holds secondary-x's SST files in Rubble
 partition_disk() {
-    # get partition.dump by 'sfdisk -d /dev/nvme0n1'
     lsblk
 
-    sfdisk /dev/nvme0n1 < partition.dump
+    local shard_num=$1
+    local rf=$2
+
+    local sst_size=100
+    local data_size=$(( 50 + shard_num * 16 ))
+    local secondary_num=$(( shard_num / rf * (rf - 1) ))
+    
+    wipefs $nvme_dev
+
+    local unit_str="G
+    "
+
+    local partition_str="n
+    p
+
+
+    +"
+
+    local sync_str="w
+    "
+
+    local cmd_str="$partition_str"${data_size}"$unit_str"
+
+    for (( i=0; i<$secondary_num; i++ ))
+    do
+        cmd_str="${cmd_str}${partition_str}"${sst_size}"${unit_str}"
+    done
+    cmd_str="${cmd_str}${sync_str}"
+
+    echo "$cmd_str" | fdisk $nvme_dev
+    
     while [[ -z $(lsblk | grep nvme0n1p2) ]]; do
         sleep 1
     done
 
-    for dev in `ls /dev/nvme0n1p*`
+    for dev in `ls ${nvme_dev}p*`
     do
         yes | mkfs.ext4 $dev
     done
 
     mkdir $DATA_PATH $SST_PATH
 
-    mount /dev/nvme0n1p1 $DATA_PATH
+    mount ${nvme_dev}p1 $DATA_PATH
 
     lsblk
 }
@@ -72,20 +109,9 @@ setup_grpc() {
     echo "hello world example build success"
 }
 
-is_head()
-{
-    local sid=$1
-    local rf=$2
-    local ip=$(hostname -I | awk '{print $2}' | tail -c 2)
-    local idx=$(($ip - 2))
-    if [ $(($sid % $rf)) -eq $idx ]; then
-        echo "true"
-    else
-        echo "false"
-    fi
-}
-
 setup_rocksdb() {
+    source helper.sh
+
     lsblk
 
     local shard_num=$1
@@ -101,25 +127,28 @@ setup_rocksdb() {
 
     cd rubble
 
-    local pnum=2
-    for (( i=0; i<${shard_num}; i++ ));
+    local pid=2
+    local nid=$( get_nid )
+    for (( sid=0; sid<${shard_num}; sid++ ));
     do
         for f in db sst_dir;
         do
-            mkdir -p ${DATA_PATH}/db/shard-${i}/${f} 
+            mkdir -p ${DATA_PATH}/db/shard-${sid}/${f} 
         done
-        local val=$( is_head $i $rf )
-        if [ "$val" == "false" ]
+        local ret=$( is_head $nid $sid $rf )
+        if [ "$ret" == "false" ]
         then
-            mkdir -p ${SST_PATH}/shard-${i}
-            mount /dev/nvme0n1p${pnum} ${SST_PATH}/shard-${i}
-            pnum=$(( pnum + 1 ))
-            bash create-sst-pool.sh 16777216 4 5000 ${SST_PATH}/shard-${i} > /dev/null 2>&1 &
+            local mount_point=${SST_PATH}/shard-${sid}
+            mkdir -p $mount_point
+            mount ${nvme_dev}p${pid} $mount_point
+            pid=$(( pid + 1 ))
+            touch ${mount_point}/node-${nid}-shard-${sid}.txt
+            bash create-sst-pool.sh 16777216 4 5000 $mount_point > /dev/null 2>&1 &
         fi
     done
     wait
 
-    for dev in `ls /dev/nvme0n1p*`
+    for dev in `ls ${nvme_dev}p*`
     do
         umount $dir
     done
@@ -128,7 +157,7 @@ setup_rocksdb() {
 }
 
 install_dependencies
-partition_disk
+partition_disk $1 $2
 setup_grpc
 setup_rocksdb $1 $2
 

@@ -56,11 +56,6 @@ rf=$#
 
 for ip in $rubble_node
 do
-    if [ $is_mlnx -eq 1 ]; then
-        ssh $ssh_arg root@$ip "wget -O partition.dump https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/partition-large.dump ${log}"
-    else
-        ssh $ssh_arg root@$ip "wget -O partition.dump https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/partition-small.dump ${log}"
-    fi
     ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-rubble.sh ${log}; bash setup-rubble.sh ${shard_num} ${rf} ${log}" &
 done
 wait
@@ -113,6 +108,7 @@ wait
 rubble_node=( "$@" )
 for (( i=0; i<$rf; i++))
 do
+    nvme_id=1
     for (( j=0; j<$rf; j++ ))
     do
         if [ $j -ne $i ]
@@ -120,11 +116,11 @@ do
             k=$(( j + 2 ))
             ip=${rubble_node[$i]}
             next_ip='10.10.1.'$k
-            ssh $ssh_arg root@$ip "bash setup-nvmeof.sh host ${next_ip} ${log}" &
+            ssh $ssh_arg root@$ip "bash setup-nvmeof.sh host ${next_ip} ${shard_num} ${rf} ${log} ${nvme_id}"
+            nvme_id=$(( nvme_id + 1 ))
         fi
     done
 done
-wait
 
 # Step 5: misc
 for ip in ${rubble_node[@]}
