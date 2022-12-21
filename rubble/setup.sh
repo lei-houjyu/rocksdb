@@ -56,6 +56,7 @@ rf=$#
 
 for ip in $rubble_node
 do
+    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/helper.sh ${log};"
     ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-rubble.sh ${log}; bash setup-rubble.sh ${shard_num} ${rf} ${log}" &
 done
 wait
