@@ -19,9 +19,7 @@ mount_remote_disk() {
     local nvme_id=$2
     local shard_num=$3
     local rf=$4
-
-    local private_ip=`hostname -I | awk '{print $2}'`
-    local local_nid=$( ip_to_nid $private_ip )
+    local local_nid=$( get_nid )
 
     for (( sid=0; sid<$shard_num; sid++ ))
     do
@@ -29,7 +27,7 @@ mount_remote_disk() {
         if [ "$val" == "true" ]
         then
             local pid=$( sid_to_pid $remote_nid $sid $rf )
-            local mount_point=/mnt/remote-sst/node-${remote-nid}/shard-${sid}
+            local mount_point=/mnt/remote-sst/node-${remote_nid}/shard-${sid}
             mkdir -p $mount_point
             mount /dev/nvme${nvme_id}n1p${pid} $mount_point
         fi

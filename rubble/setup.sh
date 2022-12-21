@@ -117,7 +117,7 @@ do
             k=$(( j + 2 ))
             ip=${rubble_node[$i]}
             next_ip='10.10.1.'$k
-            ssh $ssh_arg root@$ip "bash setup-nvmeof.sh host ${next_ip} ${shard_num} ${rf} ${log} ${nvme_id}"
+            ssh $ssh_arg root@$ip "bash setup-nvmeof.sh host ${next_ip} ${shard_num} ${rf} ${nvme_id} ${log}"
             nvme_id=$(( nvme_id + 1 ))
         fi
     done
