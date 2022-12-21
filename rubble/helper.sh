@@ -33,7 +33,7 @@ sid_to_pid() {
 
     local pid=2
     for (( i=0; i<$sid; i++ )); do
-        ret=$( is_head $nid $sid $rf )
+        ret=$( is_head $nid $i $rf )
         if [ "$ret" == "false" ]; then
             pid=$(( pid + 1 ))
         fi
