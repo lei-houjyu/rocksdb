@@ -27,11 +27,12 @@ mount_remote_disk() {
     do
         local val=$( is_head $local_nid $sid $rf )
         if [ "$val" == "true" ]
+        then
             local pid=$( sid_to_pid $remote_nid $sid $rf )
             local mount_point=/mnt/remote-sst/node-${remote-nid}/shard-${sid}
             mkdir -p $mount_point
             mount /dev/nvme${nvme_id}n1p${pid} $mount_point
-        then
+        fi
     done
 }
 

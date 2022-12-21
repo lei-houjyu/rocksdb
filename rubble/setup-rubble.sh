@@ -150,7 +150,7 @@ setup_rocksdb() {
 
     for dev in `ls ${nvme_dev}p*`
     do
-        umount $dir
+        umount $dev
     done
 
     lsblk
