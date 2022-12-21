@@ -106,7 +106,7 @@ then
     exit
 fi
 
-source helper.sh
+source /root/helper.sh
 
 if [ $1 == "target" ]
 then

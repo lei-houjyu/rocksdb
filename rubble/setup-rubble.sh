@@ -110,7 +110,7 @@ setup_grpc() {
 }
 
 setup_rocksdb() {
-    source helper.sh
+    source /root/helper.sh
 
     lsblk
 
