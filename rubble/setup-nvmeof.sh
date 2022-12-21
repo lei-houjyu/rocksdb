@@ -94,7 +94,7 @@ setup_as_host() {
 
     nvme discover -t rdma -a $target_ip -s 4420
     nvme connect -t rdma -n $subsys -a $target_ip -s 4420
-    while [ "$(nvme list)" != "$before" ]
+    while [ "$(nvme list)" == "$before" ]
     do
         sleep 1
     done
