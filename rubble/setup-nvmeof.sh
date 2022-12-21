@@ -88,12 +88,16 @@ setup_as_host() {
     local nvme_id=$4
     local nid=$( ip_to_nid $target_ip )
     local subsys='subsystem'$nid
+    local before=`nvme list`
 
     modprobe nvme-rdma
 
     nvme discover -t rdma -a $target_ip -s 4420
     nvme connect -t rdma -n $subsys -a $target_ip -s 4420
-    nvme list
+    while [ "$(nvme list)" != "$before" ]
+    do
+        sleep 1
+    done
 
     mount_remote_disk $nid $nvme_id $shard_num $rf
 
