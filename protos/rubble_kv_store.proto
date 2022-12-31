@@ -26,6 +26,7 @@ enum OpType {
     PUT = 1;
     DELETE = 2;
     UPDATE = 3;
+    SCAN = 4;
 }
 
 message Op {
@@ -57,6 +58,7 @@ message SingleOp{
     uint64 op_ptr = 6;
     uint64 reply_ptr = 7;
     int64  keynum = 8;
+    int32 record_cnt = 9;
 }
 
 message SingleOpReply{
@@ -67,6 +69,7 @@ message SingleOpReply{
     int64  Id = 5;
     OpType type = 6;
     int64  keynum = 8;
+    repeated string scanned_values = 9;
 }
 
 message OpReplies{
