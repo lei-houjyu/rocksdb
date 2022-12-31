@@ -440,20 +440,20 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       singleOpReply = reply->add_replies();
       singleOpReply->set_key(singleOp->key());
       singleOpReply->set_type(rubble::SCAN);
-      if (s.ok()) {
-        singleOpReply->set_ok(true);
-        for (it->Seek(rocksdb::Slice(singleOp->key())); iterations < record_cnt; it->Next()) {
-            if (!it->Valid()) {
-              singleOpReply->set_ok(false);
-              singleOpReply->set_status(it->status().ToString());
-              break;
-            }
-            singleOpReply->add_scanned_values(it->value().data());
-            iterations++;
+      singleOpReply->set_ok(true);
+      for (it->Seek(rocksdb::Slice(singleOp->key())); iterations < record_cnt; it->Next()) {
+        if (!it->Valid()) {
+            singleOpReply->set_ok(false);
+            singleOpReply->set_status(it->status().ToString());
+            
+            // debug
+            RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
+            assert(false);
         }
-      } else {
-        singleOpReply->set_ok(false);
+        singleOpReply->add_scanned_values(it->value().data());
+        iterations++;
       }
+      
       break;
     case rubble::PUT:
       s = db_->Put(wo, singleOp->key(), singleOp->value());
