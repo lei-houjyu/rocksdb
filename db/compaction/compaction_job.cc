@@ -341,6 +341,11 @@ CompactionJob::CompactionJob(
                                     db_options_.enable_thread_tracking);
   ThreadStatusUtil::SetThreadOperation(ThreadStatus::OP_COMPACTION);
   ReportStartedCompaction(compaction);
+  if (NeedShipSST(&db_options_)) {
+    sta_ = new ShipThreadArg(&db_options_);
+  } else {
+    sta_ = nullptr;
+  }
 }
 
 CompactionJob::~CompactionJob() {
@@ -575,7 +580,7 @@ Status CompactionJob::Run() {
     assert(false);
   }
   const size_t num_threads = compact_->sub_compact_states.size();
-  assert(num_threads > 0);
+  assert(num_threads == 1);
   const uint64_t start_micros = env_->NowMicros();
 
   // Launch a thread for each of subcompactions 1...num_threads-1
@@ -747,6 +752,10 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
 
   if (status.ok()) {
     status = InstallCompactionResults(mutable_cf_options);
+    if (sta_ != nullptr) {
+      db_options_.env->Schedule(&BGWorkShip, (void *)sta_, Env::Priority::SHIP, this,
+                                &UnscheduleShipCallback);
+    }
   }
   if (!versions_->io_status().ok()) {
     io_status_ = versions_->io_status();
@@ -1382,6 +1391,9 @@ Status CompactionJob::FinishCompactionOutputFile(
   if (s.ok()) {
     StopWatch sw(env_, stats_, COMPACTION_OUTFILE_SYNC_MICROS);
     io_s = sub_compact->outfile->Sync(db_options_.use_fsync);
+    if (sta_ != nullptr) {
+      PrepareFile(sta_, sub_compact->outfile->GetAlignedBuffer());
+    }
   }
   if (s.ok() && io_s.ok()) {
     io_s = sub_compact->outfile->Close();
@@ -1554,6 +1566,7 @@ Status CompactionJob::InstallCompactionResults(
   }
   // [RUBBLE END]
   
+  versions_->sta_ = sta_;
   return versions_->LogAndApply(compaction->column_family_data(),
                                 mutable_cf_options, compaction->edit(),
                                 db_mutex_, db_directory_);
@@ -1610,11 +1623,8 @@ Status CompactionJob::OpenCompactionOutputFile(
       NewWritableFile(fs_.get(), fname, &writable_file, file_options_);
 
   //[RUBBLE]
-  if(db_options_.is_primary && db_options_.is_rubble){
-    int sst_real = db_options_.sst_bit_map->TakeOneAvailableSlot(file_number, 1);
-    //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
-    uint64_t buffer_size = sub_compact->compaction->mutable_cf_options()->target_file_size_base  + db_options_.sst_pad_len;
-    ((PosixWritableFile*)(writable_file.get()))->SetRemoteFileInfo(sst_real, &db_options_, false, true, buffer_size);
+  if(NeedShipSST(&db_options_)) {
+    AddFile(sta_, 1, file_number);
   }
   // [RUBBLE END]
 

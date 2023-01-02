@@ -250,6 +250,8 @@ class WritableFileWriter {
 
   const char* GetFileChecksumFuncName() const;
 
+  AlignedBuffer& GetAlignedBuffer() { return buf_; }
+
  private:
   // Used when os buffering is OFF and we are writing
   // DMA such as in Direct I/O mode

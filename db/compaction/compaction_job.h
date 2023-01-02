@@ -43,6 +43,7 @@
 #include "util/autovector.h"
 #include "util/stop_watch.h"
 #include "util/thread_local.h"
+#include "db/ship_job.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -200,6 +201,7 @@ class CompactionJob {
   Env::WriteLifeTimeHint write_hint_;
   Env::Priority thread_pri_;
   IOStatus io_status_;
+  ShipThreadArg* sta_;
 };
 
 }  // namespace ROCKSDB_NAMESPACE

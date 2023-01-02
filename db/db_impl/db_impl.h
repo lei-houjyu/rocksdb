@@ -1030,6 +1030,7 @@ class DBImpl : public DB {
     ColumnFamilyData* cfd, SuperVersionContext* sv_context,
     const MutableCFOptions& mutable_cf_options) {
     InstallSuperVersionAndScheduleWork(cfd, sv_context, mutable_cf_options);
+    bg_cv_.SignalAll();
   }
 
  protected:

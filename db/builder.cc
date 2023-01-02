@@ -39,6 +39,7 @@
 #include "test_util/sync_point.h"
 #include "util/stop_watch.h"
 #include "env/io_posix.h"
+#include "db/ship_job.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -92,7 +93,7 @@ Status BuildTable(
     TableProperties* table_properties, int level, const uint64_t creation_time,
     const uint64_t oldest_key_time, Env::WriteLifeTimeHint write_hint,
     const uint64_t file_creation_time, const std::string& db_id,
-    const std::string& db_session_id) {
+    const std::string& db_session_id, ShipThreadArg* sta) {
   assert((column_family_id ==
           TablePropertiesCollectorFactory::Context::kUnknownColumnFamily) ==
          column_family_name.empty());
@@ -147,13 +148,8 @@ Status BuildTable(
 #endif  // !NDEBUG
       IOStatus io_s = NewWritableFile(fs, fname, &file, file_options);
       // [RUBBLE]
-      if(db_options->is_primary && db_options->is_rubble && db_options->disallow_flush_on_secondary){
-        // we need to ship sst files over
-        // RUBBLE_LOG_INFO(db_options->rubble_info_log, "[times]: %lu", num_mems_to_flush);
-        int sst_real = db_options->sst_bit_map->TakeOneAvailableSlot(meta->fd.GetNumber(), num_mems_to_flush);
-        //set the info needed for the writer to also write the sst to the remote dir when table gets written to the local sst dir
-        ((PosixWritableFile*)(file.get()))->SetRemoteFileInfo(sst_real, db_options, true, false,
-            mutable_cf_options.target_file_size_base + db_options->sst_pad_len);
+      if(NeedShipSST(db_options)) {
+        AddFile(sta, num_mems_to_flush, meta->fd.GetNumber());
       }
       // [RUBBLE END]
       assert(s.ok());
@@ -177,7 +173,7 @@ Status BuildTable(
           ioptions.file_checksum_gen_factory));
 
       // [RUBBLE]
-      if(db_options->is_rubble && db_options->is_primary && db_options->disallow_flush_on_secondary){
+      if(db_options->is_rubble && db_options->is_primary){
         // allocate an aligned buffer whose size is equal to the sst file size 
         // so we can accumulate small block chunks into this buffer 
         // and we can write the sst to the local sst_dir and remote sst_dir using the same buffer when the buffer is full
@@ -289,6 +285,9 @@ Status BuildTable(
     if (s.ok() && !empty) {
       StopWatch sw(env, ioptions.statistics, TABLE_SYNC_MICROS);
       *io_status = file_writer->Sync(ioptions.use_fsync);
+      if (sta != nullptr) {
+        PrepareFile(sta, file_writer->GetAlignedBuffer());
+      }
     }
     TEST_SYNC_POINT("BuildTable:BeforeCloseTableFile");
     if (s.ok() && io_status->ok() && !empty) {

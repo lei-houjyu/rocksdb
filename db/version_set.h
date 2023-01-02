@@ -52,7 +52,7 @@
 #include "table/get_context.h"
 #include "table/multiget_context.h"
 #include "trace_replay/block_cache_tracer.h"
-#include "rubble/sync_client.h"
+#include "db/ship_job.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -984,17 +984,8 @@ class VersionSet {
       bool new_descriptor_log = false,
       const ColumnFamilyOptions* new_cf_options = nullptr);
 
-  // Rubble: test if the edit_lists contains the addedFiles fields. If not, it's
-  // generated from a recovery and doesn't need to be sent out
-  bool AddedFiles(const autovector<autovector<VersionEdit*>>& edit_lists);
-
   // Rubble: used in rubble server to order the version edits
   uint64_t LogAndApplyCounter();
-
-  // Rubble: sometimes creating a SyncClient will cause the gRPC channel to
-  // status 3, under which the Sync gRPC calll can't reach the secondary nodes.
-  // We need to make sure after the creation the channel is healthy
-  void CreateSyncClient();
 
   static Status GetCurrentManifestPath(const std::string& dbname,
                                        FileSystem* fs,
@@ -1366,9 +1357,9 @@ class VersionSet {
 
   std::atomic<uint64_t> log_and_apply_counter_;
   
-public:
+ public:
 
-  SyncClient* sync_client_;
+  ShipThreadArg* sta_;
 
  private:
   // REQUIRES db mutex at beginning. may release and re-acquire db mutex

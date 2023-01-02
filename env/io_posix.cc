@@ -1158,69 +1158,10 @@ PosixWritableFile::PosixWritableFile(const std::string& fname, int fd,
   assert(!options.use_mmap_writes);
 }
 
-void PosixWritableFile::SetRemoteFileInfo(int slot_num,
-                                          const ImmutableDBOptions* db_options, 
-                                          bool is_flush_output_file, 
-                                          bool is_compact_output_file,
-                                          uint64_t buffer_size) {
-  slot_num_ = slot_num;
-  is_compact_output_file_ = is_compact_output_file;
-  is_flush_output_file_ = is_flush_output_file;
-  db_options_ = db_options;
-  buffer_size_ = buffer_size;
-  printf("local_fname: %s remote_slot: %d\n", filename_.c_str(), slot_num_);
-  ROCKS_LOG_INFO(db_options->info_log,
-    "local_fname: %s remote_slot: %d\n",
-    filename_.c_str(), slot_num_);
-}
-
 PosixWritableFile::~PosixWritableFile() {
   if (fd_ >= 0) {
     IOStatus s = PosixWritableFile::Close(IOOptions(), nullptr);
     s.PermitUncheckedError();
-  }
-}
-
-void PosixWritableFile::ShipSST(const Slice& data) {
-  // rubble : also write the sst to remote sst dir using the same buffer when we write to the local sst dir
-  if(db_options_ != nullptr && db_options_->is_rubble && db_options_->is_primary && !db_options_->is_tail){
-    const char* src = data.data();
-    size_t nbytes = data.size();
-
-    // basic workflow is as follows : block contents(which are 4KB chunks) are continously copied into the WritableFileWriter.buf_
-    // and when the buffer is full, A WritableFileWriter::Flush call is triggered, then it calls WriteBuffered since 
-    // DirectIO is not enabled for rocksdb, then a FSWritable::Append is called, which in our case is PosixWritableFile::Append
-    // for rubble mode, the buffer size allocated is set to the sst file size,  
-    // so basically we're only inside this function call when all block contents get copied and the buffer is full 
-    // so we just write the sst to the remote dir as well to the local dir using the same buf
-    if(db_options_->disallow_flush_on_secondary || is_compact_output_file_){
-      assert(IsSectorAligned(data.size(), GetRequiredBufferAlignment()));
-      assert(IsSectorAligned(data.data(), GetRequiredBufferAlignment()));
-      assert(!db_options_->remote_sst_dirs.empty());
-
-      for (std::string dir : db_options_->remote_sst_dirs) {
-        std::string fname = dir + "/" + std::to_string(slot_num_);
-        std::cout << "[ShipSST] write " << filename_ << " to " << fname << std::endl;
-        int r_fd;
-        do {
-          r_fd = open(fname.c_str(), O_WRONLY | O_DIRECT | O_DSYNC, 0755);
-        } while (r_fd < 0 && errno == EINTR);
-
-        if (r_fd < 0) {
-          std::cout << "While open a file for appending" << fname << errno << std::endl;
-          assert(false);
-        }
-
-        ssize_t done = write(r_fd, src, nbytes);
-        if (done != (ssize_t)nbytes) {
-          std::cout << "while appending to file" << fname << errno << std::endl;
-          assert(false);
-        }
-
-        close(r_fd);
-      }
-    }
-    std::string type;
   }
 }
 
@@ -1236,8 +1177,6 @@ IOStatus PosixWritableFile::Append(const Slice& data, const IOOptions& /*opts*/,
   if (!PosixWrite(fd_, src, nbytes)) {
     return IOError("While appending to file", filename_, errno);
   }
-
-  ShipSST(data);
 
   filesize_ += nbytes;
   return IOStatus::OK();
@@ -1258,8 +1197,6 @@ IOStatus PosixWritableFile::PositionedAppend(const Slice& data, uint64_t offset,
     return IOError("While pwrite to file at offset " + ToString(offset),
                    filename_, errno);
   }
-
-  ShipSST(data);
 
   filesize_ = offset + nbytes;
   return IOStatus::OK();

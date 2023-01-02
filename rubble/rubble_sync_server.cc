@@ -4,6 +4,7 @@
 #include <chrono>
 #include <inttypes.h>
 #include "db/memtable.h"
+#include "db/ship_job.h"
 #include <ctime>
 #include <unistd.h>
 #include <error.h>
@@ -24,7 +25,7 @@ static std::map<uint64_t, uint64_t> primary_op_cnt_map;
 #define BATCH_SIZE 1000
 
 void PrintStatus(RubbleKvServiceImpl *srv) {
-  return;
+  // return;
   uint64_t r_now = 0, r_old = srv->r_op_counter_.load();
   uint64_t w_now = 0, w_old = srv->w_op_counter_.load();
   while (true) {
@@ -597,8 +598,8 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
         debug_mu.unlock();
       }
       if (!is_tail_) {
-        version_set_->CreateSyncClient();
-        version_set_->sync_client_->Sync(request);
+        SyncClient *sync_client = rocksdb::GetSyncClient(db_options_);
+        sync_client->Sync(request);
       }
       ApplyBufferedVersionEdits();
     }

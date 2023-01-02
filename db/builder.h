@@ -21,6 +21,7 @@
 #include "rocksdb/table_properties.h"
 #include "rocksdb/types.h"
 #include "table/scoped_arena_iterator.h"
+#include "db/ship_job.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -89,6 +90,6 @@ extern Status BuildTable(
     const uint64_t creation_time = 0, const uint64_t oldest_key_time = 0,
     Env::WriteLifeTimeHint write_hint = Env::WLTH_NOT_SET,
     const uint64_t file_creation_time = 0, const std::string& db_id = "",
-    const std::string& db_session_id = "");
+    const std::string& db_session_id = "", ShipThreadArg* sta = nullptr);
 
 }  // namespace ROCKSDB_NAMESPACE

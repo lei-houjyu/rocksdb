@@ -613,6 +613,7 @@ set(SOURCES
         db/external_sst_file_ingestion_job.cc
         db/file_indexer.cc
         db/flush_job.cc
+        db/ship_job.cc
         db/flush_scheduler.cc
         db/forward_iterator.cc
         db/import_column_family_job.cc

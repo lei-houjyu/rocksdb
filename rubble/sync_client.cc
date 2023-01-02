@@ -4,6 +4,7 @@
 #include <chrono>
 #include <set>
 #include <nlohmann/json.hpp>
+using grpc::Status;
 using json = nlohmann::json;
 
 SyncClient::SyncClient(std::shared_ptr<Channel> channel)
@@ -23,7 +24,15 @@ void SyncClient::Sync(const std::string& args){
 
     SyncRequest request;
     request.set_args(args);
-    sync_stream_->Write(request);
+    if (!sync_stream_->Write(request)) {
+        sync_stream_->WritesDone();
+        Status s = sync_stream_->Finish();
+        std::cout << "Sync fail!"
+                << " msg: " << s.error_message() 
+                << " detail: " << s.error_details() 
+                << " debug: " << context_.debug_error_string() << std::endl;
+        assert(false);
+      }
 
     // SyncReply reply;
     // sync_stream_->Read(&reply);

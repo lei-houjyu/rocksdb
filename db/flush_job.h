@@ -42,6 +42,7 @@
 #include "util/autovector.h"
 #include "util/stop_watch.h"
 #include "util/thread_local.h"
+#include "db/ship_job.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -164,6 +165,8 @@ class FlushJob {
   IOStatus io_status_;
 
   const std::shared_ptr<IOTracer> io_tracer_;
+
+  ShipThreadArg *sta_;
 };
 
 }  // namespace ROCKSDB_NAMESPACE

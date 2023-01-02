@@ -288,6 +288,9 @@ void ThreadPoolImpl::Impl::BGThreadWrapper(void* arg) {
     case Env::Priority::LOW:
       thread_type = ThreadStatus::LOW_PRIORITY;
       break;
+    case Env::Priority::SHIP:
+      thread_type = ThreadStatus::SHIP;
+      break;
     case Env::Priority::BOTTOM:
       thread_type = ThreadStatus::BOTTOM_PRIORITY;
       break;

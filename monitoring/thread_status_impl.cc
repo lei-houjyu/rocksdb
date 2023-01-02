@@ -21,6 +21,8 @@ std::string ThreadStatus::GetThreadTypeName(
       return "High Pri";
     case ThreadStatus::ThreadType::LOW_PRIORITY:
       return "Low Pri";
+    case ThreadStatus::ThreadType::SHIP:
+      return "Ship";
     case ThreadStatus::ThreadType::USER:
       return "User";
     case ThreadStatus::ThreadType::BOTTOM_PRIORITY:
