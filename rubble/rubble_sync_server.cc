@@ -441,15 +441,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       singleOpReply->set_key(singleOp->key());
       singleOpReply->set_type(rubble::SCAN);
       singleOpReply->set_ok(true);
-      for (it->Seek(rocksdb::Slice(singleOp->key())); iterations < record_cnt; it->Next()) {
-        if (!it->Valid()) {
-            singleOpReply->set_ok(false);
-            singleOpReply->set_status(it->status().ToString());
-            
-            // debug
-            RUBBLE_LOG_ERROR(logger_, "Get Failed : %s \n", s.ToString().c_str());
-            assert(false);
-        }
+      for (it->Seek(rocksdb::Slice(singleOp->key())); it->Valid() && iterations < record_cnt; it->Next()) {
         singleOpReply->add_scanned_values(it->value().data());
         iterations++;
       }
