@@ -27,7 +27,7 @@ partition_disk() {
     local shard_num=$1
     local rf=$2
 
-    local sst_size=100
+    local sst_size=35
     local data_size=$(( 50 + shard_num * 16 ))
     local secondary_num=$(( shard_num / rf * (rf - 1) ))
     
@@ -143,7 +143,7 @@ setup_rocksdb() {
             mount ${nvme_dev}p${pid} $mount_point
             pid=$(( pid + 1 ))
             touch ${mount_point}/node-${nid}-shard-${sid}.txt
-            bash create-sst-pool.sh 16777216 4 5000 $mount_point > /dev/null 2>&1 &
+            bash create-sst-pool.sh 16777216 4 2000 $mount_point > /dev/null 2>&1 &
         fi
     done
     wait
