@@ -27,7 +27,7 @@ partition_disk() {
     local shard_num=$1
     local rf=$2
 
-    local pool_size=40
+    local pool_size=100
     local data_part_size=$(( 50 + shard_num * 16 ))
     local remote_node_num=$(( rf - 1 ))
     local shard_per_node=$(( shard_num / rf ))
@@ -140,7 +140,7 @@ setup_rocksdb() {
             local shard_dir=${SST_PATH}/node-${primary_node}/shard-${sid}
             mkdir -p $shard_dir
             touch ${shard_dir}/node-${nid}-shard-${sid}.txt
-            bash create-sst-pool.sh 16777216 1 2000 ${shard_dir} > /dev/null 2>&1 &
+            bash create-sst-pool.sh 16777216 1 5000 ${shard_dir} > /dev/null 2>&1 &
         fi
     done
     wait
