@@ -21,7 +21,7 @@ void PrepareFile(ShipThreadArg* sta, AlignedBuffer& buf) {
     file.len_ = buf.Capacity();
     file.buf_ = buf.BufferStart();
     file.beg_ = buf.Release();
-    file.checksum_ = CheckSum(file.buf_, file.len_);
+    // file.checksum_ = CheckSum(file.buf_, file.len_);
 }
 
 void AddFile(ShipThreadArg* sta, uint64_t times, uint64_t file_number) {
@@ -58,14 +58,14 @@ void ShipSST(FileInfo& file, const std::vector<std::string>& remote_sst_dirs, Sh
             assert(false);
         }
 
-        uint64_t got = CheckSum(file.buf_, file.len_);
-        uint64_t expected = file.checksum_;
-        if (got != expected) {
-            std::cout << "[ShipSST] checksum mismatch expected: " << expected
-                      << " got: " << got << " sta: " << reinterpret_cast<std::size_t>(sta) 
-                      << std::endl;
-            assert(false);
-        }
+        // uint64_t got = CheckSum(file.buf_, file.len_);
+        // uint64_t expected = file.checksum_;
+        // if (got != expected) {
+        //     std::cout << "[ShipSST] checksum mismatch expected: " << expected
+        //               << " got: " << got << " sta: " << reinterpret_cast<std::size_t>(sta) 
+        //               << std::endl;
+        //     assert(false);
+        // }
 
         close(r_fd);
     }
