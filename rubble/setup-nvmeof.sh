@@ -61,9 +61,7 @@ setup_as_target() {
 
 setup_as_host() {
     local target_ip=$1
-    local shard_num=$2
-    local rf=$3
-    local nvme_id=$4
+    local nvme_id=$2
     local nid=$( ip_to_nid $target_ip )
     local subsys='subsystem'$nid
     local before=`nvme list`
@@ -77,7 +75,7 @@ setup_as_host() {
         sleep 1
     done
 
-    mount_remote_disk $nid $nvme_id $shard_num $rf
+    mount_remote_disk $nid $nvme_id
 
     lsblk
 }
