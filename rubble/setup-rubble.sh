@@ -140,7 +140,7 @@ setup_rocksdb() {
             local shard_dir=${SST_PATH}/node-${primary_node}/shard-${sid}
             mkdir -p $shard_dir
             touch ${shard_dir}/node-${nid}-shard-${sid}.txt
-            bash create-sst-pool.sh 16777216 4 2000 ${shard_dir} > /dev/null 2>&1 &
+            bash create-sst-pool.sh 16777216 1 2000 ${shard_dir} > /dev/null 2>&1 &
         fi
     done
     wait
