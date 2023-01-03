@@ -27,7 +27,7 @@ partition_disk() {
     local shard_num=$1
     local rf=$2
 
-    local pool_size=35
+    local pool_size=40
     local data_part_size=$(( 50 + shard_num * 16 ))
     local remote_node_num=$(( rf - 1 ))
     local shard_per_node=$(( shard_num / rf ))
