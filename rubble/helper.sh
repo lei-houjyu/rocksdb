@@ -109,6 +109,7 @@ mount_local_disk() {
     mount /dev/nvme0n1p1 /mnt/data
     for (( nid=1; nid<=$rf; nid++ )); do
         if [ $nid -ne $self ]; then
+            mkdir -p /mnt/sst/node-${nid}
             mount ${option} /dev/nvme0n1p${pid} /mnt/sst/node-${nid}
             pid=$(( pid + 1 ))
         fi
