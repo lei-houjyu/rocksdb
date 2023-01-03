@@ -2,40 +2,20 @@
 
 set -x
 
-mount_local_disk() {
-    mount /dev/nvme0n1p1 /mnt/data
-    local pid=2
-    for dir in `ls /mnt/sst`
-    do
-        mount -o ro,noload /dev/nvme0n1p$pid /mnt/sst/$dir
-        pid=$(( pid + 1 ))
-    done
-
-    lsblk
-}
-
 mount_remote_disk() {
     local remote_nid=$1
     local nvme_id=$2
-    local shard_num=$3
-    local rf=$4
-    local local_nid=$( get_nid )
 
-    for (( sid=0; sid<$shard_num; sid++ ))
-    do
-        local val=$( is_head $local_nid $sid $rf )
-        if [ "$val" == "true" ]
-        then
-            local pid=$( sid_to_pid $remote_nid $sid $rf )
-            local mount_point=/mnt/remote-sst/node-${remote_nid}/shard-${sid}
-            mkdir -p $mount_point
-            mount /dev/nvme${nvme_id}n1p${pid} $mount_point
-        fi
-    done
+    local local_nid=$( get_nid )
+    local pid=$( nid_to_pid $local_nid $remote_nid )
+    local mount_point=/mnt/remote-sst/node-${remote_nid}
+    mkdir -p $mount_point
+    mount /dev/nvme${nvme_id}n1p${pid} $mount_point
 }
 
 setup_as_target() {
     local offload=$1
+    local rf=$2
     local ips=($`hostname -I`)
     local private_ip=${ips[1]}
     local idx=$(( ${private_ip: -1} - 1 ))
@@ -76,7 +56,7 @@ setup_as_target() {
 
     ln -s /sys/kernel/config/nvmet/subsystems/${subsys}/ /sys/kernel/config/nvmet/ports/1/subsystems/${subsys}
 
-    mount_local_disk
+    mount_local_disk $rf "-o ro,noload"
 }
 
 setup_as_host() {
@@ -104,8 +84,8 @@ setup_as_host() {
 
 if [ $# -lt 2 ]
 then
-    echo "Usage: bash setup-nvmeof.sh target offload(0/1)"
-    echo "Usage: bash setup-nvmeof.sh host target-IP shard_num rf nvme_id"
+    echo "Usage: bash setup-nvmeof.sh target offload(0/1) rf"
+    echo "Usage: bash setup-nvmeof.sh host target-IP nvme_id"
     exit
 fi
 
@@ -113,7 +93,7 @@ source /root/helper.sh
 
 if [ $1 == "target" ]
 then
-    setup_as_target $2
+    setup_as_target $2 $3
 else
-    setup_as_host $2 $3 $4 $5
+    setup_as_host $2 $3
 fi

@@ -20,16 +20,18 @@ install_dependencies() {
 # ├─nvme0n1p2
 # └─nvme0n1p3
 # /dev/nvme0n1p1 will be mounted to /mnt/data, and /dev/nvme0n1p{2..N} will 
-# be mounted to /mnt/sst/shard-x, which holds secondary-x's SST files in Rubble
+# be mounted to /mnt/sst/node-x, which holds SST files from node-x in Rubble
 partition_disk() {
     lsblk
 
     local shard_num=$1
     local rf=$2
 
-    local sst_size=35
-    local data_size=$(( 50 + shard_num * 16 ))
-    local secondary_num=$(( shard_num / rf * (rf - 1) ))
+    local pool_size=35
+    local data_part_size=$(( 50 + shard_num * 16 ))
+    local remote_node_num=$(( rf - 1 ))
+    local shard_per_node=$(( shard_num / rf ))
+    local sst_part_size=$(( shard_per_node * pool_size ))
     
     wipefs $nvme_dev
 
@@ -45,11 +47,11 @@ partition_disk() {
     local sync_str="w
     "
 
-    local cmd_str="$partition_str"${data_size}"$unit_str"
+    local cmd_str="$partition_str"${data_part_size}"$unit_str"
 
-    for (( i=0; i<$secondary_num; i++ ))
+    for (( i=0; i<$remote_node_num; i++ ))
     do
-        cmd_str="${cmd_str}${partition_str}"${sst_size}"${unit_str}"
+        cmd_str="${cmd_str}${partition_str}"${sst_part_size}"${unit_str}"
     done
     cmd_str="${cmd_str}${sync_str}"
 
@@ -65,8 +67,7 @@ partition_disk() {
     done
 
     mkdir $DATA_PATH $SST_PATH
-
-    mount ${nvme_dev}p1 $DATA_PATH
+    mount_local_disk $rf ""
 
     lsblk
 }
@@ -110,8 +111,6 @@ setup_grpc() {
 }
 
 setup_rocksdb() {
-    source /root/helper.sh
-
     lsblk
 
     local shard_num=$1
@@ -127,7 +126,6 @@ setup_rocksdb() {
 
     cd rubble
 
-    local pid=2
     local nid=$( get_nid )
     for (( sid=0; sid<${shard_num}; sid++ ));
     do
@@ -138,12 +136,11 @@ setup_rocksdb() {
         local ret=$( is_head $nid $sid $rf )
         if [ "$ret" == "false" ]
         then
-            local mount_point=${SST_PATH}/shard-${sid}
-            mkdir -p $mount_point
-            mount ${nvme_dev}p${pid} $mount_point
-            pid=$(( pid + 1 ))
-            touch ${mount_point}/node-${nid}-shard-${sid}.txt
-            bash create-sst-pool.sh 16777216 4 2000 $mount_point > /dev/null 2>&1 &
+            local primary_node=$( sid_to_nid $sid $rf )
+            local shard_dir=${SST_PATH}/node-${primary_node}/shard-${sid}
+            mkdir -p $shard_dir
+            touch ${shard_dir}/node-${nid}-shard-${sid}.txt
+            bash create-sst-pool.sh 16777216 4 2000 ${shard_dir} > /dev/null 2>&1 &
         fi
     done
     wait
@@ -156,6 +153,7 @@ setup_rocksdb() {
     lsblk
 }
 
+source /root/helper.sh
 install_dependencies
 partition_disk $1 $2
 setup_grpc

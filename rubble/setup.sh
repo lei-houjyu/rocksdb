@@ -102,7 +102,7 @@ fi
 log=">> nvmeof.log 2>&1"
 for ip in $rubble_node
 do
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-nvmeof.sh ${log}; bash setup-nvmeof.sh target ${is_mlnx} ${log}" &
+    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-nvmeof.sh ${log}; bash setup-nvmeof.sh target ${is_mlnx} ${rf} ${log}" &
 done
 wait
 
@@ -117,7 +117,7 @@ do
             k=$(( j + 2 ))
             ip=${rubble_node[$i]}
             next_ip='10.10.1.'$k
-            ssh $ssh_arg root@$ip "bash setup-nvmeof.sh host ${next_ip} ${shard_num} ${rf} ${nvme_id} ${log}"
+            ssh $ssh_arg root@$ip "bash setup-nvmeof.sh host ${next_ip} ${nvme_id} ${log}"
             nvme_id=$(( nvme_id + 1 ))
         fi
     done
