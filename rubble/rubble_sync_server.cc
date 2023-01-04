@@ -275,7 +275,7 @@ bool RubbleKvServiceImpl::is_ooo_write(SingleOp* singleOp) {
     return false;
   }
 
-  if (singleOp->type() == rubble::GET) {
+  if (singleOp->type() == rubble::GET || singleOp->type() == rubble::SCAN) {
     return false;
   }
 
@@ -400,11 +400,15 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
   OpReply* reply = (OpReply*)singleOp->reply_ptr();
   rocksdb::WriteOptions wo = rocksdb::WriteOptions();
   wo.disableWAL = true;
+  int iterations = 0;
+  int record_cnt;
+  rocksdb::ReadOptions ro = rocksdb::ReadOptions(/*verify_checksums*/true, /*fill_cache*/true);
+  rocksdb::Iterator* it;
 
   switch (singleOp->type()) {
     case rubble::GET:
       assert(is_tail_);
-      s = db_->Get(rocksdb::ReadOptions(/*verify_checksums*/true, /*fill_cache*/true), singleOp->key(), &value);
+      s = db_->Get(ro, singleOp->key(), &value);
       // std::cout << "Get status: " << s.ToString() << " key: " << singleOp->key() << std::endl;
       r_op_counter_.fetch_add(1);
       if (!s.ok()){
@@ -424,6 +428,26 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       }
       break;
 
+    case rubble::SCAN:
+      assert(is_tail_);
+      record_cnt = singleOp->record_cnt();
+      it = db_->NewIterator(ro);
+      if (it == nullptr) {
+        RUBBLE_LOG_ERROR(logger_, "Scan Failed : %s \n", s.ToString().c_str());
+        assert(false);
+      }
+      r_op_counter_.fetch_add(1);
+
+      singleOpReply = reply->add_replies();
+      singleOpReply->set_key(singleOp->key());
+      singleOpReply->set_type(rubble::SCAN);
+      singleOpReply->set_ok(true);
+      for (it->Seek(rocksdb::Slice(singleOp->key())); it->Valid() && iterations < record_cnt; it->Next()) {
+        singleOpReply->add_scanned_values(it->value().data());
+        iterations++;
+      }
+      
+      break;
     case rubble::PUT:
       s = db_->Put(wo, singleOp->key(), singleOp->value());
       assert(s.get_target_mem_id() != 0);
@@ -1091,7 +1115,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::UpdateSstViewAndShipSstFiles(const rocksd
         //     // maybe not ship the sst file here, instead ship after we finish the logAndApply..
         //     // ios = rocksdb::CopySstFile(fs_, fname, remote_sst_fname, 0,  true);
         //     auto ret =  rocksdb::copy_sst(sst_fname, remote_sst_fname);
-	      //     if (ret){
+          //     if (ret){
         //          std::cerr << "[ File Ship Failed ] : " << sst_num << std::endl;
         //     }else {
         //         //  std::cout << "[ File Shipped ] : " << sst_num << std::endl;
