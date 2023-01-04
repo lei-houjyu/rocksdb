@@ -11,7 +11,19 @@ pool_size=$3
 sst_dir=$4
 padding=1048576
 
+mkdir $sst_dir
 cd $sst_dir
+
+robust_create() {
+    local fname=$1
+    local fsize=$2
+    local size=0
+
+    while [ $size -ne $fsize ]; do
+        head -c $fsize /dev/zero > $fname
+        size=$( ll $fname | awk '{print $5}' )
+    done
+}
 
 for i in $(seq 1 $pool_size); do
    target_file_size=`expr $target_file_size_base + $padding`
@@ -20,7 +32,7 @@ for i in $(seq 1 $pool_size); do
        continue
    fi
    rm $i
-   head -c $target_file_size /dev/zero > $i &
+   robust_create $i $target_file_size &
 done
 
 n=`expr $pool_size + 1`
@@ -33,7 +45,7 @@ for t in $(seq 2 $max_num_mems_in_flush); do
             continue
         fi
         rm $i
-        head -c $target_file_size /dev/zero > $i &
+        robust_create $i $target_file_size &
     done
     n=`expr $m + 1`
 done
