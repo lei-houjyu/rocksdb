@@ -117,20 +117,3 @@ mount_local_disk() {
 
     lsblk
 }
-
-# Parameter:
-#   - SST pool directory
-#   - SST file size
-# Return value:
-#   - OK, if all slots are in the correct size
-#   - Bad, otherwise
-check_sst_pool() {
-    local dir=$1
-    local size=$2
-    local output=`ll $dir | grep -vE "\.|txt|total|$size"`
-    if [ -z "$output" ]; then
-        echo "OK"
-    else
-        echo "Bad"
-    fi
-}

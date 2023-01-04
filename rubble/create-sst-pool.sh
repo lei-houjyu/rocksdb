@@ -21,7 +21,7 @@ robust_create() {
 
     while [ $size -ne $fsize ]; do
         head -c $fsize /dev/zero > $fname
-        size=$( ll $fname | awk '{print $5}' )
+        size=$( ls -l $fname | awk '{print $5}' )
     done
 }
 

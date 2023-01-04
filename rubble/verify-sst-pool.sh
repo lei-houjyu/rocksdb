@@ -16,6 +16,17 @@ file_size=$(( target_file_size_base + 1048576 ))
 local_nid=$( get_nid )
 res="Clean"
 
+check_sst_pool() {
+    local dir=$1
+    local size=$2
+    local output=`ls -l $dir | grep -vE "\.|txt|total|$size"`
+    if [ -z "$output" ]; then
+        echo "OK"
+    else
+        echo "Bad"
+    fi
+}
+
 for (( remote_nid=1; remote_nid<=$rf; remote_nid++ )); do
     if [ $remote_nid -ne $local_nid ]; then
         for (( sid=0; sid<$shard_num; sid++ )); do
