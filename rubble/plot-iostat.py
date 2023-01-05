@@ -33,7 +33,6 @@ with open(file_name, 'r') as f:
             line = f.readline()
             while len(line) > 0 and line[0] == 'n':
                 nums = line.split()
-                print(nums[0], should_ignore(nums[0]))
                 if not should_ignore(nums[0]):
                     read_key  = nums[0] + '-read'
                     write_key = nums[0] + '-write'
