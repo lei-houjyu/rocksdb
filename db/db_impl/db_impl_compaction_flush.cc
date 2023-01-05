@@ -2902,7 +2902,7 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
     c->edit()->MarkTrivialMove();
     ShipThreadArg *sta = nullptr;
     if (NeedShipSST(&immutable_db_options_)) {
-      sta = new ShipThreadArg(nullptr);
+      sta = new ShipThreadArg(&immutable_db_options_);
     }
     versions_->sta_ = sta;
     status = versions_->LogAndApply(c->column_family_data(),

@@ -136,15 +136,13 @@ bool AddedFiles(const autovector<autovector<VersionEdit*>>& edit_lists) {
 void BGWorkShip(void* arg) {
     ShipThreadArg* sta = reinterpret_cast<ShipThreadArg*>(arg);
 
-    // 1. ship SST file to secondary nodes if it's not trivial-move compaction
-    if (sta->db_options_ != nullptr) {
-        // 1.1 find available slots in the SST pool
-        // int sst_slot = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(sta->sst_number_, sta->times_);
+    // 1. ship SST file to secondary nodes
+    // 1.1 find available slots in the SST pool
+    // int sst_slot = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(sta->sst_number_, sta->times_);
 
-        // 1.2 ship SST file via NVMe-oF
-        for (FileInfo f : sta->files_) {
-            ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
-        }
+    // 1.2 ship SST file via NVMe-oF
+    for (FileInfo f : sta->files_) {
+        ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
     }
     
     // 2. send version edits to secondary nodes
