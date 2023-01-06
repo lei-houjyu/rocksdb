@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ $# != 4 ]; then
-    echo "Usage: bash create-sst-pool.sh target_file_size_base max_num_mems_in_flush pool_size sst_dir"
+if [ $# != 6 ]; then
+    echo "Usage: bash create-sst-pool.sh target_file_size_base max_num_mems_in_flush pool_size sst_dir nid sid"
     exit
 fi
 
@@ -9,10 +9,13 @@ target_file_size_base=$1
 max_num_mems_in_flush=$2
 pool_size=$3
 sst_dir=$4
+nid=$5
+sid=$6
 padding=1048576
 
-mkdir $sst_dir
+mkdir -p $sst_dir
 cd $sst_dir
+touch node-${nid}-shard-${sid}.txt
 
 robust_create() {
     local fname=$1
