@@ -2,7 +2,7 @@
 
 set -x
 
-if [ $# -lt 5 ]; then
+if [ $# -lt 6 ]; then
     echo "Usage: bash verify-sst-pool.sh target_file_size_base max_num_mems_in_flush pool_size shard_num rf recreate(0/1)"
     exit
 fi
