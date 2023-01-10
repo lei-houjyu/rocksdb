@@ -446,6 +446,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
         singleOpReply->add_scanned_values(it->value().data());
         iterations++;
       }
+      delete it;
       
       break;
     case rubble::PUT:
