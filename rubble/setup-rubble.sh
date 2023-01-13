@@ -118,9 +118,9 @@ setup_rocksdb() {
     
     cd ${DATA_PATH}
 
-    git clone --branch lhy_dev https://github.com/camelboat/my_rocksdb.git
+    git clone --branch rubble https://github.com/lei-houjyu/rocksdb.git
 
-    cd my_rocksdb
+    cd rocksdb
 
     bash build.sh
 

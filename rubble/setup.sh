@@ -30,6 +30,9 @@ check_connectivity() {
 username=$1
 is_mlnx=$2
 shard_num=$3
+repo="https://raw.githubusercontent.com/lei-houjyu/rocksdb"
+branch="rubble"
+script_path="rubble"
 
 shift 3
 
@@ -38,7 +41,7 @@ log=">> key_setup.log 2>&1"
 for ip in $@
 do
     scp $ssh_arg ~/.ssh/id_rsa.pub $username@$ip:~/
-    ssh $ssh_arg $username@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-keys.sh ${log}; sudo bash setup-keys.sh ${log}"
+    ssh $ssh_arg $username@$ip "wget ${repo}/${branch}/${script_path}/setup-keys.sh ${log}; sudo bash setup-keys.sh ${log}"
     ssh $ssh_arg $username@$ip "sudo bash -c \"cat ~/id_rsa.pub >> /root/.ssh/authorized_keys\""
 done
 
@@ -47,7 +50,7 @@ log=">> ycsb_build.log 2>&1"
 ycsb_node=$1
 shift 1
 ssh $ssh_arg root@$ycsb_node "sudo apt update ${log}; yes | sudo apt install maven python3-pip ${log}; sudo pip3 install matplotlib ${log}"
-ssh $ssh_arg root@$ycsb_node "git clone --branch single-thread https://github.com/cc4351/YCSB.git ${log}; cd YCSB; nohup bash build.sh ${log} &"
+ssh $ssh_arg root@$ycsb_node "git clone --branch rubble https://github.com/lei-houjyu/YCSB.git ${log}; cd YCSB; nohup bash build.sh ${log} &"
 
 # Step 3: set up Rubble from IP-2 to IP-3
 log=">> rubble_build.log 2>&1"
@@ -56,8 +59,8 @@ rf=$#
 
 for ip in $rubble_node
 do
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/helper.sh ${log};"
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-rubble.sh ${log}; bash setup-rubble.sh ${shard_num} ${rf} ${log}" &
+    ssh $ssh_arg root@$ip "wget ${repo}/${branch}/${script_path}/helper.sh ${log};"
+    ssh $ssh_arg root@$ip "wget ${repo}/${branch}/${script_path}/setup-rubble.sh ${log}; bash setup-rubble.sh ${shard_num} ${rf} ${log}" &
 done
 wait
 
@@ -66,7 +69,7 @@ wait
 log=">> iommu.log 2>&1"
 for ip in $rubble_node
 do
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/set-iommu.sh ${log}"
+    ssh $ssh_arg root@$ip "wget ${repo}/${branch}/${script_path}/set-iommu.sh ${log}"
     if [ $is_mlnx -eq 0 ]; then
         ssh $ssh_arg root@$ip "bash set-iommu.sh on ${log}" &
     else
@@ -87,7 +90,7 @@ do
         param="1"
         script_name="install-broadcom-driver.sh"
     fi
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/${script_name} ${log}; nohup bash ${script_name} ${param} ${log} &"
+    ssh $ssh_arg root@$ip "wget ${repo}/${branch}/${script_path}/${script_name} ${log}; nohup bash ${script_name} ${param} ${log} &"
 done
 check_connectivity $ssh_down $rubble_node
 check_connectivity $ssh_up   $rubble_node
@@ -102,7 +105,7 @@ fi
 log=">> nvmeof.log 2>&1"
 for ip in $rubble_node
 do
-    ssh $ssh_arg root@$ip "wget https://raw.githubusercontent.com/camelboat/my_rocksdb/lhy_dev/rubble/setup-nvmeof.sh ${log}; bash setup-nvmeof.sh target ${is_mlnx} ${rf} ${log}" &
+    ssh $ssh_arg root@$ip "wget ${repo}/${branch}/${script_path}/setup-nvmeof.sh ${log}; bash setup-nvmeof.sh target ${is_mlnx} ${rf} ${log}" &
 done
 wait
 

@@ -177,7 +177,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    std::vector<rocksdb::ColumnFamilyDescriptor> loaded_cf_descs;
    rocksdb::Status s = LoadOptionsFromFile(
       /*config_options=*/config_options,
-      /*options_file_name=*/is_primary ? "/mnt/data/my_rocksdb/rubble/rubble_16gb_config.ini" : "/mnt/data/my_rocksdb/rubble/rubble_16gb_config_tail.ini",
+      /*options_file_name=*/is_primary ? "/mnt/data/rocksdb/rubble/rubble_16gb_config.ini" : "/mnt/data/rocksdb/rubble/rubble_16gb_config_tail.ini",
       /*db_options=*/&db_options,
       /*cf_descs=*/&loaded_cf_descs
    );

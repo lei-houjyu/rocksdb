@@ -10,7 +10,7 @@ dir=$1
 suffix=$2
 shard_num=$3
 rf=$4
-rubble_path='/mnt/data/my_rocksdb/rubble/'
+rubble_path='/mnt/data/rocksdb/rubble/'
 
 for (( i=1; i<=$rf; i++ ))
 do
