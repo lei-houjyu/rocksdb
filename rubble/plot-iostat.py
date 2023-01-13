@@ -6,6 +6,8 @@ agg_num = int(sys.argv[2])
 figure_name = file_name[:-4]
 data = {'user':[0], 'nice':[0], 'system':[0], 'iowait':[0], 'steal':[0], 'idle':[0]}
 ignore_key = ['code', 'swap']
+tot_read = 0
+tot_write = 0
 
 def should_ignore(key):
     for i in ignore_key:
@@ -42,6 +44,8 @@ with open(file_name, 'r') as f:
                         data[write_key] = [0]                    
                     data[read_key][-1] += float(nums[2]) / 1024
                     data[write_key][-1] += float(nums[3]) / 1024
+                    tot_read += float(nums[2])
+                    tot_write += float(nums[3])
                 line = f.readline()
             if agg_cnt % agg_num == 0:
                 for key in data:
@@ -73,14 +77,30 @@ plt.savefig(figure_name + '-cpu.jpg')
 plt.close()
 
 plt.figure()
-for key in data:
-    if 'read' in key or 'write' in key:
-        plt.plot(data['time'], data[key], label=key)
-        print(key, 'sum', sum(data[key]), 'avg', sum(data[key]) / len(data['user']))
-plt.xlabel('Second')
-plt.ylabel('Throughput (MB/s)')
-plt.ylim([0, 1000])
+fs=15
+# for key in data:
+#     if 'read' in key or 'write' in key:
+#         plt.plot(data['time'][5:31], data[key][5:31], label=key)
+#         print(key, 'sum', sum(data[key]), 'avg', sum(data[key]) / len(data['user']))
+
+# rubble
+plt.plot(data['time'][5:31], data['nvme0c0n1-read'][5:31], '.-', label='Local Read')
+plt.plot(data['time'][5:31], data['nvme0c0n1-write'][5:31], '^-', label='Local Write')
+plt.plot(data['time'][5:31], data['nvme1c1n1-write'][5:31], 'd-', label='Remote Write (Secondary 1)')
+plt.plot(data['time'][5:31], data['nvme2c2n1-write'][5:31], 'v-', label='Remote Write (Secondary 2)')
+
+# baseline
+# plt.plot(data['time'][8:49], data['nvme0c0n1-read'][8:49], '.-', label='Local Read')
+# plt.plot(data['time'][8:49], data['nvme0c0n1-write'][8:49], '^-', label='Local Write')
+
+plt.xlabel('Second', fontsize=fs)
+plt.ylabel('Throughput (MB/s)', fontsize=fs)
+plt.xticks(fontsize=fs)
+plt.yticks(fontsize=fs)
+plt.ylim([200, 700])
 plt.legend()
 # plt.show()
 plt.savefig(figure_name + '-disk.pdf')
 plt.close()
+
+print('tot_read:', tot_read, 'total_write:', tot_write)

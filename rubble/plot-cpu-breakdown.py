@@ -25,12 +25,12 @@ data = {"baseline-compaction-primary"   : [0, 0, 0, 0, 0],
         "baseline-compaction-secondary" : [0, 0, 0, 0, 0],
         "baseline-dbserver-secondary"   : [0, 0, 0, 0, 0],
         "baseline-misc-secondary"       : [0, 0, 0, 0, 0],
-        "rubble-compaction-primary"     : [0, 0, 0, 0, 0],
-        "rubble-dbserver-primary"       : [0, 0, 0, 0, 0],
-        "rubble-misc-primary"           : [0, 0, 0, 0, 0],
-        "rubble-compaction-secondary"   : [0, 0, 0, 0, 0],
-        "rubble-dbserver-secondary"     : [0, 0, 0, 0, 0],
-        "rubble-misc-secondary"         : [0, 0, 0, 0, 0]}
+        "rubble-offload-compaction-primary"     : [0, 0, 0, 0, 0],
+        "rubble-offload-dbserver-primary"       : [0, 0, 0, 0, 0],
+        "rubble-offload-misc-primary"           : [0, 0, 0, 0, 0],
+        "rubble-offload-compaction-secondary"   : [0, 0, 0, 0, 0],
+        "rubble-offload-dbserver-secondary"     : [0, 0, 0, 0, 0],
+        "rubble-offload-misc-secondary"         : [0, 0, 0, 0, 0]}
 
 time_series_data = {}
 
@@ -70,7 +70,7 @@ def count_cpu(word, pid_map, workload, mode, job, time):
             break
 
 for workload in labels:
-    for mode in ['baseline', 'rubble']:
+    for mode in ['baseline', 'rubble-offload']:
         time = 0
         time_series_data.clear()
         workload = workload.lower()
@@ -109,20 +109,20 @@ for workload in labels:
                 line = f.readline()
 
         # 3. plot time series data
-        plt.figure()
-        time_axis = [i for i in range(int(time / agg_num) + int(time % agg_num > 0))]
-        print('time_axis', len(time_axis))
-        for key in time_series_data.keys():
-            print(key, len(time_series_data[key]))
-            plt.plot(time_axis, agg(time_series_data[key]), label=key)
-        figure_name = 'real-time-cpu-' + mode + '-' + workload + '-' + suffix + '.jpg'
-        print('real time cpu stats are plot in ' + figure_name)
-        plt.xlabel('Time')
-        plt.ylabel('CPU Utilization')
-        plt.ylim([0, 1])
-        plt.legend()
-        plt.savefig(figure_name)
-        plt.close()
+        # plt.figure()
+        # time_axis = [i for i in range(int(time / agg_num) + int(time % agg_num > 0))]
+        # print('time_axis', len(time_axis))
+        # for key in time_series_data.keys():
+        #     print(key, len(time_series_data[key]))
+        #     plt.plot(time_axis, agg(time_series_data[key]), label=key)
+        # figure_name = 'real-time-cpu-' + mode + '-' + workload + '-' + suffix + '.jpg'
+        # print('real time cpu stats are plot in ' + figure_name)
+        # plt.xlabel('Time')
+        # plt.ylabel('CPU Utilization')
+        # plt.ylim([0, 1])
+        # plt.legend()
+        # plt.savefig(figure_name)
+        # plt.close()
     break
 
 for key in data:
