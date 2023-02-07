@@ -29,6 +29,7 @@
 #include "table/multiget_context.h"
 #include "util/dynamic_bloom.h"
 #include "util/hash.h"
+#include "db/ship_job.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -564,6 +565,8 @@ class MemTable {
   uint64_t num_target_op_;
 
   const ImmutableDBOptions *db_options; 
+
+  ShipThreadArg* sta_;
 
   // Returns a heuristic flush decision
   bool ShouldFlushNow();

@@ -201,7 +201,7 @@ class CompactionJob {
   Env::WriteLifeTimeHint write_hint_;
   Env::Priority thread_pri_;
   IOStatus io_status_;
-  ShipThreadArg* sta_;
+  ShipThreadArg* const sta_;
 };
 
 }  // namespace ROCKSDB_NAMESPACE

@@ -333,7 +333,8 @@ CompactionJob::CompactionJob(
       paranoid_file_checks_(paranoid_file_checks),
       measure_io_stats_(measure_io_stats),
       write_hint_(Env::WLTH_NOT_SET),
-      thread_pri_(thread_pri) {
+      thread_pri_(thread_pri),
+      sta_(NeedShipSST(&db_options_) ? new ShipThreadArg(&db_options_) : nullptr) {
   assert(compaction_job_stats_ != nullptr);
   assert(log_buffer_ != nullptr);
   const auto* cfd = compact_->compaction->column_family_data();
@@ -341,11 +342,6 @@ CompactionJob::CompactionJob(
                                     db_options_.enable_thread_tracking);
   ThreadStatusUtil::SetThreadOperation(ThreadStatus::OP_COMPACTION);
   ReportStartedCompaction(compaction);
-  if (NeedShipSST(&db_options_)) {
-    sta_ = new ShipThreadArg(&db_options_);
-  } else {
-    sta_ = nullptr;
-  }
 }
 
 CompactionJob::~CompactionJob() {
@@ -1566,10 +1562,9 @@ Status CompactionJob::InstallCompactionResults(
   }
   // [RUBBLE END]
   
-  versions_->sta_ = sta_;
   return versions_->LogAndApply(compaction->column_family_data(),
                                 mutable_cf_options, compaction->edit(),
-                                db_mutex_, db_directory_);
+                                db_mutex_, db_directory_, false, nullptr, sta_);
 }
 
 void CompactionJob::RecordCompactionIOStats() {

@@ -16,7 +16,25 @@ uint64_t CheckSum(const char* src, const size_t len) {
     return sum;
 }
 
-void PrepareFile(ShipThreadArg* sta, AlignedBuffer& buf) {
+bool HasEditJson(ShipThreadArg* const a) {
+    for (std::string json : a->edits_json_) {
+        if (json.length() > 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void AddEditJson(ShipThreadArg* const a, std::string json) {
+    a->edits_json_.emplace_back(json);
+}
+
+void AddDependant(ShipThreadArg* const a, ShipThreadArg* const b) {
+    a->dependants_.emplace_back(b);
+    // printf("Add %p into %p's dependants\n", b, a);
+}
+
+void PrepareFile(ShipThreadArg* const sta, AlignedBuffer& buf) {
     FileInfo& file = sta->files_.back();
     file.len_ = buf.Capacity();
     file.buf_ = buf.BufferStart();
@@ -24,7 +42,7 @@ void PrepareFile(ShipThreadArg* sta, AlignedBuffer& buf) {
     // file.checksum_ = CheckSum(file.buf_, file.len_);
 }
 
-void AddFile(ShipThreadArg* sta, uint64_t times, uint64_t file_number) {
+void AddFile(ShipThreadArg* const sta, uint64_t times, uint64_t file_number) {
     sta->files_.emplace_back();
     FileInfo& file = sta->files_.back();
     file.times_ = times;
@@ -37,7 +55,7 @@ bool NeedShipSST(const ImmutableDBOptions* db_options) {
     return db_options->is_rubble && db_options->is_primary && !db_options->is_tail;
 }
 
-void ShipSST(FileInfo& file, const std::vector<std::string>& remote_sst_dirs, ShipThreadArg *sta) {
+void ShipSST(FileInfo& file, const std::vector<std::string>& remote_sst_dirs, ShipThreadArg* sta) {
     // std::cout << "[ShipSST] file_number: " << file.file_number_ << " slot_number: " << file.slot_number_ << std::endl;
 
     for (std::string dir : remote_sst_dirs) {
@@ -144,18 +162,34 @@ void BGWorkShip(void* arg) {
     for (FileInfo f : sta->files_) {
         ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
     }
+    for (ShipThreadArg* const s : sta->dependants_) {
+        for (FileInfo f : s->files_) {
+            ShipSST(f, s->db_options_->remote_sst_dirs, s);
+        }
+    }
     
     // 2. send version edits to secondary nodes
-    if (sta->edits_json_.length() > 0) {
-        SyncClient* client = GetSyncClient(sta->db_options_);
-        client->Sync(sta->edits_json_);
-        // std::cout << "[BGWorkShip] edits_json " << sta->edits_json_ << std::endl;
+    for (std::string json : sta->edits_json_) {
+        if (json.length() > 0) {
+            // printf("[BGWorkShip] sta: %p edits_json: %s\n", sta, json.data());
+            SyncClient* client = GetSyncClient(sta->db_options_);
+            client->Sync(json);
+        }
     }
 
+    for (ShipThreadArg* const s : sta->dependants_) {
+        delete s;
+    }
     delete reinterpret_cast<ShipThreadArg*>(arg);
 }
 
 void UnscheduleShipCallback(void* arg) {
+    ShipThreadArg* sta = reinterpret_cast<ShipThreadArg*>(arg);
+    
+    for (ShipThreadArg* const s : sta->dependants_) {
+        delete s;
+    }
+
     delete reinterpret_cast<ShipThreadArg*>(arg);
 }
 }

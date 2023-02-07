@@ -93,7 +93,7 @@ Status BuildTable(
     TableProperties* table_properties, int level, const uint64_t creation_time,
     const uint64_t oldest_key_time, Env::WriteLifeTimeHint write_hint,
     const uint64_t file_creation_time, const std::string& db_id,
-    const std::string& db_session_id, ShipThreadArg* sta) {
+    const std::string& db_session_id, ShipThreadArg* const sta) {
   assert((column_family_id ==
           TablePropertiesCollectorFactory::Context::kUnknownColumnFamily) ==
          column_family_name.empty());

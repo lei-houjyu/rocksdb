@@ -424,7 +424,8 @@ Status MemTableList::TryInstallMemtableFlushResults(
     autovector<MemTable*>* to_delete, FSDirectory* db_directory,
     LogBuffer* log_buffer,
     std::list<std::unique_ptr<FlushJobInfo>>* committed_flush_jobs_info,
-    IOStatus* io_s) {
+    IOStatus* io_s, ShipThreadArg* const sta, const int job_id) {
+
   AutoThreadOperationStageUpdater stage_updater(
       ThreadStatus::STAGE_MEMTABLE_INSTALL_FLUSH_RESULTS);
   mu->AssertHeld();
@@ -439,6 +440,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
 
     mems[i]->flush_completed_ = true;
     mems[i]->file_number_ = file_number;
+    mems[i]->sta_ = sta;
   }
 
 
@@ -496,6 +498,9 @@ Status MemTableList::TryInstallMemtableFlushResults(
         if(vset->db_options()->is_rubble){
           m->edit_.TrackSlot(m->file_number_ ,vset->db_options()->sst_bit_map->GetFileSlotNum(m->file_number_));
         }
+        if (sta != m->sta_) {
+          AddDependant(sta, m->sta_);
+        }
         // [RUBBLE END]
         edit_list.push_back(&m->edit_);
         memtables_to_flush.push_back(m);
@@ -529,7 +534,7 @@ Status MemTableList::TryInstallMemtableFlushResults(
       // this can release and reacquire the mutex.
       // ROCKS_LOG_INFO(vset->db_options()->rubble_info_log, "Calling logAndApply from flush\n");
       s = vset->LogAndApply(cfd, mutable_cf_options, edit_list, mu,
-                            db_directory);
+                            db_directory, false, nullptr, sta);
       *io_s = vset->io_status();
 
       // std::cout << " ----------------- TryInstallMemtableFlushResults -> InstallNewVersion ----------------- \n";

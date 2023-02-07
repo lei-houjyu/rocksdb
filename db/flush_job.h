@@ -166,7 +166,7 @@ class FlushJob {
 
   const std::shared_ptr<IOTracer> io_tracer_;
 
-  ShipThreadArg *sta_;
+  ShipThreadArg* const sta_;
 };
 
 }  // namespace ROCKSDB_NAMESPACE

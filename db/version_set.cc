@@ -63,7 +63,13 @@
 #include "util/stop_watch.h"
 #include "util/string_util.h"
 #include "util/user_comparator_wrapper.h"
+#include "util/debug_buffer.h"
 #include <nlohmann/json.hpp>
+#include <iostream>
+#include <execinfo.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 
 using json = nlohmann::json;
 
@@ -4360,7 +4366,7 @@ Status VersionSet::LogAndApply(
     const autovector<const MutableCFOptions*>& mutable_cf_options_list,
     const autovector<autovector<VersionEdit*>>& edit_lists,
     InstrumentedMutex* mu, FSDirectory* db_directory, bool new_descriptor_log,
-    const ColumnFamilyOptions* new_cf_options) {
+    const ColumnFamilyOptions* new_cf_options, ShipThreadArg* const sta) {
 
   // logAndApply is directly called inside three functions during normal execution:
   // 1) BackgroundCompaction inside db_impl_compaction_flush.cc , sepecifically when there is a trivial move compaction
@@ -4371,10 +4377,12 @@ Status VersionSet::LogAndApply(
   // RUBBLE: trigger RPC calls to downstream node to sync RocksDB states.
   ROCKS_LOG_INFO(db_options_->info_log, "LogAndApply called\n");
   log_and_apply_counter_.fetch_add(1);
-  if (sta_ != nullptr && AddedFiles(edit_lists)) {
-    sta_->edits_json_ = VersionEditsToJson(next_file_number_.load(),
-                                           log_and_apply_counter_.load(),
-                                           edit_lists.back());
+  // printf("[LogAndApply] counter: %lu sta: %p edits: %s\n", log_and_apply_counter_.load(), sta, 
+  //   VersionEditsToJson(next_file_number_.load(), log_and_apply_counter_.load(), edit_lists.back()).data());
+  if (sta != nullptr && AddedFiles(edit_lists)) {
+    AddEditJson(sta, VersionEditsToJson(next_file_number_.load(),
+                                        log_and_apply_counter_.load(),
+                                        edit_lists.back()));
   }
   // RUBBLE END
   int num_edits = 0;

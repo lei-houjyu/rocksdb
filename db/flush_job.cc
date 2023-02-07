@@ -126,15 +126,11 @@ FlushJob::FlushJob(
       base_(nullptr),
       pick_memtable_called(false),
       thread_pri_(thread_pri),
-      io_tracer_(io_tracer) {
+      io_tracer_(io_tracer),
+      sta_(NeedShipSST(&db_options_) ? new ShipThreadArg(&db_options_) : nullptr) {
   // Update the thread status to indicate flush.
   ReportStartedFlush();
   TEST_SYNC_POINT("FlushJob::FlushJob()");
-  if (NeedShipSST(&db_options_)) {
-    sta_ = new ShipThreadArg(&db_options_);
-  } else {
-    sta_ = nullptr;
-  }
 }
 
 FlushJob::~FlushJob() {
@@ -248,12 +244,11 @@ Status FlushJob::Run(LogsWithPrepTracker* prep_tracker,
     TEST_SYNC_POINT("FlushJob::InstallResults");
     // Replace immutable memtable with the generated Table
     IOStatus tmp_io_s;
-    versions_->sta_ = sta_;
     s = cfd_->imm()->TryInstallMemtableFlushResults(
         cfd_, mutable_cf_options_, mems_, prep_tracker, versions_, db_mutex_,
         meta_.fd.GetNumber(), &job_context_->memtables_to_free, db_directory_,
-        log_buffer_, &committed_flush_jobs_info_, &tmp_io_s);
-    if (sta_ != nullptr) {
+        log_buffer_, &committed_flush_jobs_info_, &tmp_io_s, sta_, job_context_->job_id);
+    if (sta_ != nullptr && HasEditJson(sta_)) {
       db_options_.env->Schedule(&BGWorkShip, (void *)sta_, Env::Priority::SHIP, this,
                                 &UnscheduleShipCallback);
     }

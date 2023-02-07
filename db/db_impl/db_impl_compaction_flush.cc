@@ -2900,14 +2900,11 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
       }
     }
     c->edit()->MarkTrivialMove();
-    ShipThreadArg *sta = nullptr;
-    if (NeedShipSST(&immutable_db_options_)) {
-      sta = new ShipThreadArg(&immutable_db_options_);
-    }
-    versions_->sta_ = sta;
+    ShipThreadArg* const sta = NeedShipSST(&immutable_db_options_) ?
+                               new ShipThreadArg(&immutable_db_options_) : nullptr;
     status = versions_->LogAndApply(c->column_family_data(),
                                     *c->mutable_cf_options(), c->edit(),
-                                    &mutex_, directories_.GetDbDir());
+                                    &mutex_, directories_.GetDbDir(), false, nullptr, sta);
     if (sta != nullptr) {
       immutable_db_options_.env->Schedule(&BGWorkShip, (void *)sta, rocksdb::Env::SHIP,
                                           this, &UnscheduleShipCallback);

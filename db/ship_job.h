@@ -31,19 +31,27 @@ struct FileInfo {
 };
 
 struct ShipThreadArg {
-    std::string edits_json_;
     std::vector<FileInfo> files_;
+    std::vector<std::string> edits_json_;
     const ImmutableDBOptions* db_options_;
+    std::vector<ShipThreadArg*> dependants_;
 
     ShipThreadArg(const ImmutableDBOptions* db_options) :
-        edits_json_(),
         files_(),
-        db_options_(db_options) {};
+        edits_json_(),
+        db_options_(db_options),
+        dependants_() {};
 };
 
-void PrepareFile(ShipThreadArg* sta, AlignedBuffer& buf);
+bool HasEditJson(ShipThreadArg* const a);
 
-void AddFile(ShipThreadArg* sta, uint64_t times, uint64_t file_number);
+void AddEditJson(ShipThreadArg* const a, std::string json);
+
+void AddDependant(ShipThreadArg* const a, ShipThreadArg* const b);
+
+void PrepareFile(ShipThreadArg* const sta, AlignedBuffer& buf);
+
+void AddFile(ShipThreadArg* const sta, uint64_t times, uint64_t file_number);
 
 bool NeedShipSST(const ImmutableDBOptions* db_options);
 

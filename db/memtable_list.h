@@ -24,6 +24,7 @@
 #include "rocksdb/options.h"
 #include "rocksdb/types.h"
 #include "util/autovector.h"
+#include "db/ship_job.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -283,7 +284,7 @@ class MemTableList {
       autovector<MemTable*>* to_delete, FSDirectory* db_directory,
       LogBuffer* log_buffer,
       std::list<std::unique_ptr<FlushJobInfo>>* committed_flush_jobs_info,
-      IOStatus* io_s);
+      IOStatus* io_s, ShipThreadArg* const sta = nullptr, const int job_id = 0);
 
   // New memtables are inserted at the front of the list.
   // Takes ownership of the referenced held on *m by the caller of Add().
