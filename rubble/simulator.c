@@ -88,7 +88,7 @@ int main(int argc, char * argv[])
         for (int j = 0; j < BLK_SIZE; j += 8) {
             int pos = i * BLK_SIZE + j;
             for (int k = 0; k < 8; k++) {
-                printf("%c", r_buf[pos + k]);
+                // printf("%c", r_buf[pos + k]);
                 if (blk_id[k] != r_buf[pos + k]) {
                     wrong = 1;
                 }
@@ -97,8 +97,6 @@ int main(int argc, char * argv[])
         if (wrong) {
             printf("\twrong! should be %s\n", blk_id);
             wrong = 0;
-        } else {
-            printf("\n");
         }
     }
 

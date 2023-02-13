@@ -29,6 +29,7 @@
 #include "util/cast_util.h"
 #include "util/coding.h"
 #include "util/stop_watch.h"
+#include "util/debug_buffer.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -415,6 +416,14 @@ Status TableCache::Get(const ReadOptions& options,
   Status s;
   TableReader* t = fd.table_reader;
   Cache::Handle* handle = nullptr;
+  // debug_buffer_mu.lock();
+  // debug_buffer_ss << "[debug] " << "TableCache Get key " << k.ToString() << std::endl;
+  // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+  // debug_buffer_mu.unlock();
+  DEBUG_STRUCT_SET(table_cache_get_key, k.ToString().data());
+  // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "TableCache Get key %s\n", k.ToString().data());
+  // printf("[debug] TableCache Get key %s\n", k.ToString().data());
+  // std::cout << "[debug] " << "TableCache Get key " << k.ToString() << std::endl;
   if (!done) {
     assert(s.ok());
     if (t == nullptr) {

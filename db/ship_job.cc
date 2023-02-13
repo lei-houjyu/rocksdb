@@ -171,7 +171,7 @@ void BGWorkShip(void* arg) {
     // 2. send version edits to secondary nodes
     for (std::string json : sta->edits_json_) {
         if (json.length() > 0) {
-            // printf("[BGWorkShip] sta: %p edits_json: %s\n", sta, json.data());
+            printf("[BGWorkShip] sta: %p edits_json: %s\n", sta, json.data());
             SyncClient* client = GetSyncClient(sta->db_options_);
             client->Sync(json);
         }

@@ -10,6 +10,7 @@
 #include "table/block_based/block_based_table_reader.h"
 
 #include "table/block_based/reader_common.h"
+#include "util/debug_buffer.h"
 
 // The file contains some member functions of BlockBasedTable that
 // cannot be implemented in block_based_table_reader.cc because
@@ -28,7 +29,17 @@ TBlockIter* BlockBasedTable::NewDataBlockIterator(
     BlockCacheLookupContext* lookup_context, Status s,
     FilePrefetchBuffer* prefetch_buffer, bool for_compaction) const {
   PERF_TIMER_GUARD(new_table_block_iter_nanos);
-
+  // debug_buffer_mu.lock();
+  // debug_buffer_ss << "[debug] " << "NewDataBlockIterator, block handle offset: " << handle.offset()
+  //   << ", size: " << handle.size() << std::endl;
+  // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+  // debug_buffer_mu.unlock();
+  DEBUG_STRUCT_SET(data_block_handle_offset, handle.offset());
+  DEBUG_STRUCT_SET(data_block_handle_size, handle.size());
+  // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "[debug] NewDataBlockIterator, block handle offset: %lu, size: %lu\n", handle.offset(), handle.size());
+  // printf("[debug] NewDataBlockIterator, block handle offset: %lu, size: %lu\n", handle.offset(), handle.size());
+  // std::cout << "[debug] " << "NewDataBlockIterator, block handle offset: " << handle.offset()
+    // << ", size: " << handle.size() << std::endl;
   TBlockIter* iter = input_iter != nullptr ? input_iter : new TBlockIter;
   if (!s.ok()) {
     iter->Invalidate(s);

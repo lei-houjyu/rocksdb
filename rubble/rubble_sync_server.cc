@@ -182,7 +182,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       // }
 
       if (IsTermination(request)) {
-        // std::cout << "Received termination msg\n";
+        std::cout << "Received termination msg\n";
         if (is_rubble_ && !is_head_) {
           CleanBufferedOps(forwarder, reply_client, op_buffer);
         }
@@ -407,7 +407,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
 
   switch (singleOp->type()) {
     case rubble::GET:
-      assert(is_tail_);
+      // assert(is_tail_);
       s = db_->Get(ro, singleOp->key(), &value);
       // std::cout << "Get status: " << s.ToString() << " key: " << singleOp->key() << std::endl;
       r_op_counter_.fetch_add(1);
@@ -429,7 +429,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
       break;
 
     case rubble::SCAN:
-      assert(is_tail_);
+      // assert(is_tail_);
       record_cnt = singleOp->record_cnt();
       it = db_->NewIterator(ro);
       if (it == nullptr) {
@@ -615,7 +615,7 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
     // std::cout << "enter Sync loop\n";
     while (stream->Read(&request)) {
       std::string args = request.args();
-      // std::cout << "[Sync] get " << args << std::endl;
+      std::cout << "[Sync] get " << args << std::endl;
       {
         debug_mu.lock();
         rocksdb::InstrumentedMutexLock l(mu_);
@@ -717,6 +717,7 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
     // 2. cache out-of-ordered version edit
     if (version_edit_id != expected || !IsReady(edits[0])) {
       RUBBLE_LOG_INFO(logger_, "Version Edit arrives out of order, expecting %lu, cache %lu \n", expected, version_edit_id);
+      printf("Version Edit arrives out of order, expecting %lu, cache %lu \n", expected, version_edit_id);
       for (const auto& edit : edits) {
         cached_edits_.insert({edit.GetEditNumber(), edit});
       }
@@ -737,14 +738,15 @@ void RubbleKvServiceImpl::ApplyBufferedVersionEdits() {
       uint64_t log_and_apply_counter = version_set_->LogAndApplyCounter();
       uint64_t expected = log_and_apply_counter + 1;
       int count = cached_edits_.count(expected);
-      // std::cout << "[ApplyBufferedVersionEdits] expected: " 
-      //           << expected << " count: " << count << std::endl;
+      std::cout << "[ApplyBufferedVersionEdits] expected: " 
+                << expected << " count: " << count << std::endl;
       while (count != 0) {
         auto edit = cached_edits_.cbegin()->second;
         if (!IsReady(edit)) {
           break;
         }
         RUBBLE_LOG_INFO(logger_, "Got %d edits in cache, edit id : %lu \n", count, expected);
+        printf("Got %d edits in cache, edit id : %lu \n", count, expected);
         std::vector<rocksdb::VersionEdit> edits;
         for (int i = 0; i < count; i++) {
           auto it = cached_edits_.cbegin();
@@ -784,7 +786,7 @@ std::string RubbleKvServiceImpl::ApplyOneVersionEdit(std::vector<rocksdb::Versio
 
     rocksdb::IOStatus ios;
     for (const auto& edit: edits) {
-      // printf("ApplyOneVersionEdit : %s \n", edit.DebugString().c_str());
+      printf("ApplyOneVersionEdit : %s \n", edit.DebugString().c_str());
       ios = UpdateSstViewAndShipSstFiles(edit);
       assert(ios.ok());
     }

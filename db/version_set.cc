@@ -3890,7 +3890,6 @@ Status VersionSet::ProcessManifestWrites(
   autovector<Version*> versions;
   autovector<const MutableCFOptions*> mutable_cf_options_ptrs;
   std::vector<std::unique_ptr<BaseReferencedVersionBuilder>> builder_guards;
-
   if (first_writer.edit_list.front()->IsColumnFamilyManipulation()) {
     // No group commits for column family add or drop
     LogAndApplyCFHelper(first_writer.edit_list.front());
@@ -4094,13 +4093,24 @@ Status VersionSet::ProcessManifestWrites(
                builder_guards.size() == versions.size());
         ColumnFamilyData* cfd = versions[i]->cfd_;
         // std::cout << "load table handlers\n";
-        s = builder_guards[i]->version_builder()->LoadTableHandlers(
+        auto version_builder = builder_guards[i]->version_builder();
+        s = version_builder->LoadTableHandlers(
             cfd->internal_stats(), 1 /* max_threads */,
             true /* prefetch_index_and_filter_in_cache */,
             false /* is_initial_load */,
             mutable_cf_options_ptrs[i]->prefix_extractor.get(),
             MaxFileSizeForL0MetaPin(*mutable_cf_options_ptrs[i]));
+
+        std::vector<FileMetaData*> file_metas = version_builder->AddedFilesAllLevels();
+        ReadOptions ro(true, false);
+        ro.readahead_size = 2 * 1024 * 1024;
+        for (auto fm : file_metas) {
+          if (!fm->fd.table_reader->VerifyChecksum(ro, TableReaderCaller::kSSTDumpTool).ok())
+            assert(false);
+        }
+        std::cout << "LoadTableHandlers status: " << s.ok() << std::endl;
         if (!s.ok()) {
+          assert(false);
           if (db_options_->paranoid_checks) {
             break;
           }
@@ -4377,8 +4387,8 @@ Status VersionSet::LogAndApply(
   // RUBBLE: trigger RPC calls to downstream node to sync RocksDB states.
   ROCKS_LOG_INFO(db_options_->info_log, "LogAndApply called\n");
   log_and_apply_counter_.fetch_add(1);
-  // printf("[LogAndApply] counter: %lu sta: %p edits: %s\n", log_and_apply_counter_.load(), sta, 
-  //   VersionEditsToJson(next_file_number_.load(), log_and_apply_counter_.load(), edit_lists.back()).data());
+  printf("[LogAndApply] counter: %lu sta: %p edits: %s\n", log_and_apply_counter_.load(), sta, 
+    VersionEditsToJson(next_file_number_.load(), log_and_apply_counter_.load(), edit_lists.back()).data());
   if (sta != nullptr && AddedFiles(edit_lists)) {
     AddEditJson(sta, VersionEditsToJson(next_file_number_.load(),
                                         log_and_apply_counter_.load(),

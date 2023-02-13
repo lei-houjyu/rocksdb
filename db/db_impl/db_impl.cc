@@ -103,6 +103,7 @@
 #include "util/mutexlock.h"
 #include "util/stop_watch.h"
 #include "util/string_util.h"
+#include "util/debug_buffer.h"
 
 namespace ROCKSDB_NAMESPACE {
 uint64_t g_mem_op_cnt = 0;
@@ -110,6 +111,12 @@ uint64_t g_mem_id = 0;
 std::mutex g_mem_op_cnt_mtx;
 uint64_t g_mem_id_arr[G_MEM_ARR_LEN];
 uint64_t g_mem_op_cnt_arr[G_MEM_ARR_LEN];
+// thread_local std::stringstream debug_buffer_ss;
+// thread_local const char *debug_buffer;
+// thread_local std::mutex debug_buffer_mu;
+// const ImmutableDBOptions *global_dboption;
+thread_local debug_struct_t debug_struct[10000];
+thread_local int debug_struct_idx = 0;
 
 const std::string kDefaultColumnFamilyName("default");
 const std::string kPersistentStatsColumnFamilyName(
@@ -239,6 +246,7 @@ DBImpl::DBImpl(const DBOptions& options, const std::string& dbname,
       closed_(false),
       error_handler_(this, immutable_db_options_, &mutex_),
       atomic_flush_install_cv_(&mutex_) {
+  // global_dboption = &immutable_db_options_;
   // !batch_per_trx_ implies seq_per_batch_ because it is only unset for
   // WriteUnprepared, which should use seq_per_batch_.
   assert(batch_per_txn_ || seq_per_batch_);
@@ -1606,6 +1614,15 @@ std::atomic<uint64_t> total_disk_read_time{0};
 Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
                        GetImplOptions& get_impl_options) {
   using nano = std::chrono::nanoseconds;
+  // ResetDebugBuffer();
+  // debug_buffer_mu.lock();
+  // debug_buffer_ss << "[debug] " << "Get key: " << key.ToString() << std::endl;
+  // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+  // debug_buffer_mu.unlock();
+  DEBUG_STRUCT_SET(key, key.ToString().data());
+  // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "Get key: %s", key.ToString().data());
+  // printf("[debug] Get key: %s\n", key.ToString().data());
+  // std::cout << "[debug] " << "Get key: " << key.ToString() << std::endl;
   // changxu: hack to call DumpStats() manually
   if (num_get_called % 100000 == 0 && num_get_called > 0) {
     DBImpl::DumpStats();
@@ -1730,6 +1747,14 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
                        read_options, get_impl_options.callback,
                        get_impl_options.is_blob_index)) {
         done = true;
+        // debug_buffer_mu.lock();
+        // debug_buffer_ss << "[debug] " << "active memtable hit for key " << key.ToString() << std::endl;
+        // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+        // debug_buffer_mu.unlock();
+        DEBUG_STRUCT_SET(active_mem_hit, true);
+        // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "active memtable hit for key %s", key.ToString().data());
+        // printf("[debug] active memtable hit for key %s\n", key.ToString().data());
+        // std::cout << "[debug] " << "active memtable hit for key " << key.ToString() << std::endl;
         get_impl_options.value->PinSelf();
         RecordTick(stats_, MEMTABLE_HIT);
       } else if ((s.ok() || s.IsMergeInProgress()) &&
@@ -1739,6 +1764,7 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
                               get_impl_options.callback,
                               get_impl_options.is_blob_index)) {
         done = true;
+        DEBUG_STRUCT_SET(imm_mem_hit, true);
         get_impl_options.value->PinSelf();
         RecordTick(stats_, MEMTABLE_HIT);
       }
@@ -1749,6 +1775,14 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
                        &merge_context, &max_covering_tombstone_seq,
                        read_options, nullptr, nullptr, false)) {
         done = true;
+        // debug_buffer_mu.lock();
+        // debug_buffer_ss << "[debug] " << "immutable memtable hit for key " << key.ToString() << std::endl;
+        // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+        // debug_buffer_mu.unlock();
+        
+        // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "immutable memtable hit for key %s", key.ToString().data());
+        // printf("[debug] immutable memtable hit for key %s\n", key.ToString().data());
+        // std::cout << "[debug] " << "immutable memtable hit for key " << key.ToString() << std::endl;
         RecordTick(stats_, MEMTABLE_HIT);
       } else if ((s.ok() || s.IsMergeInProgress()) &&
                  sv->imm->GetMergeOperands(lkey, &s, &merge_context,
@@ -1768,6 +1802,14 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
   if (!done) {
     PERF_TIMER_GUARD(get_from_output_files_time);
     auto start = std::chrono::high_resolution_clock::now();
+    // debug_buffer_mu.lock();
+    // debug_buffer_ss << "[debug] " << "memtable miss, fall into block IO" << std::endl;
+    // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+    // debug_buffer_mu.unlock();
+    DEBUG_STRUCT_SET(mem_miss, true);
+    // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "memtable miss, fall into block IO");
+    // printf("[debug] memtable miss, fall into block IO\n");
+    // std::cout << "[debug] " << "memtable miss, fall into block IO" << std::endl;
     sv->current->Get(
         read_options, lkey, get_impl_options.value, timestamp, &s,
         &merge_context, &max_covering_tombstone_seq,
@@ -1813,6 +1855,15 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
     }
     RecordInHistogram(stats_, BYTES_PER_READ, size);
   }
+  // debug_buffer_mu.lock();
+  // debug_buffer_ss << "[debug] " << "got value of key " << key.ToString() << std::endl;
+  // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+  // debug_buffer_mu.unlock();
+  DEBUG_STRUCT_SET(value, get_impl_options.value->ToString().data());
+  DEBUG_STRUCT_ADVANCE();
+  // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "got value of key %s", key.ToString().data());
+  // printf("[debug] got value of key %s\n", key.ToString().data());
+  // std::cout << "[debug] " << "got value of key " << key.ToString() << std::endl;
   return s;
 }
 
