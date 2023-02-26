@@ -1545,8 +1545,9 @@ Status CompactionJob::InstallCompactionResults(
         std::string fname = TableFileName(sub_compact.compaction->immutable_cf_options()->cf_paths,
                             file_num, out.meta.fd.GetPathId());
         uint64_t size = out.meta.fd.GetFileSize();
-        int slot_num = db_options_.sst_bit_map->GetFileSlotNum(file_num);
-        edit->TrackSlot(file_num, slot_num);
+        // TODO:Sheng
+        // int slot_num = db_options_.sst_bit_map->GetFileSlotNum(file_num);
+        // edit->TrackSlot(file_num, slot_num);
         // int sst_real = GetTakenSlot(out.meta.fd.GetNumber());
         // fprintf(stdout, "[File Shipped] : (l%u, %lu, %lu) , take slot : %u\n", compaction->output_level(), file_num, size, slot_num);
       }

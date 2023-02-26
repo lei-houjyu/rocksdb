@@ -6,6 +6,8 @@
 #include <sys/types.h>
 #include <sys/stat.h> 
 #include <string.h>
+#include <ctime>
+#include <iomanip>
 
 namespace ROCKSDB_NAMESPACE {
 uint64_t CheckSum(const char* src, const size_t len) {
@@ -47,7 +49,8 @@ void AddFile(ShipThreadArg* const sta, uint64_t times, uint64_t file_number) {
     FileInfo& file = sta->files_.back();
     file.times_ = times;
     file.file_number_ = file_number;
-    file.slot_number_ = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(file_number, times);
+    // TODO:Sheng
+    // file.slot_number_ = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(file_number, times);
 }
 
 bool NeedShipSST(const ImmutableDBOptions* db_options) {
@@ -127,8 +130,9 @@ SyncClient* GetSyncClient(const ImmutableDBOptions* db_options_) {
             }
             client = new SyncClient(db_options_->channel);
         } while (db_options_->channel->GetState(false) != 2);
-        // std::cout << "thread " << std::this_thread::get_id()
-        //           << " creates sync client\n";
+        std::cout << "thread " << std::this_thread::get_id()
+                  << " creates sync client " << client
+                  << " state " << db_options_->channel->GetState(false) << std::endl;
     }
 
     return client;
@@ -159,21 +163,61 @@ void BGWorkShip(void* arg) {
     // int sst_slot = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(sta->sst_number_, sta->times_);
 
     // 1.2 ship SST file via NVMe-oF
+    std::stringstream ss;
     for (FileInfo f : sta->files_) {
+        f.slot_number_ = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(f.file_number_, f.times_);
         ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
+        ss << f.file_number_ << ':' << f.slot_number_ << ", ";
     }
     for (ShipThreadArg* const s : sta->dependants_) {
         for (FileInfo f : s->files_) {
+            f.slot_number_ = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(f.file_number_, f.times_);
             ShipSST(f, s->db_options_->remote_sst_dirs, s);
+            ss << f.file_number_ << ':' << f.slot_number_ << ", ";
         }
     }
+    auto now = std::chrono::system_clock::now();
+    auto now_c = std::chrono::system_clock::to_time_t(now);
+    std::tm tm = *std::localtime(&now_c);
+    int ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
+
+    std::cout << std::put_time(&tm, "%y:%m:%d %H:%M:%S.") << std::setfill('0') << std::setw(3) << ms
+    << " shipped sst: " << ss.str() << std::endl;
+    
     
     // 2. send version edits to secondary nodes
     for (std::string json : sta->edits_json_) {
         if (json.length() > 0) {
+            // fill in the slot info in the json here
             printf("[BGWorkShip] sta: %p edits_json: %s\n", sta, json.data());
+            nlohmann::json j = nlohmann::json::parse(json);
+            
+            // JSONWriter jw;
+            // jw << "SlotMap";
+            // jw.StartArray();
+            for (auto& edit_list_string : j["EditList"].get<std::vector<std::string>>()) {
+                const auto& j_edit_list = nlohmann::json::parse(edit_list_string);
+                for (auto& j_added_files : j_edit_list["AddedFiles"].get<std::vector<nlohmann::json>>()) {
+                    // jw.StartArrayedObject();
+                    uint64_t filenumber = j_added_files["FileNumber"].get<uint64_t>();
+                    j_added_files["Slot"] == sta->db_options_->sst_bit_map->GetFileSlotNum(filenumber);
+                    // jw.EndArrayedObject();
+                }
+            }
+            
+            // jw.EndArray();
+            // j["SlotMap"] = jw.Get();
+            
             SyncClient* client = GetSyncClient(sta->db_options_);
-            client->Sync(json);
+            client->Sync(j.dump());
+
+            // SyncReply downstream_reply;
+            // client->GetSyncReply(&downstream_reply);
+            // std::string reply_message = downstream_reply.message();
+            // nlohmann::json reply_json(reply_message);
+            // std::cout << "[Sync] reply: " << reply_message << std::endl;
+
+            // ApplyDownstreamSstSlotDeletion();
         }
     }
 

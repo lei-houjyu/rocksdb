@@ -133,8 +133,11 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     rocksdb::IOStatus DeleteSstFiles(const rocksdb::VersionEdit& edit);
     // set the reply message according to the status
     void SetReplyMessage(SyncReply* reply, const rocksdb::Status& s, bool is_flush, bool is_trivial_move);
+    void SetSyncReplyMessage(SyncReply *reply);
 
     void PersistData();
+
+    void ApplyDownstreamSstSlotDeletion();
 
     // db instance
     rocksdb::DB* db_ = nullptr;
@@ -191,6 +194,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     // files that get deleted in a full compaction
     std::vector<uint64_t> deleted_files_;
+    std::unordered_set<int> deleted_slots_;
     
     std::atomic<uint64_t> batch_counter_{0};
     time_point<high_resolution_clock> batch_start_time_;

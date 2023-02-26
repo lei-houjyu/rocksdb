@@ -4100,15 +4100,7 @@ Status VersionSet::ProcessManifestWrites(
             false /* is_initial_load */,
             mutable_cf_options_ptrs[i]->prefix_extractor.get(),
             MaxFileSizeForL0MetaPin(*mutable_cf_options_ptrs[i]));
-
-        std::vector<FileMetaData*> file_metas = version_builder->AddedFilesAllLevels();
-        ReadOptions ro(true, false);
-        ro.readahead_size = 2 * 1024 * 1024;
-        for (auto fm : file_metas) {
-          if (!fm->fd.table_reader->VerifyChecksum(ro, TableReaderCaller::kSSTDumpTool).ok())
-            assert(false);
-        }
-        std::cout << "LoadTableHandlers status: " << s.ok() << std::endl;
+        
         if (!s.ok()) {
           assert(false);
           if (db_options_->paranoid_checks) {

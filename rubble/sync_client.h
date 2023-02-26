@@ -42,9 +42,10 @@ class SyncClient {
 
   void Sync(const SyncRequest& request);
 
-  private:
-    // read a reply back for a sync request
-    void GetSyncReply();
+  // read a reply back for a sync request
+  void GetSyncReply(SyncReply *reply);
+
+  private:  
 
     // check the SyncReply status
     bool CheckReply(const SyncReply& reply);

@@ -804,9 +804,8 @@ std::string VersionEdit::DebugJSON(int edit_num, bool hex_key) const {
       jw << "Level" << new_files_[i].first;
       const FileMetaData& f = new_files_[i].second;
       jw << "FileNumber" << f.fd.GetNumber();
-      if(!is_trivial_move_compaction_){
-        jw << "Slot" << GetSlot(f.fd.GetNumber());
-      }
+      // TODO:Sheng
+      jw << "Slot" << -1;
       jw << "FileSize" << f.fd.GetFileSize();
       jw << "SmallestUserKey" << f.smallest.user_key().ToString();
       jw << "SmallestSeqno" << f.fd.smallest_seqno;

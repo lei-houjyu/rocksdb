@@ -1413,9 +1413,10 @@ Status DBImpl::WriteLevel0TableForRecovery(int job_id, ColumnFamilyData* cfd,
                   meta.file_checksum, meta.file_checksum_func_name);
 
     edit->SetBlobFileAdditions(std::move(blob_file_additions));
-    if(db_options->is_rubble && db_options->is_primary){
-      edit->TrackSlot(meta.fd.GetNumber(), db_options->sst_bit_map->GetFileSlotNum(meta.fd.GetNumber()));
-    }
+    // TODO:Sheng
+    // if(db_options->is_rubble && db_options->is_primary){
+    //   edit->TrackSlot(meta.fd.GetNumber(), db_options->sst_bit_map->GetFileSlotNum(meta.fd.GetNumber()));
+    // }
   }
 
   InternalStats::CompactionStats stats(CompactionReason::kFlush, 1);

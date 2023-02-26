@@ -302,6 +302,7 @@ Status ReadFooterFromFile(const IOOptions& opts, RandomAccessFileReader* file,
           ? static_cast<size_t>(file_size - Footer::kMaxEncodedLength)
           : 0;
   Status s;
+  bool from_cache = true;
   // TODO: Need to pass appropriate deadline to TryReadFromCache(). Right now,
   // there is no readahead for point lookups, so TryReadFromCache will fail if
   // the required data is not in the prefetch buffer. Once deadline is enabled
@@ -310,6 +311,7 @@ Status ReadFooterFromFile(const IOOptions& opts, RandomAccessFileReader* file,
   if (prefetch_buffer == nullptr ||
       !prefetch_buffer->TryReadFromCache(
           IOOptions(), read_offset, Footer::kMaxEncodedLength, &footer_input)) {
+    from_cache = false;
     if (file->use_direct_io()) {
       s = file->Read(opts, read_offset, Footer::kMaxEncodedLength,
                      &footer_input, nullptr, &internal_buf);
@@ -332,7 +334,13 @@ Status ReadFooterFromFile(const IOOptions& opts, RandomAccessFileReader* file,
                               " footer_input.size() " + ToString(footer_input.size()));
   }
 
+  auto footer_input_copy = footer_input;
   s = footer->DecodeFrom(&footer_input);
+  std::cout << "Read footer from file: " << file->file_name() << ", file size: " << file_size << ", read_offset: " << read_offset
+  << ", from_cache: " << from_cache << ", footer: " << footer->ToString() << "metaindex block offset: " << 
+  footer->metaindex_handle().offset() << ", size: " << footer->metaindex_handle().size()
+  << ", index block offset: " << footer->index_handle().offset() << ", size: " << footer->index_handle().size()
+  << ", raw footer input: " << footer_input_copy.ToString(true) << std::endl;
   if (!s.ok()) {
     return s;
   }

@@ -14,6 +14,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iomanip>
+#include <ctime>
 
 #include "cache/sharded_cache.h"
 
@@ -719,6 +721,11 @@ Status BlockBasedTable::Open(
     *table_reader = std::move(new_table);
   }
 
+  // DEBUG: perform a full checksum scan
+  ReadOptions ro_t(true, false);
+  ro_t.readahead_size = 2 * 1024 * 1024;
+  (*table_reader)->VerifyChecksum(ro_t, TableReaderCaller::kSSTDumpTool);
+
   return s;
 }
 
@@ -761,6 +768,8 @@ Status BlockBasedTable::PrefetchTail(
           new FilePrefetchBuffer(nullptr, 0, 0, false, true));
       return Status::OK();
     }
+    std::cout << "file system prefetch from " << file->file_name()
+    << ", offset " << prefetch_off << ", size " << prefetch_len << std::endl;
   }
 
   // Use `FilePrefetchBuffer`
@@ -769,6 +778,8 @@ Status BlockBasedTable::PrefetchTail(
   Status s = PrepareIOFromReadOptions(ro, file->env(), opts);
   if (s.ok()) {
     s = (*prefetch_buffer)->Prefetch(opts, file, prefetch_off, prefetch_len);
+    std::cout << "prefetch buffer prefetch from " << file->file_name()
+    << ", offset " << prefetch_off << ", size " << prefetch_len << std::endl;
   }
   return s;
 }
@@ -2913,6 +2924,15 @@ Status BlockBasedTable::VerifyChecksum(const ReadOptions& read_options,
   std::unique_ptr<Block> metaindex;
   std::unique_ptr<InternalIterator> metaindex_iter;
   ReadOptions ro;
+
+  auto now = std::chrono::system_clock::now();
+  auto now_c = std::chrono::system_clock::to_time_t(now);
+  std::tm tm = *std::localtime(&now_c);
+  int ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
+
+  std::cout << std::put_time(&tm, "%y:%m:%d %H:%M:%S.") << std::setfill('0') << std::setw(3) << ms
+  << " start verifying checksum for file " << rep_->file->file_name() << std::endl;
+
   s = ReadMetaIndexBlock(ro, nullptr /* prefetch buffer */, &metaindex,
                          &metaindex_iter);
   if (s.ok()) {

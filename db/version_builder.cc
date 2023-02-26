@@ -990,6 +990,14 @@ class VersionBuilder::Rep {
     for (auto& t : threads) {
       t.join();
     }
+
+    // DEBUG: verify checksum for the whole sst
+    ReadOptions ro(true, false);
+    ro.readahead_size = 2 * 1024 * 1024;
+    for (auto fm : files_meta) {
+      if (!fm.first->fd.table_reader->VerifyChecksum(ro, TableReaderCaller::kSSTDumpTool).ok())
+        assert(false);
+    }
     Status ret;
     for (const auto& s : statuses) {
       if (!s.ok()) {

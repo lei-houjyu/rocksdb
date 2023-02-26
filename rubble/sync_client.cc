@@ -58,13 +58,14 @@ void SyncClient::Sync(const SyncRequest& request){
 }
 
 // read a reply back for a sync request
-void SyncClient::GetSyncReply() {
+void SyncClient::GetSyncReply(SyncReply *reply) {
     // The tag is the link between our thread (main thread) and the completion
     // queue thread. The tag allows the completion queue to fan off
     // notification handlers for the specified read/write requests as they
     // are being processed by gRPC.
 
-    stream_->Read(&reply_, reinterpret_cast<void*>(Type::READ));
+    sync_stream_->Read(reply);
+    // stream_->Read(&reply_, reinterpret_cast<void*>(Type::READ));
 }
 
 bool SyncClient::CheckReply(const SyncReply& reply){
