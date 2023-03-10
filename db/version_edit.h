@@ -382,6 +382,10 @@ class VersionEdit {
     return slots_.at(file_num);
   }
 
+  bool IsFileMapped(const uint64_t file_num) const {
+    return slots_.count(file_num) > 0;
+  }
+
   void TrackSlot(uint64_t file_num, int slot){
     slots_.emplace(file_num, slot);
   }

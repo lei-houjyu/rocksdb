@@ -79,6 +79,23 @@ void ShipSST(FileInfo& file, const std::vector<std::string>& remote_sst_dirs, Sh
             assert(false);
         }
 
+        int w_fd;
+        fname = "/mnt/data/dump/" + dir.substr(16) + "/" + std::to_string(file.file_number_) + ".sst";
+        do {
+            w_fd = open(fname.c_str(), O_WRONLY | O_DIRECT | O_DSYNC | O_CREAT, 0755);
+        } while (w_fd < 0 && errno == EINTR);
+        if (w_fd < 0) {
+            std::cout << "While open a file for appending " << fname << " errno " << std::strerror(errno) << std::endl;
+            assert(false);
+        }
+
+        done = write(w_fd, file.buf_, file.len_);
+        if (done != (ssize_t)file.len_) {
+            std::cout << "while appending to file " << fname << " errno " << std::strerror(errno) << std::endl;
+            assert(false);
+        }
+        close(w_fd);
+
         // uint64_t got = CheckSum(file.buf_, file.len_);
         // uint64_t expected = file.checksum_;
         // if (got != expected) {
@@ -155,6 +172,26 @@ bool AddedFiles(const autovector<autovector<VersionEdit*>>& edit_lists) {
   return res;
 }
 
+void ApplyDownstreamSstSlotDeletion(ShipThreadArg* sta, const nlohmann::json& reply_json) {
+  for (const auto& deleted_slot : reply_json["DeletedSlots"]) {
+    int slot = deleted_slot.get<int>();
+    // uint64_t filenumber = sta->db_options_->sst_bit_map->GetSlotFileNum(slot);
+    sta->db_options_->sst_bit_map->FreeSlot2(slot);
+  }
+}
+
+void ShipJobTakeSlot(ShipThreadArg* sta, FileInfo& f) {
+    while (true) {
+        f.slot_number_ = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(f.file_number_, f.times_);
+        if (f.slot_number_ == -1) {
+            std::cout << "ShipJobTakeSlot " << sta << " sst bitmap is full, waiting for a free slot..." << std::endl;
+            sta->db_options_->sst_bit_map->WaitForFreeSlot();
+            continue;
+        }
+        return;
+    }
+}
+
 void BGWorkShip(void* arg) {
     ShipThreadArg* sta = reinterpret_cast<ShipThreadArg*>(arg);
 
@@ -165,13 +202,13 @@ void BGWorkShip(void* arg) {
     // 1.2 ship SST file via NVMe-oF
     std::stringstream ss;
     for (FileInfo f : sta->files_) {
-        f.slot_number_ = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(f.file_number_, f.times_);
+        ShipJobTakeSlot(sta, f);
         ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
         ss << f.file_number_ << ':' << f.slot_number_ << ", ";
     }
     for (ShipThreadArg* const s : sta->dependants_) {
         for (FileInfo f : s->files_) {
-            f.slot_number_ = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(f.file_number_, f.times_);
+            ShipJobTakeSlot(sta, f);
             ShipSST(f, s->db_options_->remote_sst_dirs, s);
             ss << f.file_number_ << ':' << f.slot_number_ << ", ";
         }
@@ -186,38 +223,55 @@ void BGWorkShip(void* arg) {
     
     
     // 2. send version edits to secondary nodes
+    printf("[BGWorkShip] sta_ %p json_size %ld\n", sta, sta->edits_json_.size());
     for (std::string json : sta->edits_json_) {
+        printf("[BGWorkShip] sta_ %p json_length %ld\n", sta, json.length());
         if (json.length() > 0) {
             // fill in the slot info in the json here
             printf("[BGWorkShip] sta: %p edits_json: %s\n", sta, json.data());
-            nlohmann::json j = nlohmann::json::parse(json);
-            
-            // JSONWriter jw;
-            // jw << "SlotMap";
-            // jw.StartArray();
-            for (auto& edit_list_string : j["EditList"].get<std::vector<std::string>>()) {
-                const auto& j_edit_list = nlohmann::json::parse(edit_list_string);
-                for (auto& j_added_files : j_edit_list["AddedFiles"].get<std::vector<nlohmann::json>>()) {
-                    // jw.StartArrayedObject();
-                    uint64_t filenumber = j_added_files["FileNumber"].get<uint64_t>();
-                    j_added_files["Slot"] == sta->db_options_->sst_bit_map->GetFileSlotNum(filenumber);
-                    // jw.EndArrayedObject();
+            nlohmann::json j = nlohmann::json::parse(json), j_new;
+
+            for (auto& it : j.items()) {
+                if (it.key() != "EditList") {
+                    j_new[it.key()] = it.value();
+                } else {
+                    nlohmann::json edit_array = nlohmann::json::array();
+                    for (auto& edit_string : it.value().get<std::vector<std::string>>()) {
+                        nlohmann::json edit_json = nlohmann::json::parse(edit_string), edit_json_new;
+                        for (auto& edit_json_it : edit_json.items()) {
+                            if (edit_json_it.key() != "AddedFiles") {
+                                edit_json_new[edit_json_it.key()] = edit_json_it.value();
+                            } else {
+                                nlohmann::json added_files_array = nlohmann::json::array();
+                                
+                                for (auto& added_files_it : edit_json_it.value().items()) {
+                                    uint64_t filenumber;
+                                    nlohmann::json added_file_json = added_files_it.value();
+                                    added_file_json["Slot"] = sta->db_options_->sst_bit_map->GetFileSlotNum(added_file_json["FileNumber"].get<uint64_t>());
+                                    added_files_array.push_back(added_file_json);
+                                }
+                                edit_json_new["AddedFiles"] = added_files_array;
+                            }
+                        }
+                        edit_array.push_back(edit_json_new.dump());
+                    }
+                    
+                    j_new["EditList"] = edit_array;
                 }
             }
-            
-            // jw.EndArray();
-            // j["SlotMap"] = jw.Get();
+            std::cout << "modified json: " << j_new.dump() << std::endl;
             
             SyncClient* client = GetSyncClient(sta->db_options_);
-            client->Sync(j.dump());
+            client->Sync(j_new.dump());
 
-            // SyncReply downstream_reply;
-            // client->GetSyncReply(&downstream_reply);
-            // std::string reply_message = downstream_reply.message();
-            // nlohmann::json reply_json(reply_message);
-            // std::cout << "[Sync] reply: " << reply_message << std::endl;
+            SyncReply downstream_reply;
+            client->GetSyncReply(&downstream_reply);
+            std::string reply_message = downstream_reply.message();
+            std::cout << "[Sync] reply: " << reply_message << std::endl;
+            nlohmann::json reply_json = nlohmann::json::parse(reply_message);
+            
 
-            // ApplyDownstreamSstSlotDeletion();
+            ApplyDownstreamSstSlotDeletion(sta, reply_json);
         }
     }
 

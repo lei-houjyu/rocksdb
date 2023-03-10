@@ -288,7 +288,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
             db_options.preallocated_sst_pool_size, 
             db_options.max_num_mems_in_flush,
             db_options.rubble_info_log,
-            map_logger, db_options.is_tail);
+            map_logger, db_options.is_tail, db_options.is_primary);
    }
 
    if(recover_mode && is_rubble){

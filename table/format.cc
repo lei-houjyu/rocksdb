@@ -312,11 +312,14 @@ Status ReadFooterFromFile(const IOOptions& opts, RandomAccessFileReader* file,
       !prefetch_buffer->TryReadFromCache(
           IOOptions(), read_offset, Footer::kMaxEncodedLength, &footer_input)) {
     from_cache = false;
+    // std::cout << "sst file " << file->file_name() << " read from disk" << std::endl;
     if (file->use_direct_io()) {
+      // std::cout << file->file_name() << " direct io" << std::endl;
       s = file->Read(opts, read_offset, Footer::kMaxEncodedLength,
                      &footer_input, nullptr, &internal_buf);
     } else {
       footer_buf.reserve(Footer::kMaxEncodedLength);
+      // std::cout << file->file_name() << " buffered io" << std::endl;
       s = file->Read(opts, read_offset, Footer::kMaxEncodedLength,
                      &footer_input, &footer_buf[0], nullptr);
     }

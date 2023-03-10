@@ -54,7 +54,7 @@ void SyncClient::Sync(const std::string& args){
 }
 
 void SyncClient::Sync(const SyncRequest& request){
-    sync_stream_->Write(request);
+    assert(sync_stream_->Write(request));
 }
 
 // read a reply back for a sync request
@@ -64,7 +64,15 @@ void SyncClient::GetSyncReply(SyncReply *reply) {
     // notification handlers for the specified read/write requests as they
     // are being processed by gRPC.
 
-    sync_stream_->Read(reply);
+    if (!sync_stream_->Read(reply)) {
+        sync_stream_->WritesDone();
+        Status s = sync_stream_->Finish();
+        std::cout << "Sync fail!"
+                << " msg: " << s.error_message() 
+                << " detail: " << s.error_details() 
+                << " debug: " << context_.debug_error_string() << std::endl;
+        assert(false);
+    }
     // stream_->Read(&reply_, reinterpret_cast<void*>(Type::READ));
 }
 

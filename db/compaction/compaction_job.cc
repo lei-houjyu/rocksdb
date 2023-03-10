@@ -748,6 +748,7 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
 
   if (status.ok()) {
     status = InstallCompactionResults(mutable_cf_options);
+    printf("[Install] before schedule sta_ %p\n", sta_);
     if (sta_ != nullptr) {
       db_options_.env->Schedule(&BGWorkShip, (void *)sta_, Env::Priority::SHIP, this,
                                 &UnscheduleShipCallback);
@@ -1553,13 +1554,14 @@ Status CompactionJob::InstallCompactionResults(
       }
     }
 
-    std::set<uint64_t> slots_to_free;
-    for (unsigned int i = 0; i < compact_->compaction->num_input_levels(); i++){
-      for (auto f : *(compact_->compaction->inputs(i))){
-        slots_to_free.insert(f->fd.GetNumber());
-      }
-    }
-    db_options_.sst_bit_map->FreeSlot(slots_to_free);
+    // Sheng: move to ship_job.cc, free slot after secondary acks
+    // std::set<uint64_t> slots_to_free;
+    // for (unsigned int i = 0; i < compact_->compaction->num_input_levels(); i++){
+    //   for (auto f : *(compact_->compaction->inputs(i))){
+    //     slots_to_free.insert(f->fd.GetNumber());
+    //   }
+    // }
+    // db_options_.sst_bit_map->FreeSlot(slots_to_free);
   }
   // [RUBBLE END]
   

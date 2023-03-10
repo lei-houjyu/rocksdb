@@ -4,13 +4,14 @@
 #include <set>
 #include <unordered_map>
 #include <rocksdb/env.h>
+#include <condition_variable>
 
 // a circular array implementation of bit map
 class SstBitMap{
 public:
     SstBitMap(int pool_size, int max_num_mems_in_flush,
     std::shared_ptr<rocksdb::Logger> logger = nullptr,
-    std::shared_ptr<rocksdb::Logger> map_logger = nullptr, bool is_tail = false);
+    std::shared_ptr<rocksdb::Logger> map_logger = nullptr, bool is_tail = false, bool is_primary = false);
     
     // take one slot for a specific file
     int TakeOneAvailableSlot(uint64_t file_num, int times);
@@ -20,6 +21,8 @@ public:
 
     // free the slot occupied by a file and returns the occupied slot num
     int FreeSlot(uint64_t file_num);
+
+    void FreeSlot2(int slot);
 
     bool CheckSlotFreed(int slot_num);
 
@@ -31,6 +34,12 @@ public:
 
     // update sst bit map with file num and slot num
     void TakeSlot(uint64_t file_num, int slot_num, int times);
+
+    void WaitForFreeSlot();
+
+    void NotifyFreeSlot();
+
+    bool IsFull();
 
 private:
     // check if the total num of slots taken matches the size of file_slots_
@@ -65,4 +74,9 @@ private:
 
     // log the operations on the map, including add and delete an entry
     std::shared_ptr<rocksdb::Logger> map_logger_;
+
+    std::condition_variable bitmap_full_cond_;
+    std::mutex bitmap_full_mu_;
+
+    std::atomic_bool is_full_;
 };

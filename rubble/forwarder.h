@@ -44,6 +44,13 @@ class Forwarder{
       }
     }
 
+    void ReadReply(OpReply *reply) {
+      if (!stream_->Read(reply)) {
+        stream_->Finish();
+        assert(false);
+      }
+    }
+
     // forward the op to the next node
     void WritesDone() {
         stream_->WritesDone();

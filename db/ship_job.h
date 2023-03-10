@@ -55,7 +55,11 @@ void AddFile(ShipThreadArg* const sta, uint64_t times, uint64_t file_number);
 
 bool NeedShipSST(const ImmutableDBOptions* db_options);
 
+void ApplyDownstreamSstSlotDeletion(ShipThreadArg* sta, const nlohmann::json& reply_json);
+
 void ShipSST(FileInfo& file, const std::vector<std::string>& remote_sst_dirs, ShipThreadArg *sta);
+
+void ShipJobTakeSlot(ShipThreadArg* sta, FileInfo& f);
 
 std::string VersionEditsToJson(uint64_t next_file_number,
                                uint64_t log_and_apply_counter,
