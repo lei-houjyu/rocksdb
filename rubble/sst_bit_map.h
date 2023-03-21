@@ -15,6 +15,9 @@ public:
     
     // take one slot for a specific file
     int TakeOneAvailableSlot(uint64_t file_num, int times);
+
+    // take multiple slots in a batch, this is a all-or-nothing method
+    bool TakeSlotsInBatch(const std::vector<std::pair<uint64_t, int>>& files_info);
     
     // free the slots occupied by the set of files
     void FreeSlot(std::set<uint64_t> file_nums);
@@ -35,11 +38,11 @@ public:
     // update sst bit map with file num and slot num
     void TakeSlot(uint64_t file_num, int slot_num, int times);
 
-    void WaitForFreeSlot();
+    void WaitForFreeSlots(const std::map<int, int>& needed_slots);
 
     void NotifyFreeSlot();
 
-    bool IsFull();
+    int GetAvailableSlots(int times);
 
 private:
     // check if the total num of slots taken matches the size of file_slots_
@@ -48,7 +51,7 @@ private:
     /* data */
     std::vector<int> next_available_slot_;
 
-    std::vector<int> num_slots_taken_ ;
+    std::vector<std::atomic_int> num_slots_taken_ ;
 
     // size of the slots of sst of normal size
     int size_;
@@ -76,7 +79,4 @@ private:
     std::shared_ptr<rocksdb::Logger> map_logger_;
 
     std::condition_variable bitmap_full_cond_;
-    std::mutex bitmap_full_mu_;
-
-    std::atomic_bool is_full_;
 };

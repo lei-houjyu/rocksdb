@@ -138,7 +138,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     void PersistData();
 
-    void ApplyDownstreamSstSlotDeletion(const json& reply_json);
+    void ApplyDownstreamSstSlotDeletion(const std::vector<int>& deleted_slots);
 
     // db instance
     rocksdb::DB* db_ = nullptr;

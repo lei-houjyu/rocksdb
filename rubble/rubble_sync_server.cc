@@ -200,14 +200,14 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       if (is_rubble_ && !is_head_) {
         OpReply piggybacked_reply;
         SetDoOpReplyMessage(&piggybacked_reply);
-        // stream->Write();
+        stream->Write(piggybacked_reply);
       }
 
-      if (is_rubble_ && !is_tail_) {
-        OpReply piggybacked_reply;
-        forwarder->ReadReply(&piggybacked_reply);
-        // ApplyDownstreamSstSlotDeletion();
-      }
+      // if (is_rubble_ && !is_tail_) {
+      //   OpReply piggybacked_reply;
+      //   forwarder->ReadReply(&piggybacked_reply);
+      //   ApplyDownstreamSstSlotDeletion();
+      // }
     }
 
     num_stream.fetch_add(-1);
@@ -632,6 +632,20 @@ void RubbleKvServiceImpl::PostProcessing(SingleOp* singleOp, Forwarder* forwarde
       }
     }
     forwarder->Forward(*request);
+    OpReply forward_reply;
+    forwarder->ReadReply(&forward_reply);
+
+    /*
+     * Extract deleted slots from the reply message
+     */
+    json reply_json = json::parse(forward_reply.sync_reply());
+    std::vector<int> deleted_slots;
+    for (const auto& j : reply_json["DeletedSlots"]) {
+      int slot = j.get<int>();
+      deleted_slots.push_back(slot);
+    }
+
+    ApplyDownstreamSstSlotDeletion(deleted_slots);
   }
 
   delete request;
@@ -664,7 +678,16 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
         json reply_json = json::parse(reply_message);
         std::cout << "[Sync] reply: " << reply_json.dump() << std::endl;
 
-        ApplyDownstreamSstSlotDeletion(reply_json);
+        std::vector<int> deleted_slots;
+        for (const auto& j : reply_json["DeletedSlots"]) {
+          int slot = deleted_slot.get<int>();
+          uint64_t filenumber = db_options_->sst_bit_map->GetSlotFileNum(slot);
+          
+          std::cout << "apply delete from dowmstream, delete file: " << filenumber << " slot: "
+              << slot << std::endl; 
+          deleted_slots.push_back(slot);
+        }
+        ApplyDownstreamSstSlotDeletion(deleted_slots);
       }
       ApplyBufferedVersionEdits();
 
@@ -676,16 +699,9 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
     return Status::OK;
 }
 
-void RubbleKvServiceImpl::ApplyDownstreamSstSlotDeletion(const json& reply_json) {
-  std::cout << "received reply: " << reply_json.dump() << std::endl;
-  
+void RubbleKvServiceImpl::ApplyDownstreamSstSlotDeletion(const std::vector<int>& deleted_slots) {
   std::lock_guard<std::mutex> lk{deleted_slots_mu_};
-  for (const auto& deleted_slot : reply_json["DeletedSlots"]) {
-    int slot = deleted_slot.get<int>();
-    uint64_t filenumber = db_options_->sst_bit_map->GetSlotFileNum(slot);
-    
-    std::cout << "apply delete from dowmstream, delete file: " << filenumber << " slot: "
-        << slot << std::endl;
+  for (int slot : deleted_slots) {
     db_options_->sst_bit_map->FreeSlot2(slot);
     if (db_options_->sst_bit_map->CheckSlotFreed(slot))
       deleted_slots_.insert(slot);

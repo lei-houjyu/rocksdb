@@ -79,22 +79,22 @@ void ShipSST(FileInfo& file, const std::vector<std::string>& remote_sst_dirs, Sh
             assert(false);
         }
 
-        int w_fd;
-        fname = "/mnt/data/dump/" + dir.substr(16) + "/" + std::to_string(file.file_number_) + ".sst";
-        do {
-            w_fd = open(fname.c_str(), O_WRONLY | O_DIRECT | O_DSYNC | O_CREAT, 0755);
-        } while (w_fd < 0 && errno == EINTR);
-        if (w_fd < 0) {
-            std::cout << "While open a file for appending " << fname << " errno " << std::strerror(errno) << std::endl;
-            assert(false);
-        }
+        // int w_fd;
+        // fname = "/mnt/data/dump/" + dir.substr(16) + "/" + std::to_string(file.file_number_) + ".sst";
+        // do {
+        //     w_fd = open(fname.c_str(), O_WRONLY | O_DIRECT | O_DSYNC | O_CREAT, 0755);
+        // } while (w_fd < 0 && errno == EINTR);
+        // if (w_fd < 0) {
+        //     std::cout << "While open a file for appending " << fname << " errno " << std::strerror(errno) << std::endl;
+        //     assert(false);
+        // }
 
-        done = write(w_fd, file.buf_, file.len_);
-        if (done != (ssize_t)file.len_) {
-            std::cout << "while appending to file " << fname << " errno " << std::strerror(errno) << std::endl;
-            assert(false);
-        }
-        close(w_fd);
+        // done = write(w_fd, file.buf_, file.len_);
+        // if (done != (ssize_t)file.len_) {
+        //     std::cout << "while appending to file " << fname << " errno " << std::strerror(errno) << std::endl;
+        //     assert(false);
+        // }
+        // close(w_fd);
 
         // uint64_t got = CheckSum(file.buf_, file.len_);
         // uint64_t expected = file.checksum_;
@@ -201,18 +201,39 @@ void BGWorkShip(void* arg) {
 
     // 1.2 ship SST file via NVMe-oF
     std::stringstream ss;
+    std::vector<std::pair<uint64_t, int>> files_info;
+    std::map<int, int> needed_slots;
     for (FileInfo f : sta->files_) {
-        ShipJobTakeSlot(sta, f);
-        ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
-        ss << f.file_number_ << ':' << f.slot_number_ << ", ";
+        files_info.push_back({f.file_number_, f.times_});
+        needed_slots[f.times_]++;
     }
     for (ShipThreadArg* const s : sta->dependants_) {
         for (FileInfo f : s->files_) {
-            ShipJobTakeSlot(sta, f);
-            ShipSST(f, s->db_options_->remote_sst_dirs, s);
-            ss << f.file_number_ << ':' << f.slot_number_ << ", ";
+            files_info.push_back({f.file_number_, f.times_});
+            needed_slots[f.times_]++;
         }
     }
+    // try to take slots for all sst files
+    while (!sta->db_options_->sst_bit_map->TakeSlotsInBatch(files_info)) {
+        sta->db_options_->sst_bit_map->WaitForFreeSlots(needed_slots);
+    }
+
+    // then ship sst
+    for (FileInfo f : sta->files_) {
+        int slot = sta->db_options_->sst_bit_map->GetFileSlotNum(f.file_number_);
+        f.slot_number_ = slot;
+        ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
+        ss << "file " << f.first << " takes slot " << slot << std::endl;
+    }
+    for (ShipThreadArg* const s : sta->dependants_) {
+        for (FileInfo f : s->files_) {
+            int slot = sta->db_options_->sst_bit_map->GetFileSlotNum(f.file_number_);
+            f.slot_number_ = slot;
+            ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
+            ss << "file " << f.first << " takes slot " << slot << std::endl;
+        }
+    }
+
     auto now = std::chrono::system_clock::now();
     auto now_c = std::chrono::system_clock::to_time_t(now);
     std::tm tm = *std::localtime(&now_c);
