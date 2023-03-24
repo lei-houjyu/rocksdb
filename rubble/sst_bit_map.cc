@@ -36,7 +36,7 @@ int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
     // so flushes only 1 memtable each time
     assert(times > 0);
 
-    std::unique_lock<std::mutex> lk{mu_};
+    std::lock_guard<std::mutex> lk{mu_};
 
     if (num_slots_taken_[0] == size_ 
         || (times >= 2 && num_slots_taken_[times - 1] == num_big_slots_)) {
@@ -98,7 +98,7 @@ int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
 }
 
 bool SstBitMap::TakeSlotsInBatch(const std::vector<std::pair<uint64_t, int>>& files_info) {
-    std::unique_lock<std::mutex> lk{mu_};
+    std::lock_guard<std::mutex> lk{mu_};
     int slots_to_take = files_info.size();
 
     if (num_slots_taken_[0] + slots_to_take == size_) {
@@ -134,6 +134,11 @@ bool SstBitMap::TakeSlotsInBatch(const std::vector<std::pair<uint64_t, int>>& fi
             }
             slot_num = cur;
         }
+        if (slot_num == end) {
+            next_available_slot_[0] = start;
+        } else {
+            next_available_slot_[0] = slot_num + 1;
+        }
         assigned_file_slots[file_num] = slot_num;
     }
 
@@ -145,11 +150,7 @@ bool SstBitMap::TakeSlotsInBatch(const std::vector<std::pair<uint64_t, int>>& fi
         slot_usage_[slot_num] += slot_initial_usage_;
         file_slots_.emplace(file_num, slot_num);
         num_slots_taken_[0]++;  // as we suppose times=1 for now
-        if (slot_num == end) {
-            next_available_slot_[0] = start;
-        } else {
-            next_available_slot_[0] = slot_num + 1;
-        }
+        
         std::cout << "[sst bitmap] " << "File " << file_num << " takes slot " << slot_num << std::endl;
     }
 
@@ -175,7 +176,6 @@ void SstBitMap::WaitForFreeSlots(const std::map<int, int>& needed_slots) {
 }
 
 void SstBitMap::NotifyFreeSlot() {
-    std::lock_guard<std::mutex> lock{mu_};
     bitmap_full_cond_.notify_all();
 }
 
@@ -206,7 +206,7 @@ void SstBitMap::CheckNumSlotsTaken(){
 }
 
 int SstBitMap::FreeSlot(uint64_t file_num){
-    std::unique_lock<std::mutex> lk{mu_};
+    std::lock_guard<std::mutex> lk{mu_};
     // assert that the file num in file_slots map
 
     // FIXME:Sheng workaround - in case the downstream progresses faster
@@ -235,7 +235,7 @@ int SstBitMap::FreeSlot(uint64_t file_num){
 }
 
 void SstBitMap::FreeSlot2(int slot) {
-    std::unique_lock<std::mutex> lk{mu_};
+    std::lock_guard<std::mutex> lk{mu_};
 
     uint64_t filenumber = slots_[slot];
     slot_usage_[slot]--;
@@ -268,14 +268,14 @@ void SstBitMap::FreeSlot(std::set<uint64_t> file_nums){
 }
     
 uint64_t SstBitMap::GetSlotFileNum(int slot_num){
-    std::unique_lock<std::mutex> lk{mu_};
+    std::lock_guard<std::mutex> lk{mu_};
     // why this assert here? what about big slots
     assert(slot_num <= size_);
     return slots_[slot_num];
 }
 
 int SstBitMap::GetFileSlotNum(uint64_t file_num){
-    std::unique_lock<std::mutex> lk{mu_};
+    std::lock_guard<std::mutex> lk{mu_};
     if (file_slots_.count(file_num) == 0)
         return -1;
     // assert(file_slots_.find(file_num) != file_slots_.end());
@@ -284,7 +284,7 @@ int SstBitMap::GetFileSlotNum(uint64_t file_num){
 
 void SstBitMap::TakeSlot(uint64_t file_num, int slot_num, int times) {
     assert(times > 0);
-    std::unique_lock<std::mutex> lk{mu_};
+    std::lock_guard<std::mutex> lk{mu_};
 
     RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, times);
     RUBBLE_LOG_INFO(logger_, "Take Slot (%lu , %d)\n", file_num, slot_num);

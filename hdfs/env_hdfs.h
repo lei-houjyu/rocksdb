@@ -335,6 +335,10 @@ class HdfsEnv : public Env {
                         Priority /*pri*/ = LOW, void* /*tag*/ = nullptr,
                         void (* /*unschedFunction*/)(void* arg) = 0) override {}
 
+  virtual void Schedule(void (* /*function*/)(void* arg), void* /*arg*/, int /*id*/,
+                        Priority /*pri*/ = LOW, void* /*tag*/ = nullptr,
+                        void (* /*unschedFunction*/)(void* arg) = 0) override {}                      
+
   virtual int UnSchedule(void* /*tag*/, Priority /*pri*/) override { return 0; }
 
   virtual void StartThread(void (* /*function*/)(void* arg),

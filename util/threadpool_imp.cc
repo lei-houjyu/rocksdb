@@ -27,6 +27,7 @@
 #include <sstream>
 #include <thread>
 #include <vector>
+#include "bits/stl_queue.h"
 
 #include "monitoring/thread_status_util.h"
 #include "port/port.h"
@@ -69,6 +70,9 @@ struct ThreadPoolImpl::Impl {
 
   void Submit(std::function<void()>&& schedule,
     std::function<void()>&& unschedule, void* tag);
+
+  void Submit(std::function<void()>&& schedule,
+    std::function<void()>&& unschedule, void* tag, int id);
 
   int UnSchedule(void* arg);
 
@@ -116,6 +120,9 @@ private:
    void* tag = nullptr;
    std::function<void()> function;
    std::function<void()> unschedFunction;
+   
+   // for ship thread only
+   int id;
   };
 
   using BGQueue = std::deque<BGItem>;
@@ -124,6 +131,23 @@ private:
   std::mutex               mu_;
   std::condition_variable  bgsignal_;
   std::vector<port::Thread> bgthreads_;
+
+  // for rubble to schedule bg threads in order
+  std::atomic_int expected_id_{1};
+
+public:
+  BGQueue::iterator NextShipTask() {
+    BGQueue::iterator it;
+    for (it = queue_.begin(); it != queue_.end(); ++it) {
+      if (it->id == expected_id_)
+        break;
+    }
+    return it;
+  }
+
+  bool IsShipThread() const {
+    return GetThreadPriority() == Env::Priority::SHIP;
+  }
 };
 
 inline ThreadPoolImpl::Impl::Impl()
@@ -182,13 +206,15 @@ inline void ThreadPoolImpl::Impl::LowerCPUPriority(CpuPriority pri) {
 void ThreadPoolImpl::Impl::BGThread(size_t thread_id) {
   bool low_io_priority = false;
   CpuPriority current_cpu_priority = CpuPriority::kNormal;
+  BGQueue::iterator bg_it;
 
   while (true) {
     // Wait until there is an item that is ready to run
     std::unique_lock<std::mutex> lock(mu_);
     // Stop waiting if the thread needs to do work or needs to terminate.
     while (!exit_all_threads_ && !IsLastExcessiveThread(thread_id) &&
-           (queue_.empty() || IsExcessiveThread(thread_id))) {
+           (queue_.empty() || IsExcessiveThread(thread_id) ||
+           (IsShipThread() && (bg_it = NextShipTask()) == queue_.end()))) {
       bgsignal_.wait(lock);
     }
 
@@ -215,8 +241,17 @@ void ThreadPoolImpl::Impl::BGThread(size_t thread_id) {
       break;
     }
 
-    auto func = std::move(queue_.front().function);
-    queue_.pop_front();
+    std::function<void()> func;
+    if (IsShipThread()) {
+      std::cout << "expected id " << expected_id_ << ", got id " << (*bg_it).id << std::endl;
+      func = std::move((*bg_it).function);
+      queue_.erase(bg_it);
+      expected_id_++;
+    } else {
+      func = std::move(queue_.front().function);
+      queue_.pop_front();
+    }
+    
 
     queue_len_.store(static_cast<unsigned int>(queue_.size()),
                      std::memory_order_relaxed);
@@ -388,6 +423,40 @@ void ThreadPoolImpl::Impl::Submit(std::function<void()>&& schedule,
   }
 }
 
+void ThreadPoolImpl::Impl::Submit(std::function<void()>&& schedule,
+  std::function<void()>&& unschedule, void* tag, int id) {
+  // only ship thread needs id to order tasks
+  assert(GetThreadPriority() == Env::Priority::SHIP);
+  std::lock_guard<std::mutex> lock(mu_);
+
+  if (exit_all_threads_) {
+    return;
+  }
+
+  StartBGThreads();
+
+  // Add to priority queue
+  queue_.push_back(BGItem());
+
+  auto& item = queue_.back();
+  item.tag = tag;
+  item.function = std::move(schedule);
+  item.unschedFunction = std::move(unschedule);
+  item.id = id;
+
+  queue_len_.store(static_cast<unsigned int>(queue_.size()),
+    std::memory_order_relaxed);
+
+  if (!HasExcessiveThread()) {
+    // Wake up at least one waiting thread.
+    bgsignal_.notify_one();
+  } else {
+    // Need to wake up all threads to make sure the one woken
+    // up is not the one to terminate.
+    WakeUpAllThreads();
+  }
+}
+
 int ThreadPoolImpl::Impl::UnSchedule(void* arg) {
   int count = 0;
 
@@ -478,6 +547,16 @@ void ThreadPoolImpl::Schedule(void(*function)(void* arg1), void* arg,
   } else {
     impl_->Submit(std::bind(function, arg), std::bind(unschedFunction, arg),
                   tag);
+  }
+}
+
+void ThreadPoolImpl::Schedule(void(*function)(void* arg1), void* arg,
+  void* tag, void(*unschedFunction)(void* arg), int id) {
+  if (unschedFunction == nullptr) {
+    impl_->Submit(std::bind(function, arg), std::function<void()>(), tag, id);
+  } else {
+    impl_->Submit(std::bind(function, arg), std::bind(unschedFunction, arg),
+                  tag, id);
   }
 }
 

@@ -680,7 +680,7 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
 
         std::vector<int> deleted_slots;
         for (const auto& j : reply_json["DeletedSlots"]) {
-          int slot = deleted_slot.get<int>();
+          int slot = j.get<int>();
           uint64_t filenumber = db_options_->sst_bit_map->GetSlotFileNum(slot);
           
           std::cout << "apply delete from dowmstream, delete file: " << filenumber << " slot: "
@@ -1242,6 +1242,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::DeleteSstFiles(const rocksdb::VersionEdit
         db_options_->sst_bit_map->FreeSlot2(slot_num);
         if (db_options_->sst_bit_map->CheckSlotFreed(slot_num)) {
           deleted_slots_.insert(slot_num);
+          std::cout << "add slot " << slot_num << " to be deleted" << std::endl;
         }
 
         if (ios.ok()){

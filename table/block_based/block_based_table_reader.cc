@@ -768,8 +768,8 @@ Status BlockBasedTable::PrefetchTail(
           new FilePrefetchBuffer(nullptr, 0, 0, false, true));
       return Status::OK();
     }
-    std::cout << "file system prefetch from " << file->file_name()
-    << ", offset " << prefetch_off << ", size " << prefetch_len << std::endl;
+    // std::cout << "file system prefetch from " << file->file_name()
+    // << ", offset " << prefetch_off << ", size " << prefetch_len << std::endl;
   }
 
   // Use `FilePrefetchBuffer`
@@ -778,8 +778,8 @@ Status BlockBasedTable::PrefetchTail(
   Status s = PrepareIOFromReadOptions(ro, file->env(), opts);
   if (s.ok()) {
     s = (*prefetch_buffer)->Prefetch(opts, file, prefetch_off, prefetch_len);
-    std::cout << "prefetch buffer prefetch from " << file->file_name()
-    << ", offset " << prefetch_off << ", size " << prefetch_len << std::endl;
+    // std::cout << "prefetch buffer prefetch from " << file->file_name()
+    // << ", offset " << prefetch_off << ", size " << prefetch_len << std::endl;
   }
   return s;
 }

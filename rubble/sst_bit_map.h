@@ -51,7 +51,7 @@ private:
     /* data */
     std::vector<int> next_available_slot_;
 
-    std::vector<std::atomic_int> num_slots_taken_ ;
+    std::vector<int> num_slots_taken_ ;
 
     // size of the slots of sst of normal size
     int size_;
@@ -68,7 +68,7 @@ private:
     std::vector<int> slot_usage_;
     int slot_initial_usage_;
 
-    // keep track of the slot num taken by a file  
+    // keep track of the slot num taken by a file
     std::unordered_map<uint64_t, int> file_slots_;
 
     std::mutex mu_;

@@ -180,17 +180,17 @@ void ApplyDownstreamSstSlotDeletion(ShipThreadArg* sta, const nlohmann::json& re
   }
 }
 
-void ShipJobTakeSlot(ShipThreadArg* sta, FileInfo& f) {
-    while (true) {
-        f.slot_number_ = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(f.file_number_, f.times_);
-        if (f.slot_number_ == -1) {
-            std::cout << "ShipJobTakeSlot " << sta << " sst bitmap is full, waiting for a free slot..." << std::endl;
-            sta->db_options_->sst_bit_map->WaitForFreeSlot();
-            continue;
-        }
-        return;
-    }
-}
+// void ShipJobTakeSlot(ShipThreadArg* sta, FileInfo& f) {
+//     while (true) {
+//         f.slot_number_ = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(f.file_number_, f.times_);
+//         if (f.slot_number_ == -1) {
+//             std::cout << "ShipJobTakeSlot " << sta << " sst bitmap is full, waiting for a free slot..." << std::endl;
+//             sta->db_options_->sst_bit_map->WaitForFreeSlots();
+//             continue;
+//         }
+//         return;
+//     }
+// }
 
 void BGWorkShip(void* arg) {
     ShipThreadArg* sta = reinterpret_cast<ShipThreadArg*>(arg);
@@ -223,14 +223,14 @@ void BGWorkShip(void* arg) {
         int slot = sta->db_options_->sst_bit_map->GetFileSlotNum(f.file_number_);
         f.slot_number_ = slot;
         ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
-        ss << "file " << f.first << " takes slot " << slot << std::endl;
+        ss << "file " << f.file_number_ << " takes slot " << slot << std::endl;
     }
     for (ShipThreadArg* const s : sta->dependants_) {
         for (FileInfo f : s->files_) {
             int slot = sta->db_options_->sst_bit_map->GetFileSlotNum(f.file_number_);
             f.slot_number_ = slot;
             ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
-            ss << "file " << f.first << " takes slot " << slot << std::endl;
+            ss << "file " << f.file_number_ << " takes slot " << slot << std::endl;
         }
     }
 

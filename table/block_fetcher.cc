@@ -323,9 +323,9 @@ Status BlockFetcher::ReadBlockContents() {
     }
 
     CheckBlockChecksum();
-    if (block_type_ == BlockType::kMetaIndex) {
-      std::cout << "read meta index block from file: " << file_->file_name() << ", contents: " << slice_.ToString(true) << std::endl;
-    }
+    // if (block_type_ == BlockType::kMetaIndex) {
+    //   std::cout << "read meta index block from file: " << file_->file_name() << ", contents: " << slice_.ToString(true) << std::endl;
+    // }
     if (status_.ok()) {
       InsertCompressedBlockToPersistentCacheIfNeeded();
     } else {
