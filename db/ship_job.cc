@@ -203,34 +203,42 @@ void BGWorkShip(void* arg) {
     std::stringstream ss;
     std::vector<std::pair<uint64_t, int>> files_info;
     std::map<int, int> needed_slots;
+
     for (FileInfo f : sta->files_) {
         files_info.push_back({f.file_number_, f.times_});
         needed_slots[f.times_]++;
+        ss << f.file_number_ << ",";
     }
     for (ShipThreadArg* const s : sta->dependants_) {
         for (FileInfo f : s->files_) {
             files_info.push_back({f.file_number_, f.times_});
             needed_slots[f.times_]++;
+            ss << f.file_number_ << ",";
         }
     }
+
+    std::cout << "about to take slots for these files in batch: " << ss.str() << std::endl;
     // try to take slots for all sst files
     while (!sta->db_options_->sst_bit_map->TakeSlotsInBatch(files_info)) {
+        std::cout << "not able to take slots in batch, wait for freeing..." << std::endl;
         sta->db_options_->sst_bit_map->WaitForFreeSlots(needed_slots);
     }
+    std::cout << "take slots for files: " << ss.str() << "successfully" << std::endl;
+    ss.str(std::string());
 
     // then ship sst
     for (FileInfo f : sta->files_) {
         int slot = sta->db_options_->sst_bit_map->GetFileSlotNum(f.file_number_);
         f.slot_number_ = slot;
         ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
-        ss << "file " << f.file_number_ << " takes slot " << slot << std::endl;
+        ss << "file " << f.file_number_ << " takes slot " << slot << ", ";
     }
     for (ShipThreadArg* const s : sta->dependants_) {
         for (FileInfo f : s->files_) {
             int slot = sta->db_options_->sst_bit_map->GetFileSlotNum(f.file_number_);
             f.slot_number_ = slot;
             ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
-            ss << "file " << f.file_number_ << " takes slot " << slot << std::endl;
+            ss << "file " << f.file_number_ << " takes slot " << slot << ", ";
         }
     }
 

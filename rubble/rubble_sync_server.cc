@@ -206,7 +206,8 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       // if (is_rubble_ && !is_tail_) {
       //   OpReply piggybacked_reply;
       //   forwarder->ReadReply(&piggybacked_reply);
-      //   ApplyDownstreamSstSlotDeletion();
+      //   std::cout << "received DoOp reply: " << piggybacked_reply.sync_reply() << std::endl;
+        // ApplyDownstreamSstSlotDeletion();
       // }
     }
 
@@ -661,12 +662,10 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
       std::string args = request.args();
       std::cout << "[Sync] get " << args << std::endl;
       {
-        printf("thread %p, Sync acquire mutex\n", this);
         debug_mu.lock();
         rocksdb::InstrumentedMutexLock l(mu_);
         std::string message = ApplyVersionEdits(args);
         debug_mu.unlock();
-        printf("thread %p, Sync release mutex\n", this);
       }
       if (!is_tail_) {
         SyncClient *sync_client = rocksdb::GetSyncClient(db_options_);
@@ -690,6 +689,7 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
         ApplyDownstreamSstSlotDeletion(deleted_slots);
       }
       ApplyBufferedVersionEdits();
+      std::cout << "applied buffered version edits" << std::endl;
 
       SyncReply reply;
       SetSyncReplyMessage(&reply); 

@@ -2925,13 +2925,13 @@ Status BlockBasedTable::VerifyChecksum(const ReadOptions& read_options,
   std::unique_ptr<InternalIterator> metaindex_iter;
   ReadOptions ro;
 
-  auto now = std::chrono::system_clock::now();
-  auto now_c = std::chrono::system_clock::to_time_t(now);
-  std::tm tm = *std::localtime(&now_c);
-  int ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
+  // auto now = std::chrono::system_clock::now();
+  // auto now_c = std::chrono::system_clock::to_time_t(now);
+  // std::tm tm = *std::localtime(&now_c);
+  // int ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
 
-  std::cout << std::put_time(&tm, "%y:%m:%d %H:%M:%S.") << std::setfill('0') << std::setw(3) << ms
-  << " start verifying checksum for file " << rep_->file->file_name() << std::endl;
+  // std::cout << std::put_time(&tm, "%y:%m:%d %H:%M:%S.") << std::setfill('0') << std::setw(3) << ms
+  // << " start verifying checksum for file " << rep_->file->file_name() << std::endl;
 
   s = ReadMetaIndexBlock(ro, nullptr /* prefetch buffer */, &metaindex,
                          &metaindex_iter);

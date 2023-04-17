@@ -151,7 +151,8 @@ bool SstBitMap::TakeSlotsInBatch(const std::vector<std::pair<uint64_t, int>>& fi
         file_slots_.emplace(file_num, slot_num);
         num_slots_taken_[0]++;  // as we suppose times=1 for now
         
-        std::cout << "[sst bitmap] " << "File " << file_num << " takes slot " << slot_num << std::endl;
+        std::cout << "[sst bitmap] TakeSlotInBatch: " << "File " << file_num << " takes slot " << slot_num <<
+            ", remains " << size_ - num_slots_taken_[0] << " free slots" << std::endl;
     }
 
     return true;
@@ -228,9 +229,10 @@ int SstBitMap::FreeSlot(uint64_t file_num){
         slots_[slot_num] = 0;
         file_slots_.erase(file_num);
         NotifyFreeSlot();
-        std::cout << "[sst bitmap] " << "successfully free slot " << slot_num << " of file " << file_num << std::endl;
-        
+        std::cout << "[sst bitmap] " << "successfully free slot " << slot_num << " of file " << file_num << std::endl;   
     }
+
+    std::cout << "[sst bitmap] remains " << size_ - num_slots_taken_[0] << " free slots" << std::endl;
     return slot_num;
 }
 
@@ -250,6 +252,7 @@ void SstBitMap::FreeSlot2(int slot) {
         NotifyFreeSlot();
         std::cout << "[sst bitmap] " << "free slot " << slot << " of file " << filenumber << std::endl;
     }
+    std::cout << "[sst bitmap] remains " << size_ - num_slots_taken_[0] << " free slots" << std::endl;
     // if filenumber = 0, then this FreeSlot request is from the `future`
     if (filenumber == 0) {
 
@@ -289,7 +292,8 @@ void SstBitMap::TakeSlot(uint64_t file_num, int slot_num, int times) {
     RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, times);
     RUBBLE_LOG_INFO(logger_, "Take Slot (%lu , %d)\n", file_num, slot_num);
     // printf("Take Slot (%lu , %d)\n", file_num, slot_num);
-    std::cout << "[sst bitmap] " << "File " << file_num << " takes slot " << slot_num << std::endl;
+    std::cout << "[sst bitmap] TakeSlot:" << "File " << file_num << " takes slot " << slot_num <<
+        " remains " << size_ - num_slots_taken_[0] << " free slots" << std::endl;
     LogFlush(map_logger_);
     LogFlush(logger_);
 
