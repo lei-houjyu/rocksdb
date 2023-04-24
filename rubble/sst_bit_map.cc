@@ -101,7 +101,7 @@ bool SstBitMap::TakeSlotsInBatch(const std::vector<std::pair<uint64_t, int>>& fi
     std::lock_guard<std::mutex> lk{mu_};
     int slots_to_take = files_info.size();
 
-    if (num_slots_taken_[0] + slots_to_take == size_) {
+    if (num_slots_taken_[0] + slots_to_take > size_) {
         std::cerr << "run out of slots, don't have " << slots_to_take << " slots available\n";
         return false;
     }
@@ -150,6 +150,8 @@ bool SstBitMap::TakeSlotsInBatch(const std::vector<std::pair<uint64_t, int>>& fi
         slot_usage_[slot_num] += slot_initial_usage_;
         file_slots_.emplace(file_num, slot_num);
         num_slots_taken_[0]++;  // as we suppose times=1 for now
+
+        assert(num_slots_taken_[0] <= size_);
         
         std::cout << "[sst bitmap] TakeSlotInBatch: " << "File " << file_num << " takes slot " << slot_num <<
             ", remains " << size_ - num_slots_taken_[0] << " free slots" << std::endl;
@@ -292,8 +294,7 @@ void SstBitMap::TakeSlot(uint64_t file_num, int slot_num, int times) {
     RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, times);
     RUBBLE_LOG_INFO(logger_, "Take Slot (%lu , %d)\n", file_num, slot_num);
     // printf("Take Slot (%lu , %d)\n", file_num, slot_num);
-    std::cout << "[sst bitmap] TakeSlot:" << "File " << file_num << " takes slot " << slot_num <<
-        " remains " << size_ - num_slots_taken_[0] << " free slots" << std::endl;
+    
     LogFlush(map_logger_);
     LogFlush(logger_);
 
@@ -301,6 +302,9 @@ void SstBitMap::TakeSlot(uint64_t file_num, int slot_num, int times) {
     slot_usage_[slot_num] += slot_initial_usage_;
     file_slots_[file_num] = slot_num;
     num_slots_taken_[times-1]++;
+
+    std::cout << "[sst bitmap] TakeSlot:" << "File " << file_num << " takes slot " << slot_num <<
+        " remains " << size_ - num_slots_taken_[0] << " free slots" << std::endl;
 
     int start, end;
     if(times == 1){

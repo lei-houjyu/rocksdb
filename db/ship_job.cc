@@ -79,22 +79,24 @@ void ShipSST(FileInfo& file, const std::vector<std::string>& remote_sst_dirs, Sh
             assert(false);
         }
 
-        // int w_fd;
-        // fname = "/mnt/data/dump/" + dir.substr(16) + "/" + std::to_string(file.file_number_) + ".sst";
-        // do {
-        //     w_fd = open(fname.c_str(), O_WRONLY | O_DIRECT | O_DSYNC | O_CREAT, 0755);
-        // } while (w_fd < 0 && errno == EINTR);
-        // if (w_fd < 0) {
-        //     std::cout << "While open a file for appending " << fname << " errno " << std::strerror(errno) << std::endl;
-        //     assert(false);
-        // }
+        assert(fsync(r_fd) == 0);
 
-        // done = write(w_fd, file.buf_, file.len_);
-        // if (done != (ssize_t)file.len_) {
-        //     std::cout << "while appending to file " << fname << " errno " << std::strerror(errno) << std::endl;
-        //     assert(false);
-        // }
-        // close(w_fd);
+        int w_fd;
+        fname = "/mnt/data/dump/" + dir.substr(16) + "/" + std::to_string(file.slot_number_) + ".sst";
+        do {
+            w_fd = open(fname.c_str(), O_WRONLY | O_DIRECT | O_DSYNC | O_CREAT, 0755);
+        } while (w_fd < 0 && errno == EINTR);
+        if (w_fd < 0) {
+            std::cout << "While open a file for appending " << fname << " errno " << std::strerror(errno) << std::endl;
+            assert(false);
+        }
+
+        done = write(w_fd, file.buf_, file.len_);
+        if (done != (ssize_t)file.len_) {
+            std::cout << "while appending to file " << fname << " errno " << std::strerror(errno) << std::endl;
+            assert(false);
+        }
+        close(w_fd);
 
         // uint64_t got = CheckSum(file.buf_, file.len_);
         // uint64_t expected = file.checksum_;
@@ -173,11 +175,17 @@ bool AddedFiles(const autovector<autovector<VersionEdit*>>& edit_lists) {
 }
 
 void ApplyDownstreamSstSlotDeletion(ShipThreadArg* sta, const nlohmann::json& reply_json) {
-  for (const auto& deleted_slot : reply_json["DeletedSlots"]) {
-    int slot = deleted_slot.get<int>();
-    // uint64_t filenumber = sta->db_options_->sst_bit_map->GetSlotFileNum(slot);
-    sta->db_options_->sst_bit_map->FreeSlot2(slot);
-  }
+    std::stringstream ss;
+    bool did_deletion = false;
+    for (const auto& deleted_slot : reply_json["DeletedSlots"]) {
+        int slot = deleted_slot.get<int>();
+        // uint64_t filenumber = sta->db_options_->sst_bit_map->GetSlotFileNum(slot);
+        sta->db_options_->sst_bit_map->FreeSlot2(slot);
+        ss << slot << ',';
+        did_deletion = true;
+    }
+    if (did_deletion)
+        std::cout << "[sync] apply deletion from downstream nodes, deleted slot: " << ss.str() << std::endl;
 }
 
 // void ShipJobTakeSlot(ShipThreadArg* sta, FileInfo& f) {

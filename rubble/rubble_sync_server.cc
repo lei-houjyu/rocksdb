@@ -248,8 +248,10 @@ void RubbleKvServiceImpl::SetDoOpReplyMessage(OpReply *reply) {
   j_reply["DeletedSlots"] = deleted_slots_json;
 
   reply->set_sync_reply(j_reply.dump());
-  std::cout << "my doop reply message: " << j_reply.dump() << std::endl;
-  std::cout << "deleted slots: " << deleted_slots_json.dump() << std::endl;
+  if (deleted_slots_.size() > 0) {
+    std::cout << "my doop reply message: " << j_reply.dump() << std::endl;
+    std::cout << "deleted slots: " << deleted_slots_json.dump() << std::endl;
+  }
   deleted_slots_.clear();
 }
 
@@ -645,6 +647,7 @@ void RubbleKvServiceImpl::PostProcessing(SingleOp* singleOp, Forwarder* forwarde
       int slot = j.get<int>();
       deleted_slots.push_back(slot);
     }
+    std::cout << "[rubble server] received delete slots info from post processing " << reply_json["DeletedSlots"] << std::endl;
 
     ApplyDownstreamSstSlotDeletion(deleted_slots);
   }
@@ -701,13 +704,18 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
 
 void RubbleKvServiceImpl::ApplyDownstreamSstSlotDeletion(const std::vector<int>& deleted_slots) {
   std::lock_guard<std::mutex> lk{deleted_slots_mu_};
+  std::stringstream ss;
+  bool did_deletion = false;
   for (int slot : deleted_slots) {
     db_options_->sst_bit_map->FreeSlot2(slot);
-    if (db_options_->sst_bit_map->CheckSlotFreed(slot))
+    if (db_options_->sst_bit_map->CheckSlotFreed(slot)) {
       deleted_slots_.insert(slot);
+      ss << slot << ',';
+      did_deletion = true;
+    }
   }
-  std::cout << "apply downstream sst slot deletion done" << std::endl;
-  
+  if (did_deletion)
+    std::cout << "[rubble server] apply downstream sst slot deletion done, deleted: " << ss.str() << std::endl;
 }
 
 void RubbleKvServiceImpl::HandleSyncRequest(const SyncRequest* request, 
@@ -719,11 +727,13 @@ void RubbleKvServiceImpl::HandleSyncRequest(const SyncRequest* request,
 
 bool RubbleKvServiceImpl::IsReady(const rocksdb::VersionEdit& edit) {
   if (edit.IsFlush()) {
-    std::cout << "[IsReady] flushed_mem " << flushed_mem.load() 
+    bool ready = flushed_mem.load() + edit.GetBatchCount() < get_mem_id();
+    std::cout << "[IsReady] flushed_mem " << flushed_mem.load()
               << " batch_count " << edit.GetBatchCount()
               << " mem_id " << get_mem_id()
-              << " version edit " << &edit << std::endl;
-    return flushed_mem.load() + edit.GetBatchCount() < get_mem_id();
+              << " version edit " << &edit
+              << " ready " << ready << std::endl;
+    return ready;
   } else {
     return true;
   }
