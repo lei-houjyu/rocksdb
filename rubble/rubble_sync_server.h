@@ -77,7 +77,60 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
   volatile std::atomic<uint64_t> r_op_counter_{0};
   volatile std::atomic<uint64_t> w_op_counter_{0};
 
+  inline void SpawnBGThreads() {
+    if (db_options_->is_rubble)
+      bg_threads_handle_.SpawnBGThreads();
+  }
+
+  inline void FinishBGThreads() {
+    if (db_options_->is_rubble)
+      bg_threads_handle_.Finish();
+  }
+
   private:
+    void VersionEditsExecutor();
+
+    // class BGThreadsHandle;
+    // friend class BGThreadHandle;
+
+    class BGThreadsHandle {
+    private:
+      std::thread handle_;
+      RubbleKvServiceImpl* rubble_impl_;
+    public:   
+      BGThreadsHandle(RubbleKvServiceImpl* impl_): rubble_impl_(impl_) {}
+
+      void SpawnBGThreads() {
+          handle_ = std::thread([this] {
+            rubble_impl_->VersionEditsExecutor();
+          });
+          pthread_setname_np(handle_.native_handle(), "VersionEditsExecutor");
+      }
+
+      void Finish() {
+          handle_.join();
+      }
+    } bg_threads_handle_;
+
+    inline void cached_edits_insert(uint64_t edit_num, std::pair<rocksdb::VersionEdit, std::string> pair) {
+      std::lock_guard<std::mutex> lk{*db_options_->version_edit_mu};
+      cached_edits_.insert({edit_num, pair});
+    }
+
+    inline std::pair<rocksdb::VersionEdit, std::string>& cached_edits_get(uint64_t edit_num) {
+      std::lock_guard<std::mutex> lk{*db_options_->version_edit_mu};
+      assert(cached_edits_.count(edit_num) == 1);
+      auto it = cached_edits_.find(edit_num);
+      return it->second;
+    }
+
+    inline void cached_edits_remove(uint64_t edit_num) {
+      std::lock_guard<std::mutex> lk{*db_options_->version_edit_mu};
+      assert(cached_edits_.count(edit_num) == 1);
+      auto it = cached_edits_.find(edit_num);
+      cached_edits_.erase(it);
+    }
+
     // get the id of the current memtable
     uint64_t get_mem_id();
 
@@ -102,6 +155,8 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     // calling UpdateSstView and logAndApply
     std::string ApplyVersionEdits(const std::string& args);
+
+    void BufferVersionEdits(const std::string& args);
     
     std::string ApplyOneVersionEdit(std::vector<rocksdb::VersionEdit>& edits);
 
@@ -133,12 +188,12 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     rocksdb::IOStatus DeleteSstFiles(const rocksdb::VersionEdit& edit);
     // set the reply message according to the status
     void SetReplyMessage(SyncReply* reply, const rocksdb::Status& s, bool is_flush, bool is_trivial_move);
-    void SetSyncReplyMessage(SyncReply *reply);
+    std::string SetSyncReplyMessage();
     void SetDoOpReplyMessage(OpReply *reply);
 
     void PersistData();
 
-    void ApplyDownstreamSstSlotDeletion(const std::vector<int>& deleted_slots);
+    // void ApplyDownstreamSstSlotDeletion(const std::vector<int>& deleted_slots);
 
     // db instance
     rocksdb::DB* db_ = nullptr;
@@ -150,6 +205,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     rocksdb::IOStatus ios_;
 
     std::shared_ptr<Channel> channel_ = nullptr;
+    std::shared_ptr<Channel> primary_channel_ = nullptr;
 
     // rocksdb's version set
     rocksdb::VersionSet* version_set_;
@@ -188,7 +244,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     bool  piggyback_edits_ = false;
   
-    std::multimap<uint64_t, rocksdb::VersionEdit> cached_edits_;
+    std::multimap<uint64_t, std::pair<rocksdb::VersionEdit, std::string>> cached_edits_;
 
     // id for a Sync Request, assign it to the reply id
     uint64_t request_id_;

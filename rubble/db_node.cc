@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv) {
     if(argc < 6) {
-        std::cout << "Usage: ./db listen_port target_address shard_id replica_id replication_factor\n";
+        std::cout << "Usage: ./db listen_port target_address shard_id replica_id replication_factor primary_address\n";
         return 0;
     }
 
@@ -11,6 +11,10 @@ int main(int argc, char** argv) {
     const std::string sid  = argv[3];
     const int rid  = std::stoi(argv[4]);
     const int rf   = std::stoi(argv[5]);
+    std::string primary_addr;
+    if (argc == 7)
+        primary_addr = argv[6];
+    std::cout << "primary addr: " << primary_addr << std::endl;
 
     const std::string src_addr       = "0.0.0.0:" + port;
     const std::string dest_addr      = addr;
@@ -37,7 +41,7 @@ int main(int argc, char** argv) {
     const std::string sst_pool_dir   = is_head ? "" : "/mnt/sst/node-" + std::to_string(nid) + "/shard-" + sid;
 
     rocksdb::DB* db = GetDBInstance(db_path, sst_path, remote_sst_dir,
-        sst_pool_dir, dest_addr, is_rubble, is_head, is_tail, sid, remote_sst_dirs);
+        sst_pool_dir, dest_addr, primary_addr, is_rubble, is_head, is_tail, sid, remote_sst_dirs);
 
     RunServer(db, src_addr);
 

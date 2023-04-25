@@ -143,15 +143,21 @@ SyncClient* GetSyncClient(const ImmutableDBOptions* db_options_) {
     thread_local SyncClient *client = nullptr;
 
     if (client == nullptr) {
+        std::shared_ptr<grpc::Channel> channel;
+        if (db_options_->is_tail) {
+            channel = db_options_->primary_channel;
+        } else {
+            channel = db_options_->channel;
+        }
         do {
             if (client != nullptr) {
                 delete client;
             }
-            client = new SyncClient(db_options_->channel);
-        } while (db_options_->channel->GetState(false) != 2);
+            client = new SyncClient(channel);
+        } while (channel->GetState(false) != 2);
         std::cout << "thread " << std::this_thread::get_id()
                   << " creates sync client " << client
-                  << " state " << db_options_->channel->GetState(false) << std::endl;
+                  << " state " << channel->GetState(false) << std::endl;
     }
 
     return client;
@@ -174,19 +180,19 @@ bool AddedFiles(const autovector<autovector<VersionEdit*>>& edit_lists) {
   return res;
 }
 
-void ApplyDownstreamSstSlotDeletion(ShipThreadArg* sta, const nlohmann::json& reply_json) {
-    std::stringstream ss;
-    bool did_deletion = false;
-    for (const auto& deleted_slot : reply_json["DeletedSlots"]) {
-        int slot = deleted_slot.get<int>();
-        // uint64_t filenumber = sta->db_options_->sst_bit_map->GetSlotFileNum(slot);
-        sta->db_options_->sst_bit_map->FreeSlot2(slot);
-        ss << slot << ',';
-        did_deletion = true;
-    }
-    if (did_deletion)
-        std::cout << "[sync] apply deletion from downstream nodes, deleted slot: " << ss.str() << std::endl;
-}
+// void ApplyDownstreamSstSlotDeletion(ShipThreadArg* sta, const nlohmann::json& reply_json) {
+//     std::stringstream ss;
+//     bool did_deletion = false;
+//     for (const auto& deleted_slot : reply_json["DeletedSlots"]) {
+//         int slot = deleted_slot.get<int>();
+//         // uint64_t filenumber = sta->db_options_->sst_bit_map->GetSlotFileNum(slot);
+//         sta->db_options_->sst_bit_map->FreeSlot2(slot);
+//         ss << slot << ',';
+//         did_deletion = true;
+//     }
+//     if (did_deletion)
+//         std::cout << "[sync] apply deletion from downstream nodes, deleted slot: " << ss.str() << std::endl;
+// }
 
 // void ShipJobTakeSlot(ShipThreadArg* sta, FileInfo& f) {
 //     while (true) {
@@ -300,15 +306,6 @@ void BGWorkShip(void* arg) {
             
             SyncClient* client = GetSyncClient(sta->db_options_);
             client->Sync(j_new.dump());
-
-            SyncReply downstream_reply;
-            client->GetSyncReply(&downstream_reply);
-            std::string reply_message = downstream_reply.message();
-            std::cout << "[Sync] reply: " << reply_message << std::endl;
-            nlohmann::json reply_json = nlohmann::json::parse(reply_message);
-            
-
-            ApplyDownstreamSstSlotDeletion(sta, reply_json);
         }
     }
 

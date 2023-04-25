@@ -1223,6 +1223,9 @@ struct DBOptions {
   // example string : 10.10.1.2:50051
   std::string target_address = "";
 
+  // This is for the tail to send back the sync reply.
+  std::string primary_address = "";
+
   //upstream's remote sst directory, not "" for all nodes except tail
   std::string remote_sst_dir = "";
   std::vector<std::string> remote_sst_dirs;
@@ -1259,6 +1262,8 @@ struct DBOptions {
   
   // grpc channel to send requests and version edits
   std::shared_ptr<grpc::Channel> channel = nullptr;
+
+  std::shared_ptr<grpc::Channel> primary_channel = nullptr;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)

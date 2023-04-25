@@ -20,12 +20,12 @@ public:
     bool TakeSlotsInBatch(const std::vector<std::pair<uint64_t, int>>& files_info);
     
     // free the slots occupied by the set of files
-    void FreeSlot(std::set<uint64_t> file_nums);
+    void FreeSlot(std::set<uint64_t> file_nums, bool notify);
 
     // free the slot occupied by a file and returns the occupied slot num
-    int FreeSlot(uint64_t file_num);
+    int FreeSlot(uint64_t file_num, bool notify);
 
-    void FreeSlot2(int slot);
+    void FreeSlot2(int slot, bool notify);
 
     bool CheckSlotFreed(int slot_num);
 

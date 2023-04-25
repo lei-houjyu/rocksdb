@@ -68,6 +68,7 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
        ioptions_(default_cf_->ioptions()),
        cf_options_(default_cf_->GetCurrentMutableCFOptions()),
        fs_(ioptions_->fs),
+       bg_threads_handle_(this),
        status_thread_(PrintStatus, this) {
         status_thread_.detach();
         if(is_rubble_ && !is_head_) {
@@ -84,6 +85,10 @@ RubbleKvServiceImpl::RubbleKvServiceImpl(rocksdb::DB* db)
         if(db_options_->target_address != "") {
           channel_ = db_options_->channel;
           assert(channel_ != nullptr);
+        }
+        if (db_options_->primary_address != "") {
+          primary_channel_ = db_options_->primary_channel;
+          assert(primary_channel_ != nullptr);
         }
         // Rubble: sanity check
         // std::cout << "[RubbleKvServiceImpl] cfd->current\n"
@@ -135,15 +140,12 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     Forwarder* forwarder = nullptr;
     ReplyClient* reply_client = nullptr;
     if(!db_options_->is_tail) {
-      // std::cout << "init the forwarder" << "\n";
       forwarder = new Forwarder(channel_);
     } else if (channel_ != nullptr) {
-      // std::cout << "init the reply client" << "\n";
       reply_client = new ReplyClient(channel_);
     }
 
     Op tmp_op;
-    // op_buffer[mem_id, op_queue]
     std::map<uint64_t, std::queue<SingleOp *>> *op_buffer = 
       new std::map<uint64_t, std::queue<SingleOp *>>();
 
@@ -168,9 +170,9 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       assert(shard_idx == tmp_op.shard_idx());
       assert(client_idx == tmp_op.client_idx());
 
-      if (is_rubble_ && !is_head_) {
-        ApplyBufferedVersionEdits();
-      }
+      // if (is_rubble_ && !is_head_) {
+      //   ApplyBufferedVersionEdits();
+      // }
 
       Op* request = new Op(tmp_op);
       OpReply* reply = new OpReply();
@@ -197,18 +199,6 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       // printf("[Request] Got %u\n", static_cast<uint32_t>(request->id()));
       HandleOp(request, reply, forwarder, reply_client, op_buffer);
 
-      if (is_rubble_ && !is_head_) {
-        OpReply piggybacked_reply;
-        SetDoOpReplyMessage(&piggybacked_reply);
-        stream->Write(piggybacked_reply);
-      }
-
-      // if (is_rubble_ && !is_tail_) {
-      //   OpReply piggybacked_reply;
-      //   forwarder->ReadReply(&piggybacked_reply);
-      //   std::cout << "received DoOp reply: " << piggybacked_reply.sync_reply() << std::endl;
-        // ApplyDownstreamSstSlotDeletion();
-      // }
     }
 
     num_stream.fetch_add(-1);
@@ -593,63 +583,61 @@ void RubbleKvServiceImpl::PostProcessing(SingleOp* singleOp, Forwarder* forwarde
   }
 
   // if there is version edits piggybacked in the DoOp request, apply those edits
-  if (request->has_edits()) {
-    assert(piggyback_edits_);
-    size_t size = request->edits_size();
-    RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits\n", static_cast<uint32_t>(size));
-    // fprintf(stdout , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
-    { 
-      printf("thread %p, PostProcessing acquire mutex\n", this);
-      debug_mu.lock();
-      rocksdb::InstrumentedMutexLock l(mu_);
-      for(int i = 0; i < size; i++){
-        ApplyVersionEdits(request->edits(i));
-      }
-      debug_mu.unlock();
-      printf("thread %p, PostProcessing release mutex\n", this);
-    }
-    RUBBLE_LOG_INFO(logger_ , "[Tail] finishes version edits\n");
-  }
+  // if (request->has_edits()) {
+  //   assert(piggyback_edits_);
+  //   size_t size = request->edits_size();
+  //   RUBBLE_LOG_INFO(logger_ , "[Tail] Got %u new version edits\n", static_cast<uint32_t>(size));
+  //   // fprintf(stdout , "[Tail] Got %u new version edits, op_counter : %lu \n", static_cast<uint32_t>(size), op_counter_.load());
+  //   { 
+  //     printf("thread %p, PostProcessing acquire mutex\n", this);
+  //     rocksdb::InstrumentedMutexLock l(mu_);
+  //     for(int i = 0; i < size; i++){
+  //       ApplyVersionEdits(request->edits(i));
+  //     }
+  //     printf("thread %p, PostProcessing release mutex\n", this);
+  //   }
+  //   RUBBLE_LOG_INFO(logger_ , "[Tail] finishes version edits\n");
+  // }
   
-  if (is_rubble_ && !is_head_) {
-    ApplyBufferedVersionEdits();
-  }
+  // if (is_rubble_ && !is_head_) {
+  //   ApplyBufferedVersionEdits();
+  // }
 
   if (db_options_->is_tail) {
     reply_client->SendReply(*reply);
   } else {
-    if(piggyback_edits_ && is_rubble_ && is_head_) {
-      std::vector<std::string> edits;
-      edits_->GetEdits(edits);
-      if(edits.size() != 0) {
-        size_t size = edits.size();
-        request->set_has_edits(true);
-        for(const auto& edit : edits) {
-          RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
-          printf("Added Version Edit : %s \n", edit.c_str());
-          request->add_edits(edit);
-        }
-        assert(request->edits_size() == size);
-      } else {
-        request->set_has_edits(false);
-      }
-    }
+    // if(piggyback_edits_ && is_rubble_ && is_head_) {
+    //   std::vector<std::string> edits;
+    //   edits_->GetEdits(edits);
+    //   if(edits.size() != 0) {
+    //     size_t size = edits.size();
+    //     request->set_has_edits(true);
+    //     for(const auto& edit : edits) {
+    //       RUBBLE_LOG_INFO(logger_, "Added Version Edit : %s \n", edit.c_str());
+    //       printf("Added Version Edit : %s \n", edit.c_str());
+    //       request->add_edits(edit);
+    //     }
+    //     assert(request->edits_size() == size);
+    //   } else {
+    //     request->set_has_edits(false);
+    //   }
+    // }
     forwarder->Forward(*request);
-    OpReply forward_reply;
-    forwarder->ReadReply(&forward_reply);
+    // OpReply forward_reply;
+    // forwarder->ReadReply(&forward_reply);
 
     /*
      * Extract deleted slots from the reply message
      */
-    json reply_json = json::parse(forward_reply.sync_reply());
-    std::vector<int> deleted_slots;
-    for (const auto& j : reply_json["DeletedSlots"]) {
-      int slot = j.get<int>();
-      deleted_slots.push_back(slot);
-    }
-    std::cout << "[rubble server] received delete slots info from post processing " << reply_json["DeletedSlots"] << std::endl;
+    // json reply_json = json::parse(forward_reply.sync_reply());
+    // std::vector<int> deleted_slots;
+    // for (const auto& j : reply_json["DeletedSlots"]) {
+    //   int slot = j.get<int>();
+    //   deleted_slots.push_back(slot);
+    // }
+    // std::cout << "[rubble server] received delete slots info from post processing " << reply_json["DeletedSlots"] << std::endl;
 
-    ApplyDownstreamSstSlotDeletion(deleted_slots);
+    // ApplyDownstreamSstSlotDeletion(deleted_slots);
   }
 
   delete request;
@@ -664,59 +652,76 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
     while (stream->Read(&request)) {
       std::string args = request.args();
       std::cout << "[Sync] get " << args << std::endl;
-      {
-        debug_mu.lock();
-        rocksdb::InstrumentedMutexLock l(mu_);
-        std::string message = ApplyVersionEdits(args);
-        debug_mu.unlock();
-      }
-      if (!is_tail_) {
-        SyncClient *sync_client = rocksdb::GetSyncClient(db_options_);
-        sync_client->Sync(request);
-
-        SyncReply downstream_reply;
-        sync_client->GetSyncReply(&downstream_reply);
-        std::string reply_message = downstream_reply.message();
-        json reply_json = json::parse(reply_message);
-        std::cout << "[Sync] reply: " << reply_json.dump() << std::endl;
-
-        std::vector<int> deleted_slots;
-        for (const auto& j : reply_json["DeletedSlots"]) {
+      if (!db_options_->is_primary) {
+        BufferVersionEdits(args);
+      } else {
+        std::cout << "[Sync] primary: received deleted slots from tail, args: " << args << std::endl;
+        json sync_json = json::parse(args);
+        std::set<uint64_t> tail_deleted_files;
+        for (const auto& j : sync_json["DeletedSlots"]) {
           int slot = j.get<int>();
           uint64_t filenumber = db_options_->sst_bit_map->GetSlotFileNum(slot);
           
           std::cout << "apply delete from dowmstream, delete file: " << filenumber << " slot: "
               << slot << std::endl; 
-          deleted_slots.push_back(slot);
+          tail_deleted_files.insert(filenumber);
         }
-        ApplyDownstreamSstSlotDeletion(deleted_slots);
+        db_options_->sst_bit_map->FreeSlot(tail_deleted_files, true);
       }
-      ApplyBufferedVersionEdits();
-      std::cout << "applied buffered version edits" << std::endl;
 
-      SyncReply reply;
-      SetSyncReplyMessage(&reply); 
-      assert(stream->Write(reply));
+      // {
+      //   debug_mu.lock();
+      //   rocksdb::InstrumentedMutexLock l(mu_);
+      //   std::string message = ApplyVersionEdits(args);
+      //   debug_mu.unlock();
+      // }
+      // if (!is_tail_) {
+      //   SyncClient *sync_client = rocksdb::GetSyncClient(db_options_);
+      //   sync_client->Sync(request);
+
+      //   SyncReply downstream_reply;
+      //   sync_client->GetSyncReply(&downstream_reply);
+      //   std::string reply_message = downstream_reply.message();
+      //   json reply_json = json::parse(reply_message);
+      //   std::cout << "[Sync] reply: " << reply_json.dump() << std::endl;
+
+      //   std::vector<int> deleted_slots;
+      //   for (const auto& j : reply_json["DeletedSlots"]) {
+      //     int slot = j.get<int>();
+      //     uint64_t filenumber = db_options_->sst_bit_map->GetSlotFileNum(slot);
+          
+      //     std::cout << "apply delete from dowmstream, delete file: " << filenumber << " slot: "
+      //         << slot << std::endl; 
+      //     deleted_slots.push_back(slot);
+      //   }
+      //   ApplyDownstreamSstSlotDeletion(deleted_slots);
+      // }
+      // ApplyBufferedVersionEdits();
+      // std::cout << "applied buffered version edits" << std::endl;
+
+      // SyncReply reply;
+      // SetSyncReplyMessage(&reply); 
+      // assert(stream->Write(reply));
     }
     // std::cout << "exit Sync loop\n";
     return Status::OK;
 }
 
-void RubbleKvServiceImpl::ApplyDownstreamSstSlotDeletion(const std::vector<int>& deleted_slots) {
-  std::lock_guard<std::mutex> lk{deleted_slots_mu_};
-  std::stringstream ss;
-  bool did_deletion = false;
-  for (int slot : deleted_slots) {
-    db_options_->sst_bit_map->FreeSlot2(slot);
-    if (db_options_->sst_bit_map->CheckSlotFreed(slot)) {
-      deleted_slots_.insert(slot);
-      ss << slot << ',';
-      did_deletion = true;
-    }
-  }
-  if (did_deletion)
-    std::cout << "[rubble server] apply downstream sst slot deletion done, deleted: " << ss.str() << std::endl;
-}
+// void RubbleKvServiceImpl::ApplyDownstreamSstSlotDeletion(const std::vector<int>& deleted_slots) {
+//   std::lock_guard<std::mutex> lk{deleted_slots_mu_};
+//   std::stringstream ss;
+//   bool did_deletion = false;
+//   for (int slot : deleted_slots) {
+//     db_options_->sst_bit_map->FreeSlot2(slot);
+//     if (db_options_->sst_bit_map->CheckSlotFreed(slot)) {
+//       deleted_slots_.insert(slot);
+//       ss << slot << ',';
+//       did_deletion = true;
+//     }
+//   }
+//   if (did_deletion)
+//     std::cout << "[rubble server] apply downstream sst slot deletion done, deleted: " << ss.str() << std::endl;
+// }
 
 void RubbleKvServiceImpl::HandleSyncRequest(const SyncRequest* request, 
                           SyncReply* reply) {
@@ -806,8 +811,9 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
     if (version_edit_id != expected || !IsReady(edits[0])) {
       RUBBLE_LOG_INFO(logger_, "Version Edit arrives out of order, expecting %lu, cache %lu \n", expected, version_edit_id);
       printf("Version Edit arrives out of order, expecting %lu, cache %lu \n", expected, version_edit_id);
+      assert(edits.size() == 1);
       for (const auto& edit : edits) {
-        cached_edits_.insert({edit.GetEditNumber(), edit});
+        cached_edits_.insert({edit.GetEditNumber(), {edit, args}});
       }
     } else {
       // 3. apply the version edit
@@ -818,10 +824,103 @@ std::string RubbleKvServiceImpl::ApplyVersionEdits(const std::string& args) {
     return "ok";
 }
 
+void RubbleKvServiceImpl::BufferVersionEdits(const std::string& args) {
+    const json j_args = json::parse(args);
+    bool is_flush = false;
+    bool is_trivial_move = false;
+    int batch_count = 0;
+
+    if (j_args.contains("IsFlush")) {
+      assert(j_args["IsFlush"].get<bool>());
+      batch_count = j_args["BatchCount"].get<int>();
+      is_flush = true;
+    }
+
+    if (j_args.contains("IsTrivial")) {
+      is_trivial_move = true;
+    }
+
+    uint64_t version_edit_id = j_args["Id"].get<uint64_t>();
+    
+    uint64_t next_file_num = j_args["NextFileNum"].get<uint64_t>();
+    rocksdb::autovector<rocksdb::VersionEdit*> edit_list;
+    std::vector<rocksdb::VersionEdit> edits;
+    for (const auto& edit_string : j_args["EditList"].get<std::vector<std::string>>()) {
+      auto j_edit = json::parse(edit_string);
+      auto edit = ParseJsonStringToVersionEdit(j_edit);
+      if (is_flush) {
+        edit.SetBatchCount(batch_count);
+      } else if(is_trivial_move) {
+        edit.MarkTrivialMove();
+      }
+      edit.SetNextFile(next_file_num);
+      edits.push_back(edit);
+    }
+
+    assert(edits.size() == 1);
+    for (const auto& edit : edits) {
+      cached_edits_insert(edit.GetEditNumber(), {edit, args});
+    }
+
+    uint64_t log_and_apply_counter = version_set_->LogAndApplyCounter();
+    uint64_t expected = log_and_apply_counter + 1;
+    if (expected == version_edit_id) {
+      db_options_->expected_edit_cv->notify_all();
+    }
+}
+
+void RubbleKvServiceImpl::VersionEditsExecutor() {
+   while (true) {
+    uint64_t log_and_apply_counter = version_set_->LogAndApplyCounter();
+    uint64_t expected = log_and_apply_counter + 1;
+    int count = cached_edits_.count(expected);
+    if (count == 0) {
+      std::unique_lock<std::mutex> lk{*db_options_->version_edit_mu};
+      std::cout << "wait for version edit " << expected << " to be cached" << std::endl;
+      db_options_->expected_edit_cv->wait(lk, [&] {
+        count = cached_edits_.count(expected);
+        return count > 0;
+      });
+      std::cout << "version edit " << expected << " gets cached!" << std::endl;
+    }
+    assert(count == 1);
+
+    auto pair = cached_edits_get(expected);
+    auto edit = pair.first;
+    auto edit_string = pair.second;
+
+    if (!IsReady(edit)) {
+      std::unique_lock<std::mutex> lk{*db_options_->version_edit_mu};
+      std::cout << "wait for version edit " << edit.GetEditNumber() << " to be ready" << std::endl;
+      db_options_->expected_edit_cv->wait(lk, [&] {
+        return IsReady(edit);
+      });
+      std::cout << "version edit " << edit.GetEditNumber() << " becomes ready!" << std::endl;
+    }
+    std::vector<rocksdb::VersionEdit> edits;
+    edits.push_back(edit);
+
+    cached_edits_remove(expected);
+
+    rocksdb::InstrumentedMutexLock l(mu_);
+    ApplyOneVersionEdit(edits);
+    edits.clear();
+
+    // TODO: call sync
+    SyncClient* sync_client = rocksdb::GetSyncClient(db_options_);
+    if (!db_options_->is_tail) {
+      sync_client->Sync(edit_string);
+    } else {
+      std::string sync_reply = SetSyncReplyMessage();
+      sync_client->Sync(sync_reply);
+    }
+   }
+}
+
+
+
 void RubbleKvServiceImpl::ApplyBufferedVersionEdits() {
   if (cached_edits_.size() != 0) {
-    printf("thread %p, ApplyBufferedVersionEdits acquire mutex\n", this);
-    debug_mu.lock();
     rocksdb::InstrumentedMutexLock l(mu_);
     if (cached_edits_.size() != 0) {
       uint64_t log_and_apply_counter = version_set_->LogAndApplyCounter();
@@ -830,7 +929,7 @@ void RubbleKvServiceImpl::ApplyBufferedVersionEdits() {
       std::cout << "[ApplyBufferedVersionEdits] expected: " 
                 << expected << " count: " << count << std::endl;
       while (count != 0) {
-        auto edit = cached_edits_.cbegin()->second;
+        auto edit = cached_edits_.cbegin()->second.first;
         if (!IsReady(edit)) {
           break;
         }
@@ -840,7 +939,7 @@ void RubbleKvServiceImpl::ApplyBufferedVersionEdits() {
         for (int i = 0; i < count; i++) {
           auto it = cached_edits_.cbegin();
           assert(it->first == expected);
-          edits.push_back(it->second);
+          edits.push_back(it->second.first);
           cached_edits_.erase(it);
         }
         ApplyOneVersionEdit(edits);
@@ -849,8 +948,6 @@ void RubbleKvServiceImpl::ApplyBufferedVersionEdits() {
         count = cached_edits_.count(expected);
       }
     }
-    debug_mu.unlock();
-    printf("thread %p, ApplyBufferedVersionEdits release mutex\n", this);
   }
 }
 
@@ -1249,11 +1346,13 @@ rocksdb::IOStatus RubbleKvServiceImpl::DeleteSstFiles(const rocksdb::VersionEdit
         int slot_num = db_options_->sst_bit_map->GetFileSlotNum(file_number);
         std::cout << "receive a delete request from upstream, edit num: " << edit.GetEditNumber() << ", delete file: " << file_number << " slot: "
             << slot_num << std::endl;
-        db_options_->sst_bit_map->FreeSlot2(slot_num);
-        if (db_options_->sst_bit_map->CheckSlotFreed(slot_num)) {
-          deleted_slots_.insert(slot_num);
-          std::cout << "add slot " << slot_num << " to be deleted" << std::endl;
-        }
+        db_options_->sst_bit_map->FreeSlot(file_number, false);
+        deleted_slots_.insert(slot_num);
+        // db_options_->sst_bit_map->FreeSlot2(slot_num);
+        // if (db_options_->sst_bit_map->CheckSlotFreed(slot_num)) {
+        //   deleted_slots_.insert(slot_num);
+        //   std::cout << "add slot " << slot_num << " to be deleted" << std::endl;
+        // }
 
         if (ios.ok()){
             // Evict cache entry for the deleted file
@@ -1278,7 +1377,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::DeleteSstFiles(const rocksdb::VersionEdit
     return ios;
 }
 
-void RubbleKvServiceImpl::SetSyncReplyMessage(SyncReply *reply) {
+std::string RubbleKvServiceImpl::SetSyncReplyMessage() {
   json j_reply;
   json deleted_slots_json = json::array();
 
@@ -1288,10 +1387,9 @@ void RubbleKvServiceImpl::SetSyncReplyMessage(SyncReply *reply) {
   }
   j_reply["DeletedSlots"] = deleted_slots_json;
 
-  reply->set_message(j_reply.dump());
-  std::cout << "my sync reply message: " << j_reply.dump() << std::endl;
   std::cout << "deleted slots: " << deleted_slots_json.dump() << std::endl;
   deleted_slots_.clear();
+  return j_reply.dump();
 }
 
 // set the reply message according to the status

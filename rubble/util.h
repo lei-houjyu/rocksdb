@@ -95,12 +95,14 @@ void RunServer(rocksdb::DB* db, const std::string& server_addr) {
    grpc::EnableDefaultHealthCheckService(true);
    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
    ServerBuilder builder;
+   service.SpawnBGThreads();
 
    builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
    std::cout << "Server listening on " << server_addr << std::endl;
    builder.RegisterService(&service);
    std::unique_ptr<Server> server(builder.BuildAndStart());
    server->Wait();
+   service.FinishBGThreads();
 }
 
 void NewLogger(const std::string& log_fname, rocksdb::Env* env, std::shared_ptr<rocksdb::Logger>& logger){
@@ -145,7 +147,7 @@ void ReconstructSstBitMap(const std::string& map_log_fname, std::shared_ptr<SstB
             map->TakeOneAvailableSlot(static_cast<uint64_t>(nums[0]), nums[1]);
          }else{
             assert(nums.size() == 1);// delete operation 
-            map->FreeSlot(static_cast<uint64_t>(nums[0]));
+            map->FreeSlot(static_cast<uint64_t>(nums[0]), false);
          }
       }
       file.close();
@@ -168,6 +170,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
                                 const string& remote_sst_dir,
                                 const string& sst_pool_dir,
                                 const string& target_addr, 
+                                const string& primary_addr,
                                 bool is_rubble, bool is_primary, bool is_tail,
                                 const string& shard_id, const vector<string>& remote_sst_dirs = vector<string>()) {
 
@@ -198,6 +201,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    std::cout << "is_tail: " << db_options.is_tail << '\n';
    
    db_options.target_address=target_addr; //TODO(add target_addr, remote_sst_dir and preallocated_sst_pool_size to option file)
+   db_options.primary_address = primary_addr;
 
    // for non-tail nodes in rubble mode, it's shipping sst file to the remote_sst_dir;
    if (db_options.is_rubble && !is_tail) {
@@ -265,6 +269,10 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
 
    if(db_options.target_address != "") {
       db_options.channel = grpc::CreateChannel(db_options.target_address, grpc::InsecureChannelCredentials());
+   }
+
+   if (db_options.primary_address != "") {
+      db_options.primary_channel = grpc::CreateChannel(db_options.primary_address, grpc::InsecureChannelCredentials());
    }
 
    if(db_options.is_rubble) {

@@ -100,6 +100,7 @@ struct ImmutableDBOptions {
   bool is_tail;
   bool disallow_flush_on_secondary;
   std::string target_address;
+  std::string primary_address;
   std::string remote_sst_dir;
   std::vector<std::string> remote_sst_dirs;
   std::string sst_pool_dir;
@@ -107,9 +108,12 @@ struct ImmutableDBOptions {
   uint64_t sst_pad_len;
   int max_num_mems_in_flush;
   std::shared_ptr<grpc::Channel> channel;
+  std::shared_ptr<grpc::Channel> primary_channel;
   std::shared_ptr<SstBitMap> sst_bit_map;
   bool piggyback_version_edits;
   std::shared_ptr<Edits> edits;
+  std::shared_ptr<std::mutex> version_edit_mu;
+  std::shared_ptr<std::condition_variable> expected_edit_cv;
 };
 
 struct MutableDBOptions {

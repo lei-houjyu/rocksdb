@@ -26,7 +26,7 @@ SstBitMap::SstBitMap(int pool_size, int max_num_mems_in_flush,
         if (is_tail || is_primary) {
             slot_initial_usage_ = 1;
         } else {
-            slot_initial_usage_ = 2;
+            slot_initial_usage_ = 1;
         }
     }
 
@@ -208,7 +208,7 @@ void SstBitMap::CheckNumSlotsTaken(){
     assert(static_cast<int>(file_slots_.size()) == total_slots_taken);
 }
 
-int SstBitMap::FreeSlot(uint64_t file_num){
+int SstBitMap::FreeSlot(uint64_t file_num, bool notify){
     std::lock_guard<std::mutex> lk{mu_};
     // assert that the file num in file_slots map
 
@@ -230,7 +230,8 @@ int SstBitMap::FreeSlot(uint64_t file_num){
         num_slots_taken_[idx]--;
         slots_[slot_num] = 0;
         file_slots_.erase(file_num);
-        NotifyFreeSlot();
+        if (notify)
+            NotifyFreeSlot();
         std::cout << "[sst bitmap] " << "successfully free slot " << slot_num << " of file " << file_num << std::endl;   
     }
 
@@ -238,7 +239,7 @@ int SstBitMap::FreeSlot(uint64_t file_num){
     return slot_num;
 }
 
-void SstBitMap::FreeSlot2(int slot) {
+void SstBitMap::FreeSlot2(int slot, bool notify) {
     std::lock_guard<std::mutex> lk{mu_};
 
     uint64_t filenumber = slots_[slot];
@@ -251,7 +252,8 @@ void SstBitMap::FreeSlot2(int slot) {
         assert(filenumber > 0);
         file_slots_.erase(filenumber);
 
-        NotifyFreeSlot();
+        if (notify)
+            NotifyFreeSlot();
         std::cout << "[sst bitmap] " << "free slot " << slot << " of file " << filenumber << std::endl;
     }
     std::cout << "[sst bitmap] remains " << size_ - num_slots_taken_[0] << " free slots" << std::endl;
@@ -265,10 +267,12 @@ bool SstBitMap::CheckSlotFreed(int slot_num) {
     return slot_usage_[slot_num] == 0;
 }
 
-void SstBitMap::FreeSlot(std::set<uint64_t> file_nums){
+void SstBitMap::FreeSlot(std::set<uint64_t> file_nums, bool notify){
     for (uint64_t file_num : file_nums) {
-        FreeSlot(file_num);
+        FreeSlot(file_num, false);
     }
+    if (notify)
+        NotifyFreeSlot();
     // CheckNumSlotsTaken();
 }
     
