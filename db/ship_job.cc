@@ -236,6 +236,7 @@ void BGWorkShip(void* arg) {
     while (!sta->db_options_->sst_bit_map->TakeSlotsInBatch(files_info)) {
         std::cout << "not able to take slots in batch, wait for freeing..." << std::endl;
         sta->db_options_->sst_bit_map->WaitForFreeSlots(needed_slots);
+        std::cout << "Wake up! now I have " << sta->db_options_->sst_bit_map->GetAvailableSlots(1) << " free slots!" << std::endl;
     }
     std::cout << "take slots for files: " << ss.str() << "successfully" << std::endl;
     ss.str(std::string());

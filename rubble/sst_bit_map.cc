@@ -161,7 +161,7 @@ bool SstBitMap::TakeSlotsInBatch(const std::vector<std::pair<uint64_t, int>>& fi
 }
 
 int SstBitMap::GetAvailableSlots(int times) {
-    return size_ - num_slots_taken_[times];
+    return size_ - num_slots_taken_[times - 1];
 }
 
 void SstBitMap::WaitForFreeSlots(const std::map<int, int>& needed_slots) {

@@ -25,11 +25,11 @@ static std::map<uint64_t, uint64_t> primary_op_cnt_map;
 #define BATCH_SIZE 1000
 
 void PrintStatus(RubbleKvServiceImpl *srv) {
-  return;
+  // return;
   uint64_t r_now = 0, r_old = srv->r_op_counter_.load();
   uint64_t w_now = 0, w_old = srv->w_op_counter_.load();
   while (true) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     time_t t = time(0);
     r_now = srv->r_op_counter_.load();
     w_now = srv->w_op_counter_.load();
@@ -309,7 +309,8 @@ bool RubbleKvServiceImpl::is_ooo_write(SingleOp* singleOp) {
   return true;
 }
 
-bool RubbleKvServiceImpl::should_execute(uint64_t target_mem_id) {
+bool RubbleKvServiceImpl::
+should_execute(uint64_t target_mem_id) {
   rocksdb::MemTable* cur_mem = default_cf_->mem();
   uint64_t cur_mem_id = cur_mem->GetID();
 
@@ -399,7 +400,7 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
     }
 
     for (auto it = op_buffer->begin(); it != op_buffer->end();) {
-      id = it->first;
+      uint64_t id = it->first;
       if (should_execute(id)) {
         while (!(*op_buffer)[id].empty()) {
           HandleSingleOp((*op_buffer)[id].front(), forwarder, reply_client);
@@ -411,7 +412,32 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
       }
     }
   }
+  
+
+  while (!op_buffer->empty()) {
+    std::unique_lock<std::mutex> lk{*db_options_->op_buffer_mu};
+    db_options_->op_buffer_cv->wait_for(lk, std::chrono::milliseconds(100), [&] {
+      for (auto it = op_buffer->begin(); it != op_buffer->end();) {
+        uint64_t id = it->first;
+        if (should_execute(id)) {
+          while (!(*op_buffer)[id].empty()) {
+            HandleSingleOp((*op_buffer)[id].front(), forwarder, reply_client);
+            (*op_buffer)[id].pop();
+          }
+          op_buffer->erase(it++);
+        } else {
+          ++it;
+        }
+      }
+      return op_buffer->empty();
+    });
+    if (op_buffer->empty()) {
+      db_options_->op_buffer_cv->notify_all();
+      break;
+    }
+  }
 }
+
 
 void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarder, ReplyClient* reply_client) {
   rocksdb::Status s;

@@ -623,6 +623,8 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
         }
         version_edit_mu = std::shared_ptr<std::mutex>(new std::mutex);
         expected_edit_cv = std::shared_ptr<std::condition_variable>(new std::condition_variable);
+        op_buffer_mu = std::shared_ptr<std::mutex>(new std::mutex);
+        op_buffer_cv = std::shared_ptr<std::condition_variable>(new std::condition_variable);
 }
 
 void ImmutableDBOptions::Dump(Logger* log) const {

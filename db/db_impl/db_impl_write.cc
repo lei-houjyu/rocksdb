@@ -1885,6 +1885,7 @@ Status DBImpl::SwitchMemtable(ColumnFamilyData* cfd, WriteContext* context) {
                                      mutable_cf_options);
   
   immutable_db_options_.expected_edit_cv->notify_all();
+  immutable_db_options_.op_buffer_cv->notify_all();
                                      
 #ifndef ROCKSDB_LITE
   mutex_.Unlock();

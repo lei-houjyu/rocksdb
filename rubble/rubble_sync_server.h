@@ -78,12 +78,12 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
   volatile std::atomic<uint64_t> w_op_counter_{0};
 
   inline void SpawnBGThreads() {
-    if (db_options_->is_rubble)
+    if (db_options_->is_rubble && !db_options_->is_primary)
       bg_threads_handle_.SpawnBGThreads();
   }
 
   inline void FinishBGThreads() {
-    if (db_options_->is_rubble)
+    if (db_options_->is_rubble && !db_options_->is_primary)
       bg_threads_handle_.Finish();
   }
 
