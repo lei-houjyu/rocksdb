@@ -1884,8 +1884,12 @@ Status DBImpl::SwitchMemtable(ColumnFamilyData* cfd, WriteContext* context) {
   InstallSuperVersionAndScheduleWork(cfd, &context->superversion_context,
                                      mutable_cf_options);
   
-  immutable_db_options_.expected_edit_cv->notify_all();
-  immutable_db_options_.op_buffer_cv->notify_all();
+  if (immutable_db_options_.is_rubble && !immutable_db_options_.is_primary) {
+    std::cout << "[version edits] Switch to memtable " << cfd->mem()->GetID() << " so notify\n";
+    immutable_db_options_.expected_edit_cv->notify_all();
+    immutable_db_options_.op_buffer_cv->notify_all();
+  }
+  
                                      
 #ifndef ROCKSDB_LITE
   mutex_.Unlock();

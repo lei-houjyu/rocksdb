@@ -146,6 +146,7 @@ public:
   }
 
   bool IsShipThread() const {
+    // return false;
     return GetThreadPriority() == Env::Priority::SHIP;
   }
 };

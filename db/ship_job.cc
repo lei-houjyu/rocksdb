@@ -79,24 +79,24 @@ void ShipSST(FileInfo& file, const std::vector<std::string>& remote_sst_dirs, Sh
             assert(false);
         }
 
-        assert(fsync(r_fd) == 0);
+        // assert(fsync(r_fd) == 0);
 
-        int w_fd;
-        fname = "/mnt/data/dump/" + dir.substr(16) + "/" + std::to_string(file.slot_number_) + ".sst";
-        do {
-            w_fd = open(fname.c_str(), O_WRONLY | O_DIRECT | O_DSYNC | O_CREAT, 0755);
-        } while (w_fd < 0 && errno == EINTR);
-        if (w_fd < 0) {
-            std::cout << "While open a file for appending " << fname << " errno " << std::strerror(errno) << std::endl;
-            assert(false);
-        }
+        // int w_fd;
+        // fname = "/mnt/data/dump/" + dir.substr(16) + "/" + std::to_string(file.slot_number_) + ".sst";
+        // do {
+        //     w_fd = open(fname.c_str(), O_WRONLY | O_DIRECT | O_DSYNC | O_CREAT, 0755);
+        // } while (w_fd < 0 && errno == EINTR);
+        // if (w_fd < 0) {
+        //     std::cout << "While open a file for appending " << fname << " errno " << std::strerror(errno) << std::endl;
+        //     assert(false);
+        // }
 
-        done = write(w_fd, file.buf_, file.len_);
-        if (done != (ssize_t)file.len_) {
-            std::cout << "while appending to file " << fname << " errno " << std::strerror(errno) << std::endl;
-            assert(false);
-        }
-        close(w_fd);
+        // done = write(w_fd, file.buf_, file.len_);
+        // if (done != (ssize_t)file.len_) {
+        //     std::cout << "while appending to file " << fname << " errno " << std::strerror(errno) << std::endl;
+        //     assert(false);
+        // }
+        // close(w_fd);
 
         // uint64_t got = CheckSum(file.buf_, file.len_);
         // uint64_t expected = file.checksum_;
@@ -207,6 +207,10 @@ bool AddedFiles(const autovector<autovector<VersionEdit*>>& edit_lists) {
 // }
 
 void BGWorkShip(void* arg) {
+    // TODO: print edit ID timestamp
+    auto t1_now = std::chrono::system_clock::now();
+    auto t1 = std::chrono::system_clock::to_time_t(t1_now);
+    auto tm_1 = *std::localtime(&t1);
     ShipThreadArg* sta = reinterpret_cast<ShipThreadArg*>(arg);
 
     // 1. ship SST file to secondary nodes
@@ -231,17 +235,23 @@ void BGWorkShip(void* arg) {
         }
     }
 
-    std::cout << "about to take slots for these files in batch: " << ss.str() << std::endl;
+    // std::cout << "about to take slots for these files in batch: " << ss.str() << std::endl;
     // try to take slots for all sst files
+    // TODO: print edit ID timestamp
     while (!sta->db_options_->sst_bit_map->TakeSlotsInBatch(files_info)) {
         std::cout << "not able to take slots in batch, wait for freeing..." << std::endl;
         sta->db_options_->sst_bit_map->WaitForFreeSlots(needed_slots);
         std::cout << "Wake up! now I have " << sta->db_options_->sst_bit_map->GetAvailableSlots(1) << " free slots!" << std::endl;
     }
-    std::cout << "take slots for files: " << ss.str() << "successfully" << std::endl;
+    // std::cout << "take slots for files: " << ss.str() << "successfully" << std::endl;
     ss.str(std::string());
 
+    auto t2_now = std::chrono::system_clock::now();
+    auto t2 = std::chrono::system_clock::to_time_t(t2_now);
+    auto tm_2 = *std::localtime(&t2);
+
     // then ship sst
+    // TODO: print edit ID timestamp
     for (FileInfo f : sta->files_) {
         int slot = sta->db_options_->sst_bit_map->GetFileSlotNum(f.file_number_);
         f.slot_number_ = slot;
@@ -257,19 +267,23 @@ void BGWorkShip(void* arg) {
         }
     }
 
-    auto now = std::chrono::system_clock::now();
-    auto now_c = std::chrono::system_clock::to_time_t(now);
-    std::tm tm = *std::localtime(&now_c);
-    int ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
+    auto t3_now = std::chrono::system_clock::now();
+    auto t3 = std::chrono::system_clock::to_time_t(t3_now);
+    auto tm_3 = *std::localtime(&t3);
 
-    std::cout << std::put_time(&tm, "%y:%m:%d %H:%M:%S.") << std::setfill('0') << std::setw(3) << ms
-    << " shipped sst: " << ss.str() << std::endl;
+    // auto now = std::chrono::system_clock::now();
+    // auto now_c = std::chrono::system_clock::to_time_t(now);
+    // std::tm tm = *std::localtime(&now_c);
+    // int ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
+
+    // std::cout << std::put_time(&tm, "%y:%m:%d %H:%M:%S.") << std::setfill('0') << std::setw(3) << ms
+    // << " shipped sst: " << ss.str() << std::endl;
     
     
     // 2. send version edits to secondary nodes
-    printf("[BGWorkShip] sta_ %p json_size %ld\n", sta, sta->edits_json_.size());
+    // printf("[BGWorkShip] sta_ %p json_size %ld\n", sta, sta->edits_json_.size());
     for (std::string json : sta->edits_json_) {
-        printf("[BGWorkShip] sta_ %p json_length %ld\n", sta, json.length());
+        // printf("[BGWorkShip] sta_ %p json_length %ld\n", sta, json.length());
         if (json.length() > 0) {
             // fill in the slot info in the json here
             printf("[BGWorkShip] sta: %p edits_json: %s\n", sta, json.data());
@@ -305,8 +319,25 @@ void BGWorkShip(void* arg) {
             }
             std::cout << "modified json: " << j_new.dump() << std::endl;
             
+            auto t4_now = std::chrono::system_clock::now();
+            auto t4 = std::chrono::system_clock::to_time_t(t4_now);
+            auto tm_4 = *std::localtime(&t4);
             SyncClient* client = GetSyncClient(sta->db_options_);
             client->Sync(j_new.dump());
+
+            std::cout << "[ship event] edit id: " << j_new["Id"].get<uint64_t>() 
+                << ", t1: "
+                << std::put_time(&tm_1, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
+                << std::chrono::duration_cast<std::chrono::milliseconds>(t1_now.time_since_epoch()).count() % 1000
+                << ", t2: "
+                << std::put_time(&tm_2, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
+                << std::chrono::duration_cast<std::chrono::milliseconds>(t2_now.time_since_epoch()).count() % 1000
+                << ", t3: "
+                << std::put_time(&tm_3, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
+                << std::chrono::duration_cast<std::chrono::milliseconds>(t3_now.time_since_epoch()).count() % 1000
+                << ", t4: "
+                << std::put_time(&tm_4, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
+                << std::chrono::duration_cast<std::chrono::milliseconds>(t4_now.time_since_epoch()).count() % 1000 << std::endl;
         }
     }
 

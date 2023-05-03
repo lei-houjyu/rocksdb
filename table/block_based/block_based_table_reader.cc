@@ -721,11 +721,6 @@ Status BlockBasedTable::Open(
     *table_reader = std::move(new_table);
   }
 
-  // DEBUG: perform a full checksum scan
-  ReadOptions ro_t(true, false);
-  ro_t.readahead_size = 2 * 1024 * 1024;
-  (*table_reader)->VerifyChecksum(ro_t, TableReaderCaller::kSSTDumpTool);
-
   return s;
 }
 

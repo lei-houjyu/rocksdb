@@ -193,6 +193,9 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
 
     void PersistData();
 
+    void poll_op_buffer(Forwarder* forwarder, ReplyClient* reply_client,
+                          std::map<uint64_t, std::queue<SingleOp*>>* op_buffer);
+
     // void ApplyDownstreamSstSlotDeletion(const std::vector<int>& deleted_slots);
 
     // db instance
