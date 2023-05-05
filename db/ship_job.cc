@@ -142,13 +142,10 @@ std::string VersionEditsToJson(uint64_t next_file_number,
 SyncClient* GetSyncClient(const ImmutableDBOptions* db_options_) {
     thread_local SyncClient *client = nullptr;
 
+    std::shared_ptr<grpc::Channel> channel;
+    channel = db_options_->channel;
+
     if (client == nullptr) {
-        std::shared_ptr<grpc::Channel> channel;
-        if (db_options_->is_tail) {
-            channel = db_options_->primary_channel;
-        } else {
-            channel = db_options_->channel;
-        }
         do {
             if (client != nullptr) {
                 delete client;
@@ -156,11 +153,33 @@ SyncClient* GetSyncClient(const ImmutableDBOptions* db_options_) {
             client = new SyncClient(channel);
         } while (channel->GetState(false) != 2);
         std::cout << "thread " << std::this_thread::get_id()
-                  << " creates sync client " << client
-                  << " state " << channel->GetState(false) << std::endl;
+                    << " creates sync client " << client
+                    << " state " << channel->GetState(false) << std::endl;
     }
 
     return client;
+}
+
+SyncClient* GetPrimarySyncClient(const ImmutableDBOptions* db_options_) {
+    thread_local SyncClient *primary_client = nullptr;
+
+    std::shared_ptr<grpc::Channel> channel;
+    channel = db_options_->primary_channel;
+
+    if (primary_client == nullptr) {
+        do {
+            if (primary_client != nullptr) {
+                delete primary_client;
+            }
+            primary_client = new SyncClient(channel);
+        } while (channel->GetState(false) != 2);
+        std::cout << "thread " << std::this_thread::get_id()
+                    << " creates sync client " << primary_client
+                    << " state " << channel->GetState(false) << std::endl;
+    }
+    
+
+    return primary_client;
 }
 
 // Test if the edit_lists contains the addedFiles fields. If not, it's

@@ -73,6 +73,7 @@ std::string VersionEditsToJson(uint64_t next_file_number,
                                const autovector<VersionEdit*>& edit_lists);
 
 SyncClient* GetSyncClient(const ImmutableDBOptions* db_options_);
+SyncClient* GetPrimarySyncClient(const ImmutableDBOptions* db_options_);
 
 bool AddedFiles(const autovector<autovector<VersionEdit*>>& edit_lists);
 

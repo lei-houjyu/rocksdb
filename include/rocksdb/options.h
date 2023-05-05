@@ -1204,6 +1204,8 @@ struct DBOptions {
   //RUBBLE
   std::shared_ptr<Logger> rubble_info_log;
 
+  int rf = 3;
+
   bool is_rubble = false;
 
   // used when rubble mode is enabled

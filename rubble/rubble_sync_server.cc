@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <error.h>
 #include <string.h>
+#include <shared_mutex>
 #include "util/coding.h"
 
 static volatile std::atomic<uint64_t> flushed_mem{0};
@@ -21,6 +22,7 @@ static std::mutex exit_mu;
 static std::mutex debug_mu;
 static std::mutex buffers_mu;
 static std::map<uint64_t, uint64_t> primary_op_cnt_map;
+
 #define G_MEM_ARR_LEN 1024
 #define BATCH_SIZE 1000
 
@@ -404,18 +406,35 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
   
 
   while (!op_buffer->empty()) {
-    poll_op_buffer(forwarder, reply_client, op_buffer);
-    if (op_buffer->empty())
-      break;
-
+    // while not empty
+    // 1. lock
+    // 2. check should_exe
+    // 3.1 if no
+    //     wait
+    // 3.2 if yes
+    //     unlock and poll_op_buffer
+    auto it = op_buffer->begin();
     std::unique_lock<std::mutex> lk{*db_options_->op_buffer_mu};
-    db_options_->op_buffer_cv->wait_for(lk, std::chrono::milliseconds(1000), [&] {
-      this->poll_op_buffer(forwarder, reply_client, op_buffer);
-      return op_buffer->empty();
-    });
-    if (!op_buffer->empty())
-      std::cout << "Empty OpBuffer check timed out!" << std::endl;
+    if (!should_execute(it->first)) {
+      db_options_->op_buffer_cv->wait(lk, [&] {
+        return this->should_execute(it->first);
+      });
+      lk.unlock();
+      poll_op_buffer(forwarder, reply_client, op_buffer);
+    }
 
+
+    // poll_op_buffer(forwarder, reply_client, op_buffer);
+    // if (op_buffer->empty())
+    //   return;
+
+    // std::unique_lock<std::mutex> lk{*db_options_->memtable_ready_mu};
+    // db_options_->memtable_ready_cv->wait(lk, [&] {
+    //   auto it = op_buffer->begin();
+    //   return this->should_execute(it->first);
+    // });
+
+    // poll_op_buffer(forwarder, reply_client, op_buffer);
   }
 }
 
@@ -451,7 +470,7 @@ void RubbleKvServiceImpl::HandleSingleOp(SingleOp* singleOp, Forwarder* forwarde
 
   switch (singleOp->type()) {
     case rubble::GET:
-      // assert(is_tail_);
+      assert(is_tail_);
       s = db_->Get(ro, singleOp->key(), &value);
       // std::cout << "Get status: " << s.ToString() << " key: " << singleOp->key() << std::endl;
       r_op_counter_.fetch_add(1);
@@ -677,6 +696,11 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
       std::cout << "[Sync] get " << args << std::endl;
       if (!db_options_->is_primary) {
         BufferVersionEdits(args);
+        
+        if (!db_options_->is_tail) {
+          SyncClient* sync_client = rocksdb::GetSyncClient(db_options_);
+          sync_client->Sync(args);
+        }
       } else {
         // std::cout << "[Sync] primary: received deleted slots from tail, args: " << args << std::endl;
         json sync_json = json::parse(args);
@@ -888,7 +912,8 @@ void RubbleKvServiceImpl::BufferVersionEdits(const std::string& args) {
     uint64_t log_and_apply_counter = version_set_->LogAndApplyCounter();
     uint64_t expected = log_and_apply_counter + 1;
     if (expected == version_edit_id) {
-      std::cout << "[version edits] Got expected " << expected << " so notify\n"; 
+      std::cout << "[version edits] Got expected " << expected << " so notify\n";
+      std::lock_guard<std::mutex> lk{*db_options_->version_edit_mu};
       db_options_->expected_edit_cv->notify_all();
     } else {
       std::cout << "[version edits] Got " << version_edit_id << " no notify\n"; 
@@ -899,32 +924,34 @@ void RubbleKvServiceImpl::VersionEditsExecutor() {
    while (true) {
     uint64_t log_and_apply_counter = version_set_->LogAndApplyCounter();
     uint64_t expected = log_and_apply_counter + 1;
+
+    std::unique_lock<std::mutex> version_edit_lk{*db_options_->version_edit_mu};
     int count = cached_edits_.count(expected);
     if (count == 0) {
-      std::unique_lock<std::mutex> lk{*db_options_->version_edit_mu};
       std::cout << "[version edits] wait for version edit " << expected << " to be cached" << std::endl;
-      db_options_->expected_edit_cv->wait(lk, [&] {
+      db_options_->expected_edit_cv->wait(version_edit_lk, [&] {
         count = cached_edits_.count(expected);
         return count > 0;
       });
+      assert(count == 1);
       std::cout << "[version edits] version edit " << expected << " gets cached!" << std::endl;
     }
-    assert(count == 1);
-
-    auto pair = cached_edits_get(expected);
+    
+    auto pair = cached_edits_.find(expected)->second;
     auto edit = pair.first;
     auto edit_string = pair.second;
+    version_edit_lk.unlock();
 
-    while (!IsReady(edit)) {
-      std::unique_lock<std::mutex> lk{*db_options_->version_edit_mu};
+    std::unique_lock<std::mutex> memtable_ready_lk{*db_options_->memtable_ready_mu};
+    if (!IsReady(edit)) {
       std::cout << "[version edits] wait for version edit " << edit.GetEditNumber() << " to be ready" << std::endl;
-      db_options_->expected_edit_cv->wait_for(lk, std::chrono::milliseconds(100), [&] {
+      db_options_->memtable_ready_cv->wait(memtable_ready_lk, [&] {
         return IsReady(edit);
       });
-      if (!IsReady(edit))
-        std::cout << "[version edits] IsReady check timed out!" << std::endl;
+      
       std::cout << "[version edits] version edit " << edit.GetEditNumber() << " becomes ready!" << std::endl;
     }
+    memtable_ready_lk.unlock();
     std::vector<rocksdb::VersionEdit> edits;
     edits.push_back(edit);
 
@@ -934,13 +961,9 @@ void RubbleKvServiceImpl::VersionEditsExecutor() {
     ApplyOneVersionEdit(edits);
     edits.clear();
 
-    SyncClient* sync_client = rocksdb::GetSyncClient(db_options_);
-    if (!db_options_->is_tail) {
-      sync_client->Sync(edit_string);
-    } else {
-      std::string sync_reply = SetSyncReplyMessage();
-      sync_client->Sync(sync_reply);
-    }
+    auto sync_client = rocksdb::GetPrimarySyncClient(db_options_);
+    std::string sync_reply = SetSyncReplyMessage();
+    sync_client->Sync(sync_reply);
    }
 }
 
@@ -1374,8 +1397,7 @@ rocksdb::IOStatus RubbleKvServiceImpl::DeleteSstFiles(const rocksdb::VersionEdit
         std::cout << "receive a delete request from upstream, edit num: " << edit.GetEditNumber() << ", delete file: " << file_number << " slot: "
             << slot_num << std::endl;
         db_options_->sst_bit_map->FreeSlot(file_number, false);
-        if (db_options_->is_tail)
-          deleted_slots_.insert(slot_num);
+        deleted_slots_.insert(slot_num);
         // db_options_->sst_bit_map->FreeSlot2(slot_num);
         // if (db_options_->sst_bit_map->CheckSlotFreed(slot_num)) {
         //   deleted_slots_.insert(slot_num);

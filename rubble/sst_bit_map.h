@@ -10,8 +10,9 @@
 class SstBitMap{
 public:
     SstBitMap(int pool_size, int max_num_mems_in_flush,
+    bool is_primary, int rf,
     std::shared_ptr<rocksdb::Logger> logger = nullptr,
-    std::shared_ptr<rocksdb::Logger> map_logger = nullptr, bool is_tail = false, bool is_primary = false);
+    std::shared_ptr<rocksdb::Logger> map_logger = nullptr);
     
     // take one slot for a specific file
     int TakeOneAvailableSlot(uint64_t file_num, int times);

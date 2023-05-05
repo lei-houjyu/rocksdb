@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     const std::string sst_pool_dir   = is_head ? "" : "/mnt/sst/node-" + std::to_string(nid) + "/shard-" + sid;
 
     rocksdb::DB* db = GetDBInstance(db_path, sst_path, remote_sst_dir,
-        sst_pool_dir, dest_addr, primary_addr, is_rubble, is_head, is_tail, sid, remote_sst_dirs);
+        sst_pool_dir, dest_addr, primary_addr, is_rubble, is_head, is_tail, sid, remote_sst_dirs, rf);
 
     RunServer(db, src_addr);
 

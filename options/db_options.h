@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <shared_mutex>
 
 #include "rocksdb/options.h"
 
@@ -114,6 +115,8 @@ struct ImmutableDBOptions {
   std::shared_ptr<Edits> edits;
   std::shared_ptr<std::mutex> version_edit_mu;
   std::shared_ptr<std::condition_variable> expected_edit_cv;
+  std::shared_ptr<std::mutex> memtable_ready_mu;
+  std::shared_ptr<std::condition_variable> memtable_ready_cv;
   std::shared_ptr<std::mutex> op_buffer_mu;
   std::shared_ptr<std::condition_variable> op_buffer_cv;
 };

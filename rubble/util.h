@@ -172,7 +172,8 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
                                 const string& target_addr, 
                                 const string& primary_addr,
                                 bool is_rubble, bool is_primary, bool is_tail,
-                                const string& shard_id, const vector<string>& remote_sst_dirs = vector<string>()) {
+                                const string& shard_id, const vector<string>& remote_sst_dirs = vector<string>(),
+                                int rf = 3) {
 
    rocksdb::DB* db;
    rocksdb::DBOptions db_options;
@@ -224,6 +225,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    rocksdb::ColumnFamilyOptions cf_options = loaded_cf_descs[0].options;
 
    db_options.env = rocksdb::Env::Default();
+   db_options.rf = rf;
 
    // add logger for rubble
    // the default path for the sst bit map log file, will try to reconstruct map from this file
@@ -295,8 +297,10 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       db_options.sst_bit_map = std::make_shared<SstBitMap>(
             db_options.preallocated_sst_pool_size, 
             db_options.max_num_mems_in_flush,
+            db_options.is_primary,
+            db_options.rf,
             db_options.rubble_info_log,
-            map_logger, db_options.is_tail, db_options.is_primary);
+            map_logger);
    }
 
    if(recover_mode && is_rubble){
