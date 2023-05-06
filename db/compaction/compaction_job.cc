@@ -748,8 +748,9 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
 
   if (status.ok()) {
     status = InstallCompactionResults(mutable_cf_options);
+    printf("[Install] before schedule sta_ %p\n", sta_);
     if (sta_ != nullptr) {
-      db_options_.env->Schedule(&BGWorkShip, (void *)sta_, Env::Priority::SHIP, this,
+      db_options_.env->Schedule(&BGWorkShip, (void *)sta_, sta_->GetEditId(), Env::Priority::SHIP, this,
                                 &UnscheduleShipCallback);
     }
   }
@@ -1545,20 +1546,22 @@ Status CompactionJob::InstallCompactionResults(
         std::string fname = TableFileName(sub_compact.compaction->immutable_cf_options()->cf_paths,
                             file_num, out.meta.fd.GetPathId());
         uint64_t size = out.meta.fd.GetFileSize();
-        int slot_num = db_options_.sst_bit_map->GetFileSlotNum(file_num);
-        edit->TrackSlot(file_num, slot_num);
+        // TODO:Sheng
+        // int slot_num = db_options_.sst_bit_map->GetFileSlotNum(file_num);
+        // edit->TrackSlot(file_num, slot_num);
         // int sst_real = GetTakenSlot(out.meta.fd.GetNumber());
         // fprintf(stdout, "[File Shipped] : (l%u, %lu, %lu) , take slot : %u\n", compaction->output_level(), file_num, size, slot_num);
       }
     }
 
-    std::set<uint64_t> slots_to_free;
-    for (unsigned int i = 0; i < compact_->compaction->num_input_levels(); i++){
-      for (auto f : *(compact_->compaction->inputs(i))){
-        slots_to_free.insert(f->fd.GetNumber());
-      }
-    }
-    db_options_.sst_bit_map->FreeSlot(slots_to_free);
+    // Sheng: move to ship_job.cc, free slot after secondary acks
+    // std::set<uint64_t> slots_to_free;
+    // for (unsigned int i = 0; i < compact_->compaction->num_input_levels(); i++){
+    //   for (auto f : *(compact_->compaction->inputs(i))){
+    //     slots_to_free.insert(f->fd.GetNumber());
+    //   }
+    // }
+    // db_options_.sst_bit_map->FreeSlot(slots_to_free);
   }
   // [RUBBLE END]
   

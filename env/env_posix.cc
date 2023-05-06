@@ -218,6 +218,10 @@ class PosixEnv : public CompositeEnvWrapper {
                 void* tag = nullptr,
                 void (*unschedFunction)(void* arg) = nullptr) override;
 
+  void Schedule(void (*function)(void* arg1), void* arg, int id, Priority pri = LOW,
+                void* tag = nullptr,
+                void (*unschedFunction)(void* arg) = nullptr) override;
+
   int UnSchedule(void* arg, Priority pri) override;
 
   void StartThread(void (*function)(void* arg), void* arg) override;
@@ -424,6 +428,12 @@ void PosixEnv::Schedule(void (*function)(void* arg1), void* arg, Priority pri,
                         void* tag, void (*unschedFunction)(void* arg)) {
   assert(pri >= Priority::BOTTOM && pri <= Priority::HIGH);
   thread_pools_[pri].Schedule(function, arg, tag, unschedFunction);
+}
+
+void PosixEnv::Schedule(void (*function)(void* arg1), void* arg, int id, Priority pri,
+                        void* tag, void (*unschedFunction)(void* arg)) {
+  assert(pri >= Priority::BOTTOM && pri <= Priority::HIGH);
+  thread_pools_[pri].Schedule(function, arg, tag, unschedFunction, id);
 }
 
 int PosixEnv::UnSchedule(void* arg, Priority pri) {

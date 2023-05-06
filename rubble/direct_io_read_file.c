@@ -47,22 +47,11 @@ int main(int argc, char * argv[])
     int wrong = 0;
     char blk_id[9];
     for (int i = 0; i < BUF_SIZE / BLK_SIZE; i++) {
-        sprintf(blk_id, "blk%05d", i);
         for (int j = 0; j < BLK_SIZE; j += 8) {
             int pos = i * BLK_SIZE + j;
             for (int k = 0; k < 8; k++) {
-                checksum += (unsigned int)buf[pos + k];
-                printf("%c", buf[pos + k]);
-                if (blk_id[k] != buf[pos + k]) {
-                    wrong = 1;
-                }
+                checksum += (unsigned int)buf[pos + k] * (i + j + k);
             }
-        }
-        if (wrong) {
-            printf("\twrong! should be %s\n", blk_id);
-            wrong = 0;
-        } else {
-            printf("\n");
         }
     }
     printf("checksum = %u\n", checksum);

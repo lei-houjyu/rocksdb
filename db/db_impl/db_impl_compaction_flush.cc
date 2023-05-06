@@ -2906,7 +2906,7 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
                                     *c->mutable_cf_options(), c->edit(),
                                     &mutex_, directories_.GetDbDir(), false, nullptr, sta);
     if (sta != nullptr) {
-      immutable_db_options_.env->Schedule(&BGWorkShip, (void *)sta, rocksdb::Env::SHIP,
+      immutable_db_options_.env->Schedule(&BGWorkShip, (void *)sta, sta->GetEditId(), rocksdb::Env::SHIP,
                                           this, &UnscheduleShipCallback);
     }
     io_s = versions_->io_status();

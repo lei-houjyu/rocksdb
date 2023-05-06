@@ -220,6 +220,16 @@ class VersionBuilder::Rep {
     delete[] levels_;
   }
 
+  std::vector<FileMetaData*> AddedFilesAllLevels() {
+    std::vector<FileMetaData*> file_metas;
+    for (int level = 0; level < num_levels_; level++) {
+      for (auto& file_meta_pair : levels_[level].added_files) {
+        file_metas.push_back(file_meta_pair.second);
+      }
+    }
+    return file_metas;
+  }
+
   void UnrefFile(FileMetaData* f) {
     f->refs--;
     if (f->refs <= 0) {
@@ -980,6 +990,14 @@ class VersionBuilder::Rep {
     for (auto& t : threads) {
       t.join();
     }
+
+    // DEBUG: verify checksum for the whole sst
+    // ReadOptions ro(true, false);
+    // ro.readahead_size = 2 * 1024 * 1024;
+    // for (auto fm : files_meta) {
+    //   if (!fm.first->fd.table_reader->VerifyChecksum(ro, TableReaderCaller::kSSTDumpTool).ok())
+    //     assert(false);
+    // }
     Status ret;
     for (const auto& s : statuses) {
       if (!s.ok()) {
@@ -1045,6 +1063,10 @@ Status VersionBuilder::LoadTableHandlers(
   return rep_->LoadTableHandlers(
       internal_stats, max_threads, prefetch_index_and_filter_in_cache,
       is_initial_load, prefix_extractor, max_file_size_for_l0_meta_pin);
+}
+
+std::vector<FileMetaData*> VersionBuilder::AddedFilesAllLevels() {
+  return rep_->AddedFilesAllLevels();
 }
 
 BaseReferencedVersionBuilder::BaseReferencedVersionBuilder(

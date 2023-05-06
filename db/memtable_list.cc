@@ -495,9 +495,10 @@ Status MemTableList::TryInstallMemtableFlushResults(
 
         // [RUBBLE]
         m->edit_.MarkFlush();
-        if(vset->db_options()->is_rubble){
-          m->edit_.TrackSlot(m->file_number_ ,vset->db_options()->sst_bit_map->GetFileSlotNum(m->file_number_));
-        }
+        // TODO:Sheng
+        // if(vset->db_options()->is_rubble){
+        //   m->edit_.TrackSlot(m->file_number_ ,vset->db_options()->sst_bit_map->GetFileSlotNum(m->file_number_));
+        // }
         if (sta != m->sta_) {
           AddDependant(sta, m->sta_);
         }

@@ -249,7 +249,7 @@ Status FlushJob::Run(LogsWithPrepTracker* prep_tracker,
         meta_.fd.GetNumber(), &job_context_->memtables_to_free, db_directory_,
         log_buffer_, &committed_flush_jobs_info_, &tmp_io_s, sta_, job_context_->job_id);
     if (sta_ != nullptr && HasEditJson(sta_)) {
-      db_options_.env->Schedule(&BGWorkShip, (void *)sta_, Env::Priority::SHIP, this,
+      db_options_.env->Schedule(&BGWorkShip, (void *)sta_, sta_->GetEditId(), Env::Priority::SHIP, this,
                                 &UnscheduleShipCallback);
     }
     if (!tmp_io_s.ok()) {

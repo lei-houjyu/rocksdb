@@ -14,6 +14,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iomanip>
+#include <ctime>
 
 #include "cache/sharded_cache.h"
 
@@ -63,6 +65,7 @@
 #include "util/stop_watch.h"
 #include "util/string_util.h"
 #include "util/xxhash.h"
+#include "util/debug_buffer.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -760,6 +763,8 @@ Status BlockBasedTable::PrefetchTail(
           new FilePrefetchBuffer(nullptr, 0, 0, false, true));
       return Status::OK();
     }
+    // std::cout << "file system prefetch from " << file->file_name()
+    // << ", offset " << prefetch_off << ", size " << prefetch_len << std::endl;
   }
 
   // Use `FilePrefetchBuffer`
@@ -768,6 +773,8 @@ Status BlockBasedTable::PrefetchTail(
   Status s = PrepareIOFromReadOptions(ro, file->env(), opts);
   if (s.ok()) {
     s = (*prefetch_buffer)->Prefetch(opts, file, prefetch_off, prefetch_len);
+    // std::cout << "prefetch buffer prefetch from " << file->file_name()
+    // << ", offset " << prefetch_off << ", size " << prefetch_len << std::endl;
   }
   return s;
 }
@@ -1465,7 +1472,13 @@ Status BlockBasedTable::MaybeReadBlockAndLoadToCache(
   Cache* block_cache = rep_->table_options.block_cache.get();
   Cache* block_cache_compressed =
       rep_->table_options.block_cache_compressed.get();
-
+  // debug_buffer_mu.lock();
+  // debug_buffer_ss << "[debug] try to read from block cache" << std::endl;
+  // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+  // debug_buffer_mu.unlock();
+  // printf("[debug] try to read from block cache\n");
+  // std::cout << "[debug] try to read from block cache" << std::endl;
+  // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "try to read from block cache");
   // First, try to get the block from the cache
   //
   // If either block cache is enabled, we'll try to read from it.
@@ -1496,12 +1509,28 @@ Status BlockBasedTable::MaybeReadBlockAndLoadToCache(
         // TODO(haoyu): Differentiate cache hit on uncompressed block cache and
         // compressed block cache.
         is_cache_hit = true;
+        // debug_buffer_mu.lock();
+        // debug_buffer_ss << "[debug] Got DataBlock from the cache" << std::endl;
+        // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+        // debug_buffer_mu.unlock();
+        DEBUG_STRUCT_SET(data_block_cache_hit, true);
+        // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "Got DataBlock from the cache");
+        // printf("[debug] Got DataBlock from the cache\n");
+        // std::cout << "[debug] Got DataBlock from the cache" << std::endl;
       }
     }
 
     // Can't find the block from the cache. If I/O is allowed, read from the
     // file.
     if (block_entry->GetValue() == nullptr && !no_io && ro.fill_cache) {
+      // debug_buffer_mu.lock();
+      // debug_buffer_ss << "[debug] Didn't find the block from the cache, read from the disk" << std::endl;
+      // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+      // debug_buffer_mu.unlock();
+      // ROCKS_LOG_INFO(global_dboption->rubble_info_log,
+      //   "Didn't find the block from the cache, read from the disk");
+      // printf("[debug] Didn't find the block from the cache, read from the disk");
+      // std::cout << "[debug] Didn't find the block from the cache, read from the disk" << std::endl;
       Statistics* statistics = rep_->ioptions.statistics;
       const bool maybe_compressed =
           block_type != BlockType::kFilter &&
@@ -1519,6 +1548,8 @@ Status BlockBasedTable::MaybeReadBlockAndLoadToCache(
             rep_->persistent_cache_options,
             GetMemoryAllocator(rep_->table_options),
             GetMemoryAllocatorForCompressedBlock(rep_->table_options));
+        // printf("[debug] Create the Block Fecther, footer checksum: ");
+        // std::cout << "[debug] " << "Create the Block Fecther, footer checksum: " << rep_->footer.checksum() << std::endl;
         s = block_fetcher.ReadBlockContents();
         raw_block_comp_type = block_fetcher.get_compression_type();
         contents = &raw_block_contents;
@@ -1901,7 +1932,14 @@ Status BlockBasedTable::RetrieveBlock(
     bool for_compaction, bool use_cache) const {
   assert(block_entry);
   assert(block_entry->IsEmpty());
-
+  // debug_buffer_mu.lock();
+  // debug_buffer_ss << "[debug] " << "RetrieveBlock at offset:" << handle.offset() << ", size: " << handle.size() << std::endl;
+  // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+  // debug_buffer_mu.unlock();
+  // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "RetrieveBlock at offset: %lu, size: %lu", 
+  //   handle.offset(), handle.size());
+  // printf("[debug] RetrieveBlock at offset: %lu, size: %lu\n", handle.offset(), handle.size());
+  // std::cout << "[debug] " << "RetrieveBlock at offset:" << handle.offset() << ", size: " << handle.size() << std::endl;
   Status s;
   if (use_cache) {
     s = MaybeReadBlockAndLoadToCache(prefetch_buffer, ro, handle,
@@ -2285,6 +2323,13 @@ Status BlockBasedTable::Get(const ReadOptions& read_options, const Slice& key,
   assert(get_context != nullptr);
   Status s;
   const bool no_io = read_options.read_tier == kBlockCacheTier;
+  // debug_buffer_mu.lock();
+  // debug_buffer_ss << "[debug] " << "BlockBasedTable Get for key " << key.ToString() << std::endl;
+  // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+  // debug_buffer_mu.unlock();
+  // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "BlockBasedTable Get");
+  // printf("[debug] BlockBasedTable Get for key %s\n", key.ToString().data());
+  // std::cout << "[debug] " << "BlockBasedTable Get for key " << key.ToString() << std::endl;
 
   FilterBlockReader* const filter =
       !skip_filters ? rep_->filter.get() : nullptr;
@@ -2874,6 +2919,15 @@ Status BlockBasedTable::VerifyChecksum(const ReadOptions& read_options,
   std::unique_ptr<Block> metaindex;
   std::unique_ptr<InternalIterator> metaindex_iter;
   ReadOptions ro;
+
+  // auto now = std::chrono::system_clock::now();
+  // auto now_c = std::chrono::system_clock::to_time_t(now);
+  // std::tm tm = *std::localtime(&now_c);
+  // int ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
+
+  // std::cout << std::put_time(&tm, "%y:%m:%d %H:%M:%S.") << std::setfill('0') << std::setw(3) << ms
+  // << " start verifying checksum for file " << rep_->file->file_name() << std::endl;
+
   s = ReadMetaIndexBlock(ro, nullptr /* prefetch buffer */, &metaindex,
                          &metaindex_iter);
   if (s.ok()) {

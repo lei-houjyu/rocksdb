@@ -924,6 +924,9 @@ Status DBImpl::PreprocessWrite(const WriteOptions& write_options,
                total_log_size_ > GetMaxTotalWalSize())) {
     WaitForPendingWrites();
     status = SwitchWAL(write_context);
+    if (immutable_db_options_.is_rubble && !immutable_db_options_.is_primary) {
+      std::cout << "Secondary executes SwitchWAL!\n";
+    }
   }
 
   if (UNLIKELY(status.ok() && write_buffer_manager_->ShouldFlush())) {
@@ -934,6 +937,9 @@ Status DBImpl::PreprocessWrite(const WriteOptions& write_options,
     // suboptimal but still correct.
     WaitForPendingWrites();
     status = HandleWriteBufferFull(write_context);
+    if (immutable_db_options_.is_rubble && !immutable_db_options_.is_primary) {
+      std::cout << "Secondary executes HandleWriteBufferFull!\n";
+    }
   }
 
   if (UNLIKELY(status.ok() && !trim_history_scheduler_.Empty())) {
@@ -1883,6 +1889,17 @@ Status DBImpl::SwitchMemtable(ColumnFamilyData* cfd, WriteContext* context) {
   }
   InstallSuperVersionAndScheduleWork(cfd, &context->superversion_context,
                                      mutable_cf_options);
+  
+  if (immutable_db_options_.is_rubble && !immutable_db_options_.is_primary) {
+    std::lock_guard<std::mutex> memtable_ready_lk{*immutable_db_options_.memtable_ready_mu};
+    std::cout << "[version edits] Switch to memtable " << cfd->mem()->GetID() << " so notify\n";
+    immutable_db_options_.memtable_ready_cv->notify_all();
+    std::unique_lock<std::mutex> op_buffer_cv{*immutable_db_options_.op_buffer_mu};
+    immutable_db_options_.op_buffer_cv->notify_all();
+
+  }
+  
+                                     
 #ifndef ROCKSDB_LITE
   mutex_.Unlock();
   // Notify client that memtable is sealed, now that we have successfully

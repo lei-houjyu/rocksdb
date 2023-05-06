@@ -1829,6 +1829,8 @@ class MemTableInserter : public WriteBatch::Handler {
         // MarkFlushScheduled only returns true if we are the one that
         // should take action, so no need to dedup further
         flush_scheduler_->ScheduleWork(cfd);
+        std::lock_guard<std::mutex> lk{*db_->immutable_db_options().op_buffer_mu};
+        db_->immutable_db_options().op_buffer_cv->notify_all();
       }
     }
     // check if memtable_list size exceeds max_write_buffer_size_to_maintain

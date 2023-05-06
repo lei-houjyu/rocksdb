@@ -45,6 +45,9 @@ class VersionBuilder {
                            const SliceTransform* prefix_extractor,
                            size_t max_file_size_for_l0_meta_pin);
 
+  std::vector<FileMetaData*> AddedFilesAllLevels();
+  
+
  private:
   class Rep;
   std::unique_ptr<Rep> rep_;

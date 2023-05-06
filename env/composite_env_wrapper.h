@@ -511,6 +511,11 @@ class CompositeEnvWrapper : public Env {
     return env_target_->Schedule(f, a, pri, tag, u);
   }
 
+  void Schedule(void (*f)(void* arg), void* a, int id, Priority pri,
+                void* tag = nullptr, void (*u)(void* arg) = nullptr) override {
+    return env_target_->Schedule(f, a, id, pri, tag, u);
+  }
+
   int UnSchedule(void* tag, Priority pri) override {
     return env_target_->UnSchedule(tag, pri);
   }

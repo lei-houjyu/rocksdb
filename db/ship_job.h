@@ -41,6 +41,13 @@ struct ShipThreadArg {
         edits_json_(),
         db_options_(db_options),
         dependants_() {};
+    
+    int GetEditId() const {
+        assert(edits_json_.size() > 0 && edits_json_[0].size() > 0);
+        nlohmann::json j = nlohmann::json::parse(edits_json_[0]);
+        return j["Id"].get<int>();
+
+    }
 };
 
 bool HasEditJson(ShipThreadArg* const a);
@@ -55,13 +62,18 @@ void AddFile(ShipThreadArg* const sta, uint64_t times, uint64_t file_number);
 
 bool NeedShipSST(const ImmutableDBOptions* db_options);
 
+void ApplyDownstreamSstSlotDeletion(ShipThreadArg* sta, const nlohmann::json& reply_json);
+
 void ShipSST(FileInfo& file, const std::vector<std::string>& remote_sst_dirs, ShipThreadArg *sta);
+
+// void ShipJobTakeSlot(ShipThreadArg* sta, FileInfo& f);
 
 std::string VersionEditsToJson(uint64_t next_file_number,
                                uint64_t log_and_apply_counter,
                                const autovector<VersionEdit*>& edit_lists);
 
 SyncClient* GetSyncClient(const ImmutableDBOptions* db_options_);
+SyncClient* GetPrimarySyncClient(const ImmutableDBOptions* db_options_);
 
 bool AddedFiles(const autovector<autovector<VersionEdit*>>& edit_lists);
 

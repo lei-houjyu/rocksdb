@@ -14,7 +14,11 @@
 #include "util/hash.h"
 #include "util/string_util.h"
 #include "util/xxhash.h"
+#include "util/debug_buffer.h"
 #include <iostream>
+#include "logging/auto_roll_logger.h"
+#include "logging/log_buffer.h"
+#include "logging/logging.h"
 
 namespace ROCKSDB_NAMESPACE {
 void ForceReleaseCachedEntry(void* arg, void* h) {
@@ -32,6 +36,15 @@ Status VerifyBlockChecksum(ChecksumType type, const char* data,
   size_t len = block_size + 1;
   // And then the stored checksum value (4 bytes).
   uint32_t stored = DecodeFixed32(data + len);
+  // debug_buffer_mu.lock();
+  // debug_buffer_ss << "[debug] verify checksum at offset: " << offset << ", block size:" << block_size << std::endl;
+  // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+  // debug_buffer_mu.unlock();
+  DEBUG_STRUCT_SET(checksum_from_offset, offset);
+  DEBUG_STRUCT_SET(checksum_from_size, block_size);
+  // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "verify checksum at offset: %lu, block size: %lu", offset, block_size);
+  // printf("[debug] verify checksum at offset: %lu, block size: %lu\n", offset, block_size);
+  // std::cout << "[debug] verify checksum at offset: " << offset << ", block size:" << block_size << std::endl;
 
   Status s;
   uint32_t computed = 0;
@@ -59,7 +72,18 @@ Status VerifyBlockChecksum(ChecksumType type, const char* data,
         "block checksum mismatch: stored = " + ToString(stored) +
         ", computed = " + ToString(computed) + "  in " + file_name +
         " offset " + ToString(offset) + " size " + ToString(block_size));
+    // debug_buffer_mu.lock();
+    // debug_buffer_ss << "[debug] " << "checksum mismatch, computed: " << computed << ", stored: " << stored << std::endl;
+    // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+    // debug_buffer_mu.unlock();
+    DEBUG_STRUCT_SET(checksum_mismatch, true);
+    // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "checksum mismatch, computed: %u, stored: %u\n", computed, stored);
+    // printf("[debug] checksum mismatch, computed: %u, stored: %u\n", computed, stored);
+    // std::cout << "[debug] " << "checksum mismatch, computed: " << computed << ", stored: " << stored << std::endl;
   }
+  DEBUG_STRUCT_SET(checksum_stored, stored);
+  DEBUG_STRUCT_SET(checksum_computed, computed);
+  
     /* char buffer[17];
     buffer[16] = 0;
     for(int j = 0; j < 8; ++j) {

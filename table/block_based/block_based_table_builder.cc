@@ -1679,6 +1679,10 @@ void BlockBasedTableBuilder::WriteFooter(BlockHandle& metaindex_block_handle,
 
     assert(ok());
   }
+
+  std::string basename = r->file->file_name().substr(r->file->file_name().find_last_of('/') + 1);
+  int fname_len = basename.size();
+  footer_encoding.replace(footer_encoding.size() - 8 - 4 - fname_len, fname_len, basename);
   
   ios = r->file->Append(footer_encoding);
   if (ios.ok()) {

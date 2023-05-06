@@ -598,6 +598,7 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       is_tail(options.is_tail),
       disallow_flush_on_secondary(options.disallow_flush_on_secondary),
       target_address(options.target_address),
+      primary_address(options.primary_address),
       remote_sst_dir(options.remote_sst_dir),
       remote_sst_dirs(options.remote_sst_dirs),
       sst_pool_dir(options.sst_pool_dir),
@@ -605,6 +606,7 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       sst_pad_len(options.sst_pad_len),
       max_num_mems_in_flush(options.max_num_mems_in_flush),
       channel(options.channel),
+      primary_channel(options.primary_channel),
       sst_bit_map(options.sst_bit_map),
       piggyback_version_edits(options.piggyback_version_edits),
       edits(options.edits)
@@ -619,6 +621,12 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
             }
           }
         }
+        version_edit_mu = std::shared_ptr<std::mutex>(new std::mutex);
+        expected_edit_cv = std::shared_ptr<std::condition_variable>(new std::condition_variable);
+        memtable_ready_mu = std::shared_ptr<std::mutex>(new std::mutex);
+        memtable_ready_cv = std::shared_ptr<std::condition_variable>(new std::condition_variable);
+        op_buffer_mu = std::shared_ptr<std::mutex>(new std::mutex);
+        op_buffer_cv = std::shared_ptr<std::condition_variable>(new std::condition_variable);
 }
 
 void ImmutableDBOptions::Dump(Logger* log) const {

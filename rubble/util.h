@@ -95,12 +95,14 @@ void RunServer(rocksdb::DB* db, const std::string& server_addr) {
    grpc::EnableDefaultHealthCheckService(true);
    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
    ServerBuilder builder;
+   service.SpawnBGThreads();
 
    builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
    std::cout << "Server listening on " << server_addr << std::endl;
    builder.RegisterService(&service);
    std::unique_ptr<Server> server(builder.BuildAndStart());
    server->Wait();
+   service.FinishBGThreads();
 }
 
 void NewLogger(const std::string& log_fname, rocksdb::Env* env, std::shared_ptr<rocksdb::Logger>& logger){
@@ -145,7 +147,7 @@ void ReconstructSstBitMap(const std::string& map_log_fname, std::shared_ptr<SstB
             map->TakeOneAvailableSlot(static_cast<uint64_t>(nums[0]), nums[1]);
          }else{
             assert(nums.size() == 1);// delete operation 
-            map->FreeSlot(static_cast<uint64_t>(nums[0]));
+            map->FreeSlot(static_cast<uint64_t>(nums[0]), false);
          }
       }
       file.close();
@@ -168,8 +170,10 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
                                 const string& remote_sst_dir,
                                 const string& sst_pool_dir,
                                 const string& target_addr, 
+                                const string& primary_addr,
                                 bool is_rubble, bool is_primary, bool is_tail,
-                                const string& shard_id, const vector<string>& remote_sst_dirs = vector<string>()) {
+                                const string& shard_id, const vector<string>& remote_sst_dirs = vector<string>(),
+                                int rf = 3) {
 
    rocksdb::DB* db;
    rocksdb::DBOptions db_options;
@@ -198,6 +202,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    std::cout << "is_tail: " << db_options.is_tail << '\n';
    
    db_options.target_address=target_addr; //TODO(add target_addr, remote_sst_dir and preallocated_sst_pool_size to option file)
+   db_options.primary_address = primary_addr;
 
    // for non-tail nodes in rubble mode, it's shipping sst file to the remote_sst_dir;
    if (db_options.is_rubble && !is_tail) {
@@ -220,6 +225,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    rocksdb::ColumnFamilyOptions cf_options = loaded_cf_descs[0].options;
 
    db_options.env = rocksdb::Env::Default();
+   db_options.rf = rf;
 
    // add logger for rubble
    // the default path for the sst bit map log file, will try to reconstruct map from this file
@@ -267,6 +273,10 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       db_options.channel = grpc::CreateChannel(db_options.target_address, grpc::InsecureChannelCredentials());
    }
 
+   if (db_options.primary_address != "") {
+      db_options.primary_channel = grpc::CreateChannel(db_options.primary_address, grpc::InsecureChannelCredentials());
+   }
+
    if(db_options.is_rubble) {
       //ignore this flag for now, always set to true.
       db_options.disallow_flush_on_secondary = true;
@@ -282,11 +292,13 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       // }
       // a default LSM tree has up to 4448 SST files (4 L0, 4 L1, 40 L2, 400 L3, 4000 L4 files)
       // but we target 16GB per instance, so only need 1000 files at L4
-      db_options.preallocated_sst_pool_size = 5000;
+      db_options.preallocated_sst_pool_size = 1448;
       // db_options.preallocated_sst_pool_size = db_options.db_paths.front().target_size / (((cf_options.write_buffer_size >> 20) + 1) << 20);
       db_options.sst_bit_map = std::make_shared<SstBitMap>(
             db_options.preallocated_sst_pool_size, 
             db_options.max_num_mems_in_flush,
+            db_options.is_primary,
+            db_options.rf,
             db_options.rubble_info_log,
             map_logger);
    }

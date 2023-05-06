@@ -800,13 +800,15 @@ std::string VersionEdit::DebugJSON(int edit_num, bool hex_key) const {
     jw.StartArray();
 
     for (size_t i = 0; i < new_files_.size(); i++) {
+      int slot = -1;
       jw.StartArrayedObject();
       jw << "Level" << new_files_[i].first;
       const FileMetaData& f = new_files_[i].second;
       jw << "FileNumber" << f.fd.GetNumber();
-      if(!is_trivial_move_compaction_){
-        jw << "Slot" << GetSlot(f.fd.GetNumber());
-      }
+      // TODO:Sheng
+      if (IsFileMapped(f.fd.GetNumber()) != 0)
+        slot = GetSlot(f.fd.GetNumber());
+      jw << "Slot" << slot;
       jw << "FileSize" << f.fd.GetFileSize();
       jw << "SmallestUserKey" << f.smallest.user_key().ToString();
       jw << "SmallestSeqno" << f.fd.smallest_seqno;

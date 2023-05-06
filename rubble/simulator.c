@@ -41,10 +41,10 @@ int main(int argc, char * argv[])
     }
 
     for (int i = 0; i < BUF_SIZE; i++) {
-        w_sum += w_buf[i];
+        w_sum += w_buf[i] * i;
     }
  
-    fd = open(argv[1], O_WRONLY | O_DIRECT | O_CREAT | O_SYNC, 0755);
+    fd = open(argv[1], O_WRONLY | O_DIRECT | O_CREAT | O_DSYNC, 0755);
     if (fd < 0){
         perror("write open failed");
         exit(1);
@@ -53,7 +53,11 @@ int main(int argc, char * argv[])
     // ssize_t w_bytes = write(fd, w_buf, BUF_SIZE);
     ssize_t w_bytes = 0;
     while (w_bytes < BUF_SIZE) {
-        w_bytes += write(fd, w_buf + w_bytes, io_size);
+        ret = write(fd, w_buf + w_bytes, io_size);
+        if (ret <= 0) {
+            perror("write");
+        }
+        w_bytes += ret;
     }
 
     free(w_buf);
@@ -74,11 +78,15 @@ int main(int argc, char * argv[])
     // ssize_t r_bytes = read(fd, r_buf, BUF_SIZE);
     ssize_t r_bytes = 0;
     while (r_bytes < BUF_SIZE) {
-        r_bytes += read(fd, r_buf + r_bytes, io_size);
+        ret = read(fd, r_buf + r_bytes, io_size);
+        if (ret <= 0) {
+            perror("write");
+        }
+        r_bytes += ret;
     }
 
     for (int i = 0; i < BUF_SIZE; i++) {
-        r_sum += (unsigned int)r_buf[i];
+        r_sum += (unsigned int)r_buf[i] * i;
     }
 
     int wrong = 0;
@@ -88,7 +96,7 @@ int main(int argc, char * argv[])
         for (int j = 0; j < BLK_SIZE; j += 8) {
             int pos = i * BLK_SIZE + j;
             for (int k = 0; k < 8; k++) {
-                printf("%c", r_buf[pos + k]);
+                // printf("%c", r_buf[pos + k]);
                 if (blk_id[k] != r_buf[pos + k]) {
                     wrong = 1;
                 }
@@ -97,8 +105,6 @@ int main(int argc, char * argv[])
         if (wrong) {
             printf("\twrong! should be %s\n", blk_id);
             wrong = 0;
-        } else {
-            printf("\n");
         }
     }
 

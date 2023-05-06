@@ -24,6 +24,7 @@
 #include "table/persistent_cache_helper.h"
 #include "util/compression.h"
 #include "util/stop_watch.h"
+#include "util/debug_buffer.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -214,6 +215,13 @@ inline void BlockFetcher::GetBlockContents() {
 }
 
 Status BlockFetcher::ReadBlockContents() {
+  // debug_buffer_mu.lock();
+  // debug_buffer_ss << "[debug] ReadBlockContents" << std::endl;
+  // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+  // debug_buffer_mu.unlock();
+  // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "ReadBlockContents");
+  // printf("[debug] ReadBlockContents\n");
+  // std::cout << "[debug] ReadBlockContents" << std::endl;
   if (TryGetUncompressBlockFromPersistentCache()) {
     compression_type_ = kNoCompression;
 #ifndef NDEBUG
@@ -232,6 +240,20 @@ Status BlockFetcher::ReadBlockContents() {
     if (status_.ok()) {
       if (file_->use_direct_io()) {
         PERF_TIMER_GUARD(block_read_time);
+
+        // debug_buffer_mu.lock();
+        // debug_buffer_ss << "[debug] direct read file " << file_->file_name() << " at offset: " << handle_.offset()
+        //   << ", size: " << block_size_with_trailer_ << std::endl;
+        // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+        // debug_buffer_mu.unlock();
+        DEBUG_STRUCT_SET(direct_read, true);
+        DEBUG_STRUCT_SET(read_file_offset, handle_.offset());
+        DEBUG_STRUCT_SET(read_file_size, block_size_with_trailer_);
+        // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "direct read file %s at offset: %lu, size: %lu", 
+        //   file_->file_name().data(), handle_.offset(), block_size_with_trailer_);
+        // printf("[debug] direct read file %s at offset: %lu, size: %lu\n", file_->file_name().data(), handle_.offset(), block_size_with_trailer_);
+        // std::cout << "[debug] direct read file " << file_->file_name() << " at offset: " << handle_.offset()
+        //   << ", size: " << block_size_with_trailer_ << std::endl;
         status_ =
             file_->Read(opts, handle_.offset(), block_size_with_trailer_,
                         &slice_, nullptr, &direct_io_buf_, for_compaction_);
@@ -240,6 +262,19 @@ Status BlockFetcher::ReadBlockContents() {
       } else {
         PrepareBufferForBlockFromFile();
         PERF_TIMER_GUARD(block_read_time);
+        // debug_buffer_mu.lock();
+        // debug_buffer_ss << "[debug] buffer read file " << file_->file_name() << " at offset: " << handle_.offset()
+        //   << ", size: " << block_size_with_trailer_ << std::endl;
+        // debug_buffer = debug_buffer_ss.rdbuf()->str().data();
+        // debug_buffer_mu.unlock();
+        DEBUG_STRUCT_SET(buffer_read, true);
+        DEBUG_STRUCT_SET(read_file_offset, handle_.offset());
+        DEBUG_STRUCT_SET(read_file_size, block_size_with_trailer_);
+        // ROCKS_LOG_INFO(global_dboption->rubble_info_log, "buffer read file %s at offset: %lu, size: %lu", 
+        //   file_->file_name().data(), handle_.offset(), block_size_with_trailer_);
+        // printf("[debug] buffer read file %s at offset: %lu, size: %lu\n", file_->file_name().data(), handle_.offset(), block_size_with_trailer_);
+        // std::cout << "[debug] buffer read file " << file_->file_name() << " at offset: " << handle_.offset()
+        //   << ", size: " << block_size_with_trailer_ << std::endl;
         status_ = file_->Read(opts, handle_.offset(), block_size_with_trailer_,
                               &slice_, used_buf_, nullptr, for_compaction_);
         PERF_COUNTER_ADD(block_read_count, 1);
@@ -288,6 +323,9 @@ Status BlockFetcher::ReadBlockContents() {
     }
 
     CheckBlockChecksum();
+    // if (block_type_ == BlockType::kMetaIndex) {
+    //   std::cout << "read meta index block from file: " << file_->file_name() << ", contents: " << slice_.ToString(true) << std::endl;
+    // }
     if (status_.ok()) {
       InsertCompressedBlockToPersistentCacheIfNeeded();
     } else {
