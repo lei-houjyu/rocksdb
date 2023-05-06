@@ -4369,6 +4369,9 @@ Status VersionSet::LogAndApply(
     const autovector<autovector<VersionEdit*>>& edit_lists,
     InstrumentedMutex* mu, FSDirectory* db_directory, bool new_descriptor_log,
     const ColumnFamilyOptions* new_cf_options, ShipThreadArg* const sta) {
+  auto t1_now = std::chrono::system_clock::now();
+  auto t1 = std::chrono::system_clock::to_time_t(t1_now);
+  auto tm_1 = *std::localtime(&t1);
 
   // logAndApply is directly called inside three functions during normal execution:
   // 1) BackgroundCompaction inside db_impl_compaction_flush.cc , sepecifically when there is a trivial move compaction
@@ -4379,6 +4382,7 @@ Status VersionSet::LogAndApply(
   // RUBBLE: trigger RPC calls to downstream node to sync RocksDB states.
   ROCKS_LOG_INFO(db_options_->info_log, "LogAndApply called\n");
   log_and_apply_counter_.fetch_add(1);
+  unsigned long laac = log_and_apply_counter_.load();
   printf("[LogAndApply] counter: %lu sta: %p edits: %s\n", log_and_apply_counter_.load(), sta, 
     VersionEditsToJson(next_file_number_.load(), log_and_apply_counter_.load(), edit_lists.back()).data());
   if (sta != nullptr && AddedFiles(edit_lists)) {
@@ -4461,6 +4465,19 @@ Status VersionSet::LogAndApply(
   // for (int i = 0; i < vs_info->num_levels(); i++) {
   //   printf("%d: %d\n", i, vs_info->NumLevelFiles(i));
   // }
+
+  auto t2_now = std::chrono::system_clock::now();
+  auto t2 = std::chrono::system_clock::to_time_t(t2_now);
+  auto tm_2 = *std::localtime(&t2);
+
+  std::cout << "[Measure LogAndApply] id: " << laac
+            << ", t1: "
+            << std::put_time(&tm_1, "%H:%M:%S.") << std::setfill('0') << std::setw(6)
+            << std::chrono::duration_cast<std::chrono::microseconds>(t1_now.time_since_epoch()).count() % 1000000
+            << ", t2: "
+            << std::put_time(&tm_2, "%H:%M:%S.") << std::setfill('0') << std::setw(6)
+            << std::chrono::duration_cast<std::chrono::microseconds>(t2_now.time_since_epoch()).count() % 1000000
+            << std::endl;
 
   return s;
 }

@@ -27,7 +27,7 @@ static std::map<uint64_t, uint64_t> primary_op_cnt_map;
 #define BATCH_SIZE 1000
 
 void PrintStatus(RubbleKvServiceImpl *srv) {
-  return;
+  // return;
   uint64_t r_now = 0, r_old = srv->r_op_counter_.load();
   uint64_t w_now = 0, w_old = srv->w_op_counter_.load();
   while (true) {
@@ -413,6 +413,7 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
     //     wait
     // 3.2 if yes
     //     unlock and poll_op_buffer
+    // std::cout << "[DoOp] start polling op buffer, current memtable id " << default_cf_->mem()->GetID() << std::endl;
     auto it = op_buffer->begin();
     std::unique_lock<std::mutex> lk{*db_options_->op_buffer_mu};
     if (!should_execute(it->first)) {
@@ -420,8 +421,9 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
         return this->should_execute(it->first);
       });
       lk.unlock();
-      poll_op_buffer(forwarder, reply_client, op_buffer);
     }
+    poll_op_buffer(forwarder, reply_client, op_buffer);
+
 
 
     // poll_op_buffer(forwarder, reply_client, op_buffer);
