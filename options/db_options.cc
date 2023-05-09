@@ -627,6 +627,8 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
         memtable_ready_cv = std::shared_ptr<std::condition_variable>(new std::condition_variable);
         op_buffer_mu = std::shared_ptr<std::mutex>(new std::mutex);
         op_buffer_cv = std::shared_ptr<std::condition_variable>(new std::condition_variable);
+
+        shipped_files_nvmeof = std::shared_ptr<std::atomic_int>(new std::atomic_int(0));
 }
 
 void ImmutableDBOptions::Dump(Logger* log) const {

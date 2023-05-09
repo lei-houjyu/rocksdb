@@ -12,6 +12,7 @@ cp dstat.csv dstat-${suffix}.csv
 cp iostat.out iostat-${suffix}.out
 cp pids.out pids-${suffix}.out
 cp top.out top-${suffix}.out
+cp nethogs.out nethogs-${suffix}.out
 
 for (( i=0; i<$shard_num; i++ ))
 do

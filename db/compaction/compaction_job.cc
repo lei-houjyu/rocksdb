@@ -748,7 +748,7 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
 
   if (status.ok()) {
     status = InstallCompactionResults(mutable_cf_options);
-    printf("[Install] before schedule sta_ %p\n", sta_);
+    // printf("[Install] before schedule sta_ %p\n", sta_);
     if (sta_ != nullptr) {
       db_options_.env->Schedule(&BGWorkShip, (void *)sta_, sta_->GetEditId(), Env::Priority::SHIP, this,
                                 &UnscheduleShipCallback);
