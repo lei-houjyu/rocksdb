@@ -1892,7 +1892,7 @@ Status DBImpl::SwitchMemtable(ColumnFamilyData* cfd, WriteContext* context) {
   
   if (immutable_db_options_.is_rubble && !immutable_db_options_.is_primary) {
     std::lock_guard<std::mutex> memtable_ready_lk{*immutable_db_options_.memtable_ready_mu};
-    std::cout << "[version edits] Switch to memtable " << cfd->mem()->GetID() << " so notify\n";
+    // std::cout << "[version edits] Switch to memtable " << cfd->mem()->GetID() << " so notify\n";
     immutable_db_options_.memtable_ready_cv->notify_all();
     std::unique_lock<std::mutex> op_buffer_cv{*immutable_db_options_.op_buffer_mu};
     immutable_db_options_.op_buffer_cv->notify_all();

@@ -79,6 +79,11 @@ void ShipSST(FileInfo& file, const std::vector<std::string>& remote_sst_dirs, Sh
             assert(false);
         }
 
+        sta->db_options_->shipped_files_nvmeof->fetch_add(1);
+        ROCKS_LOG_INFO(sta->db_options_->info_log, 
+            "Shipped SST file %s via NVMe-oF, total count: %d", fname.c_str(),
+            sta->db_options_->shipped_files_nvmeof->load());
+
         // assert(fsync(r_fd) == 0);
 
         // int w_fd;
@@ -152,9 +157,9 @@ SyncClient* GetSyncClient(const ImmutableDBOptions* db_options_) {
             }
             client = new SyncClient(channel);
         } while (channel->GetState(false) != 2);
-        std::cout << "thread " << std::this_thread::get_id()
-                    << " creates sync client " << client
-                    << " state " << channel->GetState(false) << std::endl;
+        // std::cout << "thread " << std::this_thread::get_id()
+        //             << " creates sync client " << client
+        //             << " state " << channel->GetState(false) << std::endl;
     }
 
     return client;
@@ -173,9 +178,9 @@ SyncClient* GetPrimarySyncClient(const ImmutableDBOptions* db_options_) {
             }
             primary_client = new SyncClient(channel);
         } while (channel->GetState(false) != 2);
-        std::cout << "thread " << std::this_thread::get_id()
-                    << " creates sync client " << primary_client
-                    << " state " << channel->GetState(false) << std::endl;
+        // std::cout << "thread " << std::this_thread::get_id()
+        //             << " creates sync client " << primary_client
+        //             << " state " << channel->GetState(false) << std::endl;
     }
     
 
@@ -227,9 +232,9 @@ bool AddedFiles(const autovector<autovector<VersionEdit*>>& edit_lists) {
 
 void BGWorkShip(void* arg) {
     // TODO: print edit ID timestamp
-    auto t1_now = std::chrono::system_clock::now();
-    auto t1 = std::chrono::system_clock::to_time_t(t1_now);
-    auto tm_1 = *std::localtime(&t1);
+    // auto t1_now = std::chrono::system_clock::now();
+    // auto t1 = std::chrono::system_clock::to_time_t(t1_now);
+    // auto tm_1 = *std::localtime(&t1);
     ShipThreadArg* sta = reinterpret_cast<ShipThreadArg*>(arg);
 
     // 1. ship SST file to secondary nodes
@@ -237,20 +242,20 @@ void BGWorkShip(void* arg) {
     // int sst_slot = sta->db_options_->sst_bit_map->TakeOneAvailableSlot(sta->sst_number_, sta->times_);
 
     // 1.2 ship SST file via NVMe-oF
-    std::stringstream ss;
+    // std::stringstream ss;
     std::vector<std::pair<uint64_t, int>> files_info;
     std::map<int, int> needed_slots;
 
     for (FileInfo f : sta->files_) {
         files_info.push_back({f.file_number_, f.times_});
         needed_slots[f.times_]++;
-        ss << f.file_number_ << ",";
+        // ss << f.file_number_ << ",";
     }
     for (ShipThreadArg* const s : sta->dependants_) {
         for (FileInfo f : s->files_) {
             files_info.push_back({f.file_number_, f.times_});
             needed_slots[f.times_]++;
-            ss << f.file_number_ << ",";
+            // ss << f.file_number_ << ",";
         }
     }
 
@@ -263,11 +268,11 @@ void BGWorkShip(void* arg) {
         std::cout << "Wake up! now I have " << sta->db_options_->sst_bit_map->GetAvailableSlots(1) << " free slots!" << std::endl;
     }
     // std::cout << "take slots for files: " << ss.str() << "successfully" << std::endl;
-    ss.str(std::string());
+    // ss.str(std::string());
 
-    auto t2_now = std::chrono::system_clock::now();
-    auto t2 = std::chrono::system_clock::to_time_t(t2_now);
-    auto tm_2 = *std::localtime(&t2);
+    // auto t2_now = std::chrono::system_clock::now();
+    // auto t2 = std::chrono::system_clock::to_time_t(t2_now);
+    // auto tm_2 = *std::localtime(&t2);
 
     // then ship sst
     // TODO: print edit ID timestamp
@@ -275,20 +280,20 @@ void BGWorkShip(void* arg) {
         int slot = sta->db_options_->sst_bit_map->GetFileSlotNum(f.file_number_);
         f.slot_number_ = slot;
         ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
-        ss << "file " << f.file_number_ << " takes slot " << slot << ", ";
+        // ss << "file " << f.file_number_ << " takes slot " << slot << ", ";
     }
     for (ShipThreadArg* const s : sta->dependants_) {
         for (FileInfo f : s->files_) {
             int slot = sta->db_options_->sst_bit_map->GetFileSlotNum(f.file_number_);
             f.slot_number_ = slot;
             ShipSST(f, sta->db_options_->remote_sst_dirs, sta);
-            ss << "file " << f.file_number_ << " takes slot " << slot << ", ";
+            // ss << "file " << f.file_number_ << " takes slot " << slot << ", ";
         }
     }
 
-    auto t3_now = std::chrono::system_clock::now();
-    auto t3 = std::chrono::system_clock::to_time_t(t3_now);
-    auto tm_3 = *std::localtime(&t3);
+    // auto t3_now = std::chrono::system_clock::now();
+    // auto t3 = std::chrono::system_clock::to_time_t(t3_now);
+    // auto tm_3 = *std::localtime(&t3);
 
     // auto now = std::chrono::system_clock::now();
     // auto now_c = std::chrono::system_clock::to_time_t(now);
@@ -305,7 +310,7 @@ void BGWorkShip(void* arg) {
         // printf("[BGWorkShip] sta_ %p json_length %ld\n", sta, json.length());
         if (json.length() > 0) {
             // fill in the slot info in the json here
-            printf("[BGWorkShip] sta: %p edits_json: %s\n", sta, json.data());
+            // printf("[BGWorkShip] sta: %p edits_json: %s\n", sta, json.data());
             nlohmann::json j = nlohmann::json::parse(json), j_new;
 
             for (auto& it : j.items()) {
@@ -336,27 +341,27 @@ void BGWorkShip(void* arg) {
                     j_new["EditList"] = edit_array;
                 }
             }
-            std::cout << "modified json: " << j_new.dump() << std::endl;
+            // std::cout << "modified json: " << j_new.dump() << std::endl;
             
-            auto t4_now = std::chrono::system_clock::now();
-            auto t4 = std::chrono::system_clock::to_time_t(t4_now);
-            auto tm_4 = *std::localtime(&t4);
+            // auto t4_now = std::chrono::system_clock::now();
+            // auto t4 = std::chrono::system_clock::to_time_t(t4_now);
+            // auto tm_4 = *std::localtime(&t4);
             SyncClient* client = GetSyncClient(sta->db_options_);
             client->Sync(j_new.dump());
 
-            std::cout << "[ship event] edit id: " << j_new["Id"].get<uint64_t>() 
-                << ", t1: "
-                << std::put_time(&tm_1, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
-                << std::chrono::duration_cast<std::chrono::milliseconds>(t1_now.time_since_epoch()).count() % 1000
-                << ", t2: "
-                << std::put_time(&tm_2, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
-                << std::chrono::duration_cast<std::chrono::milliseconds>(t2_now.time_since_epoch()).count() % 1000
-                << ", t3: "
-                << std::put_time(&tm_3, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
-                << std::chrono::duration_cast<std::chrono::milliseconds>(t3_now.time_since_epoch()).count() % 1000
-                << ", t4: "
-                << std::put_time(&tm_4, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
-                << std::chrono::duration_cast<std::chrono::milliseconds>(t4_now.time_since_epoch()).count() % 1000 << std::endl;
+            // std::cout << "[ship event] edit id: " << j_new["Id"].get<uint64_t>() 
+            //     << ", t1: "
+            //     << std::put_time(&tm_1, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
+            //     << std::chrono::duration_cast<std::chrono::milliseconds>(t1_now.time_since_epoch()).count() % 1000
+            //     << ", t2: "
+            //     << std::put_time(&tm_2, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
+            //     << std::chrono::duration_cast<std::chrono::milliseconds>(t2_now.time_since_epoch()).count() % 1000
+            //     << ", t3: "
+            //     << std::put_time(&tm_3, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
+            //     << std::chrono::duration_cast<std::chrono::milliseconds>(t3_now.time_since_epoch()).count() % 1000
+            //     << ", t4: "
+            //     << std::put_time(&tm_4, "%H:%M:%S.") << std::setfill('0') << std::setw(3)
+            //     << std::chrono::duration_cast<std::chrono::milliseconds>(t4_now.time_since_epoch()).count() % 1000 << std::endl;
         }
     }
 

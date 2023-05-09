@@ -216,8 +216,8 @@ void ThreadPoolImpl::Impl::BGThread(size_t thread_id) {
     while (!exit_all_threads_ && !IsLastExcessiveThread(thread_id) &&
            (queue_.empty() || IsExcessiveThread(thread_id) ||
            (IsShipThread() && (bg_it = NextShipTask()) == queue_.end()))) {
-      if (IsShipThread())
-        std::cout << "ship job can't be scheduled, wait for job id " << expected_id_.load() << "..." << std::endl;
+      // if (IsShipThread())
+      //   std::cout << "ship job can't be scheduled, wait for job id " << expected_id_.load() << "..." << std::endl;
       bgsignal_.wait(lock);
     }
 
@@ -246,7 +246,7 @@ void ThreadPoolImpl::Impl::BGThread(size_t thread_id) {
 
     std::function<void()> func;
     if (IsShipThread()) {
-      std::cout << "expected id " << expected_id_ << ", got id " << (*bg_it).id << std::endl;
+      // std::cout << "expected id " << expected_id_ << ", got id " << (*bg_it).id << std::endl;
       func = std::move((*bg_it).function);
       queue_.erase(bg_it);
       expected_id_++;
