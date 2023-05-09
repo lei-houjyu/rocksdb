@@ -420,8 +420,8 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
       db_options_->op_buffer_cv->wait(lk, [&] {
         return this->should_execute(it->first);
       });
-      lk.unlock();
     }
+    lk.unlock();
     poll_op_buffer(forwarder, reply_client, op_buffer);
 
 
