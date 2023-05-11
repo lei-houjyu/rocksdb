@@ -695,13 +695,16 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
     // std::cout << "enter Sync loop\n";
     while (stream->Read(&request)) {
       std::string args = request.args();
+      int rid = request.rid();
+
       // std::cout << "[Sync] get " << args << std::endl;
+
       if (!db_options_->is_primary) {
         BufferVersionEdits(args);
         
         if (!db_options_->is_tail) {
           SyncClient* sync_client = rocksdb::GetSyncClient(db_options_);
-          sync_client->Sync(args);
+          sync_client->Sync(request);
         }
       } else {
         // std::cout << "[Sync] primary: received deleted slots from tail, args: " << args << std::endl;
@@ -715,7 +718,7 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
           //     << slot << std::endl; 
           tail_deleted_files.insert(filenumber);
         }
-        db_options_->sst_bit_map->FreeSlot(tail_deleted_files, true);
+        db_options_->sst_bit_map->FreeSlot(tail_deleted_files, rid, true);
       }
 
       // {
@@ -965,7 +968,7 @@ void RubbleKvServiceImpl::VersionEditsExecutor() {
 
     auto sync_client = rocksdb::GetPrimarySyncClient(db_options_);
     std::string sync_reply = SetSyncReplyMessage();
-    sync_client->Sync(sync_reply);
+    sync_client->Sync(sync_reply, db_options_->rid);
    }
 }
 
@@ -1398,7 +1401,8 @@ rocksdb::IOStatus RubbleKvServiceImpl::DeleteSstFiles(const rocksdb::VersionEdit
         int slot_num = db_options_->sst_bit_map->GetFileSlotNum(file_number);
         // std::cout << "receive a delete request from upstream, edit num: " << edit.GetEditNumber() << ", delete file: " << file_number << " slot: "
         //     << slot_num << std::endl;
-        db_options_->sst_bit_map->FreeSlot(file_number, false);
+        std::set<uint64_t> deleted_files{file_number};
+        db_options_->sst_bit_map->FreeSlot(deleted_files, 0, false);
         deleted_slots_.insert(slot_num);
         // db_options_->sst_bit_map->FreeSlot2(slot_num);
         // if (db_options_->sst_bit_map->CheckSlotFreed(slot_num)) {

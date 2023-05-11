@@ -120,6 +120,8 @@ struct ImmutableDBOptions {
   std::shared_ptr<std::mutex> op_buffer_mu;
   std::shared_ptr<std::condition_variable> op_buffer_cv;
   std::shared_ptr<std::atomic_int> shipped_files_nvmeof;
+  int rid;
+  int rf;
 };
 
 struct MutableDBOptions {

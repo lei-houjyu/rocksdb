@@ -26,11 +26,12 @@ SstBitMap::SstBitMap(int pool_size, int max_num_mems_in_flush,
         }
 
         if (is_primary) {
-            slot_initial_usage_ = rf - 1;
+            // primary needs to know which secondary node has freed the slot
+            slot_initial_usage_ = (1 << rf) - 2;
         } else {
             slot_initial_usage_ = 1;
         }
-        
+
         // if (is_tail || is_primary) {
         //     slot_initial_usage_ = 1;
         // } else {
@@ -85,7 +86,7 @@ int SstBitMap::TakeOneAvailableSlot(uint64_t file_num, int times){
     }
     
     slots_[slot_num] = file_num;
-    slot_usage_[slot_num] += slot_initial_usage_;
+    slot_usage_[slot_num] = slot_initial_usage_;
     RUBBLE_LOG_INFO(map_logger_, "%lu %d\n", file_num, times);
     RUBBLE_LOG_INFO(logger_, "Take Slot (%lu , %d)\n", file_num, slot_num);
     // std::cout << "[sst bitmap] " << "File " << file_num << " takes slot " << slot_num << std::endl;
@@ -155,7 +156,7 @@ bool SstBitMap::TakeSlotsInBatch(const std::vector<std::pair<uint64_t, int>>& fi
         int slot_num = p.second;
 
         slots_[slot_num] = file_num;
-        slot_usage_[slot_num] += slot_initial_usage_;
+        slot_usage_[slot_num] = slot_initial_usage_;
         file_slots_.emplace(file_num, slot_num);
         num_slots_taken_[0]++;  // as we suppose times=1 for now
 
@@ -216,72 +217,17 @@ void SstBitMap::CheckNumSlotsTaken(){
     assert(static_cast<int>(file_slots_.size()) == total_slots_taken);
 }
 
-int SstBitMap::FreeSlot(uint64_t file_num, bool notify) {
-    std::lock_guard<std::mutex> lk{mu_};
-    // assert that the file num in file_slots map
-
-    // FIXME:Sheng workaround - in case the downstream progresses faster
-    // assert(file_slots_.find(file_num) != file_slots_.end());
-    int slot_num = file_slots_[file_num];
-    // assert(slot_usage_[slot_num] == 1 || slot_usage_[slot_num] == 2);
-    slot_usage_[slot_num]--;
-
-    // std::cout << "[sst bitmap] " << "try to free slot " << slot_num << " of file " << file_num << std::endl;
-
-    if (slot_usage_[slot_num] == 0) {
-        RUBBLE_LOG_INFO(map_logger_, "%lu\n", file_num);
-        RUBBLE_LOG_INFO(logger_, "Free Slot (%d , %lu) \n", slot_num, slots_[slot_num]);
-        // printf("Free Slot (%d , %lu) \n", slot_num, slots_[slot_num]);
-        LogFlush(map_logger_);
-        LogFlush(logger_);
-        int idx = slot_num <= size_ ? 0 : ((slot_num - size_ - 1) /num_big_slots_  + 1 );
-        num_slots_taken_[idx]--;
-        slots_[slot_num] = 0;
-        file_slots_.erase(file_num);
-        if (notify)
-            NotifyFreeSlot();
-        // std::cout << "[sst bitmap] " << "successfully free slot " << slot_num << " of file " << file_num << std::endl;   
-    }
-
-    // std::cout << "[sst bitmap] remains " << size_ - num_slots_taken_[0] << " free slots" << std::endl;
-    return slot_num;
-}
-
-void SstBitMap::FreeSlot2(int slot, bool notify) {
-    std::lock_guard<std::mutex> lk{mu_};
-
-    uint64_t filenumber = slots_[slot];
-    slot_usage_[slot]--;
-
-    if (slot_usage_[slot] == 0) {
-        int idx = slot <= size_ ? 0 : ((slot - size_ - 1) / num_big_slots_ + 1);
-        num_slots_taken_[idx]--;
-        slots_[slot] = 0;
-        assert(filenumber > 0);
-        file_slots_.erase(filenumber);
-
-        if (notify)
-            NotifyFreeSlot();
-        // std::cout << "[sst bitmap] " << "free slot " << slot << " of file " << filenumber << std::endl;
-    }
-    // std::cout << "[sst bitmap] remains " << size_ - num_slots_taken_[0] << " free slots" << std::endl;
-    // if filenumber = 0, then this FreeSlot request is from the `future`
-    if (filenumber == 0) {
-
-    }
-}
-
 bool SstBitMap::CheckSlotFreed(int slot_num) {
     return slot_usage_[slot_num] == 0;
 }
 
-void SstBitMap::FreeSlot(std::set<uint64_t> file_nums, bool notify) {
+void SstBitMap::FreeSlot(std::set<uint64_t> file_nums, int rid, bool notify) {
     std::lock_guard<std::mutex> lk{mu_};
 
     for (uint64_t file_num : file_nums) {
         int slot_num = file_slots_[file_num];
         // assert(slot_usage_[slot_num] == 1 || slot_usage_[slot_num] == 2);
-        slot_usage_[slot_num]--;
+        slot_usage_[slot_num] &= ~(1 << rid);
 
         // std::cout << "[sst bitmap] " << "try to free slot " << slot_num << " of file " << file_num << std::endl;
 
@@ -302,8 +248,9 @@ void SstBitMap::FreeSlot(std::set<uint64_t> file_nums, bool notify) {
         // std::cout << "[sst bitmap] remains " << size_ - num_slots_taken_[0] << " free slots" << std::endl;
     }
 
-    if (notify)
+    if (notify) {
         NotifyFreeSlot();
+    }
 }
     
 uint64_t SstBitMap::GetSlotFileNum(int slot_num){
@@ -333,7 +280,7 @@ void SstBitMap::TakeSlot(uint64_t file_num, int slot_num, int times) {
     LogFlush(logger_);
 
     slots_[slot_num] = file_num;
-    slot_usage_[slot_num] += slot_initial_usage_;
+    slot_usage_[slot_num] = slot_initial_usage_;
     file_slots_[file_num] = slot_num;
     num_slots_taken_[times-1]++;
 

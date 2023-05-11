@@ -38,7 +38,7 @@ class SyncClient {
 
     ~SyncClient();
 
-  void Sync(const std::string& args);
+  void Sync(const std::string& args, int rid);
 
   void Sync(const SyncRequest& request);
 

@@ -117,43 +117,6 @@ void NewLogger(const std::string& log_fname, rocksdb::Env* env, std::shared_ptr<
    }
 }
 
-void ReconstructSstBitMap(const std::string& map_log_fname, std::shared_ptr<SstBitMap>& map){
-   std::fstream file;
-   file.open(map_log_fname, std::ios::in); //open a file to perform read operation using file object
-
-   if (file.is_open()) {
-      std::string line;
-      while (std::getline(file, line)) {
-         int idx = 0;
-         
-         std::vector<std::string> tokens;
-         std::size_t start = 0, end = 0;
-
-         while ((end = line.find(" ", start)) != std::string::npos) {
-               if(idx >= 3){
-                  tokens.push_back(line.substr(start, end - start));
-               }
-               start = end + 1;
-               idx++;
-         }
-         tokens.push_back(line.substr(start));
-
-         std::vector<int> nums;
-         for (auto token: tokens){
-               nums.push_back(atoi(token.data()));
-         }
-
-         if(nums.size() == 2){ // means its an insert operation to map
-            map->TakeOneAvailableSlot(static_cast<uint64_t>(nums[0]), nums[1]);
-         }else{
-            assert(nums.size() == 1);// delete operation 
-            map->FreeSlot(static_cast<uint64_t>(nums[0]), false);
-         }
-      }
-      file.close();
-   }
-}
-
 /**
  * @param db_path the db path
  * @param sst_dir local sst directory
@@ -173,7 +136,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
                                 const string& primary_addr,
                                 bool is_rubble, bool is_primary, bool is_tail,
                                 const string& shard_id, const vector<string>& remote_sst_dirs = vector<string>(),
-                                int rf = 3) {
+                                int rid = -1, int rf = 3) {
 
    rocksdb::DB* db;
    rocksdb::DBOptions db_options;
@@ -226,6 +189,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
 
    db_options.env = rocksdb::Env::Default();
    db_options.rf = rf;
+   db_options.rid = rid;
 
    // add logger for rubble
    // the default path for the sst bit map log file, will try to reconstruct map from this file
@@ -248,15 +212,13 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
       map_log_fname = rubble_log_path + shard_id + "_secondary_sst_map_log";
    }
 
-   bool recover_mode = false;
    std::string current_fname = rocksdb::CurrentFileName(db_path);
+
+   // It's not a clean start
    s = db_options.env->FileExists(current_fname);
-   // means menifest exits, which means db is recovered from wal
-   if(s.ok()){
-      s = db_options.env->FileExists(map_log_fname);
-      assert(s.ok());
-      recover_mode = true;
-   }
+   assert(!s.ok());
+   s = db_options.env->FileExists(map_log_fname);
+   assert(!s.ok());
 
   std::cout << "[info log fname] " << rubble_info_log_fname << "\n";
   std::cout << "[sst map log fname] " << map_log_fname << "\n";
@@ -265,9 +227,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    NewLogger(rubble_info_log_fname, db_options.env, logger);
    db_options.rubble_info_log = logger;
 
-   if(!recover_mode){ // load phase, create new map logger
-      NewLogger(map_log_fname, db_options.env, map_logger);
-   }
+   NewLogger(map_log_fname, db_options.env, map_logger);
 
    if(db_options.target_address != "") {
       db_options.channel = grpc::CreateChannel(db_options.target_address, grpc::InsecureChannelCredentials());
@@ -301,10 +261,6 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
             db_options.rf,
             db_options.rubble_info_log,
             map_logger);
-   }
-
-   if(recover_mode && is_rubble){
-      ReconstructSstBitMap(map_log_fname, db_options.sst_bit_map);
    }
 
    // if(!db_options.is_primary){

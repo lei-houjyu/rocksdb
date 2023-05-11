@@ -609,7 +609,9 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       primary_channel(options.primary_channel),
       sst_bit_map(options.sst_bit_map),
       piggyback_version_edits(options.piggyback_version_edits),
-      edits(options.edits)
+      edits(options.edits),
+      rid(options.rid),
+      rf(options.rf)
       {
         if(is_rubble && !is_tail){
           if(remote_sst_dir.back() != '/'){

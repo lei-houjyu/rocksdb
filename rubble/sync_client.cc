@@ -20,40 +20,14 @@ SyncClient::~SyncClient(){
     // grpc_thread_->join();
 }
 
-void SyncClient::Sync(const std::string& args){
-
+void SyncClient::Sync(const std::string& args, int rid) {
     SyncRequest request;
     request.set_args(args);
-    if (!sync_stream_->Write(request)) {
-        sync_stream_->WritesDone();
-        Status s = sync_stream_->Finish();
-        std::cout << "Sync fail!"
-                << " msg: " << s.error_message() 
-                << " detail: " << s.error_details() 
-                << " debug: " << context_.debug_error_string() << std::endl;
-        assert(false);
-      }
-
-    // SyncReply reply;
-    // sync_stream_->Read(&reply);
-    // std::cout << "[Sync Reply] " << reply.message() << std::endl;
-    // assert(CheckReply(reply));
-    // std::cout << "thread : " << std::this_thread::get_id() << ", Ready : " << ready_.load() << std::endl;
-    // if(!ready_.load()){ 
-    //     std::unique_lock<std::mutex> lk{mu_};
-    //     std::cout << "######################### waiting on ready_ ######################" << std::endl;
-    //     cv_.wait(lk, [&](){return ready_.load();});
-    //     std::cout << "notified" << std::endl;
-    // }
-
-    // ready_.store(false);
-    // // SyncRequest request;
-    // request_.set_args(args);
-
-    // stream_->Write(request_, reinterpret_cast<void*>(Type::WRITE));  
+    request.set_rid(rid);
+    Sync(request);
 }
 
-void SyncClient::Sync(const SyncRequest& request){
+void SyncClient::Sync(const SyncRequest& request) {
     assert(sync_stream_->Write(request));
 }
 

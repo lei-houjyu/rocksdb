@@ -347,7 +347,7 @@ void BGWorkShip(void* arg) {
             // auto t4 = std::chrono::system_clock::to_time_t(t4_now);
             // auto tm_4 = *std::localtime(&t4);
             SyncClient* client = GetSyncClient(sta->db_options_);
-            client->Sync(j_new.dump());
+            client->Sync(j_new.dump(), sta->db_options_->rid);
 
             // std::cout << "[ship event] edit id: " << j_new["Id"].get<uint64_t>() 
             //     << ", t1: "

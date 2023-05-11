@@ -1206,6 +1206,8 @@ struct DBOptions {
 
   int rf = 3;
 
+  int rid = -1;
+
   bool is_rubble = false;
 
   // used when rubble mode is enabled

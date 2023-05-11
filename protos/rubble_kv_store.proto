@@ -83,7 +83,8 @@ message Reply{
 
 message SyncRequest {
     // a json string of args
-    string  args = 1;
+    string args = 1;
+    int32 rid = 2;
 }
 
 message SyncReply {
