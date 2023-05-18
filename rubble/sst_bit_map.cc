@@ -173,6 +173,22 @@ int SstBitMap::GetAvailableSlots(int times) {
     return size_ - num_slots_taken_[times - 1];
 }
 
+// Since the tail is dead, we erase its bit in all slots
+void SstBitMap::RemoveTail(int rf) {
+    slot_initial_usage_ = (1 << (rf - 1)) - 2;
+    int tail_rid = rf -  1;
+    int tail_bit = 1 << tail_rid;
+    std::set<uint64_t> tail_used_files;
+    
+    for (size_t i = 0; i < slot_usage_.size(); i++) {
+        if (slot_usage_[i] & tail_bit) {
+            tail_used_files.insert(i);
+        }
+    }
+
+    FreeSlot(tail_used_files, tail_rid, true);
+}
+
 void SstBitMap::WaitForFreeSlots(const std::map<int, int>& needed_slots) {
     std::unique_lock<std::mutex> lock{mu_};
     bitmap_full_cond_.wait(lock, [&] { 

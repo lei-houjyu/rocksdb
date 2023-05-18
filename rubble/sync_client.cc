@@ -21,6 +21,10 @@ SyncClient::~SyncClient(){
 }
 
 void SyncClient::Sync(const std::string& args, int rid) {
+    if (need_recovery) {
+        std::cout << "[Sync] need recovery, simply return\n";
+        return;
+    }
     SyncRequest request;
     request.set_args(args);
     request.set_rid(rid);
@@ -28,7 +32,11 @@ void SyncClient::Sync(const std::string& args, int rid) {
 }
 
 void SyncClient::Sync(const SyncRequest& request) {
-    assert(sync_stream_->Write(request));
+    bool s = sync_stream_->Write(request);
+    if (!s) {
+        std::cout << "[Sync] fail!\n";
+        need_recovery = true;
+    }
 }
 
 // read a reply back for a sync request

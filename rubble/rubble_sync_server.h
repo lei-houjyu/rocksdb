@@ -42,7 +42,7 @@ using rubble::OpReply;
 using rubble::SingleOp;
 using rubble::SingleOpReply;
 using rubble::OpType_Name;
-using rubble::PingRequest;
+using rubble::RecoverRequest;
 using rubble::Empty;
 
 using json = nlohmann::json;
@@ -66,7 +66,7 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
               ServerReaderWriter<SyncReply, SyncRequest>* stream) override;
   
   // heartbeat between Replicator and db servers
-  Status Pulse(ServerContext* context, const PingRequest* request, Empty* reply) override;
+  Status Recover(ServerContext* context, const RecoverRequest* request, Empty* reply) override;
 
   rocksdb::ColumnFamilyData* GetCFD();
 
@@ -244,6 +244,9 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     bool is_rubble_ = false;
     bool is_head_ = false;
     bool is_tail_ = false;
+
+    bool remove_tail_ = false;
+    bool insert_tail_ = false;
 
     bool  piggyback_edits_ = false;
   

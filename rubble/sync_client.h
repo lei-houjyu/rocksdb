@@ -85,4 +85,6 @@ class SyncClient {
     std::unique_ptr<std::thread> grpc_thread_;
     // Finish status when the client is done with the stream.
     grpc::Status finish_status_ = grpc::Status::OK;
+
+    bool need_recovery = false;
 };

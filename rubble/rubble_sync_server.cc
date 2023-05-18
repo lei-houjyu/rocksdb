@@ -158,7 +158,17 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     num_stream.fetch_add(1);
     // std::cout << "num_stream: " << num_stream.load() << std::endl;
 
+    std::shared_ptr<grpc::Channel> recovery_channel = nullptr;
+
     while (stream->Read(&tmp_op)) {
+      if (remove_tail_) {
+        // We are the new tail now, so build the reply client
+        std::string replicator_addr = "10.10.1.1:50040";
+        recovery_channel = grpc::CreateChannel(replicator_addr, grpc::InsecureChannelCredentials());
+        reply_client = new ReplyClient(recovery_channel);
+        is_tail_ = true;
+      }
+
       if (shard_idx == -1) {
         shard_idx = tmp_op.shard_idx();
         client_idx = tmp_op.client_idx();
@@ -647,7 +657,7 @@ void RubbleKvServiceImpl::PostProcessing(SingleOp* singleOp, Forwarder* forwarde
   //   ApplyBufferedVersionEdits();
   // }
 
-  if (db_options_->is_tail) {
+  if (is_tail_) {
     reply_client->SendReply(*reply);
   } else {
     // if(piggyback_edits_ && is_rubble_ && is_head_) {
@@ -702,7 +712,7 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
       if (!db_options_->is_primary) {
         BufferVersionEdits(args);
         
-        if (!db_options_->is_tail) {
+        if (!is_tail_) {
           SyncClient* sync_client = rocksdb::GetSyncClient(db_options_);
           sync_client->Sync(request);
         }
@@ -801,21 +811,22 @@ bool RubbleKvServiceImpl::IsTermination(Op* op) {
 }
 
 // heartbeat between Replicator and db servers
-Status RubbleKvServiceImpl::Pulse(ServerContext* context, const PingRequest* request, Empty* reply) {
-  std::cout << "Checking...\n";
-  // while(true) {}
-  if (request->isaction()) {
-    if (request->isprimary()) {
-      std::cout << "becoming primary\n";
-      if (impl_!= nullptr) {
-        std::cout << "restarting compaction..." << "\n";
-        impl_->restartCompaction();
-        is_head_ = true;
-        std::cout << "flush enabled." << "\n";
-      }
-    } else { 
-      std::cout << "middle node or tail node failure\n";     
+Status RubbleKvServiceImpl::Recover(ServerContext* context, const RecoverRequest* request, Empty* reply) {
+  if (request->remove_tail()) {
+    if (db_options_->is_primary) {
+      // 1. Update SST bitmap
+      db_options_->sst_bit_map->RemoveTail(db_options_->rf);
+
+      // 2. Update remote dirs in ship job
+      std::string tail_dir = db_options_->remote_sst_dirs.back();
+      db_options_->remote_sst_dirs.pop_back();
+      std::cout << "[Recover] remove " << tail_dir << " from remote_sst_dirs\n";
+    } else {
+      // 1. Mark self as the new tail
+      remove_tail_ = true;
     }
+  } else {
+
   }
   return Status::OK;
 }

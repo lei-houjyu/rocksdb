@@ -32,7 +32,12 @@ class Forwarder{
 
     // forward the op to the next node
     void Forward(const Op& op){
+      if (need_recovery) {
+        std::cout << "[Forward] need recovery, simply return\n";
+        return;
+      }
       if (!stream_->Write(op)) {
+        need_recovery = true;
         stream_->WritesDone();
         Status s = stream_->Finish();
         std::cout << "Forward fail!"
@@ -40,7 +45,7 @@ class Forwarder{
                 << " detail: " << s.error_details() 
                 << " debug: " << context_.debug_error_string()
                 << " shard: " << shard_idx << " client: " << client_idx << std::endl;
-        assert(false);
+        // assert(false);
       }
     }
 
@@ -70,4 +75,5 @@ class Forwarder{
     ClientContext context_;
     std::unique_ptr<RubbleKvStoreService::Stub> stub_;
     std::shared_ptr<ClientReaderWriter<Op, OpReply> > stream_;
+    bool need_recovery = false;
 };

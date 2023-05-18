@@ -103,7 +103,7 @@ struct ImmutableDBOptions {
   std::string target_address;
   std::string primary_address;
   std::string remote_sst_dir;
-  std::vector<std::string> remote_sst_dirs;
+  mutable std::vector<std::string> remote_sst_dirs;
   std::string sst_pool_dir;
   int preallocated_sst_pool_size;
   uint64_t sst_pad_len;

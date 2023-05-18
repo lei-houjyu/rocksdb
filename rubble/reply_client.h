@@ -35,8 +35,13 @@ class ReplyClient{
 
     // send the reply to the replicator
     void SendReply(const OpReply& reply){
+      if (need_recovery) {
+        std::cout << "[SendReply] need recovery, simply return\n";
+        return;
+      }
       // std::cout << "Sent reply, size : "  << reply.reply_size() << std::endl;
       if (!stream_->Write(reply)) {
+        need_recovery = true;
         stream_->WritesDone();
         Status s = stream_->Finish();
         std::cout << "sendReply fail!"
@@ -44,7 +49,7 @@ class ReplyClient{
                   << " detail: " << s.error_details() 
                   << " debug: " << context_.debug_error_string()
                   << " shard: " << shard_idx << " client: " << client_idx << std::endl;
-        assert(false);
+        // assert(false);
       }
       //  std::cout << "sendReply client on reply: " << reply.ok() << "\n";
     }
@@ -72,4 +77,6 @@ class ReplyClient{
     // Out of the passed in Channel comes the stub, stored here, our view of the
     // server's exposed services.
     std::unique_ptr<RubbleKvStoreService::Stub> stub_ = nullptr;
+
+    bool need_recovery = false;
 };

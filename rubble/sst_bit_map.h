@@ -40,6 +40,8 @@ public:
 
     int GetAvailableSlots(int times);
 
+    void RemoveTail(int rf);
+
 private:
     // check if the total num of slots taken matches the size of file_slots_
     void CheckNumSlotsTaken();
