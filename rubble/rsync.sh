@@ -8,5 +8,5 @@ fi
 rf=$1
 
 for (( i=2; i<=$rf; i++ )); do
-    rsync -avz --delete --include '*/' --include '*.cc' --include '*.h' --include '*.proto' --include '*.py' --include '*.sh' --exclude '*' /mnt/data/rocksdb/ root@node-$i:/mnt/data/rocksdb/
+    rsync -avz --delete --include '*/' --include '*.cc' --include '*.h' --include '*.proto' --include '*.py' --include '*.sh' --include 'CMakeLists.txt' --exclude '*' /mnt/data/rocksdb/ root@node-$i:/mnt/data/rocksdb/
 done
