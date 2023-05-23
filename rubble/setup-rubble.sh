@@ -9,7 +9,7 @@ SST_PATH="/mnt/sst"
 install_dependencies() {
     apt update
     apt install -y build-essential autoconf libtool pkg-config libgflags-dev htop \
-                   dstat sysstat cgroup-tools cmake python3-pip nvme-cli numactl \
+                   dstat sysstat cgroup-tools cmake python3-pip nvme-cli numactl nethogs \
                    linux-tools-generic linux-tools-`uname -r`
     pip3 install matplotlib
 }
