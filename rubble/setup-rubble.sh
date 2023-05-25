@@ -9,7 +9,7 @@ SST_PATH="/mnt/sst"
 install_dependencies() {
     apt update
     apt install -y build-essential autoconf libtool pkg-config libgflags-dev htop \
-                   dstat sysstat cgroup-tools cmake python3-pip nvme-cli numactl \
+                   dstat sysstat cgroup-tools cmake python3-pip nvme-cli numactl nethogs \
                    linux-tools-generic linux-tools-`uname -r`
     pip3 install matplotlib
 }
@@ -138,7 +138,7 @@ setup_rocksdb() {
         then
             local primary_node=$( sid_to_nid $sid $rf )
             local shard_dir=${SST_PATH}/node-${primary_node}/shard-${sid}
-            bash create-sst-pool.sh 16777216 1 5000 ${shard_dir} ${nid} ${sid} > /dev/null 2>&1 &
+            bash create-sst-pool.sh 16777216 1 5000 ${shard_dir} ${nid} ${sid} > /dev/null 2>&1
         fi
     done
     wait
