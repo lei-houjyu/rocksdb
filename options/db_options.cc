@@ -611,6 +611,7 @@ ImmutableDBOptions::ImmutableDBOptions(const DBOptions& options)
       piggyback_version_edits(options.piggyback_version_edits),
       edits(options.edits),
       rid(options.rid),
+      sid(options.sid),
       rf(options.rf)
       {
         if(is_rubble && !is_tail){

@@ -91,9 +91,15 @@ message SyncReply {
     string message = 1;
 }
 
+enum Action {
+    REMOVE_TAIL = 0;
+    INSERT_TAIL = 1;
+    SYNC_TAIL = 2;
+}
+
 message RecoverRequest {
-    bool remove_tail = 1;
-    bool insert_tail = 2;
+    Action action = 1;
+    uint64 mem_id = 2;
 }
 
 message Empty {}

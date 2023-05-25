@@ -134,6 +134,8 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     // get the id of the current memtable
     uint64_t get_mem_id();
 
+    void set_mem_id(uint64_t id);
+
     // check if it's an out-of-ordered write request
     bool is_ooo_write(SingleOp* singleOp);
 
@@ -196,6 +198,12 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     void poll_op_buffer(Forwarder* forwarder, ReplyClient* reply_client,
                           std::map<uint64_t, std::queue<SingleOp*>>* op_buffer);
 
+    void InsertTail();
+
+    void Reconnect();
+
+    void SyncSST();
+
     // void ApplyDownstreamSstSlotDeletion(const std::vector<int>& deleted_slots);
 
     // db instance
@@ -245,8 +253,16 @@ class RubbleKvServiceImpl final : public  RubbleKvStoreService::Service {
     bool is_head_ = false;
     bool is_tail_ = false;
 
-    bool remove_tail_ = false;
-    bool insert_tail_ = false;
+    enum RecoveryStatus {
+      REMOVING_TAIL,
+      INSERTING_TAIL,
+      SYNCING_TAIL,
+      HEALTHY
+    };
+
+    RecoveryStatus recovery_status_ = HEALTHY;
+
+    uint64_t min_mem_id_to_forward_ = 0;
 
     bool  piggyback_edits_ = false;
   

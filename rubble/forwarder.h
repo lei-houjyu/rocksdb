@@ -23,7 +23,7 @@ using rubble::OpReply;
 class Forwarder{
   public:
     Forwarder(std::shared_ptr<Channel> channel)
-        : stub_(RubbleKvStoreService::NewStub(channel)), stream_(stub_->DoOp(&context_)) {
+        : context_(new ClientContext()), stub_(RubbleKvStoreService::NewStub(channel)), stream_(stub_->DoOp(context_)) {
     };
 
     ~Forwarder(){
@@ -32,20 +32,36 @@ class Forwarder{
 
     // forward the op to the next node
     void Forward(const Op& op){
-      if (need_recovery) {
+      if (need_reconnect) {
         std::cout << "[Forward] need recovery, simply return\n";
         return;
       }
       if (!stream_->Write(op)) {
-        need_recovery = true;
+        need_reconnect = true;
         stream_->WritesDone();
         Status s = stream_->Finish();
         std::cout << "Forward fail!"
                 << " msg: " << s.error_message() 
                 << " detail: " << s.error_details() 
-                << " debug: " << context_.debug_error_string()
+                << " debug: " << context_->debug_error_string()
                 << " shard: " << shard_idx << " client: " << client_idx << std::endl;
         // assert(false);
+      }
+    }
+
+    void Reconnect(std::shared_ptr<Channel> channel) {
+      if (need_reconnect) {
+        std::cout << "Forwarder reconnecting\n" << std::flush;
+        do {
+          stub_.reset();
+          stream_.reset();
+          delete context_;
+          context_ = new ClientContext();
+          stub_ = RubbleKvStoreService::NewStub(channel);
+          stream_ = stub_->DoOp(context_);
+        } while (channel->GetState(false) != 2);
+        std::cout << "Forwarder reconnected\n" << std::flush;
+        need_reconnect = false;
       }
     }
 
@@ -72,8 +88,8 @@ class Forwarder{
     // server's exposed services.
     int shard_idx = -1;
     int client_idx = -1;
-    ClientContext context_;
+    ClientContext* context_;
     std::unique_ptr<RubbleKvStoreService::Stub> stub_;
     std::shared_ptr<ClientReaderWriter<Op, OpReply> > stream_;
-    bool need_recovery = false;
+    bool need_reconnect = false;
 };

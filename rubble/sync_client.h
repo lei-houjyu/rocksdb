@@ -45,6 +45,8 @@ class SyncClient {
   // read a reply back for a sync request
   void GetSyncReply(SyncReply *reply);
 
+  void Reconnect(std::shared_ptr<Channel> channel);
+
   private:  
 
     // check the SyncReply status
@@ -66,7 +68,7 @@ class SyncClient {
     std::condition_variable cv_read_;
     std::atomic<bool> read_ready_{true};
 
-    ClientContext context_;
+    ClientContext* context_;
 
     // The bidirectional, asynchronous stream
     std::unique_ptr<ClientAsyncReaderWriter<SyncRequest, SyncReply>> stream_;
@@ -86,5 +88,5 @@ class SyncClient {
     // Finish status when the client is done with the stream.
     grpc::Status finish_status_ = grpc::Status::OK;
 
-    bool need_recovery = false;
+    bool need_reconnect_ = false;
 };

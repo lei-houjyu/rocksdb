@@ -190,6 +190,7 @@ rocksdb::DB* GetDBInstance(const string& db_path, const string& sst_dir,
    db_options.env = rocksdb::Env::Default();
    db_options.rf = rf;
    db_options.rid = rid;
+   db_options.sid = std::stoi(shard_id);
 
    // add logger for rubble
    // the default path for the sst bit map log file, will try to reconstruct map from this file

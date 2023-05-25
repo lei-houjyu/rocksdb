@@ -27,7 +27,7 @@ static std::map<uint64_t, uint64_t> primary_op_cnt_map;
 #define BATCH_SIZE 1000
 
 void PrintStatus(RubbleKvServiceImpl *srv) {
-  return;
+  // return;
   uint64_t r_now = 0, r_old = srv->r_op_counter_.load();
   uint64_t w_now = 0, w_old = srv->w_op_counter_.load();
   while (true) {
@@ -46,7 +46,7 @@ void PrintStatus(RubbleKvServiceImpl *srv) {
               << "[WRITE] " << w_now << " op " << (w_now- w_old) << " op/s "
               << "mem_num " << mem_num << " queued_op " << queued_op << " queued_edit " << queued_edit
               << " mem_id " << mem_id << " entries " << num_entries << " ops " << ops << " data " << data_size << " "
-              << ctime(&t);
+              << ctime(&t) << std::flush;
     r_old = r_now;
     w_old = w_now;
   }
@@ -161,7 +161,7 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
     std::shared_ptr<grpc::Channel> recovery_channel = nullptr;
 
     while (stream->Read(&tmp_op)) {
-      if (remove_tail_) {
+      if (recovery_status_ != HEALTHY) {
         // We are the new tail now, so build the reply client
         std::string replicator_addr = "10.10.1.1:50040";
         recovery_channel = grpc::CreateChannel(replicator_addr, grpc::InsecureChannelCredentials());
@@ -202,6 +202,9 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
         }
         
         if (forwarder != nullptr) {
+          if (recovery_status_ == INSERTING_TAIL) {
+            forwarder->Reconnect(db_options_->channel);
+          }
           forwarder->Forward(*request);
         }
         continue;
@@ -210,7 +213,6 @@ Status RubbleKvServiceImpl::DoOp(ServerContext* context,
       // RUBBLE_LOG_INFO(logger_ , "[Request] Got %u\n", static_cast<uint32_t>(request->id()));
       // printf("[Request] Got %u\n", static_cast<uint32_t>(request->id()));
       HandleOp(request, reply, forwarder, reply_client, op_buffer);
-
     }
 
     num_stream.fetch_add(-1);
@@ -301,6 +303,10 @@ void RubbleKvServiceImpl::CleanBufferedOps(Forwarder* forwarder,
 
 uint64_t RubbleKvServiceImpl::get_mem_id() {
   return default_cf_->mem()->GetID();
+}
+
+void RubbleKvServiceImpl::set_mem_id(uint64_t id) {
+  return default_cf_->mem()->SetID(id);
 }
 
 bool RubbleKvServiceImpl::is_ooo_write(SingleOp* singleOp) {
@@ -415,38 +421,40 @@ void RubbleKvServiceImpl::HandleOp(Op* op, OpReply* reply,
   }
   
 
-  while (!op_buffer->empty()) {
-    // while not empty
-    // 1. lock
-    // 2. check should_exe
-    // 3.1 if no
-    //     wait
-    // 3.2 if yes
-    //     unlock and poll_op_buffer
-    // std::cout << "[DoOp] start polling op buffer, current memtable id " << default_cf_->mem()->GetID() << std::endl;
-    auto it = op_buffer->begin();
-    std::unique_lock<std::mutex> lk{*db_options_->op_buffer_mu};
-    if (!should_execute(it->first)) {
-      db_options_->op_buffer_cv->wait(lk, [&] {
-        return this->should_execute(it->first);
-      });
+  if (recovery_status_ != SYNCING_TAIL) {
+    while (!op_buffer->empty()) {
+      // while not empty
+      // 1. lock
+      // 2. check should_exe
+      // 3.1 if no
+      //     wait
+      // 3.2 if yes
+      //     unlock and poll_op_buffer
+      // std::cout << "[DoOp] start polling op buffer, current memtable id " << default_cf_->mem()->GetID() << std::endl;
+      auto it = op_buffer->begin();
+      std::unique_lock<std::mutex> lk{*db_options_->op_buffer_mu};
+      if (!should_execute(it->first)) {
+        db_options_->op_buffer_cv->wait(lk, [&] {
+          return this->should_execute(it->first);
+        });
+      }
+      lk.unlock();
+      poll_op_buffer(forwarder, reply_client, op_buffer);
+
+
+
+      // poll_op_buffer(forwarder, reply_client, op_buffer);
+      // if (op_buffer->empty())
+      //   return;
+
+      // std::unique_lock<std::mutex> lk{*db_options_->memtable_ready_mu};
+      // db_options_->memtable_ready_cv->wait(lk, [&] {
+      //   auto it = op_buffer->begin();
+      //   return this->should_execute(it->first);
+      // });
+
+      // poll_op_buffer(forwarder, reply_client, op_buffer);
     }
-    lk.unlock();
-    poll_op_buffer(forwarder, reply_client, op_buffer);
-
-
-
-    // poll_op_buffer(forwarder, reply_client, op_buffer);
-    // if (op_buffer->empty())
-    //   return;
-
-    // std::unique_lock<std::mutex> lk{*db_options_->memtable_ready_mu};
-    // db_options_->memtable_ready_cv->wait(lk, [&] {
-    //   auto it = op_buffer->begin();
-    //   return this->should_execute(it->first);
-    // });
-
-    // poll_op_buffer(forwarder, reply_client, op_buffer);
   }
 }
 
@@ -657,9 +665,11 @@ void RubbleKvServiceImpl::PostProcessing(SingleOp* singleOp, Forwarder* forwarde
   //   ApplyBufferedVersionEdits();
   // }
 
-  if (is_tail_) {
+  if (reply_client != nullptr && recovery_status_ != SYNCING_TAIL) {
     reply_client->SendReply(*reply);
-  } else {
+  } 
+
+  if (forwarder != nullptr && recovery_status_ != REMOVING_TAIL) {
     // if(piggyback_edits_ && is_rubble_ && is_head_) {
     //   std::vector<std::string> edits;
     //   edits_->GetEdits(edits);
@@ -676,7 +686,22 @@ void RubbleKvServiceImpl::PostProcessing(SingleOp* singleOp, Forwarder* forwarde
     //     request->set_has_edits(false);
     //   }
     // }
-    forwarder->Forward(*request);
+    int ops_size = request->ops_size();
+    if (request->ops(ops_size-1).target_mem_id() >= min_mem_id_to_forward_) {
+      if (recovery_status_ == INSERTING_TAIL) {
+        forwarder->Reconnect(db_options_->channel);
+      }
+      forwarder->Forward(*request);
+    } else {
+      std::cout << "[PostProcessing] ignore batch with largest target_mem_id: "
+                << request->ops(ops_size-1).target_mem_id()
+                << " min_mem_id_to_forward_: "
+                << min_mem_id_to_forward_
+                << std::endl;
+      for (int i = 0; i < ops_size; i++) {
+        assert(request->ops(i).target_mem_id() < min_mem_id_to_forward_);
+      }
+    }
     // OpReply forward_reply;
     // forwarder->ReadReply(&forward_reply);
 
@@ -707,13 +732,14 @@ Status RubbleKvServiceImpl::Sync(ServerContext* context,
       std::string args = request.args();
       int rid = request.rid();
 
-      // std::cout << "[Sync] get " << args << std::endl;
+      // std::cout << "[Sync] get " << args << std::endl << std::flush;
 
       if (!db_options_->is_primary) {
         BufferVersionEdits(args);
         
-        if (!is_tail_) {
+        if (!is_tail_ || recovery_status_ == INSERTING_TAIL) {
           SyncClient* sync_client = rocksdb::GetSyncClient(db_options_);
+          sync_client->Reconnect(db_options_->channel);
           sync_client->Sync(request);
         }
       } else {
@@ -812,23 +838,109 @@ bool RubbleKvServiceImpl::IsTermination(Op* op) {
 
 // heartbeat between Replicator and db servers
 Status RubbleKvServiceImpl::Recover(ServerContext* context, const RecoverRequest* request, Empty* reply) {
-  if (request->remove_tail()) {
-    if (db_options_->is_primary) {
-      // 1. Update SST bitmap
-      db_options_->sst_bit_map->RemoveTail(db_options_->rf);
+  switch (request->action()) {
+    case rubble::REMOVE_TAIL:
+      std::cout << "[Recover] REMOVE_TAIL\n" << std::flush;
+      if (db_options_->is_primary) {
+        // 1. Update SST bitmap
+        db_options_->sst_bit_map->RemoveTail(db_options_->rf);
 
-      // 2. Update remote dirs in ship job
-      std::string tail_dir = db_options_->remote_sst_dirs.back();
-      db_options_->remote_sst_dirs.pop_back();
-      std::cout << "[Recover] remove " << tail_dir << " from remote_sst_dirs\n";
-    } else {
-      // 1. Mark self as the new tail
-      remove_tail_ = true;
-    }
-  } else {
+        // 2. Update remote dirs in ship job
+        // std::string tail_dir = db_options_->remote_sst_dirs.back();
+        // db_options_->remote_sst_dirs.pop_back();
+        // std::cout << "[Recover] remove " << tail_dir << " from remote_sst_dirs\n";
+      } else {
+        // 1. Mark self as the new tail
+        recovery_status_ = REMOVING_TAIL;
+      }
+      break;
+    
+    case rubble::INSERT_TAIL:
+      std::cout << "[Recover] INSERT_TAIL\n" << std::flush;
+      if (db_options_->is_primary) {
+        // 1. Update SST bitmap
+        // db_options_->sst_bit_map->RemoveTail(db_options_->rf);
 
+        // 2. Update remote dirs in ship job
+        // std::string tail_dir = db_options_->remote_sst_dirs.back();
+        // db_options_->remote_sst_dirs.pop_back();
+        // std::cout << "[Recover] remove " << tail_dir << " from remote_sst_dirs\n";
+      } else {
+        // 1. Sync with the new tail
+        InsertTail();
+      }
+      break;
+
+    case rubble::SYNC_TAIL:
+      recovery_status_ = SYNCING_TAIL;
+      std::cout << "[Recover] SYNC_TAIL\n" << std::flush;
+      assert(db_options_->is_tail);
+      set_mem_id(request->mem_id());
+      std::cout << "[Recover] set mem_id to " << request->mem_id() << std::endl << std::flush;
+      break;
+
+    default:
+      std::cout << "[Recover] should not reach here\n" << std::flush;
+      break;
   }
+
   return Status::OK;
+}
+
+void RubbleKvServiceImpl::InsertTail() {
+  // 0. Set recovery status
+  recovery_status_ = INSERTING_TAIL;
+
+  // 1. Send the current memtable ID to it
+  uint64_t cur_mem_id = get_mem_id();
+  RecoverRequest req;
+  req.set_action(rubble::SYNC_TAIL);
+  req.set_mem_id(cur_mem_id);
+  Empty rep;
+  Reconnect();
+  while (true) {
+    std::unique_ptr<RubbleKvStoreService::Stub> stub = RubbleKvStoreService::NewStub(channel_);
+    ClientContext ctx;
+    Status s = stub->Recover(&ctx, req, &rep);
+    if (!s.ok()) {
+      // std::cout << "[InsertTail] fail to send mem_id. Error: "
+      //           << s.error_code() << ": " << s.error_message()
+      //           << " Channel: " << channel_->GetState(false)
+      //           << std::endl << std::flush;
+    } else {
+      std::cout << "[InsertTail] successfully send mem_id " << cur_mem_id << std::endl << std::flush;
+      break;
+    }
+  }
+
+  // 2. Forward write requests and version edits
+  //    recovery_status_ and min_mem_id_to_forward_ 
+  //    will help deciding what to forward
+  min_mem_id_to_forward_ = cur_mem_id + 1;
+
+  // 3. Ship SST files of the current version
+  SyncSST();
+
+  // 4. Recovery finished
+  recovery_status_ = HEALTHY;
+}
+
+void RubbleKvServiceImpl::Reconnect() {
+  std::cout << "[Reconnect] target_address " << db_options_->target_address << std::endl << std::flush;
+  channel_ = grpc::CreateChannel(db_options_->target_address, grpc::InsecureChannelCredentials());
+}
+
+void RubbleKvServiceImpl::SyncSST() {
+  rocksdb::VersionStorageInfo* info = default_cf_->current()->storage_info();
+  for (int i = 0; i < info->num_levels(); i++) {
+    const std::vector<rocksdb::FileMetaData*>& files = info->LevelFiles(i);
+    for (size_t j = 0; j < files.size(); j++) {
+      uint64_t file_num = files[j]->fd.GetNumber();
+      char file_name[40];
+      sprintf(file_name, "/mnt/data/db/shard-%d/sst_dir/%06zu.sst", db_options_->sid, file_num);
+      std::cout << "[SyncSST] file_num: " << file_name << std::endl << std::flush;
+    }
+  }
 }
 
 // Update the secondary's states by applying the version edits

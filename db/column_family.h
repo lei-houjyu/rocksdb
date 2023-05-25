@@ -371,9 +371,24 @@ class ColumnFamilyData {
   uint64_t GetTotalSstFilesSize() const;  // REQUIRE: DB mutex held
   uint64_t GetLiveSstFilesSize() const;   // REQUIRE: DB mutex held
   void SetMemtable(MemTable* new_mem) {
+    if (mem_) {
+      UpdateLastMemtableID();
+    }
     uint64_t memtable_id = last_memtable_id_.fetch_add(1) + 1;
     new_mem->SetID(memtable_id);
     mem_ = new_mem;
+  }
+
+  void UpdateLastMemtableID() {
+    uint64_t current_id = mem_->GetID();
+    uint64_t last_id = last_memtable_id_.load();
+    if (last_id != current_id) {
+      // The current mem's ID was changed during recovery,
+      // so, we need to update last_memtable_id_, too
+      last_memtable_id_.store(current_id);
+      std::cout << "[UpdateLastMemtableID] last_memtable_id_ changed to "
+                << last_memtable_id_.load() << std::endl;
+    }
   }
 
   // calculate the oldest log needed for the durability of this column family

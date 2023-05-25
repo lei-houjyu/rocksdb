@@ -11,7 +11,8 @@ SyncClient::SyncClient(std::shared_ptr<Channel> channel)
     :stub_(RubbleKvStoreService::NewStub(channel)){
         // grpc_thread_.reset(new std::thread(std::bind(&SyncClient::AsyncCompleteRpc, this)));
         // stream_ = stub_->AsyncSync(&context_, &cq_, reinterpret_cast<void*>(Type::CONNECT));
-        sync_stream_ = stub_->Sync(&context_);
+        context_ = new ClientContext();
+        sync_stream_ = stub_->Sync(context_);
     }; 
 
 SyncClient::~SyncClient(){
@@ -21,8 +22,8 @@ SyncClient::~SyncClient(){
 }
 
 void SyncClient::Sync(const std::string& args, int rid) {
-    if (need_recovery) {
-        std::cout << "[Sync] need recovery, simply return\n";
+    if (need_reconnect_) {
+        std::cout << "[Sync] need recovery, simply return\n" << std::flush;
         return;
     }
     SyncRequest request;
@@ -35,7 +36,23 @@ void SyncClient::Sync(const SyncRequest& request) {
     bool s = sync_stream_->Write(request);
     if (!s) {
         std::cout << "[Sync] fail!\n";
-        need_recovery = true;
+        need_reconnect_ = true;
+    }
+}
+
+void SyncClient::Reconnect(std::shared_ptr<Channel> channel) {
+    if (need_reconnect_) {
+        std::cout << "Client reconnecting\n" << std::flush;
+        do {
+            stub_.reset();
+            sync_stream_.reset();
+            delete context_;
+            context_ = new ClientContext();
+            stub_ = RubbleKvStoreService::NewStub(channel);
+            sync_stream_ = stub_->Sync(context_);
+        } while (channel->GetState(false) != 2);
+        std::cout << "Client reconnected\n" << std::flush;
+        need_reconnect_ = false;
     }
 }
 
@@ -52,7 +69,7 @@ void SyncClient::GetSyncReply(SyncReply *reply) {
         std::cout << "Sync fail!"
                 << " msg: " << s.error_message() 
                 << " detail: " << s.error_details() 
-                << " debug: " << context_.debug_error_string() << std::endl;
+                << " debug: " << context_->debug_error_string() << std::endl;
         assert(false);
     }
     // stream_->Read(&reply_, reinterpret_cast<void*>(Type::READ));
