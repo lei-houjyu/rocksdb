@@ -58,6 +58,53 @@ bool NeedShipSST(const ImmutableDBOptions* db_options) {
     return db_options->is_rubble && db_options->is_primary && !db_options->is_tail;
 }
 
+void ReadSST(char *file_name, unsigned char *buf, int size) {
+    int fd;
+    do {
+        fd = open(file_name, O_RDONLY | O_DIRECT | O_DSYNC, 0755);
+    } while (fd < 0 && errno == EINTR);
+
+    ssize_t done = read(fd, buf, size);
+    if (done != size) {
+        std::cout << "[ReadSST] While reading file " << file_name << " errno " << std::strerror(errno) << std::endl;
+        assert(false);
+    }
+
+    close(fd);
+}
+
+void WriteSST(char *file_name, unsigned char *buf, int size) {
+    int fd;
+    do {
+        fd = open(file_name, O_WRONLY | O_DIRECT | O_DSYNC, 0755);
+    } while (fd < 0 && errno == EINTR);
+
+    ssize_t done = write(fd, buf, size);
+    if (done != size) {
+        std::cout << "[WriteSST] While writing file " << file_name << " errno " << std::strerror(errno) << std::endl;
+        assert(false);
+    }
+    
+    close(fd);
+}
+
+void RecoverSST(std::vector<char *>* src_name, std::vector<char *>* dst_name, int size) {
+    unsigned char * buf = nullptr;
+    int ret = posix_memalign((void **)&buf, 512, size);
+    if (ret) {
+        perror("[ShipSST] posix_memalign failed");
+        assert(false);
+    }
+    
+    for (size_t i = 0; i < src_name->size(); i++) {
+        ReadSST(src_name->at(i), buf, size);
+        WriteSST(dst_name->at(i), buf, size);
+        printf("[RecoverSST] %s %s\n", src_name->at(i), dst_name->at(i));
+    }
+
+    free(buf);
+}
+
 void ShipSST(FileInfo& file, const std::vector<std::string>& remote_sst_dirs, ShipThreadArg* sta) {
     // std::cout << "[ShipSST] file_number: " << file.file_number_ << " slot_number: " << file.slot_number_ << std::endl;
 

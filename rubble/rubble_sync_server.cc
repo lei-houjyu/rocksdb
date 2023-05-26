@@ -858,13 +858,8 @@ Status RubbleKvServiceImpl::Recover(ServerContext* context, const RecoverRequest
     case rubble::INSERT_TAIL:
       std::cout << "[Recover] INSERT_TAIL\n" << std::flush;
       if (db_options_->is_primary) {
-        // 1. Update SST bitmap
-        // db_options_->sst_bit_map->RemoveTail(db_options_->rf);
-
-        // 2. Update remote dirs in ship job
-        // std::string tail_dir = db_options_->remote_sst_dirs.back();
-        // db_options_->remote_sst_dirs.pop_back();
-        // std::cout << "[Recover] remove " << tail_dir << " from remote_sst_dirs\n";
+        // 1. Recover SST
+        SyncSST();
       } else {
         // 1. Sync with the new tail
         InsertTail();
@@ -918,10 +913,7 @@ void RubbleKvServiceImpl::InsertTail() {
   //    will help deciding what to forward
   min_mem_id_to_forward_ = cur_mem_id + 1;
 
-  // 3. Ship SST files of the current version
-  SyncSST();
-
-  // 4. Recovery finished
+  // 3. Recovery finished
   recovery_status_ = HEALTHY;
 }
 
@@ -931,16 +923,41 @@ void RubbleKvServiceImpl::Reconnect() {
 }
 
 void RubbleKvServiceImpl::SyncSST() {
+  int worker_idx = 0;
+  int worker_num = 4;
+
+  std::vector<std::thread> workers;
+  std::vector<std::vector<char *>> src_files(worker_num);
+  std::vector<std::vector<char *>> dst_files(worker_num);
+
   rocksdb::VersionStorageInfo* info = default_cf_->current()->storage_info();
   for (int i = 0; i < info->num_levels(); i++) {
     const std::vector<rocksdb::FileMetaData*>& files = info->LevelFiles(i);
     for (size_t j = 0; j < files.size(); j++) {
       uint64_t file_num = files[j]->fd.GetNumber();
-      char file_name[40];
-      sprintf(file_name, "/mnt/data/db/shard-%d/sst_dir/%06zu.sst", db_options_->sid, file_num);
-      std::cout << "[SyncSST] file_num: " << file_name << std::endl << std::flush;
+      char src_name[40];
+      sprintf(src_name, "/mnt/data/db/shard-%d/sst_dir/%06zu.sst", db_options_->sid, file_num);
+
+      char dst_name[40];
+      int node_num = db_options_->sid % db_options_->rf;
+      node_num = (node_num == 0) ? db_options_->rf : node_num;
+      int slot_num = db_options_->sst_bit_map->GetFileSlotNum(file_num);
+      sprintf(dst_name, "/mnt/remote-sst/node-%d/shard-%d/%d", node_num, db_options_->sid, slot_num);
+
+      src_files[worker_idx].push_back(src_name);
+      dst_files[worker_idx].push_back(dst_name);
+      worker_idx = (worker_idx + 1) % worker_num;
     }
   }
+
+  for (int i = 0; i < worker_num; i++) {
+    workers.push_back(std::thread(rocksdb::RecoverSST, &(src_files[i]), &(dst_files[i]), 17 * 1024 * 1024));
+  }
+
+  for (int i = 0; i < worker_num; i++) {
+    workers[i].join();
+  }
+  std::cout << "Finished syncing SST\n" << std::flush;
 }
 
 // Update the secondary's states by applying the version edits

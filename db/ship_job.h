@@ -80,4 +80,10 @@ bool AddedFiles(const autovector<autovector<VersionEdit*>>& edit_lists);
 void BGWorkShip(void* arg);
 
 void UnscheduleShipCallback(void* arg);
+
+void ReadSST(char *file_name, unsigned char *buf, int size);
+
+void WriteSST(char *file_name, unsigned char *buf, int size);
+
+void RecoverSST(std::vector<char *>* src_name, std::vector<char *>* dst_name, int size);
 }
